@@ -43,11 +43,3 @@ next-env.d.ts
 # agent instruction files (next dev regenerates AGENTS.md on every run)
 /AGENTS.md
 /CLAUDE.md
-
-# OpenNext
-.open-next
-
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
