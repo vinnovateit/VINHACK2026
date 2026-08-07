@@ -1,3 +1,0 @@
-module.exports=[27572,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"en",className:"h-full antialiased",children:(0,b.jsxs)("body",{className:"flex min-h-full flex-col bg-black",children:[(0,b.jsx)("noscript",{children:(0,b.jsx)("style",{dangerouslySetInnerHTML:{__html:".hero-motion{opacity:1}"}})}),a]})})},"metadata",0,{title:"VinHack 2026 — VinnovateIT",description:"VinHack is a 36-hour hybrid hackathon by VinnovateIT at Vellore Institute of Technology, bringing together creative minds to build impactful solutions for real-world problems."}])},50645,function(a){a.n(a.i(27572))}];
-
-//# sourceMappingURL=src_app_layout_tsx_0r5yz5t._.js.map
