@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Rotonto Light is the only typeface in the VinHack design. It is a licensed
+   font, so the file is not committed — drop `Rotonto-Light.woff2` into
+   public/fonts/ and it is picked up automatically. Until then the stack falls
+   back to the system sans at the same weight. */
+@font-face {
+  font-family: "Rotonto";
+  src: url("/fonts/Rotonto-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --font-rotonto: "Rotonto", ui-sans-serif, system-ui, sans-serif;
+
+  /* Design canvas — every section is positioned against this fixed frame. */
+  --canvas-width: 1280px;
+  --canvas-height: 8834px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* The design is a fixed 1280px collage — sections overlap and every element is
+   absolutely positioned, so there is no reflow to fall back on. The canvas is
+   therefore scaled as a whole to whatever width the viewport gives it, up and
+   down alike. Clamping it at its native 1280px instead would leave black
+   gutters, and the many full-bleed elements (footer bands, the "Who are we?"
+   marquee, the track card stacks) would visibly chop off at that boundary. */
+.canvas-container {
+  container-type: inline-size;
+}
+
+.canvas-frame {
+  /* tan(atan2(a, b)) is the CSS idiom for dividing two lengths into a unitless
+     ratio — calc() cannot divide by a length. 100cqw is .canvas-container's
+     width, so this is simply (viewport width / 1280). */
+  --canvas-scale: tan(atan2(100cqw, var(--canvas-width)));
+
+  width: 100%;
+  height: calc(var(--canvas-height) * var(--canvas-scale));
+  overflow-x: clip;
+}
+
+.canvas {
+  width: var(--canvas-width);
+  height: var(--canvas-height);
+  transform: scale(var(--canvas-scale));
+  transform-origin: top left;
+}
+
+/* HeroMotion reveals this as the first frame of its entrance timeline, so the
+   collage never flashes into view before the animation arms. The <noscript>
+   rule in layout.tsx restores it when JavaScript is unavailable. */
+.hero-motion {
+  opacity: 0;
+}
+
+html,
+body {
+  background: #000;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: #fcfcfc;
+  font-family: var(--font-rotonto);
+  font-weight: 300;
 }
