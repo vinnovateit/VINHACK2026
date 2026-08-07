@@ -1,6 +1,9 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"pages_build_output_dir": ".open-next",
+	"build": {
+		"command": "npm run build:pages"
+	},
 	"main": ".open-next/worker.js",
 	"name": "vinhack",
 	"compatibility_date": "2026-08-04",
