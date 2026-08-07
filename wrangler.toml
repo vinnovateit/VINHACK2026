@@ -1,0 +1,15 @@
+name = "vinhack"
+main = ".open-next/worker.js"
+compatibility_date = "2026-08-04"
+pages_build_output_dir = ".open-next"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[build]
+command = "npm run build:pages"
+
+# Pages provides ASSETS binding automatically
+# OpenNext handles WORKER_SELF_REFERENCE automatically for Pages
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "vinhack-opennext-cache"
