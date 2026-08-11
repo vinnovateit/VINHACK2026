@@ -1,18 +1,26 @@
 export default function HeroSection() {
   return (
     <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
-      <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[361.5px] not-italic text-[#7a7a7a] text-[70px] text-center top-0 whitespace-nowrap" data-hero="nav" data-node-id="343:1173">
+      <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[361.5px] not-italic text-[#7a7a7a] text-[70px] text-center top-0 whitespace-nowrap" data-hero="nav-lead" data-node-id="343:1173">
         HOME
       </p>
-      <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[1028px] not-italic text-[#2849cb] text-[70px] text-center top-0 whitespace-nowrap" data-hero="nav" data-node-id="343:1174">
+      <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[1028px] not-italic text-[#2849cb] text-[70px] text-center top-0 whitespace-nowrap" data-hero="nav-follow" data-node-id="343:1174">
         EXPLORE
       </p>
       <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
           <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
             <h1 className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px]" data-hero="wordmark" data-node-id="343:1178">
+              {/* The wordmark ships as two layers rather than one flattened
+                  file: the solid lettering, and the offset outline drawn behind
+                  it. They are the two paths the Figma export had in a single
+                  SVG, and stack back to exactly it — but split, they can move
+                  independently, which is what lets HeroMotion slide the
+                  lettering onto the outline on hover while the outline stays
+                  where it is drawn. */}
               <div className="absolute inset-[0_-0.22%_-0.48%_0]">
-                <img alt="VinHack" className="block max-w-none size-full" src="/figma/group48095504.svg" />
+                <img alt="VinHack" className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-fill" src="/figma/vinhack-fill.svg" />
+                <img alt="" aria-hidden className="absolute block inset-0 max-w-none size-full" src="/figma/vinhack-outline.svg" />
               </div>
             </h1>
             <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1182">
@@ -28,22 +36,25 @@ export default function HeroSection() {
                   <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group41.svg" />
                 </div>
               </div>
-              <div className="absolute contents h-[207.988px] left-[104.87px] top-[150.38px] w-[411.659px]" data-hero="git" data-node-id="343:1253">
-                <div className="absolute flex h-[207.988px] items-center justify-center left-[104.87px] top-[150.38px] w-[411.659px]" data-node-id="343:1254">
+              {/* Real box, not `display: contents` — the pieces of this sticker
+                  have to turn as one, and only a box can be transformed. Child
+                  offsets below are relative to it. See `motion/besharm.ts`. */}
+              <div className="absolute h-[207.988px] left-[104.87px] top-[150.38px] w-[411.659px]" data-hero="git" data-node-id="343:1253">
+                <div className="absolute flex h-[207.988px] items-center justify-center left-0 top-0 w-[411.659px]" data-node-id="343:1254">
                   <div className="flex-none rotate-[-7.85deg]">
                     <div className="h-[155.601px] relative w-[394.094px]" data-name="image 205">
                       <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src="/figma/image205.png" />
                     </div>
                   </div>
                 </div>
-                <div className="absolute flex h-[162.336px] items-center justify-center left-[130.33px] top-[171.57px] w-[359.724px]" data-node-id="343:1255">
+                <div className="absolute flex h-[162.336px] items-center justify-center left-[25.46px] top-[21.19px] w-[359.724px]" data-node-id="343:1255">
                   <div className="flex-none rotate-[-7.85deg]">
                     <div className="h-[115.993px] relative w-[347.131px]">
                       <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/ellipse50.svg" />
                     </div>
                   </div>
                 </div>
-                <div className="absolute flex h-[67.097px] items-center justify-center left-[165.35px] top-[218.44px] w-[290.935px]" data-node-id="343:1256">
+                <div className="absolute flex h-[67.097px] items-center justify-center left-[60.48px] top-[68.06px] w-[290.935px]" data-node-id="343:1256">
                   <div className="-rotate-8 flex-none">
                     <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">{`git commit -m "innit to vinnit"`}</p>
                   </div>
@@ -355,18 +366,20 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
-          <div className="absolute contents h-[105.868px] left-[30.33px] top-[499.01px] w-[102.721px]" data-hero="key" data-node-id="343:1544" data-name="key">
-            <div className="absolute flex h-[100.797px] items-center justify-center left-[31.8px] top-[504.08px] w-[101.247px]" data-node-id="343:1545">
+          {/* Real box — see the note on `git`. The two `:` `;` dots and the two
+              spark lines have to travel with the keycap. */}
+          <div className="absolute h-[105.868px] left-[30.33px] top-[499.01px] w-[102.721px]" data-hero="key" data-node-id="343:1544" data-name="key">
+            <div className="absolute flex h-[100.797px] items-center justify-center left-[1.47px] top-[5.07px] w-[101.247px]" data-node-id="343:1545">
               <div className="flex-none rotate-[-16.21deg]">
                 <div className="bg-[#2b24fc] border-[#74d4f0] border-[1.32px] border-solid h-[81.18px] opacity-75 relative rounded-[15.84px] w-[81.84px]" />
               </div>
             </div>
-            <div className="absolute flex h-[85.705px] items-center justify-center left-[36.85px] top-[501.49px] w-[85.256px]" data-node-id="343:1546">
+            <div className="absolute flex h-[85.705px] items-center justify-center left-[6.52px] top-[2.48px] w-[85.256px]" data-node-id="343:1546">
               <div className="flex-none rotate-[-16.21deg]">
                 <div className="bg-[#2b24fc] border-[#74d4f0] border-[1.32px] border-solid h-[69.3px] opacity-95 relative rounded-[15.84px] w-[68.64px]" />
               </div>
             </div>
-            <div className="absolute flex h-[9.713px] items-center justify-center left-[57.77px] top-[585.27px] w-[2.675px]" data-node-id="343:1547">
+            <div className="absolute flex h-[9.713px] items-center justify-center left-[27.44px] top-[86.26px] w-[2.675px]" data-node-id="343:1547">
               <div className="flex-none rotate-[105.4deg]">
                 <div className="h-0 relative w-[10.074px]">
                   <div className="absolute inset-[-1.32px_0_0_0]">
@@ -375,7 +388,7 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-            <div className="absolute flex h-[6.765px] items-center justify-center left-[117.94px] top-[567.87px] w-[7.465px]" data-node-id="343:1548">
+            <div className="absolute flex h-[6.765px] items-center justify-center left-[87.61px] top-[68.86px] w-[7.465px]" data-node-id="343:1548">
               <div className="-scale-y-100 flex-none rotate-[42.18deg]">
                 <div className="h-0 relative w-[10.074px]">
                   <div className="absolute inset-[-1.32px_0_0_0]">
@@ -384,15 +397,15 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-            <div className="absolute contents h-[55.853px] left-[67.72px] top-[509.31px] w-[21.51px]" data-node-id="343:1549">
-              <div className="-translate-y-1/2 absolute flex h-[32.403px] items-center justify-center left-[67.72px] top-[525.51px] w-[14.694px]" data-node-id="343:1550">
+            <div className="absolute contents h-[55.853px] left-[37.39px] top-[10.3px] w-[21.51px]" data-node-id="343:1549">
+              <div className="-translate-y-1/2 absolute flex h-[32.403px] items-center justify-center left-[37.39px] top-[26.5px] w-[14.694px]" data-node-id="343:1550">
                 <div className="flex-none rotate-[-16.21deg]">
                   <div className="[word-break:break-word] flex flex-col font-rotonto justify-center leading-[0] not-italic relative text-[#74d4f0] text-[26.4px] whitespace-nowrap">
                     <p className="leading-[normal]">:</p>
                   </div>
                 </div>
               </div>
-              <div className="-translate-y-1/2 absolute flex h-[32.403px] items-center justify-center left-[74.54px] top-[548.96px] w-[14.694px]" data-node-id="343:1551">
+              <div className="-translate-y-1/2 absolute flex h-[32.403px] items-center justify-center left-[44.21px] top-[49.95px] w-[14.694px]" data-node-id="343:1551">
                 <div className="flex-none rotate-[-16.21deg]">
                   <div className="[word-break:break-word] flex flex-col font-rotonto justify-center leading-[0] not-italic relative text-[#74d4f0] text-[26.4px] whitespace-nowrap">
                     <p className="leading-[normal]">;</p>
@@ -402,22 +415,24 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-        <div className="absolute contents h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px]" data-hero="note" data-node-id="343:1552">
-          <div className="absolute flex h-[75.214px] items-center justify-center left-[164.02px] top-[607.87px] w-[61.123px]" data-node-id="343:1553">
+        {/* Real box — see the note on `git`. The red tab and the arrow badge
+            have to stay attached to the card. */}
+        <div className="absolute h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px]" data-hero="note" data-node-id="343:1552">
+          <div className="absolute flex h-[75.214px] items-center justify-center left-[35.59px] top-[153.84px] w-[61.123px]" data-node-id="343:1553">
             <div className="flex-none rotate-[-19.9deg]">
               <div className="h-[64.969px] relative w-[41.491px]">
                 <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector30.svg" />
               </div>
             </div>
           </div>
-          <div className="absolute flex h-[287.712px] items-center justify-center left-[128.58px] top-[454.03px] w-[275.017px]" data-node-id="343:1554">
+          <div className="absolute flex h-[287.712px] items-center justify-center left-[0.15px] top-0 w-[275.017px]" data-node-id="343:1554">
             <div className="flex-none rotate-[-20.16deg]">
               <div className="h-[229.918px] relative w-[208.546px]">
                 <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector31.svg" />
               </div>
             </div>
           </div>
-          <div className="absolute flex h-[94.214px] items-center justify-center left-[196.98px] top-[543.92px] w-[125.248px]" data-node-id="343:1555">
+          <div className="absolute flex h-[94.214px] items-center justify-center left-[68.55px] top-[89.89px] w-[125.248px]" data-node-id="343:1555">
             <div className="flex-none rotate-[13.5deg]">
               <div className="[word-break:break-word] font-rotonto leading-[0] not-italic relative text-[28.8px] text-black whitespace-nowrap">
                 <p className="leading-[normal] mb-0">Register</p>
@@ -425,31 +440,36 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
-          <div className="absolute flex items-center justify-center left-[271.25px] size-[34.438px] top-[600.17px]" data-node-id="343:1556">
+          <div className="absolute flex items-center justify-center left-[142.82px] size-[34.438px] top-[146.14px]" data-node-id="343:1556">
             <div className="flex-none rotate-[-4.55deg]">
               <div className="bg-[#ff4337] relative rounded-[27.2px] size-[32px]" />
             </div>
           </div>
-          <div className="absolute flex h-[26.333px] items-center justify-center left-[278.33px] top-[602.73px] w-[21.899px]" data-node-id="343:1557">
+          <div className="absolute flex h-[26.333px] items-center justify-center left-[149.9px] top-[148.7px] w-[21.899px]" data-node-id="343:1557">
             <div className="flex-none rotate-[13.5deg]">
               <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[19.2px] text-black whitespace-nowrap">→</p>
             </div>
           </div>
         </div>
-        <div className="absolute contents h-[212.159px] left-[706.85px] top-[144px] w-[259.685px]" data-hero="folder" data-node-id="343:1558">
-          <div className="absolute flex h-[183.439px] items-center justify-center left-[718.54px] top-[156.86px] w-[196.793px]" data-node-id="343:1559">
+        {/* Real box — see the note on `git`. This one flips on rotateY, which
+            splays a group of separately-pivoted boxes worse than a rock does.
+            The two `calc(50% + x)` offsets below were resolving against the
+            1280px section; against this 259.685px wrapper they would mean
+            something else entirely, so they are written out in px. */}
+        <div className="absolute h-[212.159px] left-[706.85px] top-[144px] w-[259.685px]" data-hero="folder" data-node-id="343:1558">
+          <div className="absolute flex h-[183.439px] items-center justify-center left-[11.69px] top-[12.86px] w-[196.793px]" data-node-id="343:1559">
             <div className="flex-none rotate-[-8.67deg]">
               <div className="h-[158.9px] relative w-[174.839px]">
                 <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095562.svg" />
               </div>
             </div>
           </div>
-          <div className="-translate-x-1/2 absolute flex h-[51.079px] items-center justify-center left-[calc(50%+181.21px)] top-[237.63px] w-[132.35px]" data-node-id="343:1562">
+          <div className="-translate-x-1/2 absolute flex h-[51.079px] items-center justify-center left-[114.36px] top-[93.63px] w-[132.35px]" data-node-id="343:1562">
             <div className="flex-none rotate-[-8.67deg]">
               <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[23.1px] text-center whitespace-nowrap">Idea Found !</p>
             </div>
           </div>
-          <div className="absolute flex h-[72.702px] items-center justify-center left-[886.55px] top-[270.13px] w-[71.463px]" data-node-id="343:1563">
+          <div className="absolute flex h-[72.702px] items-center justify-center left-[179.7px] top-[126.13px] w-[71.463px]" data-node-id="343:1563">
             <div className="flex-none rotate-[4.33deg]">
               <div className="h-[67.872px] relative w-[66.528px]">
                 <div className="absolute inset-[-0.5%_-0.28%_-0.3%_-0.56%]">
@@ -458,13 +478,13 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
-          <div className="-translate-x-1/2 absolute flex h-[47.763px] items-center justify-center left-[calc(50%+184.07px)] top-[263.5px] w-[110.601px]" data-node-id="343:1573">
+          <div className="-translate-x-1/2 absolute flex h-[47.763px] items-center justify-center left-[117.22px] top-[119.5px] w-[110.601px]" data-node-id="343:1573">
             <div className="flex-none rotate-[-8.67deg]">
               <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[12.1px] text-center whitespace-nowrap">Submit your Magic!</p>
             </div>
           </div>
-          <div className="absolute contents h-[56.469px] left-[737.42px] top-[204.27px] w-[63.842px]" data-node-id="343:1574">
-            <div className="absolute flex h-[55.391px] items-center justify-center left-[741.03px] top-[204.79px] w-[56.774px]" data-node-id="343:1575">
+          <div className="absolute contents h-[56.469px] left-[30.57px] top-[60.27px] w-[63.842px]" data-node-id="343:1574">
+            <div className="absolute flex h-[55.391px] items-center justify-center left-[34.18px] top-[60.79px] w-[56.774px]" data-node-id="343:1575">
               <div className="flex-none rotate-[-8.67deg]">
                 <div className="h-[48.4px] relative w-[50.05px]">
                   <div className="absolute bottom-1/4 left-[11.71%] right-[11.71%] top-[6.48%]">
@@ -473,7 +493,7 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-            <div className="-translate-x-1/2 absolute flex h-[39.97px] items-center justify-center left-[769.28px] top-[212.16px] w-[61.326px]" data-node-id="343:1576">
+            <div className="-translate-x-1/2 absolute flex h-[39.97px] items-center justify-center left-[62.43px] top-[68.16px] w-[61.326px]" data-node-id="343:1576">
               <div className="flex-none rotate-[-8.67deg]">
                 <p className="[word-break:break-word] font-rotonto h-[31.71px] leading-[31.185px] not-italic relative text-[22px] text-center text-white w-[57.2px]">!</p>
               </div>

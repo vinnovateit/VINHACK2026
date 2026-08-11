@@ -2,52 +2,58 @@
 
 import { useRef, type ReactNode } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import {
+  boxesOf,
+  bounceRock,
+  coinFlip,
+  hover,
+  settle,
+  sineRock,
+  splitSlide,
+} from "@/components/motion/besharm";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(useGSAP);
 
 /**
- * Motion for the hero collage.
+ * Motion for the hero collage, in besharm.in's vocabulary. Every recipe used
+ * here is transcribed in `motion/besharm.ts`, timings and all.
+ *
+ * The source's own hero is loop-only — no entrance, no fade, no parallax; the
+ * page is simply there and the pieces never stop moving. This follows that:
+ * the collage is revealed in one frame and the loops carry it. Scroll-linked
+ * drift starts below the fold, which is also where the source starts it.
  *
  * Targets are tagged in `sections/Hero.tsx` with `data-hero="<role>"`. Several
- * of those tags sit on Figma grouping wrappers, which are emitted as
- * `display: contents` — those generate no box at all, so transforms and opacity
- * are inert on them and we descend to the real boxes underneath.
+ * of those tags sit on Figma grouping wrappers, emitted as `display: contents`
+ * — those generate no box, so transforms are inert on them and `boxesOf`
+ * descends to the real boxes underneath.
  *
- * Three properties are deliberately kept apart so the concurrent tweens never
- * fight over one transform: the entrance uses `scale`/`rotation`, the idle
- * float uses `y`, and the scroll parallax uses `yPercent`. GSAP composes all of
- * them into a single matrix.
+ * Property budget — no two concurrent tweens may share a property, or they
+ * fight over the single transform matrix GSAP composes:
+ *   splitSlide / pendulum  ->  x
+ *   coinFlip               ->  y + rotateY
+ *   bounceRock / sineRock  ->  rotation
+ *   hover                  ->  scale, with overwrite:"auto"
  */
 
-/** Stickers, in the order they land. `tilt` is the entrance overshoot (deg),
- *  `drift` the idle float (px), `sway` the idle rock (deg), `depth` the
- *  parallax rate. The disc's `sway` is 0 because its own slow spin owns
- *  `rotation` — two tweens on one property would fight. */
+/** Which loop each sticker runs, and how far its phase is offset so that
+ *  neighbours never swing in step. */
 const STICKERS = [
-  { role: "git", tilt: -14, drift: 7, sway: 1.4, depth: 0.9 },
-  { role: "folder", tilt: 12, drift: -6, sway: -1.4, depth: 1.2 },
-  { role: "qr", tilt: -11, drift: -8, sway: -1.2, depth: 1.1 },
-  { role: "note", tilt: -16, drift: -5, sway: -1.6, depth: 0.8 },
-  { role: "disc", tilt: 10, drift: 8, sway: 0, depth: 1.0 },
-  { role: "megaphone", tilt: 16, drift: 5, sway: 1.8, depth: 1.4 },
-  { role: "key", tilt: 18, drift: 6, sway: 1.5, depth: 1.5 },
+  { role: "git", loop: bounceRock, offset: 0 },
+  { role: "folder", loop: coinFlip, offset: 0 },
+  { role: "megaphone", loop: sineRock, offset: 0.4 },
+  { role: "key", loop: sineRock, offset: 1.1 },
+  { role: "note", loop: bounceRock, offset: 1.5 },
 ] as const;
 
-/** Must clear the entrance timeline: the idle loops reuse `y`, and starting
- *  one while the entrance is still tweening the same property would fight. */
-const ENTRANCE_END = 2.1;
-
-/** Figma group wrappers are `display: contents`; walk past them to real boxes. */
-function collectBoxes(node: Element, out: HTMLElement[]) {
-  const el = node as HTMLElement;
-  if (getComputedStyle(el).display === "contents") {
-    for (const child of Array.from(el.children)) collectBoxes(child, out);
-  } else {
-    out.push(el);
-  }
-}
+/** Where `vinhack-outline.svg` sits relative to `vinhack-fill.svg`, in the px
+ *  of the 1020.951 x 356.181 box the wordmark occupies. Measured off the two
+ *  paths of the SVG they were split from, so it is the drawing's own offset
+ *  rather than a guess: the outline's centre sits +14.32, +11.43 from the
+ *  fill's in a 1023.16 x 357.889 viewBox. Moving the lettering by exactly this
+ *  lands it inside its own outline. */
+const LAYER_OFFSET = { x: 14.3, y: 11.4 };
 
 export default function HeroMotion({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
@@ -61,13 +67,12 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         const out: HTMLElement[] = [];
         scope
           .querySelectorAll(`[data-hero="${role}"]`)
-          .forEach((node) => collectBoxes(node, out));
+          .forEach((node) => out.push(...boxesOf(node)));
         return out;
       };
 
       const hero = scope.querySelector('[data-node-id="343:1172"]');
-      // The arc lettering is one <p> per character — enough to stagger a wave.
-      const letters = boxes("scroll").filter((el) => el.textContent?.trim());
+      if (!hero) return;
 
       const mm = gsap.matchMedia();
 
@@ -76,130 +81,66 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
       });
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // Reveal synchronously rather than as the timeline's first frame: the
-        // ticker is driven by requestAnimationFrame, which never fires while
-        // the tab is in the background, and the collage must not stay blank
-        // until the tab is focused.
+        // Revealed synchronously rather than as a tween's first frame: the
+        // ticker runs off requestAnimationFrame, which never fires while the
+        // tab is backgrounded, and the collage must not sit blank until the tab
+        // is focused. There is nothing to hide behind — none of this fades.
         gsap.set(scope, { opacity: 1 });
 
-        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+        // The two nav words take turns crossing the frame, the way the source's
+        // "WORK" and "PLAY" do. The hero clips, so each one slides cleanly out
+        // and back rather than overflowing the canvas.
+        splitSlide(boxes("nav-lead"), { trigger: hero, phase: "leads" });
+        splitSlide(boxes("nav-follow"), { trigger: hero, phase: "follows" });
 
-        tl.from(boxes("nav"), {
-          yPercent: -130,
-          opacity: 0,
-          duration: 0.55,
-          stagger: 0.08,
-        })
-          // The wordmark is the anchor: it lands first and everything is
-          // stuck onto it afterwards.
-          .from(
-            boxes("wordmark"),
-            {
-              scale: 0.8,
-              rotation: -6,
-              opacity: 0,
-              duration: 0.85,
-              ease: "back.out(1.5)",
-            },
-            0.15,
-          );
-
-        // Stickers slap onto the page one after another.
-        STICKERS.forEach(({ role, tilt }, i) => {
-          tl.from(
-            boxes(role),
-            {
-              scale: 0.35,
-              rotation: `+=${tilt}`,
-              opacity: 0,
-              duration: 0.7,
-              ease: "back.out(2)",
-            },
-            0.45 + i * 0.07,
-          );
-        });
-
-        tl.from(boxes("lede"), { y: 26, opacity: 0, duration: 0.7 }, 0.95)
-          .from(
-            letters,
-            { y: 12, opacity: 0, duration: 0.45, stagger: 0.025 },
-            1.1,
-          );
-
-        // Idle: everything breathes slightly, desynced so it never pulses in
-        // step. Concentric group members share one y, so they stay glued.
-        STICKERS.forEach(({ role, drift, sway }, i) => {
-          gsap.to(boxes(role), {
-            y: drift,
-            ...(sway ? { rotation: `+=${sway}` } : {}),
-            duration: 3.4 + i * 0.31,
-            delay: ENTRANCE_END + i * 0.17,
-            ease: "sine.inOut",
-            yoyo: true,
-            repeat: -1,
-          });
-        });
-
-        // The pixel disc turns slowly, like a badge.
-        gsap.to(boxes("disc"), {
-          rotation: "+=360",
-          duration: 48,
-          delay: ENTRANCE_END,
-          ease: "none",
-          repeat: -1,
-        });
-
-        // A wave running through "scroll down for more".
-        gsap.to(letters, {
-          y: -5,
-          duration: 0.75,
-          delay: ENTRANCE_END,
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
-          stagger: { each: 0.055 },
-        });
-
-        // Parallax as the hero scrolls away — the collage comes apart by depth.
-        if (hero) {
-          const parallax = (targets: HTMLElement[], depth: number) => {
-            if (!targets.length) return;
-            gsap.to(targets, {
-              yPercent: -14 * depth,
-              ease: "none",
-              scrollTrigger: {
-                trigger: hero,
-                start: "top top",
-                end: "bottom top",
-                scrub: 0.4,
-              },
-            });
-          };
-          STICKERS.forEach(({ role, depth }) => parallax(boxes(role), depth));
-          parallax(boxes("wordmark"), 0.35);
-          parallax(boxes("lede"), 0.6);
+        for (const { role, loop, offset } of STICKERS) {
+          loop(boxes(role), { trigger: hero, offset });
         }
 
-        // The "Register Now" note lifts under the cursor. Scale only — the
-        // idle loop owns `y` and `rotation` on these same boxes, and a second
-        // tween on either would fight it (or, with overwrite, kill it).
-        const note = boxes("note");
-        if (note.length) {
-          const enter = () =>
-            gsap.to(note, { scale: 1.06, duration: 0.35, ease: "back.out(2)" });
-          const leave = () =>
-            gsap.to(note, { scale: 1, duration: 0.45, ease: "power2.out" });
-          note.forEach((el) => {
-            el.addEventListener("pointerenter", enter);
-            el.addEventListener("pointerleave", leave);
-          });
-          return () => {
-            note.forEach((el) => {
-              el.removeEventListener("pointerenter", enter);
-              el.removeEventListener("pointerleave", leave);
-            });
-          };
+        // The disc carries a grid with a deliberate arrangement of lit cells,
+        // and "scroll down for more" curves along under it — so unlike the
+        // source's `.roti` badge it cannot turn all the way round without the
+        // pattern tumbling and the pairing reading upside down. It rocks
+        // instead: 45deg each way, so a full sweep is 90deg and it never sits
+        // more than 45deg off the orientation the design draws it at.
+        sineRock(boxes("disc"), { trigger: hero, angle: 45, duration: 3.5 });
+
+        // The two pieces of running copy get the source's one-shot instead of a
+        // loop — 0.8s power1.out out of a small offset, once, no fade.
+        settle(boxes("lede"), { rotation: 9 }, { trigger: hero });
+        settle(boxes("scroll"), { scale: 0.8 }, { trigger: hero, duration: 0.3 });
+
+        const cleanups: (() => void)[] = [];
+
+        // The wordmark closes into its own border on hover: the outline stays
+        // exactly where it is drawn and the solid lettering slides down onto
+        // it, closing the gap between the two. Off the cursor it slides back
+        // out. Both directions run the source's own hover timing — 0.3s
+        // power2.inOut — which eases in and out of the move with no overshoot.
+        const wordmarkHit = scope.querySelector('[data-hero="wordmark"]');
+        const fill = boxes("wordmark-fill");
+        if (wordmarkHit && fill.length) {
+          cleanups.push(
+            hover(
+              wordmarkHit,
+              fill,
+              { x: LAYER_OFFSET.x, y: LAYER_OFFSET.y, ease: "power2.inOut" },
+              { x: 0, y: 0, ease: "power2.inOut" },
+            ),
+          );
         }
+
+        // The "Register Now" note lifts under the cursor at the source's hover
+        // timing. Scale only — its bounce loop owns `rotation` on the same
+        // boxes, and a second tween on that would fight it. The tagged node is
+        // a `display: contents` wrapper, which takes no pointer events itself
+        // but does see them bubble up from the boxes inside it.
+        const noteHit = scope.querySelector('[data-hero="note"]');
+        if (noteHit) {
+          cleanups.push(hover(noteHit, boxes("note"), { scale: 1.06 }, { scale: 1 }));
+        }
+
+        return () => cleanups.forEach((fn) => fn());
       });
 
       return () => mm.revert();
