@@ -1,3 +1,5 @@
+import { HERO } from "@/content/site";
+
 export default function HeroSection() {
   return (
     <>
@@ -6,10 +8,10 @@ export default function HeroSection() {
           see `.hero-nav` in globals.css. */}
       <div className="hero-nav">
         <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic text-[#7a7a7a] text-[70px] whitespace-nowrap" data-hero="nav-lead" data-node-id="343:1173">
-          HOME
+          {HERO.nav.lead}
         </p>
         <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic text-[#2849cb] text-[70px] whitespace-nowrap" data-hero="nav-follow" data-node-id="343:1174">
-          EXPLORE
+          {HERO.nav.follow}
         </p>
       </div>
       <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
@@ -33,7 +35,7 @@ export default function HeroSection() {
               <div className="absolute contents h-[280.357px] left-[765px] top-[528px] w-[463.743px]" data-hero="lede" data-node-id="343:1187">
                 <div className="-translate-x-1/2 absolute flex h-[195.473px] items-center justify-center left-[996.87px] top-[570.44px] w-[435.054px]" data-node-id="343:1188">
                   <div className="flex-none rotate-[7.48deg]">
-                    <p className="[word-break:break-word] font-rotonto leading-[28.35px] not-italic relative text-[#a8a2a2] text-[21px] text-center w-[420.147px]">Where ideas become prototypes and prototypes become possibilities. VinHack brings together curious minds, creative thinkers, and passionate developers to build, learn, and innovate in just 36 hours.</p>
+                    <p className="[word-break:break-word] font-rotonto leading-[28.35px] not-italic relative text-[#a8a2a2] text-[21px] text-center w-[420.147px]">{HERO.lede}</p>
                   </div>
                 </div>
               </div>
@@ -62,7 +64,7 @@ export default function HeroSection() {
                 </div>
                 <div className="absolute flex h-[67.097px] items-center justify-center left-[60.48px] top-[68.06px] w-[290.935px]" data-node-id="343:1256">
                   <div className="-rotate-8 flex-none">
-                    <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">{`git commit -m "innit to vinnit"`}</p>
+                    <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">{HERO.commit}</p>
                   </div>
                 </div>
               </div>
@@ -80,12 +82,12 @@ export default function HeroSection() {
                   <div className="absolute contents h-[115.455px] left-[1095.87px] top-[453.66px] w-[115.494px]" data-node-id="343:1267">
                     <div className="absolute flex h-[22.827px] items-center justify-center left-[1136.05px] top-[457.04px] w-[42.148px]" data-node-id="343:1268">
                       <div className="flex-none rotate-[-13.3deg]">
-                        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[11.76px] whitespace-nowrap">this QR</p>
+                        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[11.76px] whitespace-nowrap">{HERO.qr.lead}</p>
                       </div>
                     </div>
                     <div className="absolute flex h-[74.263px] items-center justify-center left-[1179.1px] top-[468.21px] w-[30.42px]" data-node-id="343:1269">
                       <div className="flex-none rotate-[76.7deg]">
-                        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[11.76px] whitespace-nowrap">changes lives</p>
+                        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[11.76px] whitespace-nowrap">{HERO.qr.follow}</p>
                       </div>
                     </div>
                     <div className="absolute contents inset-[56.67%_6.49%_31.6%_85.88%]" data-node-id="343:1270" style={{ containerType: "size" }} data-name="QR Elements">
@@ -444,8 +446,8 @@ export default function HeroSection() {
           <div className="absolute flex h-[94.214px] items-center justify-center left-[68.55px] top-[89.89px] w-[125.248px]" data-node-id="343:1555">
             <div className="flex-none rotate-[13.5deg]">
               <div className="[word-break:break-word] font-rotonto leading-[0] not-italic relative text-[28.8px] text-black whitespace-nowrap">
-                <p className="leading-[normal] mb-0">Register</p>
-                <p className="leading-[normal]">{`Now `}</p>
+                <p className="leading-[normal] mb-0">{HERO.note[0]}</p>
+                <p className="leading-[normal]">{HERO.note[1]}</p>
               </div>
             </div>
           </div>
@@ -475,7 +477,7 @@ export default function HeroSection() {
           </div>
           <div className="-translate-x-1/2 absolute flex h-[51.079px] items-center justify-center left-[114.36px] top-[93.63px] w-[132.35px]" data-node-id="343:1562">
             <div className="flex-none rotate-[-8.67deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[23.1px] text-center whitespace-nowrap">Idea Found !</p>
+              <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[23.1px] text-center whitespace-nowrap">{HERO.folder.title}</p>
             </div>
           </div>
           <div className="absolute flex h-[72.702px] items-center justify-center left-[179.7px] top-[126.13px] w-[71.463px]" data-node-id="343:1563">
@@ -489,7 +491,7 @@ export default function HeroSection() {
           </div>
           <div className="-translate-x-1/2 absolute flex h-[47.763px] items-center justify-center left-[117.22px] top-[119.5px] w-[110.601px]" data-node-id="343:1573">
             <div className="flex-none rotate-[-8.67deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[12.1px] text-center whitespace-nowrap">Submit your Magic!</p>
+              <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[12.1px] text-center whitespace-nowrap">{HERO.folder.caption}</p>
             </div>
           </div>
           <div className="absolute contents h-[56.469px] left-[30.57px] top-[60.27px] w-[63.842px]" data-node-id="343:1574">

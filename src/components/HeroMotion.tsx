@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import {
   boxesOf,
   bounceRock,
+  DESKTOP,
   hover,
   settle,
   sineRock,
@@ -76,11 +77,17 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
 
       const mm = gsap.matchMedia();
 
-      mm.add("(prefers-reduced-motion: reduce)", () => {
+      // Below `md` the collage is not the page — `MobileSite` is, and this tree
+      // is `display: none`. Nothing here would measure correctly against boxes
+      // with no layout (the nav spread below reads `offsetWidth`), so the whole
+      // hero timeline is gated to the width where the collage is on screen.
+      // `.hero-motion`'s opacity rule is gated to the same width, so the hero is
+      // never left hidden by a timeline that did not arm.
+      mm.add(`${DESKTOP} and (prefers-reduced-motion: reduce)`, () => {
         gsap.set(scope, { opacity: 1 });
       });
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
+      mm.add(`${DESKTOP} and (prefers-reduced-motion: no-preference)`, () => {
         // Revealed synchronously rather than as a tween's first frame: the
         // ticker runs off requestAnimationFrame, which never fires while the
         // tab is backgrounded, and the collage must not sit blank until the tab

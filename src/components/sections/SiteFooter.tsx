@@ -1,4 +1,23 @@
+import { FOOTER } from "@/content/site";
+
+/**
+ * Where each tab's label sits on the exposed lip of its band, in paint order.
+ * The bands themselves are full-width artwork stacked below, so the label is
+ * the only part of a tab that is in a particular place. Centred on `left`.
+ */
+const LABELS = [
+  { tab: "INSTAGRAM", id: "297:23", left: 657, top: 198 },
+  { tab: "LINKEDIN", id: "297:24", left: 1091.5, top: 237 },
+  { tab: "EMAIL", id: "297:25", left: 972, top: 127 },
+  { tab: "MEDIUM", id: "297:26", left: 357.5, top: 275 },
+  { tab: "GITHUB", id: "297:27", left: 251.5, top: 164 },
+];
+
 export default function SiteFooter() {
+  const colour = new Map<string, string>(
+    FOOTER.tabs.map((tab) => [tab.name, tab.color]),
+  );
+
   return (
     <footer className="-translate-x-1/2 absolute bg-black h-[826px] left-1/2 overflow-clip top-[8008px] w-[1280px]" data-node-id="297:3" data-name="FOOTER">
       <div className="absolute contents left-0 top-[111px]" data-node-id="297:4">
@@ -32,21 +51,21 @@ export default function SiteFooter() {
         <div className="absolute h-[536px] left-0 top-[290px] w-[1280px]" data-node-id="297:20" data-name="Union">
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/union5.svg" />
         </div>
-        <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[657px] not-italic text-[#1c563c] text-[28px] text-center top-[198px] whitespace-nowrap" data-tab-part="instagram" data-node-id="297:23">
-          INSTAGRAM
-        </p>
-        <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[1091.5px] not-italic text-[#bfea88] text-[28px] text-center top-[237px] whitespace-nowrap" data-tab-part="linkedin" data-node-id="297:24">
-          LINKEDIN
-        </p>
-        <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[972px] not-italic text-[#2849cb] text-[28px] text-center top-[127px] whitespace-nowrap" data-tab-part="email" data-node-id="297:25">
-          EMAIL
-        </p>
-        <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[357.5px] not-italic text-[#fa1a1d] text-[28px] text-center top-[275px] whitespace-nowrap" data-tab-part="medium" data-node-id="297:26">
-          MEDIUM
-        </p>
-        <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[251.5px] not-italic text-[#74d4f0] text-[28px] text-center top-[164px] whitespace-nowrap" data-tab-part="github" data-node-id="297:27">
-          GITHUB
-        </p>
+        {LABELS.map((label) => (
+          <p
+            key={label.tab}
+            className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] not-italic text-[28px] text-center whitespace-nowrap"
+            style={{
+              color: colour.get(label.tab),
+              left: label.left,
+              top: label.top,
+            }}
+            data-tab-part={label.tab.toLowerCase()}
+            data-node-id={label.id}
+          >
+            {label.tab}
+          </p>
+        ))}
         {/* Hover targets for the folder tabs. The tab artwork is a
             full-width band, so the exposed lip needs its own hit area. */}
         <div aria-hidden className="absolute inset-0 pointer-events-none">
@@ -73,22 +92,22 @@ export default function SiteFooter() {
         </div>
       </div>
       <div className="absolute content-stretch flex items-center justify-center left-[-382px] p-[10px] top-[428px]" data-marquee="footer" data-node-id="297:28">
-        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" data-node-id="297:29">{`VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ون ہیک • `}</p>
-        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" aria-hidden>{`VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ون ہیک • `}</p>
+        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" data-node-id="297:29">{FOOTER.marquee}</p>
+        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" aria-hidden>{FOOTER.marquee}</p>
       </div>
       <div className="-translate-x-1/2 absolute content-stretch flex gap-[10.4px] items-center left-[calc(50%-380px)] top-[703px]" data-node-id="297:30">
-        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:31">{`Made `}</p>
+        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:31">{FOOTER.madeWith[0]}</p>
         <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:32">
-          with
+          {FOOTER.madeWith[1]}
         </p>
         <div className="h-[34.196px] relative shrink-0 w-[38.4px]" data-node-id="297:33" data-name="Vector">
           <img alt="love" className="absolute block inset-0 max-w-none size-full" src="/figma/vector.svg" />
         </div>
         <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:34">
-          by
+          {FOOTER.madeWith[2]}
         </p>
         <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:35">
-          VinnovateIT
+          {FOOTER.madeWith[3]}
         </p>
       </div>
       <div className="absolute content-stretch flex gap-[6.912px] items-center left-[55px] top-[756px]" data-node-id="297:36">
@@ -96,7 +115,7 @@ export default function SiteFooter() {
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector1.svg" />
         </div>
         <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[17.28px] text-black whitespace-nowrap" data-node-id="297:38">
-          2026 VinnovateIT, Vellore Institute of Technology
+          {FOOTER.copyright}
         </p>
       </div>
       <div className="absolute h-[53.568px] left-[1055px] overflow-clip top-[732px] w-[169.107px]" data-node-id="297:39" data-name="VIIT 3">

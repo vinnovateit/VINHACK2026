@@ -1,3 +1,7 @@
+import { Fragment } from "react";
+
+import { GUIDELINES } from "@/content/site";
+
 export default function GuidelinesSection() {
   return (
     <section aria-label="Guidelines" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[6344px] w-[1280px]" data-node-id="343:751" data-name="GUIDELINES">
@@ -11,29 +15,33 @@ export default function GuidelinesSection() {
         </div>
         <div className="absolute flex h-[96.566px] items-center justify-center left-[540.9px] top-[119.84px] w-[374.375px]" data-node-id="343:756">
           <div className="flex-none rotate-[3.99deg]">
-            <h2 className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[58.852px] w-[370.336px]">GUIDELINES</h2>
+            <h2 className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[58.852px] w-[370.336px]">{GUIDELINES.heading}</h2>
           </div>
         </div>
         <div className="absolute contents h-[518.161px] left-[234.67px] top-[186.67px] w-[910.496px]" data-node-id="343:757">
           <div className="absolute flex h-[411.364px] items-center justify-center left-[calc(50%-397.89px)] top-[186.67px] w-[903.056px]" data-node-id="343:758">
             <div className="flex-none rotate-[3.99deg]">
+              {/* One paragraph in the design file, its four blocks separated by
+                  a blank line rather than by being separate boxes — so the
+                  breaks go between them and not after the last. */}
               <p className="[word-break:break-word] font-rotonto leading-[26.932px] not-italic relative text-[19.95px] text-white w-[880.792px] whitespace-pre-wrap">
-                VinnovateIT believes strongly in inclusivity. Everyone, who wants to join the event, is welcome. And we assure you that, all the submissions will be evaluated irrespective of any bias with respect to whatsoever. We will always work to maintain a welcoming and safe environment for everyone.
-                <br aria-hidden />
-                <br aria-hidden />
-                If you witness an incident which you feel goes against this policy, and violates the rights of any individual including you, feel free to reach out to anyone on the organizing team. You can identify our team members, with the ID card they are wearing which has “Core” or “Board” title.
-                <br aria-hidden />
-                <br aria-hidden />
-                We ensure, all such reports will be anonymous, and strict actions will be taken against such incidents.
-                <br aria-hidden />
-                <br aria-hidden />
-                {`If you're joining us via online mode, feel free to reach out to any of organizing team members via personal chat on Discord, the organizers have a role of “VinnovateIT”.`}
+                {GUIDELINES.paragraphs.map((para, i) => (
+                  <Fragment key={para}>
+                    {i > 0 && (
+                      <>
+                        <br aria-hidden />
+                        <br aria-hidden />
+                      </>
+                    )}
+                    {para}
+                  </Fragment>
+                ))}
               </p>
             </div>
           </div>
           <div className="absolute flex h-[127.32px] items-center justify-center left-[234.67px] top-[562.81px] w-[673.333px]" data-node-id="343:759">
             <div className="flex-none rotate-[3.99deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[26.932px] not-italic relative text-[19.95px] text-white w-[669.323px]">TL;DR: Be respectful towards everyone, be it participants, organizers, or anyone related to the event. Incase of any incidents with conduct not being abided, feel free to reach out to anyone on organizing team.</p>
+              <p className="[word-break:break-word] font-rotonto leading-[26.932px] not-italic relative text-[19.95px] text-white w-[669.323px]">{GUIDELINES.tldr}</p>
             </div>
           </div>
         </div>
@@ -56,8 +64,8 @@ export default function GuidelinesSection() {
         <div className="absolute flex h-[79.064px] items-center justify-center left-[87.85px] top-[682.14px] w-[155.588px]" data-node-id="343:763">
           <div className="flex-none rotate-[-13.31deg]">
             <div className="[word-break:break-word] font-rotonto leading-[0] not-italic relative text-[#74d4f0] text-[21.076px] whitespace-nowrap">
-              <p className="leading-[22.992px] mb-0 whitespace-pre">{`KEEP IT SAFE `}</p>
-              <p className="leading-[22.992px] whitespace-pre">KEEP IT FAIR</p>
+              <p className="leading-[22.992px] mb-0 whitespace-pre">{GUIDELINES.sticker[0]}</p>
+              <p className="leading-[22.992px] whitespace-pre">{GUIDELINES.sticker[1]}</p>
             </div>
           </div>
         </div>

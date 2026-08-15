@@ -1,3 +1,7 @@
+import { Fragment } from "react";
+
+import { RULES } from "@/content/site";
+
 export default function RulesSection() {
   return (
     <section aria-label="Rules" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[5512px] w-[1280px]" data-node-id="343:709" data-name="RULES">
@@ -16,68 +20,28 @@ export default function RulesSection() {
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/rectangle169.svg" />
         </div>
         <h2 className="[word-break:break-word] absolute font-rotonto leading-[normal] left-[503.47px] not-italic text-[#1c563c] text-[58.543px] top-[153.16px] w-[724.342px]" data-node-id="343:714">
-          RULES
+          {RULES.heading}
         </h2>
         <div className="[word-break:break-word] absolute font-rotonto h-[545.737px] leading-[0] left-[134.36px] not-italic text-[#1c563c] text-[19.845px] top-[226.58px] w-[953.552px]" data-node-id="343:715">
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Teams must have 2–4 participants (no solo participation, no multiple teams).</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Hackathon runs for 36 hours continuously.</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">All work must be done during the event; only open-source tools/libraries allowed; any AI tools can be used.</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Any tech stack may be used; projects must align with at least one track.</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px] whitespace-pre-wrap">
-              <span className="leading-[20.837px]">{`Internet access is permitted.  Submissions must include: working prototype/demo, pitch deck or documentation, and GitHub repo with source code.`}</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Late submissions will not be accepted.</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">{`Judging based on novelty, feasibility & impact, tech implementation, design & UX, open-source usage, and pitching.`}</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Judges’ decisions are final.</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul className="mb-0">
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Respect all participants and organizers; misconduct leads to disqualification.</span>
-            </li>
-          </ul>
-          <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">​</p>
-          <ul>
-            <li className="list-disc ms-[29.7675px]">
-              <span className="leading-[20.837px]">Teams must remain onsite throughout the hackathon.</span>
-            </li>
-          </ul>
+          {/* Figma emits each bullet as its own single-item list with a
+              zero-width-space paragraph between, which is what opens the gap
+              between them — the rules are one list, so the spacer is only ever
+              *between* two of them and the last bullet carries neither it nor
+              the bottom margin. */}
+          {RULES.items.map((item, i) => (
+            <Fragment key={item}>
+              <ul className={i === RULES.items.length - 1 ? undefined : "mb-0"}>
+                <li className="list-disc ms-[29.7675px] whitespace-pre-wrap">
+                  <span className="leading-[20.837px]">{item}</span>
+                </li>
+              </ul>
+              {i < RULES.items.length - 1 && (
+                <p className="leading-[20.837px] mb-0 whitespace-pre-wrap">
+                  {"​"}
+                </p>
+              )}
+            </Fragment>
+          ))}
         </div>
         <div className="absolute h-[75.412px] left-[576.9px] top-[86.68px] w-[58.543px]" data-node-id="343:716" data-name="PIN">
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/pin.svg" />
@@ -92,7 +56,7 @@ export default function RulesSection() {
           </div>
           <div className="absolute flex h-[67.648px] items-center justify-center left-[919.18px] top-[643.33px] w-[182.2px]" data-node-id="343:734">
             <div className="flex-none rotate-15">
-              <p className="[word-break:break-word] font-rotonto leading-[20.837px] not-italic relative text-[21.829px] text-white whitespace-nowrap">BE RESPECTFUL</p>
+              <p className="[word-break:break-word] font-rotonto leading-[20.837px] not-italic relative text-[21.829px] text-white whitespace-nowrap">{RULES.sticker}</p>
             </div>
           </div>
         </div>

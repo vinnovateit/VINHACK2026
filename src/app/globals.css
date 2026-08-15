@@ -152,9 +152,109 @@
 
 /* HeroMotion reveals this as the first frame of its entrance timeline, so the
    collage never flashes into view before the animation arms. The <noscript>
-   rule in layout.tsx restores it when JavaScript is unavailable. */
-.hero-motion {
-  opacity: 0;
+   rule in layout.tsx restores it when JavaScript is unavailable.
+
+   Gated to the width HeroMotion itself is gated to (see `DESKTOP` in
+   motion/recipes.ts). Below it the collage is `display: none` and no timeline
+   arms, so an ungated rule would be a hide with nothing left to undo it. */
+@media (min-width: 768px) {
+  .hero-motion {
+    opacity: 0;
+  }
+}
+
+/* ---- mobile ------------------------------------------------------------- */
+
+/* Below `md` the collage is replaced by a reflowed single column, but the
+   drawings in it are kept: the stickers, the folder, the speech bubble and the
+   receipt are each a little collage of their own, with everything inside them
+   at an exact offset and on an exact angle. Reflowing *those* would mean
+   redrawing them, so instead each is dropped in at its Figma size and scaled to
+   the column — the same trick `.canvas-frame` plays on the whole page, at the
+   scale of one object.
+
+   That is the difference that makes the phone readable where scaling the whole
+   1280px frame did not: at 375px the page as a whole scales to 0.29 and 21px
+   body copy lands at 6px, but a 412px-wide sticker scaled into a 335px column
+   lands at 0.81, and the type inside it stays the size it was drawn.
+
+   `--piece-w` / `--piece-h` are the artwork's own size and come from the
+   element; `--piece-max` caps the scale so a piece is never blown up past the
+   size it was drawn at on a wide phone. */
+/* `container-type: inline-size` is also `contain: inline-size`, which means the
+   contents cannot size the box — so a piece has to get its width from outside
+   or it collapses to nothing. `width: 100%` is that width by default; a caller
+   that wants it narrower caps it with `max-width` rather than leaving it to
+   shrink-to-fit, which here would resolve to zero. */
+.piece {
+  container-type: inline-size;
+  width: 100%;
+}
+
+.piece-frame {
+  --piece-fit: tan(atan2(100cqw, var(--piece-w)));
+  --piece-scale: min(var(--piece-max, 1), var(--piece-fit));
+
+  /* Sized to the artwork rather than to the column: past `--piece-max` the
+     scale stops growing, and a frame still spanning the full column would leave
+     the drawing pinned to its left edge — the plate scales from its top left.
+     At exactly the artwork's width the auto margins centre it instead. */
+  width: calc(var(--piece-w) * var(--piece-scale));
+  height: calc(var(--piece-h) * var(--piece-scale));
+  margin-inline: auto;
+}
+
+.piece-plate {
+  position: relative;
+  width: var(--piece-w);
+  height: var(--piece-h);
+  transform: scale(var(--piece-scale));
+  transform-origin: top left;
+}
+
+/* The two marquees, in CSS rather than GSAP — `PageMotion` does not run below
+   `md` (see `DESKTOP` in motion/recipes.ts), and a marquee is the one piece of
+   this page's motion that carries meaning rather than decoration: it is how the
+   wordmark shows all nine scripts. The row holds the text twice, so translating
+   it by exactly half its width is a seamless loop. */
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-run var(--marquee-duration, 24s) linear infinite;
+}
+
+@keyframes marquee-run {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* The receipt feeding out of the printer. The collage prints it with GSAP, a
+   line at a time; this is the same gesture in one declaration — a mechanical
+   `steps()` advance rather than a smooth wipe, which is what reads as a
+   thermal printer rather than a growing rectangle. It re-runs on every day
+   change because `MobileTimeline` keys the paper on the day. */
+.receipt-feed {
+  animation: receipt-feed 0.9s steps(13) both;
+}
+
+@keyframes receipt-feed {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    animation: none;
+  }
+
+  .receipt-feed {
+    animation: none;
+  }
 }
 
 html,

@@ -1,3 +1,5 @@
+import { TRACKS } from "@/content/site";
+
 export default function TracksSection() {
   return (
     <section aria-label="Tracks" className="-translate-x-1/2 absolute bg-black h-[1352px] left-1/2 top-[3342px] w-[1280px]" data-node-id="594:33" data-name="TRACKS">
@@ -5,7 +7,7 @@ export default function TracksSection() {
         <div className="absolute h-[298px] left-0 top-0 w-[819.022px]" data-node-id="594:35">
           <div className="absolute content-stretch flex gap-[20px] items-center left-0 top-0" data-node-id="594:36">
             <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap" data-node-id="594:37">
-              solve what matters
+              {TRACKS.lines[0]}
             </p>
             <div className="h-[45px] relative shrink-0 w-[46px]" data-node-id="594:38">
               <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector32.svg" />
@@ -18,7 +20,7 @@ export default function TracksSection() {
           </div>
           <div className="absolute content-stretch flex gap-[20px] items-center left-[500px] top-[106px]" data-node-id="594:40">
             <h2 className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap" data-node-id="594:41">
-              TRACKS
+              {TRACKS.lines[1]}
             </h2>
             <div className="relative shrink-0 size-[60px]" data-node-id="594:42">
               <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095496.svg" />
@@ -31,7 +33,7 @@ export default function TracksSection() {
           </div>
           <div className="absolute content-stretch flex gap-[20px] items-center left-[250px] top-[212px]" data-node-id="594:46">
             <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap" data-node-id="594:47">
-              build what lasts
+              {TRACKS.lines[2]}
             </p>
             <div className="h-[44.5px] relative shrink-0 w-[37.5px]" data-node-id="594:48" data-name="star 2">
               <div className="absolute inset-[0_-3.7%_0_-3.53%]">
@@ -51,7 +53,7 @@ export default function TracksSection() {
           </div>
           <div className="-translate-x-1/2 absolute flex h-[94.349px] items-center justify-center left-[1001.54px] top-[90.96px] w-[248.313px]" data-node-id="594:56">
             <div className="flex-none rotate-[-8.3deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[24.84px] text-center w-[242.187px]">INNOVATE FOR IMPACT</p>
+              <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[24.84px] text-center w-[242.187px]">{TRACKS.sticker}</p>
             </div>
           </div>
         </div>

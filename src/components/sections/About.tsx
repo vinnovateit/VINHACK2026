@@ -1,4 +1,5 @@
 import CameraFeed from "@/components/CameraFeed";
+import { ABOUT } from "@/content/site";
 
 export default function AboutSection() {
   return (
@@ -365,17 +366,17 @@ export default function AboutSection() {
       </div>
       <div className="absolute content-stretch flex items-center left-[81px] top-[109px]" data-node-id="297:441">
         <h2 className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fc2425] text-[100px] text-center whitespace-nowrap" data-node-id="297:442">
-          About VinHack
+          {ABOUT.heading}
         </h2>
       </div>
       <div className="[word-break:break-word] absolute font-rotonto leading-[0] left-[87px] not-italic text-[#fc2425] text-[21px] top-[268px] tracking-[0.42px] w-[639px] whitespace-pre-wrap" data-node-id="297:443">
         <p className="leading-[38px] mb-0">
-          VinHack is a 36-hour hybrid hackathon that fosters collaboration, learning, and innovation by bringing together creative minds to develop impactful solutions for real-world problems.
+          {ABOUT.paragraphs[0]}
           <br aria-hidden />
           <br aria-hidden />
         </p>
         <p className="leading-[38px]">
-          Conducted in three rounds, teams of 1–4 members analyse problem statements, build prototypes, and refine their solutions. Alongside the competition, participants gain insights through guest speaker sessions, interactive activities, and networking opportunities. The event concludes with exciting prizes awarded across multiple categories.
+          {ABOUT.paragraphs[1]}
           <br aria-hidden />
           <br aria-hidden />
         </p>

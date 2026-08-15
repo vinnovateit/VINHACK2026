@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import {
   bounceRock,
   coinFlip,
+  DESKTOP,
   drift,
   hover,
   marquee,
@@ -211,13 +212,21 @@ export default function PageMotion({ children }: { children: ReactNode }) {
       const scope = root.current;
       if (!scope) return;
       const canvas = scope.closest(".canvas") as HTMLElement | null;
-      /** Layout px per rendered px — the canvas is scaled to the viewport. */
-      const unscale = canvas ? 1280 / canvas.getBoundingClientRect().width : 1;
 
       const mm = gsap.matchMedia();
       const cleanups: (() => void)[] = [];
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
+      // Gated to the width where the collage is on screen: below `md` this tree
+      // is `display: none` and `MobileSite` renders instead. A hidden tree
+      // measures 0x0, which would leave every ScrollTrigger with a start and an
+      // end that coincide — and `unscale` below dividing by zero.
+      mm.add(`${DESKTOP} and (prefers-reduced-motion: no-preference)`, () => {
+        /** Layout px per rendered px — the canvas is scaled to the viewport.
+         *  Measured here rather than once on mount, so a window that starts
+         *  below `md` and is then widened past it reads the canvas it got. */
+        const canvasWidth = canvas?.getBoundingClientRect().width ?? 0;
+        const unscale = canvasWidth ? 1280 / canvasWidth : 1;
+
         for (const section of SECTIONS) {
           const el = scope.querySelector(`[data-node-id="${section.id}"]`);
           if (!el) continue;

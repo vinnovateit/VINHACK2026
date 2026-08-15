@@ -26,6 +26,19 @@ gsap.registerPlugin(ScrollTrigger);
  *  px. */
 const REM = 18;
 
+/**
+ * The width at and above which the 1280px collage is the page. Below it the
+ * collage is `display: none` and `MobileSite` renders instead, so every recipe
+ * here is gated to this width through `gsap.matchMedia`: a hidden tree measures
+ * 0x0, which leaves ScrollTriggers whose start and end coincide and distances
+ * derived from `offsetWidth` at zero.
+ *
+ * It is Tailwind's `md`, and it has to stay in step with the `md:` classes in
+ * `page.tsx` that do the switching — the two are the same breakpoint written in
+ * the two languages, and matchMedia cannot read a Tailwind variant.
+ */
+export const DESKTOP = "(min-width: 768px)";
+
 /** Figma grouping wrappers are emitted as `display: contents` and generate no
  *  box, so transforms are inert on them — descend to the real boxes underneath. */
 export function realBoxes(node: Element, out: HTMLElement[] = []): HTMLElement[] {
