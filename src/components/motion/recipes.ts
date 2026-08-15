@@ -4,7 +4,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * The motion vocabulary of besharm.in, transcribed from the running site.
+ * The motion vocabulary this page is built on, transcribed from a running
+ * reference site.
  *
  * The numbers here were read off the live page rather than eyeballed — the
  * tweens were pulled straight out of `ScrollTrigger.getAll()` and
@@ -21,7 +22,8 @@ gsap.registerPlugin(ScrollTrigger);
  * through endless loops and scroll-linked drift instead.
  */
 
-/** Root font-size on besharm.in, for reading its rem distances back as px. */
+/** Root font-size on the reference site, for reading its rem distances back as
+ *  px. */
 const REM = 18;
 
 /** Figma grouping wrappers are emitted as `display: contents` and generate no
@@ -104,8 +106,8 @@ export function splitSlide(
 }
 
 /**
- * A word swinging between two extremes — the source's "BESHARM" lettering. It
- * jumps to one end on a zero-duration tween, then rocks across and back.
+ * A word swinging between two extremes — the source's own wordmark lettering.
+ * It jumps to one end on a zero-duration tween, then rocks across and back.
  *
  * Transcribed for completeness but not currently used anywhere: the wordmark
  * and the timeline heading both ran it and both were wanted still instead.

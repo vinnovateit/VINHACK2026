@@ -6,8 +6,8 @@ gsap.registerPlugin(ScrollTrigger);
 /**
  * A written-on reveal for the cursive lettering.
  *
- * Unlike everything in `motion/besharm.ts`, this is not transcribed from
- * besharm.in — that site draws nothing on, so there is no source timing to
+ * Unlike everything in `motion/recipes.ts`, this is not transcribed from the
+ * reference site — that site draws nothing on, so there is no source timing to
  * copy. It lives in its own file to keep the transcription honest.
  *
  * How it works, and why not the usual trick: the textbook draw-on animates

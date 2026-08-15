@@ -16,14 +16,14 @@ import {
   spin,
   triggerFor,
   type SettleFrom,
-} from "@/components/motion/besharm";
+} from "@/components/motion/recipes";
 import { handwrite } from "@/components/motion/handwrite";
 
 gsap.registerPlugin(useGSAP);
 
 /**
- * Motion for everything below the hero, in besharm.in's vocabulary. Every
- * recipe used here is transcribed in `motion/besharm.ts`, timings and all.
+ * Motion for everything below the hero, in the reference site's vocabulary.
+ * Every recipe used here is transcribed in `motion/recipes.ts`, timings and all.
  *
  * The shape of the source's page, and so of this one: nothing fades in and
  * nothing staggers. Sections are simply present. What makes them feel alive is

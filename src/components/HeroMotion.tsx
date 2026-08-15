@@ -10,13 +10,13 @@ import {
   settle,
   sineRock,
   splitSlide,
-} from "@/components/motion/besharm";
+} from "@/components/motion/recipes";
 
 gsap.registerPlugin(useGSAP);
 
 /**
- * Motion for the hero collage, in besharm.in's vocabulary. Every recipe used
- * here is transcribed in `motion/besharm.ts`, timings and all.
+ * Motion for the hero collage, in the reference site's vocabulary. Every recipe
+ * used here is transcribed in `motion/recipes.ts`, timings and all.
  *
  * The source's own hero is loop-only — no entrance, no fade, no parallax; the
  * page is simply there and the pieces never stop moving. This follows that:
@@ -88,10 +88,26 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         gsap.set(scope, { opacity: 1 });
 
         // The two nav words take turns crossing the frame, the way the source's
-        // "WORK" and "PLAY" do. The hero clips, so each one slides cleanly out
-        // and back rather than overflowing the canvas.
-        splitSlide(boxes("nav-lead"), { trigger: hero, phase: "leads" });
-        splitSlide(boxes("nav-follow"), { trigger: hero, phase: "follows" });
+        // "WORK" and "PLAY" do. They start centred and touching, and each one
+        // travels out to its own screen edge and back — HOME left, EXPLORE
+        // right — one at a time, so the pair is only ever apart on one side.
+        //
+        // The source's fixed 400px would stop short on a wide monitor and
+        // overshoot on a narrow one, so the distance is measured off the
+        // layout: with the pair centred, the free space splits evenly either
+        // side of it, and half of it is exactly what carries each word from the
+        // middle to its edge. Measured once at load — a resize wants a reload.
+        const lead = boxes("nav-lead");
+        const follow = boxes("nav-follow");
+        const band = scope.querySelector(".hero-nav") as HTMLElement | null;
+        const spread =
+          band && lead[0] && follow[0]
+            ? (band.offsetWidth - lead[0].offsetWidth - follow[0].offsetWidth) /
+              2
+            : undefined;
+
+        splitSlide(lead, { trigger: hero, phase: "leads", distance: spread });
+        splitSlide(follow, { trigger: hero, phase: "follows", distance: spread });
 
         for (const { role, loop, offset } of STICKERS) {
           loop(boxes(role), { trigger: hero, offset });

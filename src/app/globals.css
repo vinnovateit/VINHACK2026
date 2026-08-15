@@ -81,6 +81,35 @@
   margin-inline: auto;
 }
 
+/* HOME and EXPLORE take turns sliding out of frame, so the frame they leave
+   through should be the screen, not the hero's 1280px plate. Clipped at the
+   plate they vanished 312px short of the edge on a 1920 monitor, leaving a band
+   of black either side the pair never reached.
+
+   The offset is the hero's gutter, negated: past 1280px the plate is centred
+   with (100cqw - 1280px) / 2 either side, so the band starts there and runs the
+   full container width. Below 1280px the plate already fills the width — the
+   gutter is zero, and min()/max() collapse the band back onto the plate.
+
+   `z-index` because the band is declared before the hero section, which paints
+   a black background over the whole plate; keeping it first preserves reading
+   order for the two nav words. */
+.hero-nav {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+
+  left: min(0px, calc((var(--canvas-width) - 100cqw) / 2));
+  width: max(var(--canvas-width), 100cqw);
+
+  /* The pair starts centred and touching, then HeroMotion carries each out to
+     its own edge and back. */
+  display: flex;
+  justify-content: center;
+
+  overflow-x: clip;
+}
+
 /* ---- body: full-bleed --------------------------------------------------- */
 
 .body-frame {

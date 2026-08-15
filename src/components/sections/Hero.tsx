@@ -1,12 +1,18 @@
 export default function HeroSection() {
   return (
-    <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
-      <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[361.5px] not-italic text-[#7a7a7a] text-[70px] text-center top-0 whitespace-nowrap" data-hero="nav-lead" data-node-id="343:1173">
-        HOME
-      </p>
-      <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[1028px] not-italic text-[#2849cb] text-[70px] text-center top-0 whitespace-nowrap" data-hero="nav-follow" data-node-id="343:1174">
-        EXPLORE
-      </p>
+    <>
+      {/* The nav pair lives outside the hero section, which clips at 1280px.
+          These two slide out of frame and back, and their frame is the screen —
+          see `.hero-nav` in globals.css. */}
+      <div className="hero-nav">
+        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic text-[#7a7a7a] text-[70px] whitespace-nowrap" data-hero="nav-lead" data-node-id="343:1173">
+          HOME
+        </p>
+        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic text-[#2849cb] text-[70px] whitespace-nowrap" data-hero="nav-follow" data-node-id="343:1174">
+          EXPLORE
+        </p>
+      </div>
+      <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
       <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
           <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
@@ -38,7 +44,7 @@ export default function HeroSection() {
               </div>
               {/* Real box, not `display: contents` — the pieces of this sticker
                   have to turn as one, and only a box can be transformed. Child
-                  offsets below are relative to it. See `motion/besharm.ts`. */}
+                  offsets below are relative to it. See `motion/recipes.ts`. */}
               <div className="absolute h-[207.988px] left-[104.87px] top-[150.38px] w-[411.659px]" data-hero="git" data-node-id="343:1253">
                 <div className="absolute flex h-[207.988px] items-center justify-center left-0 top-0 w-[411.659px]" data-node-id="343:1254">
                   <div className="flex-none rotate-[-7.85deg]">
@@ -504,6 +510,7 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
