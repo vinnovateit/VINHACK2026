@@ -195,6 +195,8 @@ const RECEIPT = {
   /** The paper itself — clipped, so it can be fed out of the slot. Everything
    *  printed on it, the zigzag edge included, travels with it. */
   paper: "343:2041",
+  /** The day printed on the receipt itself, under the VinHack line. */
+  billDay: "343:2082",
   /** The day switch: a pill that slides under whichever day is selected. */
   toggle: "343:2115",
   /** The label sitting in the unselected half. */
@@ -317,6 +319,7 @@ export default function PageMotion({ children }: { children: ReactNode }) {
           const pill = node(RECEIPT.pill);
           const restLabel = node(RECEIPT.restLabel);
           const pillLabel = pill?.querySelector("p");
+          const billDay = node(RECEIPT.billDay);
 
           if (receipt && toggle && pill && restLabel && pillLabel) {
             // How far the pill travels to cover the other half.
@@ -351,6 +354,11 @@ export default function PageMotion({ children }: { children: ReactNode }) {
               const held = pillLabel.textContent;
               pillLabel.textContent = restLabel.textContent;
               restLabel.textContent = held;
+
+              // The receipt is headed with the day it lists, so it follows the
+              // pill. Set before reprinting, so the new heading is what gets
+              // printed rather than something that changes mid-feed.
+              if (billDay) billDay.textContent = pillLabel.textContent;
 
               receipt.reprint();
             };
