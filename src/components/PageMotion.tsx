@@ -18,6 +18,7 @@ import {
   type SettleFrom,
 } from "@/components/motion/recipes";
 import { handwrite } from "@/components/motion/handwrite";
+import { printReceipt } from "@/components/motion/receipt";
 
 gsap.registerPlugin(useGSAP);
 
@@ -189,6 +190,19 @@ const MARQUEES = ["footer", "who"];
 
 const TABS = ["email", "github", "instagram", "linkedin", "medium"];
 
+/** The timeline's receipt printer, by Figma node id. */
+const RECEIPT = {
+  /** The paper itself — clipped, so it can be fed out of the slot. Everything
+   *  printed on it, the zigzag edge included, travels with it. */
+  paper: "343:2041",
+  /** The day switch: a pill that slides under whichever day is selected. */
+  toggle: "343:2115",
+  /** The label sitting in the unselected half. */
+  restLabel: "343:2116",
+  /** The filled pill, which carries the selected day's label. */
+  pill: "343:2117",
+} as const;
+
 export default function PageMotion({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
 
@@ -284,6 +298,77 @@ export default function PageMotion({ children }: { children: ReactNode }) {
           cleanups.push(
             hover(card, [card as HTMLElement], { scale: 1.03 }, { scale: 1 }),
           );
+        }
+
+        // ---- Timeline receipt ------------------------------------------
+        const node = (id: string) =>
+          scope.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+
+        const paper = node(RECEIPT.paper);
+        const printer = node("343:2039");
+        if (paper && printer) {
+          const receipt = printReceipt(paper, { trigger: printer });
+
+          // The day switch. The markup is two static labels and a filled pill,
+          // so the whole control is wired here: the pill slides to whichever
+          // half was clicked, the two labels trade places, and the receipt is
+          // torn off and printed again for the day now selected.
+          const toggle = node(RECEIPT.toggle);
+          const pill = node(RECEIPT.pill);
+          const restLabel = node(RECEIPT.restLabel);
+          const pillLabel = pill?.querySelector("p");
+
+          if (receipt && toggle && pill && restLabel && pillLabel) {
+            // How far the pill travels to cover the other half.
+            const throw_ = toggle.clientWidth - pill.offsetWidth;
+
+            // The flat label is drawn in the right-hand half only, so on its
+            // own it would end up underneath the pill with the left half left
+            // empty. Mirror it about the toggle's centre instead: the two swap
+            // sides, passing each other, rather than one vanishing.
+            const mirror =
+              -2 *
+              (restLabel.offsetLeft +
+                restLabel.offsetWidth / 2 -
+                toggle.clientWidth / 2);
+
+            let onDayTwo = false;
+
+            const pick = (wantDayTwo: boolean) => {
+              if (wantDayTwo === onDayTwo) return;
+              onDayTwo = wantDayTwo;
+
+              const slide = {
+                duration: 0.4,
+                ease: "power2.inOut",
+                overwrite: "auto" as const,
+              };
+              gsap.to(pill, { x: wantDayTwo ? throw_ : 0, ...slide });
+              gsap.to(restLabel, { x: wantDayTwo ? mirror : 0, ...slide });
+
+              // The pill always reads as the selected day, the flat label as
+              // the other — so selecting swaps the two strings.
+              const held = pillLabel.textContent;
+              pillLabel.textContent = restLabel.textContent;
+              restLabel.textContent = held;
+
+              receipt.reprint();
+            };
+
+            // Each half of the pill's track is a hit area. `pointerdown`
+            // rather than `click` so the paper starts moving under the finger.
+            const onDown = (event: Event) => {
+              const box = toggle.getBoundingClientRect();
+              const x = (event as PointerEvent).clientX - box.left;
+              pick(x > box.width / 2);
+            };
+
+            toggle.style.cursor = "pointer";
+            toggle.addEventListener("pointerdown", onDown);
+            cleanups.push(() =>
+              toggle.removeEventListener("pointerdown", onDown),
+            );
+          }
         }
 
         return () => {

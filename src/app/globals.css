@@ -129,13 +129,24 @@
    than restate all nine, the plate holds a full-height sheet pulled up by
    exactly the hero's height, so those offsets stay true to the design file.
    The region above 0 is empty (the hero is not in this half) and paints
-   nothing. */
+   nothing.
+
+   It does still *hit-test*, though. That empty top overlays the hero exactly,
+   and the body plate is painted after the hero's, so the sheet was swallowing
+   every pointer event over the collage — the wordmark and the note stopped
+   answering the cursor. Transparent to the pointer here, restored on the
+   content inside, which starts below the hero and never overlaps it. */
 .body-sheet {
   position: absolute;
   top: calc(var(--hero-height) * -1);
   left: 0;
   width: var(--canvas-width);
   height: var(--canvas-height);
+  pointer-events: none;
+}
+
+.body-sheet > * {
+  pointer-events: auto;
 }
 
 /* HeroMotion reveals this as the first frame of its entrance timeline, so the
