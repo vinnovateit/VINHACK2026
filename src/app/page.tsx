@@ -15,10 +15,13 @@ import SiteFooter from "@/components/sections/SiteFooter";
 export default function Home() {
   return (
     <main className="bg-black">
-      <DesignCanvas>
-        <HeroMotion>
-          <HeroSection />
-        </HeroMotion>
+      <DesignCanvas
+        hero={
+          <HeroMotion>
+            <HeroSection />
+          </HeroMotion>
+        }
+      >
         <PageMotion>
           <AboutSection />
           <WhoAreWeSection />

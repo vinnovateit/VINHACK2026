@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
-/* Rotonto Light is the only typeface in the VinHack design. It is a licensed
-   font, so the file is not committed — drop `Rotonto-Light.woff2` into
-   public/fonts/ and it is picked up automatically. Until then the stack falls
-   back to the system sans at the same weight. */
+/* Rotonto is the only typeface in the VinHack design. It is a licensed font, so
+   the file is gitignored rather than committed — drop `Rotonto-Regular.woff2`
+   into public/fonts/ and it is picked up automatically. Without it the stack
+   falls back to the system sans.
+
+   The design was drawn in Rotonto Light (300); the face we have is Regular
+   (400), so live text sits a touch heavier than the Figma comp. The weight
+   below is the file's real usWeightClass — declaring 300 here would be a lie
+   the browser then has to resolve. */
 @font-face {
   font-family: "Rotonto";
-  src: url("/fonts/Rotonto-Light.woff2") format("woff2");
-  font-weight: 300;
+  src: url("/fonts/Rotonto-Regular.woff2") format("woff2");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -18,14 +23,24 @@
   /* Design canvas — every section is positioned against this fixed frame. */
   --canvas-width: 1280px;
   --canvas-height: 8834px;
+
+  /* Where the hero ends and the scrolling body begins. The hero occupies
+     top 0 -> 832 and every other section is laid out below it, so this is the
+     one number that splits the frame in two. */
+  --hero-height: 832px;
 }
 
 /* The design is a fixed 1280px collage — sections overlap and every element is
-   absolutely positioned, so there is no reflow to fall back on. The canvas is
-   therefore scaled as a whole to whatever width the viewport gives it, up and
-   down alike. Clamping it at its native 1280px instead would leave black
-   gutters, and the many full-bleed elements (footer bands, the "Who are we?"
-   marquee, the track card stacks) would visibly chop off at that boundary. */
+   absolutely positioned, so there is no reflow to fall back on. It is scaled
+   as a whole instead, and the two halves of the page are scaled differently:
+
+     hero   1:1, never enlarged, centred, black either side past 1280px
+     body   fills the width at any size, so the full-bleed bands (footer
+            strips, the "Who are we?" marquee, the track card stacks) keep
+            running edge to edge
+
+   Both still scale *down* below 1280px. A fixed collage cannot reflow, and
+   the alternative there is a horizontal scrollbar on every laptop and phone. */
 .canvas-container {
   container-type: inline-size;
 }
@@ -34,18 +49,64 @@
   /* tan(atan2(a, b)) is the CSS idiom for dividing two lengths into a unitless
      ratio — calc() cannot divide by a length. 100cqw is .canvas-container's
      width, so this is simply (viewport width / 1280). */
-  --canvas-scale: tan(atan2(100cqw, var(--canvas-width)));
+  --canvas-fit: tan(atan2(100cqw, var(--canvas-width)));
 
   width: 100%;
-  height: calc(var(--canvas-height) * var(--canvas-scale));
   overflow-x: clip;
 }
 
-.canvas {
+.canvas-plate {
+  position: relative;
   width: var(--canvas-width);
-  height: var(--canvas-height);
   transform: scale(var(--canvas-scale));
   transform-origin: top left;
+}
+
+/* ---- hero: 1:1 ---------------------------------------------------------- */
+
+.hero-frame {
+  /* Capped at 1 so the hero is never enlarged past its native size. */
+  --canvas-scale: min(1, var(--canvas-fit));
+
+  height: calc(var(--hero-height) * var(--canvas-scale));
+}
+
+.hero-frame > .canvas-plate {
+  height: var(--hero-height);
+
+  /* Centres the hero once the viewport is wider than it. Narrower, the auto
+     margins collapse to zero and the box overflows right, where the frame's
+     `overflow-x: clip` takes it — by then the scale has already shrunk the
+     artwork to fit, so what overflows is empty space, not content. */
+  margin-inline: auto;
+}
+
+/* ---- body: full-bleed --------------------------------------------------- */
+
+.body-frame {
+  --canvas-scale: var(--canvas-fit);
+
+  height: calc(
+    (var(--canvas-height) - var(--hero-height)) * var(--canvas-scale)
+  );
+}
+
+.body-frame > .canvas-plate {
+  height: calc(var(--canvas-height) - var(--hero-height));
+}
+
+/* Each body section carries the `top` Figma gave it, measured from the top of
+   the whole 8834px frame — About sits at 832px, the footer at 8008px. Rather
+   than restate all nine, the plate holds a full-height sheet pulled up by
+   exactly the hero's height, so those offsets stay true to the design file.
+   The region above 0 is empty (the hero is not in this half) and paints
+   nothing. */
+.body-sheet {
+  position: absolute;
+  top: calc(var(--hero-height) * -1);
+  left: 0;
+  width: var(--canvas-width);
+  height: var(--canvas-height);
 }
 
 /* HeroMotion reveals this as the first frame of its entrance timeline, so the
@@ -60,8 +121,12 @@ body {
   background: #000;
 }
 
+/* 400 to match the one Rotonto face we ship. Asking for 300 against a 400-only
+   family leaves the browser free to fake a lighter weight, which on the
+   fallback sans came out visibly thinner than the design. Nothing in the app
+   sets its own font-weight, so this one line governs the whole page. */
 body {
   color: #fcfcfc;
   font-family: var(--font-rotonto);
-  font-weight: 300;
+  font-weight: 400;
 }

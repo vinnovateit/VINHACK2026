@@ -54,3 +54,7 @@ next-env.d.ts
 # open-next
 /.open-next/
 /.dev.vars
+
+# Licensed typeface — kept local, never published with the site source
+public/fonts/*
+!public/fonts/.gitkeep
