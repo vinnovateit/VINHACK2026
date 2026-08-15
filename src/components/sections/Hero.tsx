@@ -366,8 +366,10 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
-          {/* Real box — see the note on `git`. The two `:` `;` dots and the two
-              spark lines have to travel with the keycap. */}
+          {/* Real box — see the note on `git`. This sticker is static now, so
+              nothing depends on the grouping, but it stays one box so the dots
+              and spark lines keep travelling with the keycap if it is ever
+              animated again. */}
           <div className="absolute h-[105.868px] left-[30.33px] top-[499.01px] w-[102.721px]" data-hero="key" data-node-id="343:1544" data-name="key">
             <div className="absolute flex h-[100.797px] items-center justify-center left-[1.47px] top-[5.07px] w-[101.247px]" data-node-id="343:1545">
               <div className="flex-none rotate-[-16.21deg]">
@@ -415,8 +417,9 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-        {/* Real box — see the note on `git`. The red tab and the arrow badge
-            have to stay attached to the card. */}
+        {/* Real box — see the note on `git`. The card no longer loops, but it
+            still scales under the cursor, and the red tab and arrow badge have
+            to stay attached to it when it does. */}
         <div className="absolute h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px]" data-hero="note" data-node-id="343:1552">
           <div className="absolute flex h-[75.214px] items-center justify-center left-[35.59px] top-[153.84px] w-[61.123px]" data-node-id="343:1553">
             <div className="flex-none rotate-[-19.9deg]">
