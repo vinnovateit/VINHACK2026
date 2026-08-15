@@ -6,7 +6,6 @@ import { useGSAP } from "@gsap/react";
 import {
   boxesOf,
   bounceRock,
-  coinFlip,
   hover,
   settle,
   sineRock,
@@ -32,20 +31,21 @@ gsap.registerPlugin(useGSAP);
  * Property budget — no two concurrent tweens may share a property, or they
  * fight over the single transform matrix GSAP composes:
  *   splitSlide / pendulum  ->  x
- *   coinFlip               ->  y + rotateY
  *   bounceRock / sineRock  ->  rotation
  *   hover                  ->  scale, with overwrite:"auto"
  */
 
-/** Which loop each sticker runs, and how far its phase is offset so that
- *  neighbours never swing in step. */
-const STICKERS = [
-  { role: "git", loop: bounceRock, offset: 0 },
-  { role: "folder", loop: coinFlip, offset: 0 },
-  { role: "megaphone", loop: sineRock, offset: 0.4 },
-  { role: "key", loop: sineRock, offset: 1.1 },
-  { role: "note", loop: bounceRock, offset: 1.5 },
-] as const;
+/**
+ * Which loop each sticker runs, and how far its phase is offset so that
+ * neighbours never swing in step.
+ *
+ * Only the git commit bubble loops. The keycap, "Register Now", "Idea Found !"
+ * and the megaphone are deliberately left still — each is a legible object
+ * rather than an abstract mark, and they read better pinned to the collage than
+ * drifting on it. Removing them from this list is all it takes; nothing else
+ * touches them.
+ */
+const STICKERS = [{ role: "git", loop: bounceRock, offset: 0 }] as const;
 
 /** Where `vinhack-outline.svg` sits relative to `vinhack-fill.svg`, in the px
  *  of the 1020.951 x 356.181 box the wordmark occupies. Measured off the two
