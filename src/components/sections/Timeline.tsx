@@ -1,3 +1,65 @@
+/* The receipt's schedule is drawn in the type Figma set for Day 1 — the same
+   sizes, the same left margin, times right-aligned on the same edge. Day 2 is
+   built from these rather than restated element by element, so the two days
+   cannot drift apart. `top` is a prop because Tailwind cannot generate a class
+   for a value it does not see at build time. */
+
+/** One line of the schedule: what is happening, and when. */
+function Row({
+  label,
+  time,
+  top,
+}: {
+  label: string;
+  time: string;
+  top: number;
+}) {
+  return (
+    <>
+      <p
+        className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black whitespace-nowrap"
+        style={{ top }}
+      >
+        {label}
+      </p>
+      {/* Right-aligned rather than positioned per string: Day 1's times are
+          each nudged to land on the same edge, and this reaches it directly. */}
+      <p
+        className="[word-break:break-word] absolute font-rotonto leading-[13.823px] not-italic right-[41px] text-[17.772px] text-black text-right whitespace-nowrap"
+        style={{ top }}
+      >
+        {time}
+      </p>
+    </>
+  );
+}
+
+/** A review checkpoint, centred across the paper. */
+function Review({ label, top }: { label: string; top: number }) {
+  return (
+    <p
+      className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[13.823px] left-1/2 not-italic text-[17.772px] text-black text-center whitespace-nowrap"
+      style={{ top }}
+    >
+      {label}
+    </p>
+  );
+}
+
+/** The dashed rule the receipt separates its blocks with. */
+function Rule({ top }: { top: number }) {
+  return (
+    <div
+      className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] w-[294.233px]"
+      style={{ top }}
+    >
+      <div className="absolute inset-[-1.97px_0_0_0]">
+        <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
+      </div>
+    </div>
+  );
+}
+
 export default function TimelineSection() {
   return (
     <section aria-label="Timeline" className="absolute bg-black h-[832px] left-0 overflow-clip top-[4680px] w-[1280px]" data-node-id="343:2038" data-name="MacBook Air - 17">
@@ -17,7 +79,7 @@ export default function TimelineSection() {
             </div>
           </div>
           <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-59px)] not-italic text-[17.772px] text-black top-[206.36px] whitespace-nowrap" data-node-id="343:2081">{`VinHack 2026 `}</p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-36.43px)] not-italic text-[29.621px] text-black top-[174.76px] whitespace-nowrap" data-node-id="343:2082">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-36.43px)] not-italic text-[29.621px] text-black top-[174.76px] whitespace-nowrap" data-node-id="343:2082" data-day="1">
             Day 1
           </p>
           <div className="-translate-x-1/2 absolute h-0 left-[calc(50%+0.25px)] top-[246.84px] w-[294.233px]" data-node-id="343:2083">
@@ -30,56 +92,56 @@ export default function TimelineSection() {
               <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
             </div>
           </div>
-          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] top-[424.56px] w-[294.233px]" data-node-id="343:2085">
+          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] top-[424.56px] w-[294.233px]" data-node-id="343:2085" data-day="1">
             <div className="absolute inset-[-1.97px_0_0_0]">
               <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
             </div>
           </div>
-          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] top-[297.2px] w-[294.233px]" data-node-id="343:2086">
+          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] top-[297.2px] w-[294.233px]" data-node-id="343:2086" data-day="1">
             <div className="absolute inset-[-1.97px_0_0_0]">
               <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
             </div>
           </div>
-          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] top-[459.62px] w-[294.233px]" data-node-id="343:2087">
+          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] top-[459.62px] w-[294.233px]" data-node-id="343:2087" data-day="1">
             <div className="absolute inset-[-1.97px_0_0_0]">
               <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
             </div>
           </div>
           <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[37.03px] not-italic text-[17.772px] text-black top-[265.11px] whitespace-nowrap" data-node-id="343:2088">{`Date : `}</p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[265.11px] whitespace-nowrap" data-node-id="343:2089">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[265.11px] whitespace-nowrap" data-node-id="343:2089" data-day="1">
             18th Sept
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[321.39px] whitespace-nowrap" data-node-id="343:2090">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[321.39px] whitespace-nowrap" data-node-id="343:2090" data-day="1">
             Check-in
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[346.56px] whitespace-nowrap" data-node-id="343:2091">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[346.56px] whitespace-nowrap" data-node-id="343:2091" data-day="1">
             Speaker Session
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[371.74px] whitespace-nowrap" data-node-id="343:2092">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[371.74px] whitespace-nowrap" data-node-id="343:2092" data-day="1">
             Lunch Break
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[396.92px] whitespace-nowrap" data-node-id="343:2093">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[396.92px] whitespace-nowrap" data-node-id="343:2093" data-day="1">
             Mini Event 1
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-82.69px)] not-italic text-[17.772px] text-black top-[435.43px] whitespace-nowrap" data-node-id="343:2094">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-82.69px)] not-italic text-[17.772px] text-black top-[435.43px] whitespace-nowrap" data-node-id="343:2094" data-day="1">
             Review 1 @ 4.00 PM
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[473.44px] whitespace-nowrap" data-node-id="343:2095">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[33.08px] not-italic text-[17.772px] text-black top-[473.44px] whitespace-nowrap" data-node-id="343:2095" data-day="1">
             Dinner Break
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[321.39px] whitespace-nowrap" data-node-id="343:2096">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[321.39px] whitespace-nowrap" data-node-id="343:2096" data-day="1">
             9.00 AM
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[346.56px] whitespace-nowrap" data-node-id="343:2097">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[346.56px] whitespace-nowrap" data-node-id="343:2097" data-day="1">
             11.30 AM
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[255.23px] not-italic text-[17.772px] text-black top-[371.74px] whitespace-nowrap" data-node-id="343:2098">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[255.23px] not-italic text-[17.772px] text-black top-[371.74px] whitespace-nowrap" data-node-id="343:2098" data-day="1">
             1.00 PM
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[396.92px] whitespace-nowrap" data-node-id="343:2099">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[396.92px] whitespace-nowrap" data-node-id="343:2099" data-day="1">
             2.00 PM
           </p>
-          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[252.77px] not-italic text-[17.772px] text-black top-[473.44px] whitespace-nowrap" data-node-id="343:2100">
+          <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[252.77px] not-italic text-[17.772px] text-black top-[473.44px] whitespace-nowrap" data-node-id="343:2100" data-day="1">
             7.00 PM
           </p>
           <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[31.6px] not-italic text-[6.912px] text-black top-[535.64px] whitespace-nowrap" data-node-id="343:2110">
@@ -90,6 +152,47 @@ export default function TimelineSection() {
           </p>
           <div className="absolute h-[78.77px] left-[65.51px] top-[40px] w-[230px]" data-node-id="343:2269" data-name="LOGO">
             <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/logo.svg" />
+          </div>
+
+          {/* Day 2. Hidden until the switch selects it — PageMotion swaps the
+              two `data-day` sets and reprints the paper.
+
+              Authored as its own block rather than restated over Day 1's slots,
+              because the shape differs: Day 2 opens on a review and runs to six
+              rows and two reviews, where Day 1 has four rows, a review, then
+              one more. The pitch is 23px against Day 1's 25.2 — the extra
+              content has to fit the same 235px between the date rule and the
+              footer rule, and this is what closes it without crowding the
+              rules. Everything else — margins, sizes, the right-hand edge the
+              times land on — is Day 1's. */}
+          <div className="absolute inset-0" data-day="2" style={{ display: "none" }}>
+            <p
+              className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-36.43px)] not-italic text-[29.621px] text-black top-[174.76px] whitespace-nowrap"
+            >
+              Day 2
+            </p>
+            <p
+              className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[250.79px] not-italic text-[17.772px] text-black top-[265.11px] whitespace-nowrap"
+            >
+              19th Sept
+            </p>
+
+            <Rule top={297.2} />
+            <Rule top={308} />
+            <Review label="Review 2 @ 2.00 AM" top={318.9} />
+            <Rule top={341} />
+
+            <Row label="Break" time="6.00 AM" top={353} />
+            <Row label="Report back at venue" time="8.00 AM" top={376} />
+            <Row label="Final Countdown" time="10.00 AM" top={399} />
+            <Row label="Lunch Break" time="1.00 PM" top={422} />
+
+            <Rule top={445} />
+            <Review label="Review 3 @ 1.30 PM" top={455.9} />
+            <Rule top={478} />
+
+            <Row label="Final Presentation" time="5.00 PM" top={490} />
+            <Row label="Closing Ceremony" time="7.00 PM" top={513} />
           </div>
         </div>
       </div>

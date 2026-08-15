@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
-/* Rotonto is the only typeface in the VinHack design. It is a licensed font, so
-   the file is gitignored rather than committed — drop `Rotonto-Regular.woff2`
-   into public/fonts/ and it is picked up automatically. Without it the stack
-   falls back to the system sans.
+/* Rotonto is the only typeface in the VinHack design. The file is committed at
+   public/fonts/ so the deployed build has it — kept out of the repo it 404s in
+   CI and every page falls back to the system sans, which is what shipped
+   before. Check the licence covers redistribution: this is a public repo, so
+   committing the file publishes it.
 
    The design was drawn in Rotonto Light (300); the face we have is Regular
    (400), so live text sits a touch heavier than the Figma comp. The weight
