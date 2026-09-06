@@ -73,6 +73,42 @@ export function triggerFor(node: Element): Element {
   return realBoxes(node)[0] ?? node;
 }
 
+/**
+ * Puts every box under one transform origin — the centre of the group they
+ * make between them — so that a turn or a scale moves them as one drawing.
+ *
+ * This is what any Figma group needs before it can be rotated or scaled. The
+ * grouping wrappers are `display: contents` and generate no box, so a group
+ * like the rules sheet reaches a recipe as five separate boxes; each turning
+ * about its own middle is not the sheet turning, it is five pieces of paper
+ * splaying apart. Translation is the one transform that does not need this,
+ * which is why `drift` has never wanted it.
+ *
+ * The origin is written in each box's own pixels, so the canvas scale has to
+ * be divided back out: `getBoundingClientRect` is in rendered pixels and
+ * `transform-origin` is in layout pixels.
+ */
+export function shareOrigin(boxes: HTMLElement[], unscale = 1) {
+  if (boxes.length < 2) return;
+  const rects = boxes.map((box) => box.getBoundingClientRect());
+  const cx =
+    (Math.min(...rects.map((r) => r.left)) +
+      Math.max(...rects.map((r) => r.right))) /
+    2;
+  const cy =
+    (Math.min(...rects.map((r) => r.top)) +
+      Math.max(...rects.map((r) => r.bottom))) /
+    2;
+
+  boxes.forEach((box, i) => {
+    gsap.set(box, {
+      transformOrigin:
+        `${((cx - rects[i].left) * unscale).toFixed(2)}px ` +
+        `${((cy - rects[i].top) * unscale).toFixed(2)}px`,
+    });
+  });
+}
+
 /** Every loop below only arms once its element has been scrolled into view,
  *  which is what the source's bare `toggleActions: "play"` triggers do. Once
  *  armed they run forever — the source never pauses them. */
