@@ -17,13 +17,51 @@
 /* --------------------------------------------------------------- hero */
 
 export const HERO = {
-  nav: { lead: "HOME", follow: "EXPLORE" },
   lede: "Where ideas become prototypes and prototypes become possibilities. VinHack brings together curious minds, creative thinkers, and passionate developers to build, learn, and innovate in just 36 hours.",
-  commit: 'git commit -m "innit to vinnit"',
+  /**
+   * The lines the commit sticker types, one after another, forever.
+   *
+   * The first is the one Figma drew, and it is also the longest — which is
+   * load-bearing. The sticker's text sits centred in a fixed 290.935px box with
+   * `white-space: nowrap`, so the line's own width is what decides where it
+   * starts. Left to itself each message would centre on its own width and the
+   * text would jitter left and right every time it changed, so the collage
+   * reserves the width of the *widest* line and types into the left edge of
+   * that reservation. `commits[0]` is what gets reserved, so nothing here may
+   * be longer than it (31 characters) — a longer line would both overflow the
+   * speech bubble and shift the sticker's resting position off the design.
+   */
+  commits: [
+    'git commit -m "innit to vinnit"',
+    'git commit -m "it works now"',
+    'git commit -m "final final v2"',
+    'git commit -m "fix the fix"',
+    'git commit -m "demo in 5 mins"',
+    'git commit -m "trust me bro"',
+    'git commit -m "ship it anyway"',
+    'git commit -m "revert revert"',
+  ],
   note: ["Register", "Now "],
-  folder: { title: "Idea Found !", caption: "Submit your Magic!" },
   qr: { lead: "this QR", follow: "changes lives" },
+  /**
+   * The scroll cue's words. They are drawn letter by letter along a curve in
+   * `hero/ScrollCue` — the design file placed and turned each glyph by hand, so
+   * the shape of the line is not derivable from the string — and this is what
+   * the disc is labelled with for anything not looking at the curve.
+   */
   scroll: "scroll down for more",
+  /**
+   * The speaker sticker is the page's sound switch, and this names it for a
+   * screen reader.
+   *
+   * The state itself is not written out here any more. The drawing carries it
+   * three ways over — the horn's colour, the two arcs leaving it, and the cross
+   * struck where they were — and it used to carry a "SOUND ON" / "MUTED"
+   * caption under the horn as well, which is a sticker explaining its own
+   * picture. What that caption was actually for is anything not looking at the
+   * screen, and `aria-checked` on the switch says it to them properly.
+   */
+  sound: { label: "Page sound" },
 } as const;
 
 /* -------------------------------------------------------------- about */

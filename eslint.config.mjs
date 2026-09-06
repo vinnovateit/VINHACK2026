@@ -14,9 +14,12 @@ const eslintConfig = defineConfig([
     //
     // The mobile layout draws the same exported assets — the stickers and the
     // receipt come through whole, at their Figma sizes — so it is the same
-    // assets for the same reason.
+    // assets for the same reason. `hero/` is the pieces the two layouts share:
+    // the same Figma nodes again, lifted out so the phone's hero and the
+    // collage's draw one copy of each.
     files: [
       "src/components/sections/**/*.tsx",
+      "src/components/hero/**/*.tsx",
       "src/components/mobile/**/*.tsx",
     ],
     rules: { "@next/next/no-img-element": "off" },
