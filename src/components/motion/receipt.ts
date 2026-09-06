@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { feedTick, tearRip } from "@/components/motion/machine";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -24,6 +25,13 @@ gsap.registerPlugin(ScrollTrigger);
  *                            advances in discrete line feeds.
  *   the tear is a snap       a fast rip against the slot, then a damped swing
  *                            as the freed strip settles.
+ *
+ * And it is audible. One tick per line feed and a rip on the tear, both from
+ * `motion/machine.ts` — the same synthesized construction as the keycap and the
+ * shutter, so there is no audio file to fetch and nothing to 404. The ticks are
+ * fired off the step index rather than off `onUpdate`, because `steps()` holds
+ * a value across many frames and a tick a frame would be a buzz; the sound and
+ * the picture then advance on exactly the same beat.
  *
  * Revealed with `clip-path` rather than by animating `height`: the paper holds
  * two dozen absolutely positioned children, and clipping keeps the whole feed
@@ -67,8 +75,14 @@ export function printReceipt(
     gsap.set(ink, { y: shown - full });
   };
 
+  // ~14 line feeds a second, which is about the rate a receipt printer
+  // actually advances at — and, now that the feed is audible, also the rate
+  // the ticks come at.
+  const steps = Math.round(duration * 14);
+
   const build = () => {
     const roll = { p: 0 };
+    let fed = 0;
     feed(0);
     gsap.set(paper, { rotation: 0, transformOrigin: "50% 0%" });
 
@@ -78,14 +92,22 @@ export function printReceipt(
         .to(roll, {
           p: 1,
           duration,
-          // ~14 line feeds a second, which is about the rate a receipt
-          // printer actually advances at.
-          ease: `steps(${Math.round(duration * 14)})`,
-          onUpdate: () => feed(roll.p),
+          ease: `steps(${steps})`,
+          onUpdate: () => {
+            feed(roll.p);
+            // One tick each time the platen actually steps on, not each time
+            // this is called: `steps()` holds a value across several frames.
+            const step = Math.round(roll.p * steps);
+            if (step > fed) {
+              fed = step;
+              feedTick();
+            }
+          },
         })
         // The tear: a quick rip across the slot, then the freed strip swings
         // and settles. Small numbers — the paper is only 360px wide, and
         // anything more reads as a flag rather than a receipt.
+        .call(tearRip)
         .to(paper, { rotation: 1.1, duration: 0.09, ease: "power3.in" })
         .to(paper, { rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" })
     );
@@ -102,9 +124,13 @@ export function printReceipt(
   });
 
   // Already past it on load — a refresh partway down the page — so there is
-  // nobody to watch it print. Leave the paper out rather than blank.
+  // nobody to watch it print. Leave the paper out rather than blank, and put
+  // it there in silence: events are suppressed so the whole feed's worth of
+  // ticks and the tear do not all fire at once on an unwatched sheet, which
+  // means the paper has to be laid out by hand rather than by `onUpdate`.
   if (trigger.getBoundingClientRect().bottom < window.innerHeight) {
-    tl.progress(1);
+    feed(1);
+    tl.progress(1, true);
   }
 
   return {
