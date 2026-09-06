@@ -370,6 +370,29 @@
   }
 }
 
+/* The wordmark marquee's nine scripts.
+ *
+ * Rotonto draws the Latin "VINHACK" and the bullets; each Noto face after it
+ * answers for the one script it covers, and the browser walks the list per
+ * character. Rotonto is named directly rather than through `--font-rotonto`,
+ * because that variable ends in `sans-serif` — a generic family matches
+ * everything, so it would answer for Tamil before Noto Sans Tamil was ever
+ * reached and the whole stack below it would be dead. The generics go at the
+ * end, once, where they belong.
+ *
+ * 700 because the line is the wordmark: the Indic faces have a real bold and
+ * the design wants the weight. Rotonto ships one 400 face and will be
+ * synthesised bolder, which on display-sized black-on-red is the intent.
+ */
+.scripts {
+  font-family:
+    "Rotonto", var(--font-devanagari), var(--font-bengali),
+    var(--font-gujarati), var(--font-tamil), var(--font-telugu),
+    var(--font-kannada), var(--font-malayalam), var(--font-urdu),
+    ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
 /* The asterisk beside the BE RESPECTFUL globe, breathing.
 
    In CSS rather than GSAP because it is the one loop on the page that both

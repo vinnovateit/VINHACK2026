@@ -1112,10 +1112,10 @@ function MobileFooter() {
             className="marquee"
             style={{ "--marquee-duration": "30s" } as CSSProperties}
           >
-            <p dir="auto" className="shrink-0 text-[44px] whitespace-nowrap text-black">
+            <p dir="auto" className="scripts shrink-0 text-[44px] whitespace-nowrap text-black">
               {FOOTER.marquee}
             </p>
-            <p aria-hidden dir="auto" className="shrink-0 text-[44px] whitespace-nowrap text-black">
+            <p aria-hidden dir="auto" className="scripts shrink-0 text-[44px] whitespace-nowrap text-black">
               {FOOTER.marquee}
             </p>
           </div>
