@@ -93,6 +93,73 @@ export const PASS = {
   swatch: "Next pass colour",
 } as const;
 
+/**
+ * The photobooth at `/memories`, reached from the shutter on the attendee pass
+ * and from nowhere else — it is not in any nav.
+ *
+ * Two stages: the camera, then the card. The copy below is grouped the same
+ * way, `booth` first and the editor's after it.
+ *
+ * The card is drawn on the hero's black ground, so the lines are set in Rotonto
+ * at display size over it. Keep them short: the card fits three lines and
+ * shrinks the type to make longer ones fit, so a long line arrives small. Any
+ * "VinHack" in a line is drawn as the logo rather than set in type — a line
+ * that mentions it twice will show the mark twice, so don't.
+ */
+export const MEMORIES = {
+  heading: "VinHack Memories",
+  back: "back to vinhack",
+  lede: "Take the shot, throw some stickers at it, keep the picture.",
+
+  /** The camera stage. Nothing here opens the camera on its own: `enable` is
+   *  the label on a panel that is off until it is pressed. */
+  booth: {
+    idle: ["STEP", "INTO", "FRAME"],
+    enable: "CLICK TO ENABLE",
+    requesting: "REQUESTING…",
+    retry: "CLICK TO RETRY",
+    blocked: "CAMERA BLOCKED",
+    missing: "NO CAMERA FOUND",
+    unsupported: "CAMERA UNSUPPORTED",
+    insecure: "HTTPS REQUIRED",
+    unavailable: "CAMERA UNAVAILABLE",
+    shoot: "TAKE THE SHOT",
+    counting: "HOLD IT…",
+    filter: "FILTER",
+    skip: "SKIP THE CAMERA",
+    /** In the editor, back to the camera — the stickers already placed stay
+     *  where they are. */
+    retake: "RETAKE",
+    /** Said out loud, for anything not watching the count. */
+    countdown: (n: number) => `${n}`,
+  },
+
+  messages: [
+    "WE SURVIVED VINHACK",
+    "WE COOKED AT VINHACK",
+    "36 HOURS. NO REGRETS.",
+    "IT WORKED ON MY MACHINE",
+    "CTRL+S SAVED MY LIFE",
+    "I CAME, I SAW, I DEPLOYED",
+    "POWERED BY CHAI & CHAOS",
+    "MERGE CONFLICTS BUILT CHARACTER",
+  ],
+  prev: "Previous line",
+  next: "Next line",
+  aspects: { square: "SQUARE", story: "STORY" },
+  tray: "STICKERS",
+  save: "SAVE IMAGE",
+  saving: "DRAWING…",
+  /** There is no share button. A static export cannot hand a file to
+   *  Instagram or LinkedIn, so the page says where to put it instead of
+   *  offering a button that would not do it. */
+  tag: "TAG @VINNOVATEIT · #VINHACK2026",
+  hint: "Drag anything to move it — the line too. The corner handle turns and resizes, × takes a sticker off.",
+  empty: "Tap a sticker to put it on the card. Drag the line anywhere you like.",
+  /** Names the movable line, for a keyboard and a screen reader. */
+  textLabel: "The message. Drag to move it, corner handle to turn and resize.",
+} as const;
+
 /* -------------------------------------------------------- who are we */
 
 export const WHO_ARE_WE = {
