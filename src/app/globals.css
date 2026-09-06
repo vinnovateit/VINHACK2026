@@ -370,6 +370,30 @@
   }
 }
 
+/* The asterisk beside the BE RESPECTFUL globe, breathing.
+
+   In CSS rather than GSAP because it is the one loop on the page that both
+   layouts want and neither one drives: the collage's `PageMotion` does not run
+   below `md`, and this is a single property on a single element in a place
+   both trees draw. `transform-origin` is the asterisk's own centre inside the
+   226.452 x 195.34 viewBox it shares with the globe — the two files are laid
+   over each other at the same size, so it swells about its middle rather than
+   about the badge's. */
+.asterisk {
+  transform-origin: 83.11% 75.28%;
+  animation: asterisk-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes asterisk-pulse {
+  0%,
+  100% {
+    transform: scale(0.72);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+}
+
 /* The receipt feeding out of the printer. The collage prints it with GSAP, a
    line at a time; this is the same gesture in one declaration — a mechanical
    `steps()` advance rather than a smooth wipe, which is what reads as a
@@ -489,6 +513,11 @@
   }
 
   .receipt-feed {
+    animation: none;
+  }
+
+  /* Held at its drawn size rather than at either end of the swell. */
+  .asterisk {
     animation: none;
   }
 
