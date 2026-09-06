@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { printRun } from "@/components/motion/machine";
 import { TIMELINE } from "@/content/site";
 
 /**
@@ -15,10 +16,26 @@ import { TIMELINE } from "@/content/site";
  * instead of at fixed offsets, and the paper feeds out on a CSS animation that
  * re-runs whenever the day changes. `key` on the paper is what re-runs it: a
  * new key is a new element, so the animation starts again from nothing.
+ *
+ * It is also audible, but only from the day switch. The sound is scheduled to
+ * match `.receipt-feed` exactly — thirteen line feeds over 0.9s and then the
+ * tear — and it is fired from the press rather than from the animation because
+ * a browser will not start audio until the visitor has touched the page: the
+ * first print, on arrival, has nobody's permission to make a noise yet.
  */
+
+/** Matches `.receipt-feed` in globals.css: `0.9s steps(13)`. */
+const FEED = { steps: 13, duration: 0.9 };
+
 export default function MobileTimeline() {
   const [dayIndex, setDayIndex] = useState(0);
   const day = TIMELINE.days[dayIndex];
+
+  const pick = (index: number) => {
+    if (index === dayIndex) return;
+    setDayIndex(index);
+    printRun(FEED);
+  };
 
   return (
     <div>
@@ -40,7 +57,7 @@ export default function MobileTimeline() {
           <button
             key={option.name}
             type="button"
-            onClick={() => setDayIndex(i)}
+            onClick={() => pick(i)}
             aria-pressed={i === dayIndex}
             className={`relative z-1 flex-1 cursor-pointer py-[11px] text-center text-[17px] transition-colors duration-300 ${
               i === dayIndex ? "text-[#74d4f0]" : "text-[#2849cb]"

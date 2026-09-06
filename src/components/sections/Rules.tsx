@@ -50,7 +50,22 @@ export default function RulesSection() {
           <div className="absolute flex h-[195.34px] items-center justify-center left-[896.4px] top-[574.86px] w-[226.452px]" data-node-id="343:720">
             <div className="-scale-y-100 flex-none rotate-180">
               <div className="h-[195.34px] relative w-[226.452px]">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095564.svg" />
+                {/* The badge ships as two files rather than the one Figma
+                    exported. The asterisk beside the globe pulses on its own
+                    clock, and a group inside a flat `<img>` cannot be reached
+                    to animate — so it is lifted out into its own file and laid
+                    back over the globe at the same size, which puts it exactly
+                    where the single file had it. `transform-origin` is the
+                    asterisk's own centre in the shared 226.452 x 195.34
+                    viewBox, so it swells about its middle instead of about the
+                    badge's. */}
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095564-globe.svg" />
+                <img
+                  alt=""
+                  aria-hidden
+                  className="asterisk absolute block inset-0 max-w-none size-full"
+                  src="/figma/group48095566-asterisk.svg"
+                />
               </div>
             </div>
           </div>

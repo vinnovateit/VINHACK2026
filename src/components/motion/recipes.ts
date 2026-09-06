@@ -17,9 +17,15 @@ gsap.registerPlugin(ScrollTrigger);
  * viewport — the same width as this canvas — so its rem distances convert at
  * x18 and land here 1:1. Both are quoted on each recipe.
  *
- * Two things the source never does, and neither does this file: nothing fades
- * in, and nothing staggers. Content is simply present, and the page stays alive
- * through endless loops and scroll-linked drift instead.
+ * Two things the source never does, and for most of this file neither does it:
+ * nothing fades in, and nothing staggers. Content is simply present, and the
+ * page stays alive through endless loops and scroll-linked drift instead.
+ *
+ * The exception is the "entrance" section near the bottom — `neonStrike` and
+ * `reelIn` — which is not transcribed from anywhere. The hero now opens with a
+ * deliberate reveal rather than being simply present, and those two are its
+ * vocabulary. Everything above that heading still follows the source's rule,
+ * and nothing below the hero has an entrance at all.
  */
 
 /** Root font-size on the reference site, for reading its rem distances back as
@@ -38,6 +44,12 @@ const REM = 18;
  * the two languages, and matchMedia cannot read a Tailwind variant.
  */
 export const DESKTOP = "(min-width: 768px)";
+
+/** The other half of the same switch: the width at which `MobileSite` is the
+ *  page and the collage is `display: none`. `MobileMotion` gates on it for the
+ *  same reason everything here gates on `DESKTOP` — whichever tree is hidden
+ *  measures 0x0, and a recipe pointed at it moves nothing by no distance. */
+export const MOBILE = "(max-width: 767px)";
 
 /** Figma grouping wrappers are emitted as `display: contents` and generate no
  *  box, so transforms are inert on them — descend to the real boxes underneath. */
@@ -67,6 +79,42 @@ export function triggerFor(node: Element): Element {
   return realBoxes(node)[0] ?? node;
 }
 
+/**
+ * Puts every box under one transform origin — the centre of the group they
+ * make between them — so that a turn or a scale moves them as one drawing.
+ *
+ * This is what any Figma group needs before it can be rotated or scaled. The
+ * grouping wrappers are `display: contents` and generate no box, so a group
+ * like the rules sheet reaches a recipe as five separate boxes; each turning
+ * about its own middle is not the sheet turning, it is five pieces of paper
+ * splaying apart. Translation is the one transform that does not need this,
+ * which is why `drift` has never wanted it.
+ *
+ * The origin is written in each box's own pixels, so the canvas scale has to
+ * be divided back out: `getBoundingClientRect` is in rendered pixels and
+ * `transform-origin` is in layout pixels.
+ */
+export function shareOrigin(boxes: HTMLElement[], unscale = 1) {
+  if (boxes.length < 2) return;
+  const rects = boxes.map((box) => box.getBoundingClientRect());
+  const cx =
+    (Math.min(...rects.map((r) => r.left)) +
+      Math.max(...rects.map((r) => r.right))) /
+    2;
+  const cy =
+    (Math.min(...rects.map((r) => r.top)) +
+      Math.max(...rects.map((r) => r.bottom))) /
+    2;
+
+  boxes.forEach((box, i) => {
+    gsap.set(box, {
+      transformOrigin:
+        `${((cx - rects[i].left) * unscale).toFixed(2)}px ` +
+        `${((cy - rects[i].top) * unscale).toFixed(2)}px`,
+    });
+  });
+}
+
 /** Every loop below only arms once its element has been scrolled into view,
  *  which is what the source's bare `toggleActions: "play"` triggers do. Once
  *  armed they run forever — the source never pauses them. */
@@ -88,6 +136,10 @@ export type SlidePhase = "leads" | "follows";
  * "WORK" / "PLAY" pair. One leads while the other waits out its round trip, so
  * only one is ever moving. Both halves are an 8s cycle, which is what keeps
  * them interlocked.
+ *
+ * Transcribed and no longer called: the hero's HOME / EXPLORE pair, which was
+ * the only thing running it, has been taken off the design. It stays on the
+ * menu the way `pendulum` does.
  *
  *   leads:    -> -22.2222rem (-400px)  2s expo.out
  *             -> 0                     2s expo.in
@@ -375,6 +427,181 @@ export function marquee(
     onToggle: (self) => (self.isActive ? tween.play() : tween.pause()),
   });
   return tween;
+}
+
+/* -------------------------------------------------------------- this page's */
+
+/**
+ * Not a transcription — the reference site has no equivalent. Everything above
+ * this line was read off the source; this was written for VinHack, because the
+ * hero's commit sticker is a terminal command and a command is more convincing
+ * typed than rocked.
+ *
+ * Types each message character by character, holds the finished line, clears it
+ * in one frame and moves to the next, forever. The order is shuffled once per
+ * page load, so the sticker does not read the same way twice, but every message
+ * still gets its turn before any repeats.
+ *
+ * `steps()` rather than a smooth ease: a caret lands on whole characters, and
+ * interpolating the index smoothly would type at a rate that visibly eases in
+ * and out. Constant, one character at a time is what a keyboard does.
+ *
+ * The clear is the timeline's first act, not something done on the way in, so a
+ * visitor whose ScrollTrigger never fires — landing already scrolled past the
+ * hero — is left looking at the line the markup shipped rather than an empty
+ * bubble.
+ */
+export function typewriter(
+  line: HTMLElement,
+  messages: readonly string[],
+  { trigger, perChar = 0.055, hold = 1.6, gap = 0.35 }: {
+    trigger: Element;
+    /** Seconds a single character takes to appear. */
+    perChar?: number;
+    /** Seconds the finished line stays on screen. */
+    hold?: number;
+    /** Seconds of empty bubble between one message and the next. */
+    gap?: number;
+  },
+) {
+  if (!messages.length) return;
+
+  const order = [...messages];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+
+  const clear = () => {
+    line.textContent = "";
+  };
+
+  const tl = gsap
+    .timeline({ repeat: -1, scrollTrigger: whenSeen(trigger) })
+    .call(clear);
+
+  for (const message of order) {
+    // GSAP tweens the index on a plain object and the text is written from it,
+    // which keeps the whole thing on the one timeline — pausable, scrubbable
+    // and torn down with everything else — rather than on a stray interval.
+    const head = { chars: 0 };
+    tl.to(head, {
+      chars: message.length,
+      duration: message.length * perChar,
+      ease: `steps(${message.length})`,
+      onUpdate: () => {
+        line.textContent = message.slice(0, Math.round(head.chars));
+      },
+    })
+      .to({}, { duration: hold })
+      .call(clear)
+      .to({}, { duration: gap });
+  }
+
+  return tl;
+}
+
+/* ----------------------------------------------------------------- entrance */
+
+/**
+ * The glyphs a reel spins through on its way to a letter.
+ *
+ * Not the alphabet: a split-flap or a slot reel shows you *hardware* between
+ * stops, and what sells that is characters with a lot of ink and no meaning.
+ * Letters and digits would read as words being typed, which is the thing the
+ * commit sticker already does for the rest of its life.
+ */
+const REEL_GLYPHS = "#@$%&*/\\|<>=+-_~^:;!?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+/**
+ * A line of text landing one column at a time, like a split-flap board coming
+ * to rest — the "reels" half of the hero's entrance.
+ *
+ * Every frame writes a string of exactly `message.length` characters: the part
+ * that has already landed, then random glyphs for the part still spinning. The
+ * length never changes, so the sticker's reserved width (see `HERO.commits` in
+ * content/site.ts) holds from the first frame and nothing shifts sideways while
+ * it resolves.
+ *
+ * `steps(length)` is what makes the resolve advance a whole column at a time
+ * rather than easing an index between two letters, and the spinning glyphs are
+ * re-rolled on a divisor of the frame rate rather than every frame — at 60fps a
+ * fresh random glyph per frame per column is visual noise, not a reel.
+ *
+ * Spaces are left alone. A reel with no flap on it does not spin.
+ */
+export function reelIn(
+  line: HTMLElement,
+  message: string,
+  { duration = 0.62, churn = 3 }: {
+    /** Seconds from all-spinning to fully landed. */
+    duration?: number;
+    /** Frames a spinning glyph is held before it is re-rolled. */
+    churn?: number;
+  } = {},
+) {
+  const head = { landed: 0 };
+  let frame = 0;
+  let spun = "";
+
+  const roll = () =>
+    Array.from(message, (char) =>
+      char === " "
+        ? " "
+        : REEL_GLYPHS[Math.floor(Math.random() * REEL_GLYPHS.length)],
+    ).join("");
+
+  spun = roll();
+  line.textContent = spun;
+
+  return gsap.to(head, {
+    landed: message.length,
+    duration,
+    ease: `steps(${message.length})`,
+    onUpdate: () => {
+      if (frame++ % churn === 0) spun = roll();
+      const at = Math.round(head.landed);
+      line.textContent = message.slice(0, at) + spun.slice(at);
+    },
+    onComplete: () => {
+      line.textContent = message;
+    },
+  });
+}
+
+/**
+ * A cold neon tube striking: the current catches, drops out, catches harder,
+ * and finally holds.
+ *
+ * The rhythm is the point and it is deliberately uneven — a flicker on a metre
+ * reads as an effect, and a real tube stutters at intervals that do not divide
+ * into each other. `steps(1)` on every keyframe because a tube is lit or it is
+ * not; easing between the levels would make it a dimmer.
+ *
+ * Returns a tween, so a caller can drop it onto a timeline at a position.
+ */
+export function neonStrike(target: HTMLElement, { duration = 0.72 } = {}) {
+  // Fractions of the whole strike, so the shape survives a change of duration.
+  const beats: [number, number][] = [
+    [0.55, 0.07],
+    [0.05, 0.1],
+    [0.85, 0.06],
+    [0.12, 0.13],
+    [1, 0.07],
+    [0.3, 0.08],
+    [1, 0.49],
+  ];
+  return gsap.fromTo(
+    target,
+    { opacity: 0 },
+    {
+      keyframes: beats.map(([opacity, share]) => ({
+        opacity,
+        duration: share * duration,
+        ease: "steps(1)",
+      })),
+    },
+  );
 }
 
 /* ------------------------------------------------------------------- hover */

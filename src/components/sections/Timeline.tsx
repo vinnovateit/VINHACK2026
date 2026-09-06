@@ -155,6 +155,8 @@ export default function TimelineSection() {
             {TIMELINE.email}
           </p>
           <div className="absolute h-[78.77px] left-[65.51px] top-[40px] w-[230px]" data-node-id="343:2269" data-name="LOGO">
+            {/* Printed in black, not the red the mark carries elsewhere: this
+                one is coming out of a receipt printer, which has one ink. */}
             <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/logo.svg" />
           </div>
 

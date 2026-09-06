@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import GlitchField from "@/components/GlitchField";
 
 type Status =
   | { kind: "idle" }
@@ -103,7 +104,12 @@ export default function CameraFeed() {
   return (
     <button
       type="button"
-      onClick={live ? stop : start}
+      // The pass this panel sits in recolours on a click anywhere that is not
+      // a control, so the camera's own click has to stop there. See `PassCard`.
+      onClick={(event) => {
+        event.stopPropagation();
+        (live ? stop : start)();
+      }}
       disabled={status.kind === "starting"}
       aria-label={live ? "Turn the camera off" : "Turn the camera on"}
       className="absolute inset-0 block cursor-pointer bg-[#fcfcfc] text-[#2849cb]"
@@ -123,23 +129,29 @@ export default function CameraFeed() {
           </span>
         </>
       ) : (
-        <span className="absolute inset-0 flex flex-col items-center justify-center gap-[2px] font-rotonto text-[21.12px] leading-[normal]">
-          {status.kind === "error" ? (
-            <>
-              <span className="text-[#fa1a1d]">{status.message}</span>
-              <span className="mt-[4px] text-[13px] opacity-70">CLICK TO RETRY</span>
-            </>
-          ) : (
-            <>
-              <span>LIVE</span>
-              <span>CAMERA</span>
-              <span>FEED</span>
-              <span className="mt-[4px] text-[13px] opacity-70">
-                {status.kind === "starting" ? "REQUESTING…" : "CLICK TO ENABLE"}
-              </span>
-            </>
-          )}
-        </span>
+        <>
+          {/* The panel that is not yet a picture. It sits under the lettering
+              and inside the colourway's filter, so the noise is drained,
+              inverted or tinted exactly like the feed it stands in for. */}
+          <GlitchField />
+          <span className="absolute inset-0 flex flex-col items-center justify-center gap-[2px] font-rotonto text-[21.12px] leading-[normal]">
+            {status.kind === "error" ? (
+              <>
+                <span className="text-[#fa1a1d]">{status.message}</span>
+                <span className="mt-[4px] text-[13px] opacity-70">CLICK TO RETRY</span>
+              </>
+            ) : (
+              <>
+                <span>LIVE</span>
+                <span>CAMERA</span>
+                <span>FEED</span>
+                <span className="mt-[4px] text-[13px] opacity-70">
+                  {status.kind === "starting" ? "REQUESTING…" : "CLICK TO ENABLE"}
+                </span>
+              </>
+            )}
+          </span>
+        </>
       )}
     </button>
   );

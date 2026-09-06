@@ -21,9 +21,13 @@
 @theme {
   --font-rotonto: "Rotonto", ui-sans-serif, system-ui, sans-serif;
 
-  /* Design canvas — every section is positioned against this fixed frame. */
+  /* Design canvas — every section is positioned against this fixed frame.
+     Figma drew it 8834 tall; the extra 416 is the gap opened between Rules and
+     Guidelines, so that the sheet coming off the board and the one going up in
+     its place have room to be two separate events rather than one cut. Every
+     section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 8834px;
+  --canvas-height: 9250px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -46,6 +50,16 @@
   container-type: inline-size;
 }
 
+/* Same fallback as `.canvas-frame` below, for every section using Tailwind's
+   `overflow-clip` utility (the Timeline section's draggable stickers among
+   them): unlayered, so it wins over the utility's own `@layer utilities`
+   rule regardless of source order, and keeps sections clipped in browsers
+   that don't yet support the `clip` value. */
+.overflow-clip {
+  overflow: hidden;
+  overflow: clip;
+}
+
 .canvas-frame {
   /* tan(atan2(a, b)) is the CSS idiom for dividing two lengths into a unitless
      ratio — calc() cannot divide by a length. 100cqw is .canvas-container's
@@ -53,6 +67,12 @@
   --canvas-fit: tan(atan2(100cqw, var(--canvas-width)));
 
   width: 100%;
+  /* Fallback first: browsers that don't understand `overflow: clip` (Safari
+     before v16) drop the second declaration and keep this one, instead of
+     silently falling through to the default `visible` — which is what let a
+     sticker dragged to a section's corner spill past the canvas and open a
+     horizontal scrollbar on the whole page. */
+  overflow-x: hidden;
   overflow-x: clip;
 }
 
@@ -82,35 +102,6 @@
   margin-inline: auto;
 }
 
-/* HOME and EXPLORE take turns sliding out of frame, so the frame they leave
-   through should be the screen, not the hero's 1280px plate. Clipped at the
-   plate they vanished 312px short of the edge on a 1920 monitor, leaving a band
-   of black either side the pair never reached.
-
-   The offset is the hero's gutter, negated: past 1280px the plate is centred
-   with (100cqw - 1280px) / 2 either side, so the band starts there and runs the
-   full container width. Below 1280px the plate already fills the width — the
-   gutter is zero, and min()/max() collapse the band back onto the plate.
-
-   `z-index` because the band is declared before the hero section, which paints
-   a black background over the whole plate; keeping it first preserves reading
-   order for the two nav words. */
-.hero-nav {
-  position: absolute;
-  top: 0;
-  z-index: 1;
-
-  left: min(0px, calc((var(--canvas-width) - 100cqw) / 2));
-  width: max(var(--canvas-width), 100cqw);
-
-  /* The pair starts centred and touching, then HeroMotion carries each out to
-     its own edge and back. */
-  display: flex;
-  justify-content: center;
-
-  overflow-x: clip;
-}
-
 /* ---- body: full-bleed --------------------------------------------------- */
 
 .body-frame {
@@ -126,7 +117,7 @@
 }
 
 /* Each body section carries the `top` Figma gave it, measured from the top of
-   the whole 8834px frame — About sits at 832px, the footer at 8008px. Rather
+   the whole 9250px frame — About sits at 832px, the footer at 8424px. Rather
    than restate all nine, the plate holds a full-height sheet pulled up by
    exactly the hero's height, so those offsets stay true to the design file.
    The region above 0 is empty (the hero is not in this half) and paints
@@ -160,6 +151,176 @@
 @media (min-width: 768px) {
   .hero-motion {
     opacity: 0;
+  }
+}
+
+/* ---- the sound switch --------------------------------------------------- */
+
+/* The speaker sticker is a real control (`role="switch"`), so it owes a visible
+   focus indicator — and it cannot borrow one from a `<button>`, because the
+   collage is a Figma export of nested transformed boxes and there is no button
+   in it. Written here rather than as `focus-visible:` utilities so the ring is
+   one declaration that cannot be half-applied, and offset far enough clear of
+   the horn that it does not read as part of the drawing.
+
+   `:focus-visible` rather than `:focus`: a pointer press on the switch should
+   toggle the sound, not leave a ring behind on the artwork. */
+[data-hero="speaker"]:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid #bfea88;
+  outline-offset: 7px;
+}
+
+/* ---- the hero entrance, on the phone ------------------------------------ */
+
+/* `HeroMotion` does not run below `md` — the collage it measures is
+   `display: none` there (see `DESKTOP` in motion/recipes.ts) — so the phone's
+   half of the entrance is CSS. Same gesture, no JavaScript, and it starts the
+   moment the element is painted rather than waiting on hydration.
+
+   The wordmark is a neon sign coming on cold: the outline is the tube, which
+   strikes, drops out and catches again before it holds; the lettering is the
+   gas, which floods in behind it once the tube is lit; and the whole sign
+   blooms once and settles. Then the stickers are dealt in behind it. */
+
+.neon-tube {
+  animation: neon-strike 0.72s steps(1) both;
+}
+
+/* The beats are uneven on purpose. A flicker on a metre reads as an effect —
+   what makes a tube look cold is intervals that do not divide into each other.
+   These are the same fractions `neonStrike` uses on the collage. */
+@keyframes neon-strike {
+  0% { opacity: 0; }
+  7% { opacity: 0.55; }
+  17% { opacity: 0.05; }
+  23% { opacity: 0.85; }
+  36% { opacity: 0.12; }
+  43% { opacity: 1; }
+  51% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.neon-fill {
+  animation: neon-flood 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.62s both;
+}
+
+@keyframes neon-flood {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The bloom is on the `<h1>` rather than either layer, so it haloes the sign as
+   one object. It ends at `none` rather than a transparent shadow: a live
+   `filter` leaves the element rasterized and forces a containing block for the
+   rest of the page's life, for a glow that is no longer being drawn. */
+.neon-sign {
+  animation: neon-bloom 1.1s ease-out 0.62s both;
+}
+
+@keyframes neon-bloom {
+  from {
+    filter: drop-shadow(0 0 24px rgba(191, 234, 136, 0.75));
+  }
+  99% {
+    filter: drop-shadow(0 0 0 rgba(191, 234, 136, 0));
+  }
+  to {
+    filter: none;
+  }
+}
+
+/* A piece thrown onto the black. The four custom properties are the throw —
+   set them per element (Tailwind arbitrary properties do this inline) and leave
+   the timing to the one rule. `both` so a piece is invisible *before* its delay
+   as well as settled after it; without it every sticker is on screen from the
+   first frame and only the wordmark has an entrance.
+
+   The overshoot lives in the easing rather than in a keyframe, so a piece
+   arrives and settles in one animation and there is no midpoint at which it is
+   past its own layout position when the animation is cancelled. */
+.deal-in {
+  animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) var(--deal-delay, 0s)
+    both;
+}
+
+@keyframes deal-in {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--deal-x, 0), var(--deal-y, 34px), 0)
+      rotate(var(--deal-r, 0deg)) scale(var(--deal-s, 0.92));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The scroll cue's arrow, falling through the disc.
+ *
+ * The collage drives this from GSAP in `HeroMotion` — a `steps(6)` fall, a
+ * breathe where the design draws the arrow, and a `steps(6)` exit — and that
+ * module does not run at this width. This is the same shape in CSS, on the same
+ * markup (`hero/ScrollCue` is drawn by both layouts), so the phone's cue is the
+ * page's cue rather than a still picture of it.
+ *
+ * The numbers come from the same two constants: the grid's 26.46px pitch times
+ * six rows is 158.76px, which puts every cell outside the 169.785px circle at
+ * both ends. The keyframe percentages are the GSAP timeline's own seconds over
+ * its 4.35s total — 0.6 fall, 2.8 breathing, 0.6 out, 0.35 empty.
+ *
+ * Two animations rather than one: the fall lands on whole rows and must be
+ * stepped, the breathe is a sine and must not be. They are the same duration
+ * and both infinite, so they never drift apart.
+ */
+.mobile-stage [data-hero="disc-arrow"] {
+  animation:
+    cue-fall 4.35s infinite,
+    cue-breathe 4.35s ease-in-out infinite;
+}
+
+@keyframes cue-fall {
+  0% {
+    transform: translateY(-158.76px);
+    animation-timing-function: steps(6, end);
+  }
+  13.8% {
+    transform: translateY(0);
+    animation-timing-function: linear;
+  }
+  78.2% {
+    transform: translateY(0);
+    animation-timing-function: steps(6, end);
+  }
+  92%,
+  100% {
+    transform: translateY(158.76px);
+  }
+}
+
+@keyframes cue-breathe {
+  0%,
+  13.8% {
+    opacity: 1;
+  }
+  29.9% {
+    opacity: 0.4;
+  }
+  46% {
+    opacity: 1;
+  }
+  62.1% {
+    opacity: 0.4;
+  }
+  78.2%,
+  100% {
+    opacity: 1;
   }
 }
 
@@ -229,6 +390,53 @@
   }
 }
 
+/* The wordmark marquee's nine scripts.
+ *
+ * Rotonto draws the Latin "VINHACK" and the bullets; each Noto face after it
+ * answers for the one script it covers, and the browser walks the list per
+ * character. Rotonto is named directly rather than through `--font-rotonto`,
+ * because that variable ends in `sans-serif` — a generic family matches
+ * everything, so it would answer for Tamil before Noto Sans Tamil was ever
+ * reached and the whole stack below it would be dead. The generics go at the
+ * end, once, where they belong.
+ *
+ * 700 because the line is the wordmark: the Indic faces have a real bold and
+ * the design wants the weight. Rotonto ships one 400 face and will be
+ * synthesised bolder, which on display-sized black-on-red is the intent.
+ */
+.scripts {
+  font-family:
+    "Rotonto", var(--font-devanagari), var(--font-bengali),
+    var(--font-gujarati), var(--font-tamil), var(--font-telugu),
+    var(--font-kannada), var(--font-malayalam), var(--font-urdu),
+    ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* The asterisk beside the BE RESPECTFUL globe, breathing.
+
+   In CSS rather than GSAP because it is the one loop on the page that both
+   layouts want and neither one drives: the collage's `PageMotion` does not run
+   below `md`, and this is a single property on a single element in a place
+   both trees draw. `transform-origin` is the asterisk's own centre inside the
+   226.452 x 195.34 viewBox it shares with the globe — the two files are laid
+   over each other at the same size, so it swells about its middle rather than
+   about the badge's. */
+.asterisk {
+  transform-origin: 83.11% 75.28%;
+  animation: asterisk-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes asterisk-pulse {
+  0%,
+  100% {
+    transform: scale(0.72);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+}
+
 /* The receipt feeding out of the printer. The collage prints it with GSAP, a
    line at a time; this is the same gesture in one declaration — a mechanical
    `steps()` advance rather than a smooth wipe, which is what reads as a
@@ -247,6 +455,101 @@
   }
 }
 
+/* The dead-signal glitch behind "CLICK TO ENABLE", on the pass's camera panel
+   and on the photobooth's. Three layers, all gradients, all slow:
+
+     scan    hairline scanlines crawling by exactly one period, so the loop is
+             seamless and reads as drift rather than as a repeating jump
+     split   a red / cyan wash swinging side to side — the chroma separation a
+             misaligned signal has, at an opacity you notice only in motion
+     tear    one band sweeping down the panel, slipping sideways as it passes
+
+   Nothing here picks its own colours out of the air: the red and the cyan are
+   the site's #fa1a1d and #74d4f0. And nothing here applies a filter — the panel
+   above it carries the colourway's `feed` filter (`filter-(--pass-feed)` in the
+   layouts, an inline one in the booth), so the glitch is tinted, inverted or
+   drained along with everything else in the frame. That is the whole point of
+   putting it *inside* the filtered box. */
+.glitch {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glitch-scan {
+  position: absolute;
+  inset: -8px 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.14) 0 2px,
+    transparent 2px 5px
+  );
+  animation: glitch-scan 5.5s linear infinite;
+}
+
+@keyframes glitch-scan {
+  to {
+    transform: translateY(5px);
+  }
+}
+
+.glitch-split {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(250 26 29 / 0.18),
+    transparent 24%,
+    transparent 76%,
+    rgb(116 212 240 / 0.2)
+  );
+  animation: glitch-drift 7s ease-in-out infinite alternate;
+}
+
+@keyframes glitch-drift {
+  from {
+    transform: translateX(-7px);
+  }
+  to {
+    transform: translateX(7px);
+  }
+}
+
+.glitch-tear {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: 11%;
+  background: linear-gradient(90deg, rgb(250 26 29 / 0.24), rgb(116 212 240 / 0.24));
+  animation: glitch-tear 9s cubic-bezier(0.85, 0, 0.15, 1) infinite;
+}
+
+@keyframes glitch-tear {
+  0% {
+    top: -13%;
+    transform: translateX(0);
+  }
+  46% {
+    transform: translateX(-9px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  54% {
+    transform: translateX(-5px);
+  }
+  100% {
+    top: 102%;
+    transform: translateX(0);
+  }
+}
+
+/* An entrance is the one kind of motion a visitor cannot opt out of by not
+   scrolling, so it is the first thing this query switches off. `animation: none`
+   rather than a shortened one: with `both` removed along with the animation,
+   every element falls straight back to its own styles — lit, in place, opaque —
+   which is exactly the end state the animation was travelling to. */
 @media (prefers-reduced-motion: reduce) {
   .marquee {
     animation: none;
@@ -254,6 +557,37 @@
 
   .receipt-feed {
     animation: none;
+  }
+
+  /* Held at its drawn size rather than at either end of the swell. */
+  .asterisk {
+    animation: none;
+  }
+
+  .neon-tube,
+  .neon-fill,
+  .neon-sign,
+  .deal-in {
+    animation: none;
+  }
+
+  /* The arrow stays where the design draws it, lit — the disc still reads as
+     pointing down, it just stops falling. */
+  .mobile-stage [data-hero="disc-arrow"] {
+    animation: none;
+  }
+
+  /* The glitch stops moving but stays drawn: the scanlines and the chroma
+     split are what make the panel read as a dead feed, and holding them still
+     keeps that reading without the drift. The tear is a sweep and nothing else,
+     so it goes entirely rather than parking across the middle of the panel. */
+  .glitch-scan,
+  .glitch-split {
+    animation: none;
+  }
+
+  .glitch-tear {
+    display: none;
   }
 }
 

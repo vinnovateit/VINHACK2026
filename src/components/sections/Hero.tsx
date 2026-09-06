@@ -1,20 +1,22 @@
+import QrArt from "@/components/hero/QrArt";
+import ScrollCue from "@/components/hero/ScrollCue";
+import SpeakerArt from "@/components/hero/SpeakerArt";
 import { HERO } from "@/content/site";
 
 export default function HeroSection() {
   return (
-    <>
-      {/* The nav pair lives outside the hero section, which clips at 1280px.
-          These two slide out of frame and back, and their frame is the screen —
-          see `.hero-nav` in globals.css. */}
-      <div className="hero-nav">
-        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic text-[#7a7a7a] text-[70px] whitespace-nowrap" data-hero="nav-lead" data-node-id="343:1173">
-          {HERO.nav.lead}
-        </p>
-        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic text-[#2849cb] text-[70px] whitespace-nowrap" data-hero="nav-follow" data-node-id="343:1174">
-          {HERO.nav.follow}
-        </p>
-      </div>
-      <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
+    <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
+      {/* The HOME / EXPLORE pair used to sit across the top of the plate and
+          took the first ~90px of it with them. With the pair gone that strip is
+          dead black above the wordmark, so the whole collage is lifted by
+          exactly its height.
+
+          A wrapper rather than 40 edited `top` values: `inset-0` makes this box
+          the section's own frame, so it becomes the containing block every
+          child already resolved against and every Figma offset below stays
+          true to the design file. The section keeps `overflow-clip`, so the
+          lift crops against the plate rather than escaping it. */}
+      <div className="absolute inset-0 -translate-y-[90px]">
       <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
           <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
@@ -28,7 +30,7 @@ export default function HeroSection() {
                   where it is drawn. */}
               <div className="absolute inset-[0_-0.22%_-0.48%_0]">
                 <img alt="VinHack" className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-fill" src="/figma/vinhack-fill.svg" />
-                <img alt="" aria-hidden className="absolute block inset-0 max-w-none size-full" src="/figma/vinhack-outline.svg" />
+                <img alt="" aria-hidden className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-outline" src="/figma/vinhack-outline.svg" />
               </div>
             </h1>
             <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1182">
@@ -39,15 +41,28 @@ export default function HeroSection() {
                   </div>
                 </div>
               </div>
-              <div className="absolute contents inset-[20.74%_11.52%_66.09%_78.4%]" data-hero="megaphone" data-node-id="343:1189" data-name="Mask group">
-                <div className="absolute inset-[14.85%_10.51%_60.04%_74.47%] mask-alpha mask-intersect mask-no-clip mask-no-repeat mask-position-[50.304px_49.013px] mask-size-[128.981px_109.634px]" data-node-id="343:1192" style={{ maskImage: "url('/figma/group40.svg')" }} data-name="Group">
-                  <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group41.svg" />
-                </div>
+              {/* The speaker sticker is the page's sound switch. The drawing —
+                  the horn, its arcs and the cross struck through them — is
+                  `hero/SpeakerArt`, because the phone's hero has the same
+                  switch on it; the behaviour is `motion/speaker.ts`, for the
+                  same reason.
+
+                  This box is what stays here: the hit target, the focus ring,
+                  and what the entrance deals in. Its rect is the Figma one —
+                  1003.52, 172.56, 128.981 x 109.634 against the 1280 x 832
+                  plate. */}
+              <div className="absolute cursor-pointer h-[109.634px] left-[1003.52px] top-[172.56px] w-[128.981px]" data-hero="speaker" data-node-id="343:1189" data-name="Mask group" role="switch" aria-checked="true" aria-label={HERO.sound.label} tabIndex={0}>
+                <SpeakerArt />
               </div>
               {/* Real box, not `display: contents` — the pieces of this sticker
                   have to turn as one, and only a box can be transformed. Child
                   offsets below are relative to it. See `motion/recipes.ts`. */}
               <div className="absolute h-[207.988px] left-[104.87px] top-[150.38px] w-[411.659px]" data-hero="git" data-node-id="343:1253">
+                {/* The artwork layer. Scaled about the sticker's own centre so
+                    the piece grows in place, and kept inside the tagged box so
+                    the entrance still deals the box rather than fighting this
+                    transform for the matrix. */}
+                <div className="absolute inset-0 scale-110">
                 <div className="absolute flex h-[207.988px] items-center justify-center left-0 top-0 w-[411.659px]" data-node-id="343:1254">
                   <div className="flex-none rotate-[-7.85deg]">
                     <div className="h-[155.601px] relative w-[394.094px]" data-name="image 205">
@@ -64,327 +79,110 @@ export default function HeroSection() {
                 </div>
                 <div className="absolute flex h-[67.097px] items-center justify-center left-[60.48px] top-[68.06px] w-[290.935px]" data-node-id="343:1256">
                   <div className="-rotate-8 flex-none">
-                    <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">{HERO.commit}</p>
+                    {/* The line types itself, so its width changes constantly —
+                        and this box centres its contents, which would walk the
+                        text left and right on every character. So the sticker
+                        reserves a fixed width once and lays the live line over
+                        it from a fixed left edge, growing rightwards inside the
+                        space that reservation already claimed. Nothing moves
+                        but the characters.
+
+                        The reservation is every message stacked in one grid
+                        cell, so its width is the *widest* of them. It used to
+                        be `commits[0]` alone, on the reasoning that it is the
+                        longest — but longest in characters is not widest in
+                        pixels in a proportional face, and "innit to vinnit" is
+                        all i/n/t/v while "ship it anyway" is not. Whichever
+                        message actually measures widest now sets the width, and
+                        no message can overflow the bubble.
+
+                        The last cell is the caret's own 12px, reserved with the
+                        text rather than hanging off the end of it.
+
+                        `commits[0]` is still what the markup ships in the live
+                        line, so with JavaScript off, or before the timeline
+                        arms, the sticker reads exactly as Figma drew it. */}
+                    <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">
+                      <span aria-hidden className="grid invisible">
+                        {HERO.commits.map((message) => (
+                          <span className="col-start-1 row-start-1" key={message}>
+                            {message}
+                            <span className="inline-block w-[12px]" />
+                          </span>
+                        ))}
+                      </span>
+                      {/* `inset-0` rather than `left-0`: the overlay is exactly
+                          as wide as the reservation, which is what lets the
+                          line shrink inside it. The entrance spins random
+                          glyphs through this line and a glyph is not the width
+                          of the letter it stands in for, so a spinning line can
+                          measure wider than any real message — clipped to the
+                          reservation instead of pushed out of the bubble. It is
+                          nonsense characters for the 0.62s it lasts, so there
+                          is nothing there to read. */}
+                      <span className="absolute inset-0 flex items-center">
+                        <span className="min-w-0 overflow-hidden" data-hero="commit-line">{HERO.commits[0]}</span>
+                        {/* Drawn as a box rather than typed as a character:
+                            Rotonto is a display face and there is no promise it
+                            carries a bar or block glyph to spare. */}
+                        <span aria-hidden className="bg-[#bfea88] h-[19px] inline-block ml-[3px] shrink-0 w-[9px]" data-hero="commit-caret" />
+                      </span>
+                    </p>
                   </div>
+                </div>
                 </div>
               </div>
-              <div className="absolute contents h-[350.644px] left-[971.73px] top-[340.95px] w-[351.677px]" data-hero="qr" data-node-id="343:1257">
-                <div className="absolute contents h-[321.626px] left-[986.7px] top-[355.46px] w-[321.748px]" data-node-id="343:1258">
-                  <div className="absolute flex h-[184.826px] items-center justify-center left-[1045.95px] top-[423.86px] w-[203.236px]" data-node-id="343:1259">
-                    <div className="flex-none rotate-[-101.48deg]">
-                      <div className="h-[176.349px] relative w-[152.777px]">
-                        <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095478.svg" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute contents h-[189.319px] left-[1058.95px] top-[416.73px] w-[189.318px]" data-node-id="343:1266" data-name="QR Code">
-                  <div className="absolute contents h-[115.455px] left-[1095.87px] top-[453.66px] w-[115.494px]" data-node-id="343:1267">
-                    <div className="absolute flex h-[22.827px] items-center justify-center left-[1136.05px] top-[457.04px] w-[42.148px]" data-node-id="343:1268">
-                      <div className="flex-none rotate-[-13.3deg]">
-                        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[11.76px] whitespace-nowrap">{HERO.qr.lead}</p>
-                      </div>
-                    </div>
-                    <div className="absolute flex h-[74.263px] items-center justify-center left-[1179.1px] top-[468.21px] w-[30.42px]" data-node-id="343:1269">
-                      <div className="flex-none rotate-[76.7deg]">
-                        <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[11.76px] whitespace-nowrap">{HERO.qr.follow}</p>
-                      </div>
-                    </div>
-                    <div className="absolute contents inset-[56.67%_6.49%_31.6%_85.88%]" data-node-id="343:1270" style={{ containerType: "size" }} data-name="QR Elements">
-                      <div className="absolute flex inset-[56.67%_6.49%_31.6%_85.88%] items-center justify-center" data-node-id="343:1271" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[56.92%_6.66%_31.85%_86.05%] items-center justify-center" data-node-id="343:1275" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1172cqw,80.8823cqh)] rotate-[-13.3deg] w-[hypot(80.8828cqw,-19.1177cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group1.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[58.47%_11.91%_38.39%_86.05%] items-center justify-center" data-node-id="343:1497" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group2.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[59.37%_12.49%_39.29%_86.63%] items-center justify-center" data-node-id="343:1501" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group3.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[56.92%_7.66%_39.93%_90.29%] items-center justify-center" data-node-id="343:1505" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group4.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[57.82%_8.25%_40.83%_90.88%] items-center justify-center" data-node-id="343:1509" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group5.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[65.01%_10.91%_31.85%_87.05%] items-center justify-center" data-node-id="343:1513" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group6.svg" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute flex inset-[65.9%_11.49%_32.75%_87.63%] items-center justify-center" data-node-id="343:1517" style={{ containerType: "size" }}>
-                        <div className="flex-none h-[hypot(19.1175cqw,80.8825cqh)] rotate-[-13.3deg] w-[hypot(80.8825cqw,-19.1175cqh)]">
-                          <div className="relative size-full" data-name="Clip path group">
-                            <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/clip-path-group7.svg" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* The QR sticker, on a layer of its own so it can be scaled up
+                  with the rest of the collage.
+
+                  This was a `display: contents` wrapper and every piece under
+                  it is positioned in the plate's own 1280x832 coordinates —
+                  several of them in percentages of it, and two in container
+                  query units. Re-basing all of that onto a box the size of the
+                  sticker would rewrite every one of those numbers, so the box
+                  is the plate instead: same coordinate space, nothing under it
+                  touched, and the scale is taken about the sticker's own centre
+                  (971.73 + 351.677/2, 340.95 + 350.644/2) so it grows in place
+                  rather than sliding out from the middle of the page.
+
+                  `pointer-events-none` because it now covers the whole plate,
+                  and a transparent sheet over the collage would swallow the
+                  hover on the wordmark and the press on the keycap. Nothing in
+                  the QR is interactive. */}
+              <div className="absolute inset-0 pointer-events-none scale-110" data-hero="qr" data-node-id="343:1257" style={{ transformOrigin: "1147.57px 516.27px" }}>
+                <QrArt />
               </div>
             </div>
           </div>
-          <div className="absolute contents left-[548px] top-[550px]" data-node-id="435:2">
-            <div className="absolute flex items-center justify-center left-[548px] size-[220.512px] top-[550px]" data-hero="disc" data-node-id="343:1194">
-              <div className="-scale-y-100 flex-none rotate-[165.86deg]">
-                <div className="bg-[#bfea88] overflow-clip relative rounded-[3150px] size-[181.65px]">
-                  <div className="-translate-x-1/2 -translate-y-1/2 absolute bg-[#274135] left-[calc(50%+0.37px)] overflow-clip rounded-[3150px] size-[169.785px] top-[calc(50%+0.37px)]" data-node-id="343:1195">
-                    <div className="absolute contents left-[-5.67px] top-[-32.13px]" data-node-id="343:1196">
-                      <div className="absolute contents left-[100.17px] top-[-5.67px]" data-node-id="343:1197">
-                        <div className="absolute bg-[#171918] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[-5.67px]" data-node-id="343:1198" />
-                        <div className="absolute bg-[#171918] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[20.79px]" data-node-id="343:1199" />
-                        <div className="absolute bg-[#171918] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[47.25px]" data-node-id="343:1200" />
-                        <div className="absolute bg-[#171918] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[73.71px]" data-node-id="343:1201" />
-                        <div className="absolute bg-[#00a335] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[100.17px]" data-node-id="343:1202" />
-                        <div className="absolute bg-[#171918] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[126.63px]" data-node-id="343:1203" />
-                        <div className="absolute bg-[#171918] left-[100.17px] rounded-[4.725px] size-[22.68px] top-[153.09px]" data-node-id="343:1204" />
-                      </div>
-                      <div className="absolute contents left-[20.79px] top-[-5.67px]" data-node-id="343:1205">
-                        <div className="absolute bg-[#171918] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[-5.67px]" data-node-id="343:1206" />
-                        <div className="absolute bg-[#171918] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[20.79px]" data-node-id="343:1207" />
-                        <div className="absolute bg-[#171918] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[47.25px]" data-node-id="343:1208" />
-                        <div className="absolute bg-[#00a335] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[73.71px]" data-node-id="343:1209" />
-                        <div className="absolute bg-[#171918] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[100.17px]" data-node-id="343:1210" />
-                        <div className="absolute bg-[#171918] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[126.63px]" data-node-id="343:1211" />
-                        <div className="absolute bg-[#171918] left-[20.79px] rounded-[4.725px] size-[22.68px] top-[153.09px]" data-node-id="343:1212" />
-                      </div>
-                      <div className="absolute contents left-[-5.67px] top-[-28.35px]" data-node-id="343:1213">
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[-28.35px]" data-node-id="343:1214" />
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[-1.89px]" data-node-id="343:1215" />
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[24.57px]" data-node-id="343:1216" />
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[51.03px]" data-node-id="343:1217" />
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[77.49px]" data-node-id="343:1218" />
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[103.95px]" data-node-id="343:1219" />
-                        <div className="absolute bg-[#171918] left-[-5.67px] rounded-[4.725px] size-[22.68px] top-[130.41px]" data-node-id="343:1220" />
-                      </div>
-                      <div className="absolute contents left-[153.09px] top-[-32.13px]" data-node-id="343:1221">
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[-32.13px]" data-node-id="343:1222" />
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[-5.67px]" data-node-id="343:1223" />
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[20.79px]" data-node-id="343:1224" />
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[47.25px]" data-node-id="343:1225" />
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[73.71px]" data-node-id="343:1226" />
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[100.17px]" data-node-id="343:1227" />
-                        <div className="absolute bg-[#171918] left-[153.09px] rounded-[4.725px] size-[22.68px] top-[126.63px]" data-node-id="343:1228" />
-                      </div>
-                      <div className="absolute contents left-[73.71px] top-[-5.67px]" data-node-id="343:1229">
-                        <div className="absolute bg-[#171918] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[-5.67px]" data-node-id="343:1230" />
-                        <div className="absolute bg-[#00d753] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[20.79px]" data-node-id="343:1231" />
-                        <div className="absolute bg-[#00d753] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[47.25px]" data-node-id="343:1232" />
-                        <div className="absolute bg-[#00d753] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[73.71px]" data-node-id="343:1233" />
-                        <div className="absolute bg-[#00d753] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[100.17px]" data-node-id="343:1234" />
-                        <div className="absolute bg-[#00a335] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[126.63px]" data-node-id="343:1235" />
-                        <div className="absolute bg-[#171918] left-[73.71px] rounded-[4.725px] size-[22.68px] top-[153.09px]" data-node-id="343:1236" />
-                      </div>
-                      <div className="absolute contents left-[126.63px] top-[-5.67px]" data-node-id="343:1237">
-                        <div className="absolute bg-[#171918] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[-5.67px]" data-node-id="343:1238" />
-                        <div className="absolute bg-[#171918] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[20.79px]" data-node-id="343:1239" />
-                        <div className="absolute bg-[#171918] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[47.25px]" data-node-id="343:1240" />
-                        <div className="absolute bg-[#00a335] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[73.71px]" data-node-id="343:1241" />
-                        <div className="absolute bg-[#171918] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[100.17px]" data-node-id="343:1242" />
-                        <div className="absolute bg-[#171918] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[126.63px]" data-node-id="343:1243" />
-                        <div className="absolute bg-[#171918] left-[126.63px] rounded-[4.725px] size-[22.68px] top-[153.09px]" data-node-id="343:1244" />
-                      </div>
-                      <div className="absolute contents left-[47.25px] top-[-5.67px]" data-node-id="343:1245">
-                        <div className="absolute bg-[#171918] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[-5.67px]" data-node-id="343:1246" />
-                        <div className="absolute bg-[#171918] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[20.79px]" data-node-id="343:1247" />
-                        <div className="absolute bg-[#171918] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[47.25px]" data-node-id="343:1248" />
-                        <div className="absolute bg-[#171918] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[73.71px]" data-node-id="343:1249" />
-                        <div className="absolute bg-[#00d753] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[100.17px]" data-node-id="343:1250" />
-                        <div className="absolute bg-[#171918] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[126.63px]" data-node-id="343:1251" />
-                        <div className="absolute bg-[#171918] left-[47.25px] rounded-[4.725px] size-[22.68px] top-[153.09px]" data-node-id="343:1252" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute contents left-[573.54px] top-[725.99px]" data-hero="scroll" data-node-id="343:1521">
-              <div className="absolute contents left-[573.54px] top-[725.99px]" data-node-id="343:1522">
-                <div className="absolute contents left-[573.54px] top-[725.99px]" data-node-id="343:1523" data-name="curve text">
-                  <div className="-translate-y-1/2 absolute flex h-[15.075px] items-center justify-center left-[573.54px] top-[733.53px] w-[14.526px]" data-node-id="343:1524">
-                    <div className="flex-none rotate-[40.91deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[7.771px]">
-                        <p className="leading-[normal]">s</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[15.668px] items-center justify-center left-[579.42px] top-[738.55px] w-[14.9px]" data-node-id="343:1525">
-                    <div className="flex-none rotate-[38.31deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.55px]">
-                        <p className="leading-[normal]">c</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[14.04px] items-center justify-center left-[586.13px] top-[742.66px] w-[12.346px]" data-node-id="343:1526">
-                    <div className="flex-none rotate-[35.85deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[5.686px]">
-                        <p className="leading-[normal]">r</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[15.86px] items-center justify-center left-[590.72px] top-[746.58px] w-[14.569px]" data-node-id="343:1527">
-                    <div className="flex-none rotate-[33.14deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.773px]">
-                        <p className="leading-[normal]">o</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.158px] items-center justify-center left-[598.09px] top-[749.68px] w-[9.768px]" data-node-id="343:1528">
-                    <div className="flex-none rotate-[30.69deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[3.518px]">
-                        <p className="leading-[normal]">l</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.248px] items-center justify-center left-[601.07px] top-[751.32px] w-[9.524px]" data-node-id="343:1529">
-                    <div className="flex-none rotate-[29.24deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[3.518px]">
-                        <p className="leading-[normal]">l</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.702px] items-center justify-center left-[604.17px] top-[753.1px] w-[9.921px]" data-node-id="343:1530">
-                    <div className="flex-none rotate-[27.55deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[4.297px]">
-                        <p className="leading-[normal]">{` `}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[15.685px] items-center justify-center left-[607.96px] top-[755.84px] w-[13.521px]" data-node-id="343:1531">
-                    <div className="flex-none rotate-[24.63deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.816px]">
-                        <p className="leading-[normal]">d</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[15.452px] items-center justify-center left-[615.97px] top-[759.04px] w-[12.852px]" data-node-id="343:1532">
-                    <div className="flex-none rotate-[20.55deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.773px]">
-                        <p className="leading-[normal]">o</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[15.739px] items-center justify-center left-[624.15px] top-[761.96px] w-[14.291px]" data-node-id="343:1533">
-                    <div className="flex-none rotate-[15.79deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[11.115px]">
-                        <p className="leading-[normal]">w</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[14.555px] items-center justify-center left-[634.87px] top-[764.09px] w-[10.638px]" data-node-id="343:1534">
-                    <div className="flex-none rotate-[11.11deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.245px]">
-                        <p className="leading-[normal]">n</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.688px] items-center justify-center left-[642.95px] top-[765.07px] w-[6.124px]" data-node-id="343:1535">
-                    <div className="flex-none rotate-[8.14deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[4.297px]">
-                        <p className="leading-[normal]">{` `}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.713px] items-center justify-center left-[647.21px] top-[765.64px] w-[6.903px]" data-node-id="343:1536">
-                    <div className="flex-none rotate-[5.83deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[5.589px]">
-                        <p className="leading-[normal]">f</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.598px] items-center justify-center left-[652.76px] top-[766.14px] w-[9.364px]" data-node-id="343:1537">
-                    <div className="flex-none rotate-[2.6deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.773px]">
-                        <p className="leading-[normal]">o</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.27px] items-center justify-center left-[661.4px] top-[766.26px] w-[6.073px]" data-node-id="343:1538">
-                    <div className="flex-none rotate-[-0.55deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[5.947px]">
-                        <p className="leading-[normal]">r</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[13.396px] items-center justify-center left-[666.86px] top-[766.13px] w-[4.899px]" data-node-id="343:1539">
-                    <div className="flex-none rotate-[-2.63deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[4.297px]">
-                        <p className="leading-[normal]">{` `}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[14.451px] items-center justify-center left-[670.41px] top-[765.52px] w-[14.064px]" data-node-id="343:1540">
-                    <div className="flex-none rotate-[-5.87deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[12.779px]">
-                        <p className="leading-[normal]">m</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[14.486px] items-center justify-center left-[682.25px] top-[764.13px] w-[10.844px]" data-node-id="343:1541">
-                    <div className="flex-none rotate-[-9.55deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.773px]">
-                        <p className="leading-[normal]">o</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[14.097px] items-center justify-center left-[690.47px] top-[762.82px] w-[8.268px]" data-node-id="343:1542">
-                    <div className="flex-none rotate-[-11.8deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[5.686px]">
-                        <p className="leading-[normal]">r</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="-translate-y-1/2 absolute flex h-[14.919px] items-center justify-center left-[695.5px] top-[761.29px] w-[11.649px]" data-node-id="343:1543">
-                    <div className="flex-none rotate-[-13.81deg]">
-                      <div className="[word-break:break-word] flex flex-col font-rotonto h-[13.213px] justify-center leading-[0] not-italic relative text-[13.213px] text-white w-[8.749px]">
-                        <p className="leading-[normal]">e</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* The scroll cue — the LED disc with the arrow falling through it
+              and "scroll down for more" curving underneath. Drawn in
+              `hero/ScrollCue`, in its own coordinates, because the phone's
+              hero has the same one; this is only where the collage puts it.
+
+              A real box rather than the `display: contents` wrapper it was:
+              the cue is placed once and its contents are local to it now. The
+              box overlaps the bottom of the wordmark, so it is transparent to
+              the pointer and the disc inside takes its own events back. */}
+          <div className="absolute h-[223px] left-[548px] pointer-events-none top-[550px] w-[220.512px]" data-node-id="435:2">
+            <ScrollCue />
           </div>
-          {/* Real box — see the note on `git`. This sticker is static now, so
-              nothing depends on the grouping, but it stays one box so the dots
-              and spark lines keep travelling with the keycap if it is ever
-              animated again. */}
-          <div className="absolute h-[105.868px] left-[30.33px] top-[499.01px] w-[102.721px]" data-hero="key" data-node-id="343:1544" data-name="key">
+          {/* Real box — see the note on `git`. The sticker is drawn as a key
+              already: a wide plate at 75% opacity with a smaller, brighter cap
+              sitting up and to the left of it, which is the parallax of a cap
+              standing above its well. So it presses. HeroMotion drives the cap
+              and its two glyphs down that same offset and back — the plate and
+              the spark lines are the well, and stay put. */}
+          <div className="absolute cursor-pointer h-[105.868px] left-[30.33px] top-[499.01px] w-[102.721px]" data-hero="key" data-node-id="343:1544" data-name="key">
+            {/* The artwork layer, scaled about the key's centre. The cap's own
+                travel is driven inside this, so it is scaled with everything
+                else and the press keeps its proportion to the key. */}
+            <div className="absolute inset-0 scale-110">
             <div className="absolute flex h-[100.797px] items-center justify-center left-[1.47px] top-[5.07px] w-[101.247px]" data-node-id="343:1545">
               <div className="flex-none rotate-[-16.21deg]">
                 <div className="bg-[#2b24fc] border-[#74d4f0] border-[1.32px] border-solid h-[81.18px] opacity-75 relative rounded-[15.84px] w-[81.84px]" />
               </div>
             </div>
-            <div className="absolute flex h-[85.705px] items-center justify-center left-[6.52px] top-[2.48px] w-[85.256px]" data-node-id="343:1546">
+            <div className="absolute flex h-[85.705px] items-center justify-center left-[6.52px] top-[2.48px] w-[85.256px]" data-hero="key-cap" data-node-id="343:1546">
               <div className="flex-none rotate-[-16.21deg]">
                 <div className="bg-[#2b24fc] border-[#74d4f0] border-[1.32px] border-solid h-[69.3px] opacity-95 relative rounded-[15.84px] w-[68.64px]" />
               </div>
@@ -407,7 +205,7 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-            <div className="absolute contents h-[55.853px] left-[37.39px] top-[10.3px] w-[21.51px]" data-node-id="343:1549">
+            <div className="absolute contents h-[55.853px] left-[37.39px] top-[10.3px] w-[21.51px]" data-hero="key-cap" data-node-id="343:1549">
               <div className="-translate-y-1/2 absolute flex h-[32.403px] items-center justify-center left-[37.39px] top-[26.5px] w-[14.694px]" data-node-id="343:1550">
                 <div className="flex-none rotate-[-16.21deg]">
                   <div className="[word-break:break-word] flex flex-col font-rotonto justify-center leading-[0] not-italic relative text-[#74d4f0] text-[26.4px] whitespace-nowrap">
@@ -423,12 +221,17 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </div>
         {/* Real box — see the note on `git`. The card no longer loops, but it
             still scales under the cursor, and the red tab and arrow badge have
             to stay attached to it when it does. */}
         <div className="absolute h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px]" data-hero="note" data-node-id="343:1552">
+          {/* The artwork layer, scaled about the note's centre. The hover lift
+              stays on the box outside it, so the two scales compose instead of
+              overwriting each other. */}
+          <div className="absolute inset-0 scale-110">
           <div className="absolute flex h-[75.214px] items-center justify-center left-[35.59px] top-[153.84px] w-[61.123px]" data-node-id="343:1553">
             <div className="flex-none rotate-[-19.9deg]">
               <div className="h-[64.969px] relative w-[41.491px]">
@@ -461,58 +264,17 @@ export default function HeroSection() {
               <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[19.2px] text-black whitespace-nowrap">→</p>
             </div>
           </div>
-        </div>
-        {/* Real box — see the note on `git`. This one flips on rotateY, which
-            splays a group of separately-pivoted boxes worse than a rock does.
-            The two `calc(50% + x)` offsets below were resolving against the
-            1280px section; against this 259.685px wrapper they would mean
-            something else entirely, so they are written out in px. */}
-        <div className="absolute h-[212.159px] left-[706.85px] top-[144px] w-[259.685px]" data-hero="folder" data-node-id="343:1558">
-          <div className="absolute flex h-[183.439px] items-center justify-center left-[11.69px] top-[12.86px] w-[196.793px]" data-node-id="343:1559">
-            <div className="flex-none rotate-[-8.67deg]">
-              <div className="h-[158.9px] relative w-[174.839px]">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095562.svg" />
-              </div>
-            </div>
-          </div>
-          <div className="-translate-x-1/2 absolute flex h-[51.079px] items-center justify-center left-[114.36px] top-[93.63px] w-[132.35px]" data-node-id="343:1562">
-            <div className="flex-none rotate-[-8.67deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[23.1px] text-center whitespace-nowrap">{HERO.folder.title}</p>
-            </div>
-          </div>
-          <div className="absolute flex h-[72.702px] items-center justify-center left-[179.7px] top-[126.13px] w-[71.463px]" data-node-id="343:1563">
-            <div className="flex-none rotate-[4.33deg]">
-              <div className="h-[67.872px] relative w-[66.528px]">
-                <div className="absolute inset-[-0.5%_-0.28%_-0.3%_-0.56%]">
-                  <img alt="" className="block max-w-none size-full" src="/figma/group48095565.svg" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="-translate-x-1/2 absolute flex h-[47.763px] items-center justify-center left-[117.22px] top-[119.5px] w-[110.601px]" data-node-id="343:1573">
-            <div className="flex-none rotate-[-8.67deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[31.185px] not-italic relative text-[#003b11] text-[12.1px] text-center whitespace-nowrap">{HERO.folder.caption}</p>
-            </div>
-          </div>
-          <div className="absolute contents h-[56.469px] left-[30.57px] top-[60.27px] w-[63.842px]" data-node-id="343:1574">
-            <div className="absolute flex h-[55.391px] items-center justify-center left-[34.18px] top-[60.79px] w-[56.774px]" data-node-id="343:1575">
-              <div className="flex-none rotate-[-8.67deg]">
-                <div className="h-[48.4px] relative w-[50.05px]">
-                  <div className="absolute bottom-1/4 left-[11.71%] right-[11.71%] top-[6.48%]">
-                    <img alt="" className="block max-w-none size-full" src="/figma/polygon20.svg" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="-translate-x-1/2 absolute flex h-[39.97px] items-center justify-center left-[62.43px] top-[68.16px] w-[61.326px]" data-node-id="343:1576">
-              <div className="flex-none rotate-[-8.67deg]">
-                <p className="[word-break:break-word] font-rotonto h-[31.71px] leading-[31.185px] not-italic relative text-[22px] text-center text-white w-[57.2px]">!</p>
-              </div>
-            </div>
           </div>
         </div>
+        {/* The "Idea Found ! / Submit your Magic!" folder stood here (Figma
+            343:1558, at 706.85, 144). It has been taken off the collage: it
+            named no destination, carried no state and duplicated the call to
+            action the "Register Now" note already makes, so it was a third
+            sticker competing for the same glance. Its artwork —
+            group48095562/48095565.svg and polygon20.svg — is still in
+            public/figma, unreferenced. */}
       </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

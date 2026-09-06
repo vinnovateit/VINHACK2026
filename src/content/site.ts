@@ -17,13 +17,51 @@
 /* --------------------------------------------------------------- hero */
 
 export const HERO = {
-  nav: { lead: "HOME", follow: "EXPLORE" },
   lede: "Where ideas become prototypes and prototypes become possibilities. VinHack brings together curious minds, creative thinkers, and passionate developers to build, learn, and innovate in just 36 hours.",
-  commit: 'git commit -m "innit to vinnit"',
+  /**
+   * The lines the commit sticker types, one after another, forever.
+   *
+   * The first is the one Figma drew, and it is also the longest — which is
+   * load-bearing. The sticker's text sits centred in a fixed 290.935px box with
+   * `white-space: nowrap`, so the line's own width is what decides where it
+   * starts. Left to itself each message would centre on its own width and the
+   * text would jitter left and right every time it changed, so the collage
+   * reserves the width of the *widest* line and types into the left edge of
+   * that reservation. `commits[0]` is what gets reserved, so nothing here may
+   * be longer than it (31 characters) — a longer line would both overflow the
+   * speech bubble and shift the sticker's resting position off the design.
+   */
+  commits: [
+    'git commit -m "innit to vinnit"',
+    'git commit -m "it works now"',
+    'git commit -m "final final v2"',
+    'git commit -m "fix the fix"',
+    'git commit -m "demo in 5 mins"',
+    'git commit -m "trust me bro"',
+    'git commit -m "ship it anyway"',
+    'git commit -m "revert revert"',
+  ],
   note: ["Register", "Now "],
-  folder: { title: "Idea Found !", caption: "Submit your Magic!" },
   qr: { lead: "this QR", follow: "changes lives" },
+  /**
+   * The scroll cue's words. They are drawn letter by letter along a curve in
+   * `hero/ScrollCue` — the design file placed and turned each glyph by hand, so
+   * the shape of the line is not derivable from the string — and this is what
+   * the disc is labelled with for anything not looking at the curve.
+   */
   scroll: "scroll down for more",
+  /**
+   * The speaker sticker is the page's sound switch, and this names it for a
+   * screen reader.
+   *
+   * The state itself is not written out here any more. The drawing carries it
+   * three ways over — the horn's colour, the two arcs leaving it, and the cross
+   * struck where they were — and it used to carry a "SOUND ON" / "MUTED"
+   * caption under the horn as well, which is a sticker explaining its own
+   * picture. What that caption was actually for is anything not looking at the
+   * screen, and `aria-checked` on the switch says it to them properly.
+   */
+  sound: { label: "Page sound" },
 } as const;
 
 /* -------------------------------------------------------------- about */
@@ -46,6 +84,80 @@ export const PASS = {
     { label: "Duration", value: "36 Hours" },
   ],
   barcode: "VINHACK2026",
+  /** The shutter sits in the gap the design leaves between the Type and
+   *  Duration columns, and is the only way into `/memories`. */
+  shutter: "Take a VinHack memory",
+  /** The pass recolours on click. The card itself is the hit target, so this
+   *  names the same action for a keyboard, on a control that is invisible
+   *  until it is focused. */
+  swatch: "Next pass colour",
+} as const;
+
+/**
+ * The photobooth at `/memories`, reached from the shutter on the attendee pass
+ * and from nowhere else — it is not in any nav.
+ *
+ * Two stages: the camera, then the card. The copy below is grouped the same
+ * way, `booth` first and the editor's after it.
+ *
+ * The card is drawn on the hero's black ground, so the lines are set in Rotonto
+ * at display size over it. Keep them short: the card fits three lines and
+ * shrinks the type to make longer ones fit, so a long line arrives small. Any
+ * "VinHack" in a line is drawn as the logo rather than set in type — a line
+ * that mentions it twice will show the mark twice, so don't.
+ */
+export const MEMORIES = {
+  heading: "VinHack Memories",
+  back: "back to vinhack",
+  lede: "Take the shot, throw some stickers at it, keep the picture.",
+
+  /** The camera stage. Nothing here opens the camera on its own: `enable` is
+   *  the label on a panel that is off until it is pressed. */
+  booth: {
+    idle: ["STEP", "INTO", "FRAME"],
+    enable: "CLICK TO ENABLE",
+    requesting: "REQUESTING…",
+    retry: "CLICK TO RETRY",
+    blocked: "CAMERA BLOCKED",
+    missing: "NO CAMERA FOUND",
+    unsupported: "CAMERA UNSUPPORTED",
+    insecure: "HTTPS REQUIRED",
+    unavailable: "CAMERA UNAVAILABLE",
+    shoot: "TAKE THE SHOT",
+    counting: "HOLD IT…",
+    filter: "FILTER",
+    skip: "SKIP THE CAMERA",
+    /** In the editor, back to the camera — the stickers already placed stay
+     *  where they are. */
+    retake: "RETAKE",
+    /** Said out loud, for anything not watching the count. */
+    countdown: (n: number) => `${n}`,
+  },
+
+  messages: [
+    "WE SURVIVED VINHACK",
+    "WE COOKED AT VINHACK",
+    "36 HOURS. NO REGRETS.",
+    "IT WORKED ON MY MACHINE",
+    "CTRL+S SAVED MY LIFE",
+    "I CAME, I SAW, I DEPLOYED",
+    "POWERED BY CHAI & CHAOS",
+    "MERGE CONFLICTS BUILT CHARACTER",
+  ],
+  prev: "Previous line",
+  next: "Next line",
+  aspects: { square: "SQUARE", story: "STORY" },
+  tray: "STICKERS",
+  save: "SAVE IMAGE",
+  saving: "DRAWING…",
+  /** There is no share button. A static export cannot hand a file to
+   *  Instagram or LinkedIn, so the page says where to put it instead of
+   *  offering a button that would not do it. */
+  tag: "TAG @VINNOVATEIT · #VINHACK2026",
+  hint: "Drag anything to move it — the line too. The corner handle turns and resizes, × takes a sticker off.",
+  empty: "Tap a sticker to put it on the card. Drag the line anywhere you like.",
+  /** Names the movable line, for a keyboard and a screen reader. */
+  textLabel: "The message. Drag to move it, corner handle to turn and resize.",
 } as const;
 
 /* -------------------------------------------------------- who are we */
