@@ -45,6 +45,12 @@ const REM = 18;
  */
 export const DESKTOP = "(min-width: 768px)";
 
+/** The other half of the same switch: the width at which `MobileSite` is the
+ *  page and the collage is `display: none`. `MobileMotion` gates on it for the
+ *  same reason everything here gates on `DESKTOP` — whichever tree is hidden
+ *  measures 0x0, and a recipe pointed at it moves nothing by no distance. */
+export const MOBILE = "(max-width: 767px)";
+
 /** Figma grouping wrappers are emitted as `display: contents` and generate no
  *  box, so transforms are inert on them — descend to the real boxes underneath. */
 export function realBoxes(node: Element, out: HTMLElement[] = []): HTMLElement[] {

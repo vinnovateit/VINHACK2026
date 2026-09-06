@@ -709,19 +709,88 @@ function MobileTracks() {
 
 /* ----------------------------------------------------------- timeline */
 
+/**
+ * One of the timeline's loose stickers.
+ *
+ * The collage scatters six of these round the receipt printer, stamps them down
+ * as the section arrives and then lets the visitor pick them up and move them —
+ * or throw them off the page. The phone gets the same thing, in the one shape a
+ * column has room for: a row above the schedule and a row below it.
+ *
+ * The wrapper is what carries the motion, not the `Piece` inside it: `stampIn`
+ * and `draggable` both write a transform, and `Piece`'s plate already has one
+ * of its own for the scale. Two transforms, two boxes, and neither overwrites
+ * the other.
+ */
+function Loose({
+  width,
+  height,
+  max,
+  size,
+  stamp,
+  className,
+  children,
+}: {
+  width: number;
+  height: number;
+  max: number;
+  /** How wide the sticker sits in the row, in px. */
+  size: number;
+  /** Seconds after the row is reached that this one lands. */
+  stamp: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`shrink-0 ${className ?? ""}`}
+      style={{ width: size }}
+      data-m-drag
+      data-m-stamp={stamp}
+    >
+      <Piece width={width} height={height} max={max}>
+        {children}
+      </Piece>
+    </div>
+  );
+}
+
 function MobileTimelineSection() {
   return (
     <section aria-label="Timeline" className={`${COL} ${PAD} py-16`}>
+      {/* The two that ride above the schedule. */}
+      <div className="mb-10 flex items-end justify-center gap-4">
+        <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
+          <div className="absolute inset-0 overflow-hidden">
+            <img
+              alt=""
+              className="absolute top-[-12.2%] left-0 h-[131.71%] w-full max-w-none"
+              src="/figma/image235.png"
+            />
+          </div>
+        </Loose>
+
+        <Loose width={136.85} height={134.841} max={0.9} size={108} stamp={0.12}>
+          <div className="absolute top-0 left-0 flex h-[134.841px] w-[136.85px] items-center justify-center">
+            <div className="flex-none rotate-[-13.5deg]">
+              <div className="relative h-[111.295px] w-[114.013px]">
+                <img
+                  alt=""
+                  className="absolute inset-0 size-full max-w-none object-cover"
+                  src="/figma/image234.png"
+                />
+              </div>
+            </div>
+          </div>
+        </Loose>
+      </div>
+
       <h2 className="mb-10 text-[44px] text-[#fa1a1d]">{TIMELINE.heading}</h2>
       <MobileTimeline />
 
-      <div className="mt-12 flex justify-center">
-        <Piece
-          width={185.111}
-          height={166.791}
-          max={0.95}
-          className="max-w-[200px]"
-        >
+      {/* And the three below it. */}
+      <div className="mt-12 flex flex-wrap items-start justify-center gap-4">
+        <Loose width={185.111} height={166.791} max={0.95} size={150} stamp={0.24}>
           <div className="absolute top-0 left-0 flex h-[166.791px] w-[185.111px] items-center justify-center">
             <div className="flex-none rotate-[-14.05deg] skew-x-[-1.48deg]">
               <div className="relative h-[130.714px] w-[161.483px]">
@@ -743,7 +812,42 @@ function MobileTimelineSection() {
               </div>
             </div>
           </div>
-        </Piece>
+        </Loose>
+
+        {/* The collage sizes this one in container query units off its own box,
+            so the box has to be exactly the size the design gives it — 160.514
+            x 164.786 — for the `cqw` and `cqh` inside to resolve to what Figma
+            drew. `Piece` then scales the whole thing. */}
+        <Loose width={160.514} height={164.786} max={0.9} size={116} stamp={0.36}>
+          <div
+            className="absolute top-0 left-0 flex h-[164.786px] w-[160.514px] items-center justify-center"
+            style={{ containerType: "size" }}
+          >
+            <div className="flex-none h-[hypot(34.0099cqw,69.1918cqh)] w-[hypot(65.9901cqw,-30.8082cqh)] rotate-[-25.61deg] skew-x-[-0.02deg]">
+              <div className="relative size-full">
+                <img
+                  alt=""
+                  className="absolute inset-0 size-full max-w-none object-cover"
+                  src="/figma/image236.png"
+                />
+              </div>
+            </div>
+          </div>
+        </Loose>
+
+        <Loose width={150.24} height={144.718} max={0.9} size={110} stamp={0.48}>
+          <div className="absolute top-0 left-0 flex h-[144.718px] w-[150.24px] items-center justify-center">
+            <div className="flex-none rotate-[-7.91deg]">
+              <div className="relative h-[127.496px] w-[133.971px]">
+                <img
+                  alt=""
+                  className="absolute inset-0 block size-full max-w-none"
+                  src="/figma/image227-vectorized.svg"
+                />
+              </div>
+            </div>
+          </div>
+        </Loose>
       </div>
     </section>
   );
@@ -751,20 +855,40 @@ function MobileTimelineSection() {
 
 /* -------------------------------------------------------------- rules */
 
+/**
+ * Rules and Guidelines are drawn as the same object twice over: a sheet of
+ * paper with a pin through the top of it. On the collage that is a swap —
+ * `foldAway` takes the rules off the board as `dropIn` brings the guidelines
+ * down in their place, both keyed to the boundary between the two sections
+ * (see `motion/pinboard.ts`).
+ *
+ * The phone gets the same swap, driven by `MobileMotion` off these two data
+ * attributes. What it needs that the collage does not is room: the two sheets
+ * are stacked in a column here rather than overlaid on a fixed canvas, so
+ * without a real gap between them the rules are still sliding out while the
+ * guidelines are already down, and the two read as one long shuffle instead of
+ * one sheet replacing another. Hence the wide `pb` here and `pt` there.
+ *
+ * Both sections clip, so a sheet on its way out is gone at the edge of its own
+ * section rather than travelling across the page.
+ */
 function MobileRules() {
   return (
-    <section aria-label="Rules" className={`${COL} ${PAD} py-16`}>
-      {/* The board the rules are pinned to, with its pin. */}
-      <div className="relative">
+    <section aria-label="Rules" className={`${COL} ${PAD} overflow-clip pt-16 pb-28`}>
+      {/* The board the rules are pinned to, with its pin. The fold is on this
+          wrapper and the stamp on the pin inside it — two elements, so the
+          scrubbed fold cannot rewrite the transform the stamp is still using. */}
+      <div className="relative" data-m-fold>
         <img
           alt=""
           aria-hidden
           className="-top-[26px] -translate-x-1/2 absolute left-1/2 z-1 block h-[62px] w-[48px] max-w-none"
           src="/figma/pin.svg"
+          data-m-stamp="0.8"
         />
         <div className="rounded-[4px] bg-[#bfea88] px-5 pt-12 pb-10">
           <h2 className="text-[38px] text-[#1c563c]">{RULES.heading}</h2>
-          <ul className="mt-6 space-y-4 text-[15px] leading-[1.5] text-[#1c563c]">
+          <ul className="mt-6 space-y-4 text-[15px] leading-[1.5] text-[#1c563c]" data-m-reveal>
             {RULES.items.map((item) => (
               <li key={item} className="ms-5 list-disc whitespace-pre-wrap">
                 {item}
@@ -775,31 +899,37 @@ function MobileRules() {
       </div>
 
       <div className="mt-10 flex justify-center">
-        <Piece
-          width={226.452}
-          height={195.34}
-          max={0.95}
-          className="w-full max-w-[240px]"
-        >
-          <div className="absolute top-0 left-0 flex h-[195.34px] w-[226.452px] items-center justify-center">
-            <div className="-scale-y-100 flex-none rotate-180">
-              <div className="relative h-[195.34px] w-[226.452px]">
-                <img
-                  alt=""
-                  className="absolute inset-0 block size-full max-w-none"
-                  src="/figma/group48095564.svg"
-                />
+        <div className="w-full max-w-[240px]" data-m-stamp="0.95">
+          <Piece width={226.452} height={195.34} max={0.95}>
+            <div className="absolute top-0 left-0 flex h-[195.34px] w-[226.452px] items-center justify-center">
+              <div className="-scale-y-100 flex-none rotate-180">
+                {/* Two files, for the reason given in sections/Rules.tsx: the
+                    asterisk beside the globe breathes on its own and cannot be
+                    reached inside a flat `<img>`. */}
+                <div className="relative h-[195.34px] w-[226.452px]">
+                  <img
+                    alt=""
+                    className="absolute inset-0 block size-full max-w-none"
+                    src="/figma/group48095564-globe.svg"
+                  />
+                  <img
+                    alt=""
+                    aria-hidden
+                    className="asterisk absolute inset-0 block size-full max-w-none"
+                    src="/figma/group48095566-asterisk.svg"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="absolute top-[68.47px] left-[22.78px] flex h-[67.648px] w-[182.2px] items-center justify-center">
-            <div className="flex-none rotate-15">
-              <p className="relative font-rotonto text-[21.829px] leading-[20.837px] whitespace-nowrap text-white">
-                {RULES.sticker}
-              </p>
+            <div className="absolute top-[68.47px] left-[22.78px] flex h-[67.648px] w-[182.2px] items-center justify-center">
+              <div className="flex-none rotate-15">
+                <p className="relative font-rotonto text-[21.829px] leading-[20.837px] whitespace-nowrap text-white">
+                  {RULES.sticker}
+                </p>
+              </div>
             </div>
-          </div>
-        </Piece>
+          </Piece>
+        </div>
       </div>
     </section>
   );
@@ -809,25 +939,62 @@ function MobileRules() {
 
 function MobileGuidelines() {
   return (
-    <section aria-label="Guidelines" className={`${COL} ${PAD} py-16`}>
-      <div className="relative">
-        <img
-          alt=""
+    <section aria-label="Guidelines" className={`${COL} ${PAD} overflow-clip pt-24 pb-16`}>
+      {/* The sheet: the drawing, the heading printed on it and the text, all
+          coming down together. A heading that stayed put while the page it is
+          on arrived would be the one thing giving the trick away. */}
+      <div className="relative" data-m-drop>
+        {/* The sheet's own artwork, which the phone was simply missing — the
+            collage draws it at 343:753 and this column had nothing behind the
+            words at all.
+
+            Same construction as the collage's: an outer box that is the rotated
+            drawing's bounding box, with the drawing itself turned inside it at
+            72.646% x 70.272% of that box. Keeping those two proportions is what
+            makes it the same shape rather than a differently-squashed one — the
+            file is `preserveAspectRatio="none"` and will stretch to whatever it
+            is given. It bleeds well past the column on purpose and the section
+            clips it, which is how it reads as a sheet larger than the page. */}
+        <div
           aria-hidden
-          className="-top-[34px] absolute right-2 z-1 block h-[76px] w-[42px] max-w-none"
-          src="/figma/pin1.svg"
-        />
-        <h2 className="text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
+          className="-top-[90px] -left-[36%] pointer-events-none absolute w-[172%]"
+          style={{ aspectRatio: "1599.46 / 1590.388" }}
+        >
+          <div className="flex size-full items-center justify-center">
+            <div
+              className="-scale-y-100 flex-none rotate-[-143.32deg]"
+              style={{ width: "72.646%", height: "70.272%" }}
+            >
+              <img
+                alt=""
+                className="block size-full max-w-none"
+                src="/figma/group48095560.svg"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative">
+          <img
+            alt=""
+            aria-hidden
+            className="-top-[34px] absolute right-2 z-1 block h-[76px] w-[42px] max-w-none"
+            src="/figma/pin1.svg"
+          />
+          <h2 className="text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
+        </div>
+
+        <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white" data-m-reveal>
+          {GUIDELINES.paragraphs.map((para) => (
+            <p key={para}>{para}</p>
+          ))}
+          <p className="pt-2">{GUIDELINES.tldr}</p>
+        </div>
       </div>
 
-      <div className="mt-7 space-y-5 text-[15px] leading-[1.6] text-white">
-        {GUIDELINES.paragraphs.map((para) => (
-          <p key={para}>{para}</p>
-        ))}
-        <p className="pt-2">{GUIDELINES.tldr}</p>
-      </div>
-
-      <div className="mt-10 flex justify-center">
+      {/* Stamped once the sheet has actually landed — `top 45%` rather than the
+          recipe's own `top 70%`, which on the phone is still inside the drop. */}
+      <div className="mt-10 flex justify-center" data-m-stamp="0.25" data-m-stamp-at="top 45%">
         <Piece
           width={286.925}
           height={273.695}

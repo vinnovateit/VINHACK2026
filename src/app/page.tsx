@@ -1,5 +1,6 @@
 import DesignCanvas from "@/components/DesignCanvas";
 import HeroMotion from "@/components/HeroMotion";
+import MobileMotion from "@/components/mobile/MobileMotion";
 import MobileSite from "@/components/mobile/MobileSite";
 import PageMotion from "@/components/PageMotion";
 import HeroSection from "@/components/sections/Hero";
@@ -30,9 +31,9 @@ import SiteFooter from "@/components/sections/SiteFooter";
  *
  * The cost is that both trees are in the document. It is the reason the two
  * layouts share `content/site.ts` rather than each holding its own copy of the
- * words, and the reason `HeroMotion` and `PageMotion` gate on the same
- * breakpoint (`DESKTOP` in motion/recipes.ts) — GSAP must not measure the tree
- * that is `display: none`.
+ * words, and the reason every motion module gates on the breakpoint: `HeroMotion`
+ * and `PageMotion` on `DESKTOP`, `MobileMotion` on `MOBILE` (both in
+ * motion/recipes.ts) — GSAP must not measure the tree that is `display: none`.
  */
 export default function Home() {
   return (
@@ -59,7 +60,9 @@ export default function Home() {
         </DesignCanvas>
       </div>
 
-      <MobileSite />
+      <MobileMotion>
+        <MobileSite />
+      </MobileMotion>
     </main>
   );
 }
