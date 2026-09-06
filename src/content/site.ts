@@ -46,6 +46,13 @@ export const PASS = {
     { label: "Duration", value: "36 Hours" },
   ],
   barcode: "VINHACK2026",
+  /** The shutter sits in the gap the design leaves between the Type and
+   *  Duration columns, and is the only way into `/memories`. */
+  shutter: "Take a VinHack memory",
+  /** The pass recolours on click. The card itself is the hit target, so this
+   *  names the same action for a keyboard, on a control that is invisible
+   *  until it is focused. */
+  swatch: "Next pass colour",
 } as const;
 
 /* -------------------------------------------------------- who are we */

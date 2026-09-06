@@ -247,6 +247,101 @@
   }
 }
 
+/* The dead-signal glitch behind "CLICK TO ENABLE", on the pass's camera panel
+   and on the photobooth's. Three layers, all gradients, all slow:
+
+     scan    hairline scanlines crawling by exactly one period, so the loop is
+             seamless and reads as drift rather than as a repeating jump
+     split   a red / cyan wash swinging side to side — the chroma separation a
+             misaligned signal has, at an opacity you notice only in motion
+     tear    one band sweeping down the panel, slipping sideways as it passes
+
+   Nothing here picks its own colours out of the air: the red and the cyan are
+   the site's #fa1a1d and #74d4f0. And nothing here applies a filter — the panel
+   above it carries the colourway's `feed` filter (`filter-(--pass-feed)` in the
+   layouts, an inline one in the booth), so the glitch is tinted, inverted or
+   drained along with everything else in the frame. That is the whole point of
+   putting it *inside* the filtered box. */
+.glitch {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glitch-scan {
+  position: absolute;
+  inset: -8px 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.14) 0 2px,
+    transparent 2px 5px
+  );
+  animation: glitch-scan 5.5s linear infinite;
+}
+
+@keyframes glitch-scan {
+  to {
+    transform: translateY(5px);
+  }
+}
+
+.glitch-split {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(250 26 29 / 0.18),
+    transparent 24%,
+    transparent 76%,
+    rgb(116 212 240 / 0.2)
+  );
+  animation: glitch-drift 7s ease-in-out infinite alternate;
+}
+
+@keyframes glitch-drift {
+  from {
+    transform: translateX(-7px);
+  }
+  to {
+    transform: translateX(7px);
+  }
+}
+
+.glitch-tear {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: 11%;
+  background: linear-gradient(90deg, rgb(250 26 29 / 0.24), rgb(116 212 240 / 0.24));
+  animation: glitch-tear 9s cubic-bezier(0.85, 0, 0.15, 1) infinite;
+}
+
+@keyframes glitch-tear {
+  0% {
+    top: -13%;
+    transform: translateX(0);
+  }
+  46% {
+    transform: translateX(-9px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  54% {
+    transform: translateX(-5px);
+  }
+  100% {
+    top: 102%;
+    transform: translateX(0);
+  }
+}
+
+/* An entrance is the one kind of motion a visitor cannot opt out of by not
+   scrolling, so it is the first thing this query switches off. `animation: none`
+   rather than a shortened one: with `both` removed along with the animation,
+   every element falls straight back to its own styles — lit, in place, opaque —
+   which is exactly the end state the animation was travelling to. */
 @media (prefers-reduced-motion: reduce) {
   .marquee {
     animation: none;
@@ -254,6 +349,19 @@
 
   .receipt-feed {
     animation: none;
+  }
+
+  /* The glitch stops moving but stays drawn: the scanlines and the chroma
+     split are what make the panel read as a dead feed, and holding them still
+     keeps that reading without the drift. The tear is a sweep and nothing else,
+     so it goes entirely rather than parking across the middle of the panel. */
+  .glitch-scan,
+  .glitch-split {
+    animation: none;
+  }
+
+  .glitch-tear {
+    display: none;
   }
 }
 

@@ -3,6 +3,9 @@ import type { CSSProperties } from "react";
 import CameraFeed from "@/components/CameraFeed";
 import MobileTimeline from "@/components/mobile/MobileTimeline";
 import Piece from "@/components/mobile/Piece";
+import PassCard from "@/components/pass/PassCard";
+import ShutterButton from "@/components/pass/ShutterButton";
+import { PASS_START } from "@/components/pass/variants";
 import {
   ABOUT,
   FOOTER,
@@ -302,7 +305,10 @@ function AttendeePass() {
       max={0.92}
       className="w-full max-w-[360px]"
     >
-      <div className="absolute inset-0 overflow-clip rounded-[34.32px] bg-[#74d4f0]">
+      <PassCard
+        start={PASS_START.front}
+        className="absolute inset-0 overflow-clip rounded-[34.32px]"
+      >
         <p className="-translate-x-full absolute top-[131.1px] left-[267.14px] font-rotonto text-[112.64px] whitespace-nowrap text-right text-[#313855] opacity-5">
           {PASS.watermark}
         </p>
@@ -310,7 +316,7 @@ function AttendeePass() {
           {PASS.watermark}
         </p>
 
-        <div className="absolute top-[58.77px] left-[209.91px] font-rotonto text-[31.68px] leading-[0] whitespace-nowrap text-[#2849cb]">
+        <div className="absolute top-[58.77px] left-[209.91px] font-rotonto text-[31.68px] leading-[0] whitespace-nowrap text-(--pass-ink)">
           <p className="mb-0 leading-[normal]">{PASS.title[0]}</p>
           <p className="leading-[normal]">{PASS.title[1]}</p>
         </div>
@@ -331,21 +337,21 @@ function AttendeePass() {
         </div>
         <div className="-translate-x-1/2 absolute top-[66px] left-[102.39px] flex h-[33.509px] w-[164.641px] items-center justify-center">
           <div className="flex-none rotate-[5.46deg]">
-            <div className="relative h-[18.023px] font-rotonto text-[21.12px] leading-[0] whitespace-pre-wrap text-center text-[#74d4f0]">
+            <div className="relative h-[18.023px] font-rotonto text-[21.12px] leading-[0] whitespace-pre-wrap text-center text-(--pass-stub)">
               <p className="mb-0 leading-[normal]">{PASS.ticket[0]}</p>
               <p className="leading-[normal]">{PASS.ticket[1]}</p>
             </div>
           </div>
         </div>
 
-        <div className="-translate-x-1/2 absolute top-[169.22px] left-[calc(50%-1.3px)] h-[145.618px] w-[316.8px] overflow-clip bg-[#fcfcfc]">
+        <div className="-translate-x-1/2 absolute top-[169.22px] left-[calc(50%-1.3px)] h-[145.618px] w-[316.8px] overflow-clip bg-[#fcfcfc] filter-(--pass-feed) transition-[filter] duration-300">
           <CameraFeed />
         </div>
 
         {PASS.fields.map((field, i) => (
           <div key={field.label}>
             <p
-              className="-translate-x-1/2 absolute font-rotonto text-[21.12px] whitespace-nowrap text-center text-[#2849cb]"
+              className="-translate-x-1/2 absolute font-rotonto text-[21.12px] whitespace-nowrap text-center text-(--pass-ink)"
               style={
                 i === 0
                   ? { left: 48.96, top: 332.98 }
@@ -375,13 +381,14 @@ function AttendeePass() {
           className="absolute top-[406.5px] left-[44.2px] h-[96px] w-[280.7px]"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(90deg, #2849cb 0 2px, transparent 2px 5px, #2849cb 5px 8px, transparent 8px 11px, #2849cb 11px 15px, transparent 15px 19px)",
+              "repeating-linear-gradient(90deg, var(--pass-ink) 0 2px, transparent 2px 5px, var(--pass-ink) 5px 8px, transparent 8px 11px, var(--pass-ink) 11px 15px, transparent 15px 19px)",
           }}
         />
-        <p className="-translate-x-1/2 absolute top-[511px] left-1/2 font-rotonto text-[11.616px] whitespace-nowrap text-center text-[#2849cb]">
+        <p className="-translate-x-1/2 absolute top-[511px] left-1/2 font-rotonto text-[11.616px] whitespace-nowrap text-center text-(--pass-ink)">
           {PASS.barcode}
         </p>
-      </div>
+        <ShutterButton />
+      </PassCard>
     </Piece>
   );
 }
