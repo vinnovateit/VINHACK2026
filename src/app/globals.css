@@ -21,9 +21,13 @@
 @theme {
   --font-rotonto: "Rotonto", ui-sans-serif, system-ui, sans-serif;
 
-  /* Design canvas — every section is positioned against this fixed frame. */
+  /* Design canvas — every section is positioned against this fixed frame.
+     Figma drew it 8834 tall; the extra 416 is the gap opened between Rules and
+     Guidelines, so that the sheet coming off the board and the one going up in
+     its place have room to be two separate events rather than one cut. Every
+     section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 8834px;
+  --canvas-height: 9250px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -46,6 +50,16 @@
   container-type: inline-size;
 }
 
+/* Same fallback as `.canvas-frame` below, for every section using Tailwind's
+   `overflow-clip` utility (the Timeline section's draggable stickers among
+   them): unlayered, so it wins over the utility's own `@layer utilities`
+   rule regardless of source order, and keeps sections clipped in browsers
+   that don't yet support the `clip` value. */
+.overflow-clip {
+  overflow: hidden;
+  overflow: clip;
+}
+
 .canvas-frame {
   /* tan(atan2(a, b)) is the CSS idiom for dividing two lengths into a unitless
      ratio — calc() cannot divide by a length. 100cqw is .canvas-container's
@@ -53,6 +67,12 @@
   --canvas-fit: tan(atan2(100cqw, var(--canvas-width)));
 
   width: 100%;
+  /* Fallback first: browsers that don't understand `overflow: clip` (Safari
+     before v16) drop the second declaration and keep this one, instead of
+     silently falling through to the default `visible` — which is what let a
+     sticker dragged to a section's corner spill past the canvas and open a
+     horizontal scrollbar on the whole page. */
+  overflow-x: hidden;
   overflow-x: clip;
 }
 
@@ -97,7 +117,7 @@
 }
 
 /* Each body section carries the `top` Figma gave it, measured from the top of
-   the whole 8834px frame — About sits at 832px, the footer at 8008px. Rather
+   the whole 9250px frame — About sits at 832px, the footer at 8424px. Rather
    than restate all nine, the plate holds a full-height sheet pulled up by
    exactly the hero's height, so those offsets stay true to the design file.
    The region above 0 is empty (the hero is not in this half) and paints

@@ -857,17 +857,17 @@ function MobileTimelineSection() {
 
 /**
  * Rules and Guidelines are drawn as the same object twice over: a sheet of
- * paper with a pin through the top of it. On the collage that is a swap —
- * `foldAway` takes the rules off the board as `dropIn` brings the guidelines
- * down in their place, both keyed to the boundary between the two sections
- * (see `motion/pinboard.ts`).
+ * paper with a pin through the top of it. On the collage the two are one
+ * horizontal scroll — `slideOut` pans the rules off to the right and `slideIn`
+ * brings the guidelines in from the left behind them, both keyed to the gap
+ * between the two sections (see `motion/pinboard.ts`).
  *
- * The phone gets the same swap, driven by `MobileMotion` off these two data
+ * The phone gets the same scroll, driven by `MobileMotion` off these two data
  * attributes. What it needs that the collage does not is room: the two sheets
  * are stacked in a column here rather than overlaid on a fixed canvas, so
- * without a real gap between them the rules are still sliding out while the
- * guidelines are already down, and the two read as one long shuffle instead of
- * one sheet replacing another. Hence the wide `pb` here and `pt` there.
+ * without a real gap between them the rules are still panning out while the
+ * guidelines are already in, and the two read as one long shuffle instead of a
+ * board being scrolled. Hence the wide `pb` here and `pt` there.
  *
  * Both sections clip, so a sheet on its way out is gone at the edge of its own
  * section rather than travelling across the page.
@@ -875,10 +875,10 @@ function MobileTimelineSection() {
 function MobileRules() {
   return (
     <section aria-label="Rules" className={`${COL} ${PAD} overflow-clip pt-16 pb-28`}>
-      {/* The board the rules are pinned to, with its pin. The fold is on this
+      {/* The board the rules are pinned to, with its pin. The pan is on this
           wrapper and the stamp on the pin inside it — two elements, so the
-          scrubbed fold cannot rewrite the transform the stamp is still using. */}
-      <div className="relative" data-m-fold>
+          scrubbed pan cannot rewrite the transform the stamp is still using. */}
+      <div className="relative" data-m-slide-out>
         <img
           alt=""
           aria-hidden
@@ -895,40 +895,52 @@ function MobileRules() {
               </li>
             ))}
           </ul>
-        </div>
-      </div>
 
-      <div className="mt-10 flex justify-center">
-        <div className="w-full max-w-[240px]" data-m-stamp="0.95">
-          <Piece width={226.452} height={195.34} max={0.95}>
-            <div className="absolute top-0 left-0 flex h-[195.34px] w-[226.452px] items-center justify-center">
-              <div className="-scale-y-100 flex-none rotate-180">
-                {/* Two files, for the reason given in sections/Rules.tsx: the
-                    asterisk beside the globe breathes on its own and cannot be
-                    reached inside a flat `<img>`. */}
-                <div className="relative h-[195.34px] w-[226.452px]">
-                  <img
-                    alt=""
-                    className="absolute inset-0 block size-full max-w-none"
-                    src="/figma/group48095564-globe.svg"
-                  />
-                  <img
-                    alt=""
-                    aria-hidden
-                    className="asterisk absolute inset-0 block size-full max-w-none"
-                    src="/figma/group48095566-asterisk.svg"
-                  />
+          {/* The badge belongs on the paper, not under it. The collage stamps
+              it over the sheet's bottom-right corner (343:719) with a little of
+              it hanging off the bottom edge, and it pans away with the paper it
+              is stuck to rather than staying behind — which is why it lives
+              inside the sheet here, where `data-m-slide-out` carries it.
+
+              In flow rather than absolutely placed: the paper then grows to
+              hold it, instead of the badge coming down on top of the last
+              bullet on whichever phone the list happens to reflow longest on.
+              The negative bottom margin is the overhang — it takes back more
+              than the sheet's own bottom padding, so the paper closes 16px
+              above the badge and the badge hangs over the edge. */}
+          <div className="-mb-14 mt-8 flex justify-end">
+            <div className="w-full max-w-[220px]" data-m-stamp="0.95">
+              <Piece width={226.452} height={195.34} max={0.95}>
+                <div className="absolute top-0 left-0 flex h-[195.34px] w-[226.452px] items-center justify-center">
+                  <div className="-scale-y-100 flex-none rotate-180">
+                    {/* Two files, for the reason given in sections/Rules.tsx:
+                        the asterisk beside the globe breathes on its own and
+                        cannot be reached inside a flat `<img>`. */}
+                    <div className="relative h-[195.34px] w-[226.452px]">
+                      <img
+                        alt=""
+                        className="absolute inset-0 block size-full max-w-none"
+                        src="/figma/group48095564-globe.svg"
+                      />
+                      <img
+                        alt=""
+                        aria-hidden
+                        className="asterisk absolute inset-0 block size-full max-w-none"
+                        src="/figma/group48095566-asterisk.svg"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+                <div className="absolute top-[68.47px] left-[22.78px] flex h-[67.648px] w-[182.2px] items-center justify-center">
+                  <div className="flex-none rotate-15">
+                    <p className="relative font-rotonto text-[21.829px] leading-[20.837px] whitespace-nowrap text-white">
+                      {RULES.sticker}
+                    </p>
+                  </div>
+                </div>
+              </Piece>
             </div>
-            <div className="absolute top-[68.47px] left-[22.78px] flex h-[67.648px] w-[182.2px] items-center justify-center">
-              <div className="flex-none rotate-15">
-                <p className="relative font-rotonto text-[21.829px] leading-[20.837px] whitespace-nowrap text-white">
-                  {RULES.sticker}
-                </p>
-              </div>
-            </div>
-          </Piece>
+          </div>
         </div>
       </div>
     </section>
@@ -938,12 +950,15 @@ function MobileRules() {
 /* --------------------------------------------------------- guidelines */
 
 function MobileGuidelines() {
+  // A wider `pb` than the section used to want: the badge is inside the sheet
+  // now, so the paper reaches 60px past the bottom of it, and the black between
+  // this sheet and Register is what is left after that.
   return (
-    <section aria-label="Guidelines" className={`${COL} ${PAD} overflow-clip pt-24 pb-16`}>
+    <section aria-label="Guidelines" className={`${COL} ${PAD} overflow-clip pt-24 pb-28`}>
       {/* The sheet: the drawing, the heading printed on it and the text, all
-          coming down together. A heading that stayed put while the page it is
-          on arrived would be the one thing giving the trick away. */}
-      <div className="relative" data-m-drop>
+          coming in together. A heading that stayed put while the page it is on
+          arrived would be the one thing giving the trick away. */}
+      <div className="relative" data-m-slide-in>
         {/* The sheet's own artwork, which the phone was simply missing — the
             collage draws it at 343:753 and this column had nothing behind the
             words at all.
@@ -953,12 +968,30 @@ function MobileGuidelines() {
             72.646% x 70.272% of that box. Keeping those two proportions is what
             makes it the same shape rather than a differently-squashed one — the
             file is `preserveAspectRatio="none"` and will stretch to whatever it
-            is given. It bleeds well past the column on purpose and the section
-            clips it, which is how it reads as a sheet larger than the page. */}
+            is given.
+
+            Measured off the text's height rather than the column's width, which
+            is what was wrong with a sheet that only reached the third
+            paragraph. The drawing is a slab lying on its side, and the design's
+            -143.32deg leaves its purple covering 45.8% of the outer box's
+            height against 66.6% of its width — so a box counted out in column
+            widths runs out of paper long before a phone's worth of copy runs
+            out of lines. 218.2% of the text block plus 210px is the box whose
+            purple lands exactly on the text plus 48px above and below it,
+            whatever length the words reflow to.
+
+            The width then follows from the ratio, and it is much wider than the
+            column: a slab that tall is that wide, and there is no turning it.
+            So the sheet full-bleeds and the section clips it — its long edges
+            still cross the screen on the slight slant the collage shows, and it
+            is the short ends that go. */}
         <div
           aria-hidden
-          className="-top-[90px] -left-[36%] pointer-events-none absolute w-[172%]"
-          style={{ aspectRatio: "1599.46 / 1590.388" }}
+          className="pointer-events-none absolute top-1/2 left-1/2 w-auto -translate-x-1/2 -translate-y-1/2"
+          style={{
+            height: "calc(218.2% + 210px)",
+            aspectRatio: "1599.46 / 1590.388",
+          }}
         >
           <div className="flex size-full items-center justify-center">
             <div
@@ -990,63 +1023,72 @@ function MobileGuidelines() {
           ))}
           <p className="pt-2">{GUIDELINES.tldr}</p>
         </div>
-      </div>
 
-      {/* Stamped once the sheet has actually landed — `top 45%` rather than the
-          recipe's own `top 70%`, which on the phone is still inside the drop. */}
-      <div className="mt-10 flex justify-center" data-m-stamp="0.25" data-m-stamp-at="top 45%">
-        <Piece
-          width={286.925}
-          height={273.695}
-          max={0.9}
-          className="w-full max-w-[300px]"
-        >
-          <div className="absolute top-0 left-0 flex h-[273.695px] w-[286.925px] items-center justify-center">
-            <div className="flex-none rotate-[-28.31deg]">
-              <div className="relative h-[190.642px] w-[223.214px]">
-                <div className="absolute inset-[-2.24%_-1.65%_-1.92%_-2.07%]">
-                  <img
-                    alt=""
-                    className="block size-full max-w-none"
-                    src="/figma/vector49.svg"
-                  />
+        {/* Stamped once the sheet has actually landed — `top 45%` rather than
+            the recipe's own `top 70%`, which on the phone is still inside the
+            pan.
+
+            Kept inside the sheet and pulled to its left edge, which is where
+            the collage puts it: 343:761 sits over the purple's bottom-left
+            corner with a corner of itself hanging off. Being part of the block
+            the artwork above measures itself against is what makes it land on
+            paper — the sheet now reaches down behind the badge instead of
+            stopping short of it, which is what left it floating on black in its
+            own row underneath. */}
+        <div className="-ml-4 mt-10 flex" data-m-stamp="0.25" data-m-stamp-at="top 45%">
+          <Piece
+            width={286.925}
+            height={273.695}
+            max={0.9}
+            className="w-full max-w-[260px]"
+          >
+            <div className="absolute top-0 left-0 flex h-[273.695px] w-[286.925px] items-center justify-center">
+              <div className="flex-none rotate-[-28.31deg]">
+                <div className="relative h-[190.642px] w-[223.214px]">
+                  <div className="absolute inset-[-2.24%_-1.65%_-1.92%_-2.07%]">
+                    <img
+                      alt=""
+                      className="block size-full max-w-none"
+                      src="/figma/vector49.svg"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="absolute top-[98.14px] left-[71.85px] flex h-[79.064px] w-[155.588px] items-center justify-center">
-            <div className="flex-none rotate-[-13.31deg]">
-              <div className="relative font-rotonto text-[21.076px] leading-[0] whitespace-nowrap text-[#74d4f0]">
-                <p className="mb-0 leading-[22.992px] whitespace-pre">
-                  {GUIDELINES.sticker[0]}
-                </p>
-                <p className="leading-[22.992px] whitespace-pre">
-                  {GUIDELINES.sticker[1]}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-[86.63px] left-[126.07px] flex h-[21.996px] w-[20.829px] items-center justify-center">
-            <div className="flex-none rotate-[-28.31deg]">
-              <div className="relative h-[17.244px] w-[14.37px]">
-                <div className="absolute inset-[-13.89%_-16.67%]">
-                  <img
-                    alt=""
-                    className="block size-full max-w-none"
-                    src="/figma/vector51.svg"
-                  />
+            <div className="absolute top-[98.14px] left-[71.85px] flex h-[79.064px] w-[155.588px] items-center justify-center">
+              <div className="flex-none rotate-[-13.31deg]">
+                <div className="relative font-rotonto text-[21.076px] leading-[0] whitespace-nowrap text-[#74d4f0]">
+                  <p className="mb-0 leading-[22.992px] whitespace-pre">
+                    {GUIDELINES.sticker[0]}
+                  </p>
+                  <p className="leading-[22.992px] whitespace-pre">
+                    {GUIDELINES.sticker[1]}
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="absolute top-[167.75px] left-[145.33px] flex h-[25.835px] w-[19.892px] items-center justify-center">
-            <div className="flex-none rotate-[-13.31deg]">
-              <p className="relative font-rotonto text-[21.076px] leading-[22.992px] tracking-[4.2152px] whitespace-nowrap text-white">
-                !!
-              </p>
+            <div className="absolute top-[86.63px] left-[126.07px] flex h-[21.996px] w-[20.829px] items-center justify-center">
+              <div className="flex-none rotate-[-28.31deg]">
+                <div className="relative h-[17.244px] w-[14.37px]">
+                  <div className="absolute inset-[-13.89%_-16.67%]">
+                    <img
+                      alt=""
+                      className="block size-full max-w-none"
+                      src="/figma/vector51.svg"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </Piece>
+            <div className="absolute top-[167.75px] left-[145.33px] flex h-[25.835px] w-[19.892px] items-center justify-center">
+              <div className="flex-none rotate-[-13.31deg]">
+                <p className="relative font-rotonto text-[21.076px] leading-[22.992px] tracking-[4.2152px] whitespace-nowrap text-white">
+                  !!
+                </p>
+              </div>
+            </div>
+          </Piece>
+        </div>
       </div>
     </section>
   );

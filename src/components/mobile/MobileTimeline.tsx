@@ -82,7 +82,7 @@ export default function MobileTimeline() {
           <img
             alt=""
             className="mx-auto block w-[170px] max-w-none"
-            src="/figma/logo-red.svg"
+            src="/figma/logo.svg"
           />
 
           <p className="mt-[18px] text-center text-[26px] leading-none">

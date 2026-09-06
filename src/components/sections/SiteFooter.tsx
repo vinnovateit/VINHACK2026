@@ -19,7 +19,7 @@ export default function SiteFooter() {
   );
 
   return (
-    <footer className="-translate-x-1/2 absolute bg-black h-[826px] left-1/2 overflow-clip top-[8008px] w-[1280px]" data-node-id="297:3" data-name="FOOTER">
+    <footer className="-translate-x-1/2 absolute bg-black h-[826px] left-1/2 overflow-clip top-[8424px] w-[1280px]" data-node-id="297:3" data-name="FOOTER">
       <div className="absolute contents left-0 top-[111px]" data-node-id="297:4">
         <div className="absolute flex h-[363px] items-center justify-center left-0 top-[111px] w-[1280px]" data-tab-part="email" data-node-id="297:5">
           <div className="-scale-y-100 flex-none rotate-180">

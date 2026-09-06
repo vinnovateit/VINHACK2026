@@ -17,7 +17,7 @@ import SiteFooter from "@/components/sections/SiteFooter";
 /**
  * The page is drawn two ways, and which one you get is a media query.
  *
- * The design is a fixed 1280 x 8834 collage with no reflow in it, so at and
+ * The design is a fixed 1280 x 9250 collage with no reflow in it, so at and
  * above `md` it is scaled whole — that is `DesignCanvas`, and it is the design
  * exactly as it was drawn. Below `md` that scaling puts 21px body copy at 6px
  * on a phone, so `MobileSite` takes over with the same content and artwork

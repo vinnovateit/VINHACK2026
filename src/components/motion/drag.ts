@@ -45,12 +45,28 @@ import gsap from "gsap";
  * gesture rather than the whole of it: a slow drag that ends in a flick is a
  * flick, and averaging over the whole travel would swallow it. `THROW_SLACK` is
  * the other way in — a deliberate haul out past the edge, at any speed.
+ *
+ * `REACH` is what makes that second way in the same gesture in every direction.
+ * The section is the only thing a sticker may be *left* outside of, but it is a
+ * 1280px room and a sticker sits somewhere particular in it: hauling one out
+ * through the edge it happens to be sitting against took a few pixels, and
+ * hauling the same sticker the other way took the width of the section, so each
+ * one could only be got rid of towards its own corner. So the give starts at
+ * whichever comes first — the edge of the section, or `REACH` of travel from
+ * where the sticker was picked up. Every sticker is now thrown by the same haul
+ * whichever way it is pulled, and a longer journey is made the way it always
+ * was: put it down, pick it up again.
  */
 const RUBBER = 0.42;
 const THROW_SPEED = 0.9;
-const THROW_SLACK = 96;
+const THROW_SLACK = 72;
+/** How far a sticker travels freely in one grab before it starts pulling
+ *  against the give, screen px. */
+const REACH = 200;
 /** How much of the tail of the gesture the release speed is read off. */
 const SAMPLE_MS = 90;
+
+type Box = { minX: number; maxX: number; minY: number; maxY: number };
 
 type Grab = {
   pointer: number;
@@ -59,9 +75,13 @@ type Grab = {
   y: number;
   /** Each box's x/y before the grab, in layout px. */
   start: { x: number; y: number }[];
-  /** How far the pointer may travel before the group leaves `bounds`, screen
-   *  px, measured once at the grab. */
-  limit: { minX: number; maxX: number; minY: number; maxY: number };
+  /** How far the pointer may travel before the sticker starts pulling against
+   *  the give, screen px, measured once at the grab. */
+  limit: Box;
+  /** How far it may travel and still be *left* there — the section, and only
+   *  the section. Past `limit` but inside this is a place a sticker may be put
+   *  down; past this is where it is put back from. */
+  keep: Box;
   /** The tail of the gesture — position and time — for reading a release
    *  speed off. Trimmed on every move, so it never grows. */
   trail: { x: number; y: number; t: number }[];
@@ -170,17 +190,28 @@ export function draggable(
     const top = Math.min(...rects.map((r) => r.top));
     const bottom = Math.max(...rects.map((r) => r.bottom));
 
+    const keep = {
+      minX: frame.left - left,
+      maxX: frame.right - right,
+      minY: frame.top - top,
+      maxY: frame.bottom - bottom,
+    };
+
     grab = {
       pointer: event.pointerId,
       x: event.clientX,
       y: event.clientY,
       start: boxes.map((box) => ({ x: axis(box, "x"), y: axis(box, "y") })),
+      // The give starts at whichever comes first in each direction, the
+      // section's edge or `REACH`, so the haul that throws a sticker is the
+      // same one on all four of its sides however near a corner it was drawn.
       limit: {
-        minX: frame.left - left,
-        maxX: frame.right - right,
-        minY: frame.top - top,
-        maxY: frame.bottom - bottom,
+        minX: Math.max(keep.minX, -REACH),
+        maxX: Math.min(keep.maxX, REACH),
+        minY: Math.max(keep.minY, -REACH),
+        maxY: Math.min(keep.maxY, REACH),
       },
+      keep,
       trail: [{ x: event.clientX, y: event.clientY, t: event.timeStamp }],
       at: { x: 0, y: 0 },
     };
@@ -193,9 +224,16 @@ export function draggable(
 
   const move = (event: PointerEvent) => {
     if (!grab || event.pointerId !== grab.pointer) return;
-    const { limit } = grab;
+    const { limit, keep } = grab;
     const dx = rubber(event.clientX - grab.x, limit.minX, limit.maxX);
     const dy = rubber(event.clientY - grab.y, limit.minY, limit.maxY);
+    // `dx`/`dy` are what a throw is measured against — the give past `limit`
+    // has no ceiling, which is what lets a long, slow haul read as the same
+    // pull as a short, fast one. Rendered rather than that raw figure is the
+    // same value pinned to `keep`, the section's own edge: past `limit` the
+    // sticker is already being held out over open air, and without this it
+    // was drawn exactly there, clipped by CSS alone — fine everywhere that
+    // supports `overflow: clip`, a hole in the canvas anywhere that doesn't.
     grab.at = { x: dx, y: dy };
     grab.trail.push({ x: event.clientX, y: event.clientY, t: event.timeStamp });
     while (
@@ -204,10 +242,12 @@ export function draggable(
     ) {
       grab.trail.shift();
     }
+    const drawX = clamp(dx, keep.minX, keep.maxX);
+    const drawY = clamp(dy, keep.minY, keep.maxY);
     boxes.forEach((box, i) => {
       gsap.set(box, {
-        x: grab!.start[i].x + dx * unscale,
-        y: grab!.start[i].y + dy * unscale,
+        x: grab!.start[i].x + drawX * unscale,
+        y: grab!.start[i].y + drawY * unscale,
       });
     });
   };
@@ -215,7 +255,7 @@ export function draggable(
   const up = (event: PointerEvent) => {
     if (!grab || event.pointerId !== grab.pointer) return;
     const target = event.currentTarget as HTMLElement;
-    const { limit, at, trail, start } = grab;
+    const { limit, keep, at, trail, start } = grab;
     target.releasePointerCapture?.(event.pointerId);
     target.style.cursor = "grab";
 
@@ -245,10 +285,14 @@ export function draggable(
     }
 
     // Not thrown, but possibly hanging over the edge on the rubber. Put it
-    // back inside the bounds it is allowed to live in.
+    // back inside the bounds it is allowed to live in — the section, not
+    // `REACH`: a long carry that was pulling against the give is still a place
+    // the sticker may be left, and springing it back 40px because the visitor
+    // took it further than a short drag would be taking their placement off
+    // them. Only the section is a line it may not be left over.
     const home = {
-      x: clamp(at.x, limit.minX, limit.maxX),
-      y: clamp(at.y, limit.minY, limit.maxY),
+      x: clamp(at.x, keep.minX, keep.maxX),
+      y: clamp(at.y, keep.minY, keep.maxY),
     };
     if (home.x !== at.x || home.y !== at.y) {
       boxes.forEach((box, i) => {

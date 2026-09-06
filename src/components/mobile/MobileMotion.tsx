@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 
 import { keyDown, keyUp } from "@/components/motion/click";
 import { draggable } from "@/components/motion/drag";
-import { dropIn, foldAway } from "@/components/motion/pinboard";
+import { slideIn, slideOut } from "@/components/motion/pinboard";
 import { boxesOf, MOBILE } from "@/components/motion/recipes";
 import { reveal } from "@/components/motion/reveal";
 import { wireSpeaker } from "@/components/motion/speaker";
@@ -34,8 +34,8 @@ gsap.registerPlugin(useGSAP);
  *
  *   data-m-stamp="0.4"       stamped down, this many seconds after its trigger
  *   data-m-stamp-at="top 45%"  where in the pass it fires, when it has to wait
- *   data-m-fold              turned and slid off as its section leaves
- *   data-m-drop              brought down from above as its section arrives
+ *   data-m-slide-out         panned off to the right as its section leaves
+ *   data-m-slide-in          panned in from the left as its section arrives
  *   data-m-reveal            copy pulling into focus once
  *   data-m-drag              pickable up, and throwable off the page
  *
@@ -50,9 +50,11 @@ gsap.registerPlugin(useGSAP);
  *  5.05 left and 2.59 up from its plate, and a press closes most of that. */
 const KEY_TRAVEL = { x: -4.05, y: 2.1 };
 
-/** How far a sheet slides off the phone. The collage's 620 is drawn for a
+/** How far a sheet travels across the phone. The collage's 620 is drawn for a
  *  1280px plate; a column is half that, and a sheet that overshoots simply
- *  spends the rest of the scroll gone. */
+ *  spends the rest of the scroll gone. The same figure both ways, for the
+ *  reason `motion/pinboard.ts` gives: a board that moved at two speeds would
+ *  read as two boards. */
 const SHEET_SHIFT = 360;
 
 export default function MobileMotion({ children }: { children: ReactNode }) {
@@ -75,18 +77,14 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
         // ---- the two pinned sheets -------------------------------------
         //
         // Hung off the sections rather than off the sheets themselves, for the
-        // reason given in `motion/pinboard.ts`: the swap only reads as one
-        // sheet replacing another if both halves are keyed to the same line on
-        // the page, and the sections' adjoining edges are that line.
-        for (const el of all("[data-m-fold]")) {
-          foldAway([el], {
-            trigger: sectionOf(el),
-            shift: SHEET_SHIFT,
-            lift: 40,
-          });
+        // reason given in `motion/pinboard.ts`: the two halves only read as one
+        // horizontal scroll if they are keyed to the ends of the gap between
+        // the sections, and the sections' own edges are that gap.
+        for (const el of all("[data-m-slide-out]")) {
+          slideOut([el], { trigger: sectionOf(el), shift: SHEET_SHIFT });
         }
-        for (const el of all("[data-m-drop]")) {
-          dropIn([el], { trigger: sectionOf(el), drop: 460 });
+        for (const el of all("[data-m-slide-in]")) {
+          slideIn([el], { trigger: sectionOf(el), shift: SHEET_SHIFT });
         }
 
         // ---- stamps ----------------------------------------------------

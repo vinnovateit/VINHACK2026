@@ -2,7 +2,7 @@ import { REGISTER } from "@/content/site";
 
 export default function RegisterSection() {
   return (
-    <section aria-label="Register now" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[7176px] w-[1280px]" data-node-id="297:166" data-name="REGISTER NOW">
+    <section aria-label="Register now" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[7592px] w-[1280px]" data-node-id="297:166" data-name="REGISTER NOW">
       <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-1/2 not-italic text-[#bfea88] text-[30px] text-center top-[593px] whitespace-pre" data-node-id="297:167">
         {REGISTER.tagline[0]}
         <br aria-hidden />

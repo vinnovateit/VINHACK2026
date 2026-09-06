@@ -20,7 +20,7 @@ import {
 } from "@/components/motion/recipes";
 import { draggable } from "@/components/motion/drag";
 import { handwrite } from "@/components/motion/handwrite";
-import { dropIn, foldAway } from "@/components/motion/pinboard";
+import { slideIn, slideOut } from "@/components/motion/pinboard";
 import { printReceipt } from "@/components/motion/receipt";
 import { reveal, strikeOnce } from "@/components/motion/reveal";
 import { stampIn } from "@/components/motion/stamp";
@@ -39,8 +39,8 @@ gsap.registerPlugin(useGSAP);
  * Property budget — no two concurrent tweens may share a property, or they
  * fight over the single transform matrix GSAP composes:
  *   drift (scrubbed)       ->  y, or rotation where no loop uses it
- *   pull / put (scrubbed)  ->  y, and never alongside a drift — same property,
- *                              same boxes, and the later one simply wins
+ *   slide in/out (scrubbed) -> x, the two halves of the horizontal scroll
+ *                              between the Rules and Guidelines sheets
  *   settle (one-shot)      ->  x / y / scale / rotation
  *   loops                  ->  rotation, or x, or y + rotateY
  *   stamp (one-shot)       ->  scale / rotation / opacity, and the loop it
@@ -80,12 +80,12 @@ type Move = {
   end?: string;
   /** The offset the element eases out of, once, as it enters view. */
   settle?: SettleFrom;
-  /** Turned and slid out to the side as the section leaves — the Rules sheet
-   *  coming off the board. Replaces `drift`: same properties, same boxes. */
-  fold?: true;
-  /** Brought down from above as the section arrives — the Guidelines sheet
-   *  going up in its place. Likewise replaces `drift`. */
-  drop?: true;
+  /** Panned out to the right as the section leaves — the Rules half of the
+   *  horizontal scroll between the two sheets. */
+  slideOut?: true;
+  /** Panned in from the left as the section arrives — the Guidelines half of
+   *  the same scroll, going the same way at the same rate. */
+  slideIn?: true;
   /** Endless loop. */
   loop?: "bounce" | "sine" | "flip" | "spin" | "swing";
   /** Loop phase offset in seconds, so neighbours never move in step. */
@@ -222,42 +222,42 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     id: "343:709",
     name: "Rules",
     moves: [
-      // The sheet: read where it is drawn, then turned and slid off the board
-      // as the section goes. The rules themselves are revealed through this
-      // entry rather than getting one of their own — `reveal` selects inside
-      // the node and spends opacity, so it neither claims the box away from
-      // the fold nor competes with it. Whole block at once, because the pin is
-      // waiting on it and ten staggered bullets is a long wait.
+      // The sheet: read where it is drawn, then panned off the board to the
+      // right as the section goes. The rules themselves are revealed through
+      // this entry rather than getting one of their own — `reveal` selects
+      // inside the node and spends opacity, so it neither claims the box away
+      // from the pan nor competes with it. Whole block at once, because the pin
+      // is waiting on it and ten staggered bullets is a long wait.
       {
         node: "343:710",
-        fold: true,
+        slideOut: true,
         reveal: { select: '[data-node-id="343:715"]', stagger: 0 },
       },
       // The pin is stamped where it is drawn and does not move again until the
       // sheet goes, which it then goes with — it is through the paper, so it
       // cannot stay behind. Nothing about its arrival is scroll-linked.
-      { node: "343:716", stamp: 0.8, fold: true },
+      { node: "343:716", stamp: 0.8, slideOut: true },
       // Stamped, and then still. The badge's life is the asterisk beside it,
       // which breathes on its own clock in CSS (`.asterisk` in globals.css);
       // it used to rock as well, and the two together were fidgeting.
-      { node: "343:719", stamp: 0.95, fold: true },
+      { node: "343:719", stamp: 0.95, slideOut: true },
     ],
   },
   {
     id: "343:751",
     name: "Guidelines",
     moves: [
-      // The mirror of Rules, and simultaneous with it: the sheet comes down
-      // from above as the rules slide out, clipped by the section until it is
+      // The other half of Rules' movement: the sheet comes in from the left the
+      // way the rules went out to the right, clipped by the section until it is
       // properly on. Then the text resolves on it and the pin is driven in.
-      { node: "343:753", drop: true },
-      // The heading comes down with the sheet rather than settling on its own:
+      { node: "343:753", slideIn: true },
+      // The heading comes in with the sheet rather than settling on its own:
       // it is printed on the paper, and a heading that stayed put while the
       // page it is on arrived would be the one thing giving the trick away.
-      { node: "343:756", drop: true },
-      { node: "343:757", drop: true, reveal: { select: "p", stagger: 0 } },
+      { node: "343:756", slideIn: true },
+      { node: "343:757", slideIn: true, reveal: { select: "p", stagger: 0 } },
       // Both stamped once the sheet has actually landed — `top 40%` rather
-      // than the default `top 70%`, which is still inside the drop.
+      // than the default `top 70%`, which is still inside the pan.
       { node: "343:760", stamp: 0.1, stampAt: "top 40%" },
       { node: "343:761", stamp: 0.25, stampAt: "top 40%", loop: "bounce", offset: 0.9 },
     ],
@@ -395,12 +395,16 @@ export default function PageMotion({ children }: { children: ReactNode }) {
             // top -379 *inside* its section, so hung off its own rect it
             // crossed the viewport a full sheet-height early and had finished
             // arriving while you were still reading the rules. And the two
-            // halves only read as one swap if they are keyed to the same line
-            // on the page — which the sections' adjoining edges are, and no
-            // two elements inside them are.
+            // halves only read as one scroll if they are keyed to the two ends
+            // of the gap between the sections — which the section edges are,
+            // and no two elements inside them are.
+            //
+            // Neither is handed `unscale`: they spend x alone, and a layout px
+            // is a layout px whatever the canvas is scaled to. It is only the
+            // recipes that turn something which have to be told.
             const startSheet = () => {
-              if (move.fold) foldAway(boxes, { trigger: el, unscale });
-              if (move.drop) dropIn(boxes, { trigger: el, unscale });
+              if (move.slideOut) slideOut(boxes, { trigger: el });
+              if (move.slideIn) slideIn(boxes, { trigger: el });
             };
 
             const startLoop = move.loop
@@ -424,7 +428,7 @@ export default function PageMotion({ children }: { children: ReactNode }) {
             // still using. The sheet recipes are the subtle one, and they are
             // the reason the pin was not stamping at all: a scrubbed tween
             // re-renders from its own recorded start state on every scroll
-            // tick, so a `pull` built first sat there rewriting the pin's
+            // tick, so a slide built first sat there rewriting the pin's
             // transform out from under the stamp for the whole of its 0.83s.
             // That is the hazard this file's header warns about, and the cure
             // is the same as for the loop — start it once the stamp is done.
