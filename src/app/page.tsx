@@ -13,6 +13,7 @@ import RulesSection from "@/components/sections/Rules";
 import GuidelinesSection from "@/components/sections/Guidelines";
 import RegisterSection from "@/components/sections/Register";
 import SiteFooter from "@/components/sections/SiteFooter";
+import { FEATURES } from "@/content/features";
 
 /**
  * The page is drawn two ways, and which one you get is a media query.
@@ -40,6 +41,8 @@ export default function Home() {
     <main className="bg-black">
       <div className="hidden md:block">
         <DesignCanvas
+          compact={!FEATURES.projects}
+          tracksCompact={!FEATURES.tracks}
           hero={
             <HeroMotion>
               <HeroSection />
@@ -49,13 +52,17 @@ export default function Home() {
           <PageMotion>
             <AboutSection />
             <WhoAreWeSection />
-            <ProjectsSection />
-            <TracksSection />
-            <TimelineSection />
-            <RulesSection />
-            <GuidelinesSection />
-            <RegisterSection />
-            <SiteFooter />
+            {FEATURES.projects && <ProjectsSection />}
+            <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>
+              <TracksSection />
+              <div className={!FEATURES.tracks ? "tracks-disabled-sections" : ""}>
+                <TimelineSection />
+                <RulesSection />
+                <GuidelinesSection />
+                <RegisterSection />
+                <SiteFooter />
+              </div>
+            </div>
           </PageMotion>
         </DesignCanvas>
       </div>

@@ -35,6 +35,76 @@
   --hero-height: 832px;
 }
 
+.projects-disabled {
+  --canvas-height: 8418px;
+}
+
+.tracks-disabled {
+  --canvas-height: 8498px;
+}
+
+.projects-disabled.tracks-disabled {
+  --canvas-height: 7666px;
+}
+
+.projects-disabled-sections {
+  transform: translateY(-832px);
+}
+
+.tracks-disabled-sections {
+  transform: translateY(-752px);
+}
+
+.coming-soon-wrap {
+  animation: coming-soon-group 3.6s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  .coming-soon-wrap {
+    left: 50%;
+    position: absolute;
+    top: 458px;
+  }
+}
+
+.coming-soon {
+  text-shadow: 0 0 18px rgba(191, 234, 136, 0.28);
+}
+
+@keyframes coming-soon-group {
+  0%, 100% {
+    opacity: 0.74;
+    transform: translateX(-50%) translateY(0) rotate(-2deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(4px) rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coming-soon-wrap {
+    animation: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .coming-soon-wrap {
+    animation-name: coming-soon-group-mobile;
+  }
+}
+
+@keyframes coming-soon-group-mobile {
+  0%, 100% {
+    opacity: 0.74;
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(4px) rotate(2deg);
+  }
+}
+
 /* The design is a fixed 1280px collage — sections overlap and every element is
    absolutely positioned, so there is no reflow to fall back on. It is scaled
    as a whole instead, and the two halves of the page are scaled differently:
