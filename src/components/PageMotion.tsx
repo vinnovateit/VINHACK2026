@@ -268,17 +268,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     id: "297:166",
     name: "Register",
     moves: [
-      // "register now" is joined cursive on two lines, so it is written the way
-      // it would be by hand: the top word first, then the second, with the gap
-      // between them reading as the pen lifting to the next line. "now" is the
-      // shorter word and gets a proportionally shorter stroke.
-      //
-      // A brisker hand than it was — the whole phrase in about 1.4s rather
-      // than 2.05 — and started earlier, at `top 85%` instead of `top 75%`, so
-      // the pen is already moving as the section comes up rather than waiting
-      // until the lettering is a quarter of the way up the screen.
-      { node: "297:169", write: { duration: 0.95, start: "top 85%" } },
-      { node: "297:177", write: { duration: 0.4, delay: 1, start: "top 85%" } },
+      // "register now" cursive strokes are drawn by RegisterSvg and NowSvg.
       { node: "297:167", drift: -40 },
     ],
   },

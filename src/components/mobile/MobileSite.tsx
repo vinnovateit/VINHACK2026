@@ -6,6 +6,8 @@ import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
 import MobileTimeline from "@/components/mobile/MobileTimeline";
 import Piece from "@/components/mobile/Piece";
+import RegisterSvg from "@/components/RegisterSvg";
+import NowSvg from "@/components/NowSvg";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
 import { PASS_START } from "@/components/pass/variants";
@@ -1103,19 +1105,10 @@ function MobileRegister() {
           clip-path; here it is simply present. */}
       <Piece width={779.141} height={342.48}>
         <h2 className="absolute top-0 left-0 h-[327.438px] w-[779.141px]">
-          <img
-            alt={REGISTER.heading}
-            className="absolute inset-0 block size-full max-w-none"
-            src="/figma/register.svg"
-          />
+          <RegisterSvg className="absolute inset-0 block size-full max-w-none" />
         </h2>
         <div className="absolute top-[208.44px] left-[281.96px] h-[134.04px] w-[388.209px]">
-          <img
-            alt=""
-            aria-hidden
-            className="absolute inset-0 block size-full max-w-none"
-            src="/figma/now.svg"
-          />
+          <NowSvg className="absolute inset-0 block size-full max-w-none" />
         </div>
       </Piece>
 
