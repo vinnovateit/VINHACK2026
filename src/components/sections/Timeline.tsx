@@ -43,13 +43,9 @@ function Review({ label, top }: { label: string; top: number }) {
 function Rule({ top }: { top: number }) {
   return (
     <div
-      className="-translate-x-1/2 absolute h-0 left-[calc(50%-0.74px)] w-[294.233px]"
+      className="receipt-rule -translate-x-1/2 absolute h-[1px] left-[calc(50%-0.74px)] w-[294.233px]"
       style={{ top }}
-    >
-      <div className="absolute inset-[-1.97px_0_0_0]">
-        <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
-      </div>
-    </div>
+    />
   );
 }
 
@@ -70,8 +66,8 @@ const LAYOUT = [
     rules: [297.2, 424.56, 459.62],
   },
   {
-    entries: [318.9, 353, 376, 399, 422, 455.9, 490, 513],
-    rules: [297.2, 308, 341, 445, 478],
+    entries: [308, 340, 362, 384, 406, 439, 472, 494],
+    rules: [297.2, 328, 428, 460],
   },
 ];
 
@@ -123,30 +119,26 @@ export default function TimelineSection() {
     <section aria-label="Timeline" className="absolute bg-black h-[832px] left-0 overflow-clip top-[4680px] w-[1280px]" data-node-id="343:2038" data-name="MacBook Air - 17">
       <div className="-translate-x-1/2 absolute bg-[#fa1a1d] h-[98.736px] left-[calc(50%+360.18px)] rounded-[19.747px] top-[126px] w-[440.363px]" data-node-id="343:2039">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute bg-black h-[18.76px] left-1/2 top-1/2 w-[380.134px]" data-node-id="343:2040" />
-        <div className="absolute bg-[#f1f0f0] h-[595.872px] left-[39.49px] overflow-clip top-[49.37px] w-[361.867px]" data-node-id="343:2041">
-          <div className="absolute flex h-[21.722px] items-center justify-center left-[0.99px] top-[580.07px] w-[363.347px]" data-node-id="343:2061">
-            <div className="flex-none rotate-180">
-              <div className="h-[21.722px] relative w-[363.347px]">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095503.svg" />
-              </div>
-            </div>
-          </div>
+        <div className="absolute h-[595.872px] left-[39.49px] overflow-clip top-[49.37px] w-[361.867px]" data-node-id="343:2041">
+          <div
+            aria-hidden
+            className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0]"
+            data-node-id="343:2061"
+          />
           <div className="absolute h-0 left-[75.53px] top-[144.65px] w-[214.257px]" data-node-id="343:2080">
             <div className="absolute inset-[-5.92px_0_0_0]">
               <img alt="" className="block max-w-none size-full" src="/figma/line12.svg" />
             </div>
           </div>
           <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[calc(50%-59px)] not-italic text-[17.772px] text-black top-[206.36px] whitespace-nowrap" data-node-id="343:2081">{TIMELINE.masthead}</p>
-          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%+0.25px)] top-[246.84px] w-[294.233px]" data-node-id="343:2083">
-            <div className="absolute inset-[-1.97px_0_0_0]">
-              <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
-            </div>
-          </div>
-          <div className="-translate-x-1/2 absolute h-0 left-[calc(50%-2.22px)] top-[531.69px] w-[294.233px]" data-node-id="343:2084">
-            <div className="absolute inset-[-1.97px_0_0_0]">
-              <img alt="" className="block max-w-none size-full" src="/figma/line13.svg" />
-            </div>
-          </div>
+          <div
+            className="receipt-rule -translate-x-1/2 absolute h-[1px] left-[calc(50%+0.25px)] top-[246.84px] w-[294.233px]"
+            data-node-id="343:2083"
+          />
+          <div
+            className="receipt-rule -translate-x-1/2 absolute h-[1px] left-[calc(50%-2.22px)] top-[531.69px] w-[294.233px]"
+            data-node-id="343:2084"
+          />
           <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[37.03px] not-italic text-[17.772px] text-black top-[265.11px] whitespace-nowrap" data-node-id="343:2088">{TIMELINE.dateLabel}</p>
           <p className="[word-break:break-word] absolute font-rotonto leading-[13.823px] left-[31.6px] not-italic text-[6.912px] text-black top-[535.64px] whitespace-nowrap" data-node-id="343:2110">
             {TIMELINE.site}
@@ -163,16 +155,20 @@ export default function TimelineSection() {
           <DaySheet index={0} />
           <DaySheet index={1} />
         </div>
+        {/* Cutter lip anchoring the paper to the red slot mouth */}
+        <div
+          aria-hidden
+          className="-translate-x-1/2 pointer-events-none absolute left-1/2 top-[47px] h-[6px] w-[378px] rounded-full bg-[#161616] shadow-[0_3px_5px_rgba(0,0,0,0.55)] z-10"
+        />
       </div>
       <div className="absolute bg-[#74d4f0] border-[#2849cb] border-[1.8px] border-solid h-[63px] left-[240px] overflow-clip rounded-[13.5px] top-[473px] w-[356.4px]" data-node-id="343:2115">
-        <p className="[word-break:break-word] absolute font-rotonto leading-[normal] left-[calc(50%+66.6px)] not-italic text-[#2849cb] text-[21.6px] top-[calc(50%-12.6px)] whitespace-nowrap" data-node-id="343:2116">
+        <div className="-translate-y-1/2 absolute bg-[#2849cb] border-[#74d4f0] border-[1.8px] border-solid h-[59.4px] left-0 rounded-[11.7px] top-1/2 w-[181.8px]" data-node-id="343:2117" />
+        <p className="-translate-y-1/2 absolute font-rotonto leading-[normal] left-0 not-italic text-[#74d4f0] text-[21.6px] text-center top-1/2 w-[178.2px] whitespace-nowrap z-1 pointer-events-none transition-colors duration-300" data-node-id="343:2118">
+          {TIMELINE.days[0].name}
+        </p>
+        <p className="-translate-y-1/2 absolute font-rotonto leading-[normal] left-[178.2px] not-italic text-[#2849cb] text-[21.6px] text-center top-1/2 w-[178.2px] whitespace-nowrap z-1 pointer-events-none transition-colors duration-300" data-node-id="343:2116">
           {TIMELINE.days[1].name}
         </p>
-        <div className="-translate-y-1/2 absolute bg-[#2849cb] border-[#74d4f0] border-[1.8px] border-solid h-[59.4px] left-0 overflow-clip rounded-[13.5px] top-1/2 w-[181.8px]" data-node-id="343:2117">
-          <p className="[word-break:break-word] absolute font-rotonto leading-[normal] left-[calc(50%-26.1px)] not-italic text-[#74d4f0] text-[21.6px] top-[calc(50%-12.6px)] whitespace-nowrap" data-node-id="343:2118">
-            {TIMELINE.days[0].name}
-          </p>
-        </div>
       </div>
       <div className="-translate-y-1/2 absolute aspect-[77.25666706933134/71.41451740581158] flex items-center justify-center left-[23.93%] right-[70.04%] top-[calc(50%-127.69px)]" data-node-id="343:2119" style={{ containerType: "size" }}>
         <div className="-scale-x-100 flex-none h-[hypot(-71.9713cqw,-38.2022cqh)] rotate-[116.14deg] w-[hypot(28.0287cqw,-61.7978cqh)]">

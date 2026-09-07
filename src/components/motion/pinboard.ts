@@ -71,11 +71,13 @@ export function slideOut(
   },
 ) {
   if (!boxes.length) return;
+  gsap.set(boxes, { willChange: "transform", force3D: true });
   return gsap.fromTo(
     boxes,
     { x: 0 },
     {
       x: shift,
+      force3D: true,
       ease: "none",
       scrollTrigger: { trigger, start, end, scrub: true },
     },
@@ -106,11 +108,13 @@ export function slideIn(
   },
 ) {
   if (!boxes.length) return;
+  gsap.set(boxes, { willChange: "transform", force3D: true });
   return gsap.fromTo(
     boxes,
     { x: -shift },
     {
       x: 0,
+      force3D: true,
       ease: "none",
       scrollTrigger: { trigger, start, end, scrub: true },
     },

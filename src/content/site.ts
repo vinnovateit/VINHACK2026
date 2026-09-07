@@ -229,7 +229,7 @@ const review = (label: string): ScheduleReview => ({ kind: "review", label });
 export const TIMELINE = {
   heading: "Timeline",
   masthead: "VinHack 2026 ",
-  dateLabel: "Date : ",
+  dateLabel: "Date",
   site: "vinhack.vinnovateit.com",
   email: "vinnovateit@gmail.com",
   sticker: ["Be Curious ", "Keep Exploring !"],
@@ -239,26 +239,26 @@ export const TIMELINE = {
       name: "Day 1",
       date: "18th Sept",
       entries: [
-        row("Check-in", "9.00 AM"),
-        row("Speaker Session", "11.30 AM"),
-        row("Lunch Break", "1.00 PM"),
-        row("Mini Event 1", "2.00 PM"),
-        review("Review 1 @ 4.00 PM"),
-        row("Dinner Break", "7.00 PM"),
+        row("Check-in", "9:00 AM"),
+        row("Speaker Session", "11:30 AM"),
+        row("Lunch Break", "1:00 PM"),
+        row("Mini Event 1", "2:00 PM"),
+        review("Review 1 @ 4:00 PM"),
+        row("Dinner Break", "7:00 PM"),
       ],
     },
     {
       name: "Day 2",
       date: "19th Sept",
       entries: [
-        review("Review 2 @ 2.00 AM"),
-        row("Break", "6.00 AM"),
-        row("Report back at venue", "8.00 AM"),
-        row("Final Countdown", "10.00 AM"),
-        row("Lunch Break", "1.00 PM"),
-        review("Review 3 @ 1.30 PM"),
-        row("Final Presentation", "5.00 PM"),
-        row("Closing Ceremony", "7.00 PM"),
+        review("Review 2 @ 2:00 AM"),
+        row("Break", "6:00 AM"),
+        row("Report Back at Venue", "8:00 AM"),
+        row("Final Countdown", "10:00 AM"),
+        row("Lunch Break", "1:00 PM"),
+        review("Review 3 @ 1:30 PM"),
+        row("Final Presentation", "5:00 PM"),
+        row("Closing Ceremony", "7:00 PM"),
       ],
     },
   ] satisfies Day[],
@@ -273,7 +273,7 @@ export const RULES = {
     "Hackathon runs for 36 hours continuously.",
     "All work must be done during the event; only open-source tools/libraries allowed; any AI tools can be used.",
     "Any tech stack may be used; projects must align with at least one track.",
-    "Internet access is permitted.  Submissions must include: working prototype/demo, pitch deck or documentation, and GitHub repo with source code.",
+    "Internet access is permitted. Submissions must include working prototype/demo, pitch deck or documentation, and GitHub repo with source code.",
     "Late submissions will not be accepted.",
     "Judging based on novelty, feasibility & impact, tech implementation, design & UX, open-source usage, and pitching.",
     "Judges’ decisions are final.",
@@ -315,7 +315,7 @@ export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
   marquee:
-    "VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ون ہیک • ",
+    " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • വിൻഹാക്ക് • ವಿನ್‌ಹ್ಯಾಕ್ • ون ہیک •  ",
   /**
    * The five folder tabs, in the order they stack — each a coloured band with
    * its label in a contrasting colour off the same palette, which is the pair
@@ -323,11 +323,11 @@ export const FOOTER = {
    * than links and none carries a URL, so neither layout links them.
    */
   tabs: [
-    { name: "EMAIL", band: "#74d4f0", color: "#2849cb" },
-    { name: "GITHUB", band: "#2849cb", color: "#74d4f0" },
-    { name: "INSTAGRAM", band: "#bfea88", color: "#1c563c" },
-    { name: "LINKEDIN", band: "#1c563c", color: "#bfea88" },
-    { name: "MEDIUM", band: "#db9eef", color: "#fa1a1d" },
+    { name: "EMAIL", band: "#74d4f0", color: "#2849cb", href: "mailto:vinnovateit@gmail.com" },
+    { name: "GITHUB", band: "#2849cb", color: "#74d4f0", href: "https://github.com/vinnovateit" },
+    { name: "INSTAGRAM", band: "#bfea88", color: "#1c563c", href: "https://instagram.com/vinnovateit" },
+    { name: "LINKEDIN", band: "#1c563c", color: "#bfea88", href: "https://www.linkedin.com/company/v-innovate-it" },
+    { name: "MEDIUM", band: "#db9eef", color: "#fa1a1d", href: "https://medium.com/@vinnovateit" },
   ],
   /** The panel the tabs are filed into, which the closing credits sit on. */
   base: "#fa1a1d",

@@ -1,4 +1,6 @@
 import { REGISTER } from "@/content/site";
+import RegisterSvg from "@/components/RegisterSvg";
+import NowSvg from "@/components/NowSvg";
 
 export default function RegisterSection() {
   return (
@@ -10,10 +12,10 @@ export default function RegisterSection() {
       </p>
       <div className="absolute contents left-[250px] top-[168.43px]" data-node-id="297:168" data-name="register now">
         <h2 className="absolute h-[327.438px] left-[250px] top-[168.43px] w-[779.141px]" data-node-id="297:169" data-name="register">
-          <img alt={REGISTER.heading} className="absolute block inset-0 max-w-none size-full" src="/figma/register.svg" />
+          <RegisterSvg className="absolute block inset-0 max-w-none size-full" />
         </h2>
         <div className="absolute h-[134.04px] left-[531.96px] top-[376.87px] w-[388.209px]" data-node-id="297:177" data-name="now">
-          <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/now.svg" />
+          <NowSvg className="absolute block inset-0 max-w-none size-full" />
         </div>
       </div>
     </section>
