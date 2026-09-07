@@ -315,7 +315,7 @@ export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
   marquee:
-    "VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ون ہیک • ",
+    "VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • വിൻഹാക്ക് • ವಿನ್‌ಹ್ಯಾಕ್ • ون ہیک • ",
   /**
    * The five folder tabs, in the order they stack — each a coloured band with
    * its label in a contrasting colour off the same palette, which is the pair
