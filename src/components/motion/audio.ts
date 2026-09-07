@@ -37,6 +37,14 @@ export function audio(): AudioContext | null {
   return context;
 }
 
+if (typeof window !== "undefined") {
+  const unlock = () => {
+    if (context && context.state === "suspended") void context.resume();
+  };
+  window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+  window.addEventListener("keydown", unlock, { capture: true, passive: true });
+}
+
 /** 50ms of white noise, generated once and re-triggered for every hit. */
 function noiseBuffer(ac: AudioContext): AudioBuffer {
   if (!noise) {

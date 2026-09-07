@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { audio } from "@/components/motion/audio";
 import { feedTick, tearRip } from "@/components/motion/machine";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -75,38 +76,44 @@ export function printReceipt(
     gsap.set(ink, { y: shown - full });
   };
 
-  // ~14 line feeds a second, which is about the rate a receipt printer
-  // actually advances at — and, now that the feed is audible, also the rate
-  // the ticks come at.
-  const steps = Math.round(duration * 14);
-
   const build = () => {
     const roll = { p: 0 };
     let fed = 0;
     feed(0);
     gsap.set(paper, { rotation: 0, transformOrigin: "50% 0%" });
 
+    const stepTo = (targetP: number, dur: number, stepCount: number) => ({
+      p: targetP,
+      duration: dur,
+      ease: `steps(${stepCount})`,
+      onUpdate: () => {
+        feed(roll.p);
+        const currentStep = Math.round(roll.p * 26);
+        if (currentStep > fed) {
+          fed = currentStep;
+          feedTick();
+        }
+      },
+    });
+
+    const scale = duration / 1.86;
+
     return (
       gsap
         .timeline()
-        .to(roll, {
-          p: 1,
-          duration,
-          ease: `steps(${steps})`,
-          onUpdate: () => {
-            feed(roll.p);
-            // One tick each time the platen actually steps on, not each time
-            // this is called: `steps()` holds a value across several frames.
-            const step = Math.round(roll.p * steps);
-            if (step > fed) {
-              fed = step;
-              feedTick();
-            }
-          },
-        })
+        // Chunk 1: Header / logo emerges
+        .to(roll, stepTo(0.28, 0.35 * scale, 7))
+        .to({}, { duration: 0.18 * scale })
+        // Chunk 2: Masthead & date divider
+        .to(roll, stepTo(0.55, 0.38 * scale, 7))
+        .to({}, { duration: 0.16 * scale })
+        // Chunk 3: Schedule entries & checkpoints
+        .to(roll, stepTo(0.82, 0.36 * scale, 7))
+        .to({}, { duration: 0.15 * scale })
+        // Chunk 4: Footer lines & feed out to tear line
+        .to(roll, stepTo(1.0, 0.28 * scale, 5))
         // The tear: a quick rip across the slot, then the freed strip swings
-        // and settles. Small numbers — the paper is only 360px wide, and
-        // anything more reads as a flag rather than a receipt.
+        // and settles.
         .call(tearRip)
         .to(paper, { rotation: 1.1, duration: 0.09, ease: "power3.in" })
         .to(paper, { rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" })
@@ -135,6 +142,8 @@ export function printReceipt(
 
   return {
     reprint: () => {
+      const ac = audio();
+      if (ac && ac.state === "suspended") void ac.resume();
       tl.kill();
       tl = build();
       tl.play(0);

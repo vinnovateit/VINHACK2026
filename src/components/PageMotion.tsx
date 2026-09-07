@@ -22,6 +22,8 @@ import { draggable } from "@/components/motion/drag";
 import { handwrite } from "@/components/motion/handwrite";
 import { slideIn, slideOut } from "@/components/motion/pinboard";
 import { printReceipt } from "@/components/motion/receipt";
+import { audio } from "@/components/motion/audio";
+import { toggleSnap } from "@/components/motion/machine";
 import { reveal, strikeOnce } from "@/components/motion/reveal";
 import { stampIn } from "@/components/motion/stamp";
 
@@ -303,9 +305,9 @@ const RECEIPT = {
   paper: "343:2041",
   /** The day switch: a pill that slides under whichever day is selected. */
   toggle: "343:2115",
-  /** The label sitting in the unselected half. */
-  restLabel: "343:2116",
-  /** The filled pill, which carries the selected day's label. */
+  day1Label: "343:2118",
+  day2Label: "343:2116",
+  /** The filled pill that slides between the two days. */
   pill: "343:2117",
 } as const;
 
@@ -572,8 +574,8 @@ export default function PageMotion({ children }: { children: ReactNode }) {
           // torn off and printed again for the day now selected.
           const toggle = node(RECEIPT.toggle);
           const pill = node(RECEIPT.pill);
-          const restLabel = node(RECEIPT.restLabel);
-          const pillLabel = pill?.querySelector("p");
+          const day1Label = node(RECEIPT.day1Label);
+          const day2Label = node(RECEIPT.day2Label);
 
           /** Show one day's schedule and hide the other. */
           const showDay = (day: "1" | "2") => {
@@ -586,39 +588,32 @@ export default function PageMotion({ children }: { children: ReactNode }) {
             }
           };
 
-          if (receipt && toggle && pill && restLabel && pillLabel) {
+          if (receipt && toggle && pill && day1Label && day2Label) {
             // How far the pill travels to cover the other half.
             const throw_ = toggle.clientWidth - pill.offsetWidth;
-
-            // The flat label is drawn in the right-hand half only, so on its
-            // own it would end up underneath the pill with the left half left
-            // empty. Mirror it about the toggle's centre instead: the two swap
-            // sides, passing each other, rather than one vanishing.
-            const mirror =
-              -2 *
-              (restLabel.offsetLeft +
-                restLabel.offsetWidth / 2 -
-                toggle.clientWidth / 2);
 
             let onDayTwo = false;
 
             const pick = (wantDayTwo: boolean) => {
-              if (wantDayTwo === onDayTwo) return;
+              const ac = audio();
+              if (ac && ac.state === "suspended") void ac.resume();
+
+              if (wantDayTwo === onDayTwo) {
+                toggleSnap();
+                receipt.reprint();
+                return;
+              }
               onDayTwo = wantDayTwo;
 
               const slide = {
-                duration: 0.4,
-                ease: "power2.inOut",
+                duration: 0.32,
+                ease: "power3.out",
                 overwrite: "auto" as const,
+                onComplete: () => toggleSnap(),
               };
               gsap.to(pill, { x: wantDayTwo ? throw_ : 0, ...slide });
-              gsap.to(restLabel, { x: wantDayTwo ? mirror : 0, ...slide });
-
-              // The pill always reads as the selected day, the flat label as
-              // the other — so selecting swaps the two strings.
-              const held = pillLabel.textContent;
-              pillLabel.textContent = restLabel.textContent;
-              restLabel.textContent = held;
+              day1Label.style.color = wantDayTwo ? "#2849cb" : "#74d4f0";
+              day2Label.style.color = wantDayTwo ? "#74d4f0" : "#2849cb";
 
               // Swap which day's schedule is on the paper. Both are authored
               // in `sections/Timeline.tsx`; only one is ever displayed. Done
@@ -632,9 +627,12 @@ export default function PageMotion({ children }: { children: ReactNode }) {
             // Each half of the pill's track is a hit area. `pointerdown`
             // rather than `click` so the paper starts moving under the finger.
             const onDown = (event: Event) => {
+              const ac = audio();
+              if (ac && ac.state === "suspended") void ac.resume();
               const box = toggle.getBoundingClientRect();
               const x = (event as PointerEvent).clientX - box.left;
-              pick(x > box.width / 2);
+              const target = x > box.width / 2;
+              pick(target === onDayTwo ? !onDayTwo : target);
             };
 
             toggle.style.cursor = "pointer";

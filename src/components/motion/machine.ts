@@ -34,8 +34,8 @@ export function feedTick() {
   const ac = audio();
   if (!ac) return;
   const wobble = 0.94 + Math.random() * 0.12;
-  transient(ac, { gain: 0.045, freq: 1850 * wobble, q: 2.4, decay: 0.016 });
-  tone(ac, { gain: 0.022, from: 168 * wobble, to: 120, decay: 0.022 });
+  transient(ac, { gain: 0.09, freq: 1850 * wobble, q: 2.4, decay: 0.018 });
+  tone(ac, { gain: 0.044, from: 168 * wobble, to: 120, decay: 0.024 });
 }
 
 /**
@@ -80,17 +80,28 @@ export function printRun({
   for (let i = 0; i < steps; i++) {
     const wobble = 0.94 + Math.random() * 0.12;
     transient(ac, {
-      gain: 0.045,
+      gain: 0.09,
       freq: 1850 * wobble,
       q: 2.4,
-      decay: 0.016,
+      decay: 0.018,
       at: i * gap,
     });
-    tone(ac, { gain: 0.022, from: 168 * wobble, to: 120, decay: 0.022, at: i * gap });
+    tone(ac, { gain: 0.044, from: 168 * wobble, to: 120, decay: 0.024, at: i * gap });
   }
   transient(ac, { gain: 0.13, freq: 3400, q: 0.35, decay: 0.14, at: duration });
   transient(ac, { gain: 0.07, freq: 6200, q: 0.5, decay: 0.09, at: duration + 0.02 });
   tone(ac, { gain: 0.05, from: 210, to: 84, decay: 0.13, at: duration });
+}
+
+/**
+ * Switch landing snap: plays exactly when the day toggle pill finishes spring-sliding to the end.
+ */
+export function toggleSnap() {
+  if (isMuted()) return;
+  const ac = audio();
+  if (!ac) return;
+  transient(ac, { gain: 0.2, freq: 2900, q: 1.5, decay: 0.025 });
+  tone(ac, { gain: 0.13, from: 230, to: 88, decay: 0.055 });
 }
 
 /**

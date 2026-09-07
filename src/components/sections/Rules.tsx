@@ -11,11 +11,14 @@ export default function RulesSection() {
             <div className="bg-[#bfea88] h-[642.978px] opacity-80 relative w-[1087.506px]" />
           </div>
         </div>
-        <div className="absolute h-[642.978px] left-[80.77px] top-[108.51px] w-[1087.506px]" data-node-id="343:712">
-          <div className="absolute inset-[-2.93%_-1.73%]">
-            <img alt="" className="block max-w-none size-full" src="/figma/rectangle167.svg" />
-          </div>
-        </div>
+        <div
+          className="absolute h-[642.978px] left-[80.77px] top-[108.51px] w-[1087.506px] bg-[#bfea88]"
+          data-node-id="343:712"
+          style={{
+            boxShadow:
+              "0 15px 4px rgba(0,0,0,0.25), 0 -15px 4px rgba(0,0,0,0.25), -15px 4px 4px rgba(0,0,0,0.25), 15px 4px 4px rgba(0,0,0,0.25)",
+          }}
+        />
         <div className="absolute h-[587.412px] left-[108.56px] top-[138.28px] w-[1031.94px]" data-node-id="343:713">
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/rectangle169.svg" />
         </div>

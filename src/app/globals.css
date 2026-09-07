@@ -443,14 +443,32 @@
    thermal printer rather than a growing rectangle. It re-runs on every day
    change because `MobileTimeline` keys the paper on the day. */
 .receipt-feed {
-  animation: receipt-feed 0.9s steps(13) both;
+  animation: receipt-feed 1.8s both;
 }
 
 @keyframes receipt-feed {
-  from {
+  0% {
     clip-path: inset(0 0 100% 0);
   }
-  to {
+  22% {
+    clip-path: inset(0 0 72% 0);
+  }
+  32% {
+    clip-path: inset(0 0 72% 0);
+  }
+  54% {
+    clip-path: inset(0 0 45% 0);
+  }
+  64% {
+    clip-path: inset(0 0 45% 0);
+  }
+  82% {
+    clip-path: inset(0 0 18% 0);
+  }
+  90% {
+    clip-path: inset(0 0 18% 0);
+  }
+  100% {
     clip-path: inset(0 0 0 0);
   }
 }
@@ -605,3 +623,60 @@ body {
   font-family: var(--font-rotonto);
   font-weight: 400;
 }
+
+/* ---- receipt printer details (Timeline & MobileTimeline) ----------------- */
+
+.receipt-rule {
+  background-image: repeating-linear-gradient(
+    to right,
+    #000 0,
+    #000 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.receipt-paper-sheet {
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 14px),
+    97.22% 100%,
+    94.44% calc(100% - 14px),
+    91.67% 100%,
+    88.89% calc(100% - 14px),
+    86.11% 100%,
+    83.33% calc(100% - 14px),
+    80.56% 100%,
+    77.78% calc(100% - 14px),
+    75.00% 100%,
+    72.22% calc(100% - 14px),
+    69.44% 100%,
+    66.67% calc(100% - 14px),
+    63.89% 100%,
+    61.11% calc(100% - 14px),
+    58.33% 100%,
+    55.56% calc(100% - 14px),
+    52.78% 100%,
+    50.00% calc(100% - 14px),
+    47.22% 100%,
+    44.44% calc(100% - 14px),
+    41.67% 100%,
+    38.89% calc(100% - 14px),
+    36.11% 100%,
+    33.33% calc(100% - 14px),
+    30.56% 100%,
+    27.78% calc(100% - 14px),
+    25.00% 100%,
+    22.22% calc(100% - 14px),
+    19.44% 100%,
+    16.67% calc(100% - 14px),
+    13.89% 100%,
+    11.11% calc(100% - 14px),
+    8.33% 100%,
+    5.56% calc(100% - 14px),
+    2.78% 100%,
+    0.00% calc(100% - 14px)
+  );
+}
+
