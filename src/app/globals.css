@@ -624,6 +624,79 @@ body {
   font-weight: 400;
 }
 
+/* ---- section-specific text selection ------------------------------------ */
+
+::selection {
+  background-color: #fa1a1d;
+  color: #ffffff;
+}
+
+[aria-label="VinHack"] ::selection,
+[data-name="HERO FINAL"] ::selection {
+  background-color: #fa1a1d;
+  color: #ffffff;
+}
+
+[aria-label="About VinHack"] ::selection,
+[data-name="ABOUT VINHACK"] ::selection {
+  background-color: #74d4f0;
+  color: #000000;
+}
+
+[aria-label="Who are we"] ::selection,
+[data-name="WHO ARE WE"] ::selection {
+  background-color: #bfea88;
+  color: #000000;
+}
+
+[aria-label="Projects"] ::selection,
+[data-name="PROJECTS"] ::selection {
+  background-color: #fbee35;
+  color: #000000;
+}
+
+[aria-label="Tracks"] ::selection,
+[data-name="TRACKS"] ::selection {
+  background-color: #2849cb;
+  color: #ffffff;
+}
+
+[aria-label="Timeline"] ::selection,
+[data-name="MacBook Air - 17"] ::selection {
+  background-color: #74d4f0;
+  color: #000000;
+}
+
+[data-node-id="343:2041"] ::selection,
+.receipt-feed ::selection {
+  background-color: #2849cb;
+  color: #ffffff;
+}
+
+[aria-label="Rules"] ::selection,
+[data-name="RULES"] ::selection {
+  background-color: #1c563c;
+  color: #bfea88;
+}
+
+[aria-label="Guidelines"] ::selection,
+[data-name="GUIDELINES"] ::selection {
+  background-color: #74d4f0;
+  color: #0f172a;
+}
+
+[aria-label="Register now"] ::selection,
+[data-name="REGISTER NOW"] ::selection {
+  background-color: #bfea88;
+  color: #000000;
+}
+
+footer ::selection,
+[data-name="FOOTER"] ::selection {
+  background-color: #ffffff;
+  color: #000000;
+}
+
 /* ---- receipt printer details (Timeline & MobileTimeline) ----------------- */
 
 .receipt-rule {
