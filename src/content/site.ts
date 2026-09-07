@@ -315,7 +315,7 @@ export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
   marquee:
-    "VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • വിൻഹാക്ക് • ವಿನ್‌ಹ್ಯಾಕ್ • ون ہیک • ",
+    " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • വിൻഹാക്ക് • ವಿನ್‌ಹ್ಯಾಕ್ • ون ہیک •  ",
   /**
    * The five folder tabs, in the order they stack — each a coloured band with
    * its label in a contrasting colour off the same palette, which is the pair
@@ -323,11 +323,11 @@ export const FOOTER = {
    * than links and none carries a URL, so neither layout links them.
    */
   tabs: [
-    { name: "EMAIL", band: "#74d4f0", color: "#2849cb" },
-    { name: "GITHUB", band: "#2849cb", color: "#74d4f0" },
-    { name: "INSTAGRAM", band: "#bfea88", color: "#1c563c" },
-    { name: "LINKEDIN", band: "#1c563c", color: "#bfea88" },
-    { name: "MEDIUM", band: "#db9eef", color: "#fa1a1d" },
+    { name: "EMAIL", band: "#74d4f0", color: "#2849cb", href: "mailto:vinnovateit@gmail.com" },
+    { name: "GITHUB", band: "#2849cb", color: "#74d4f0", href: "https://github.com/vinnovateit" },
+    { name: "INSTAGRAM", band: "#bfea88", color: "#1c563c", href: "https://instagram.com/vinnovateit" },
+    { name: "LINKEDIN", band: "#1c563c", color: "#bfea88", href: "https://www.linkedin.com/company/v-innovate-it" },
+    { name: "MEDIUM", band: "#db9eef", color: "#fa1a1d", href: "https://medium.com/@vinnovateit" },
   ],
   /** The panel the tabs are filed into, which the closing credits sit on. */
   base: "#fa1a1d",

@@ -1130,15 +1130,39 @@ function MobileFooter() {
           overlapping the last with only its lip showing; stacked, the lip is
           the whole tab. */}
       <div>
-        {FOOTER.tabs.map((tab) => (
-          <div
-            key={tab.name}
-            className="-mb-[10px] rounded-t-[18px] px-6 pt-4 pb-6 text-[24px] last:mb-0"
-            style={{ background: tab.band, color: tab.color }}
-          >
-            {tab.name}
-          </div>
-        ))}
+        {FOOTER.tabs.map((tab) => {
+          const isExternal = tab.href.startsWith("http");
+          return (
+            <a
+              key={tab.name}
+              href={tab.href}
+              target={isExternal ? "_blank" : undefined}
+              rel={isExternal ? "noopener noreferrer" : undefined}
+              className="group -mb-[10px] flex items-center justify-between rounded-t-[18px] px-6 pt-7 pb-6 text-[24px] last:mb-0 no-underline cursor-pointer transition-transform duration-200 active:scale-[0.99]"
+              style={{ background: tab.band, color: tab.color }}
+            >
+              <span className="relative font-rotonto inline-flex items-center">
+                <span>{tab.name}</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 -bottom-1 h-[2px] w-0 bg-current transition-all duration-200 group-hover:w-full group-focus-visible:w-full"
+                />
+              </span>
+              <svg
+                aria-hidden="true"
+                className="size-6 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M7 17L17 7M17 7H7M17 7V17" />
+              </svg>
+            </a>
+          );
+        })}
       </div>
 
       <div className="pt-8 pb-10" style={{ background: FOOTER.base }}>

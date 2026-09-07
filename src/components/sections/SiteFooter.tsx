@@ -1,22 +1,6 @@
 import { FOOTER } from "@/content/site";
 
-/**
- * Where each tab's label sits on the exposed lip of its band, in paint order.
- * The bands themselves are full-width artwork stacked below, so the label is
- * the only part of a tab that is in a particular place. Centred on `left`.
- */
-const LABELS = [
-  { tab: "INSTAGRAM", id: "297:23", left: 657, top: 198 },
-  { tab: "LINKEDIN", id: "297:24", left: 1091.5, top: 237 },
-  { tab: "EMAIL", id: "297:25", left: 972, top: 127 },
-  { tab: "MEDIUM", id: "297:26", left: 357.5, top: 275 },
-  { tab: "GITHUB", id: "297:27", left: 251.5, top: 164 },
-];
-
 export default function SiteFooter() {
-  const colour = new Map<string, string>(
-    FOOTER.tabs.map((tab) => [tab.name, tab.color]),
-  );
 
   return (
     <footer className="-translate-x-1/2 absolute bg-black h-[826px] left-1/2 overflow-clip top-[8424px] w-[1280px]" data-node-id="297:3" data-name="FOOTER">
@@ -51,45 +35,60 @@ export default function SiteFooter() {
         <div className="absolute h-[536px] left-0 top-[290px] w-[1280px]" data-node-id="297:20" data-name="Union">
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/union5.svg" />
         </div>
-        {LABELS.map((label) => (
-          <p
-            key={label.tab}
-            className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] not-italic text-[28px] text-center whitespace-nowrap"
-            style={{
-              color: colour.get(label.tab),
-              left: label.left,
-              top: label.top,
-            }}
-            data-tab-part={label.tab.toLowerCase()}
-            data-node-id={label.id}
-          >
-            {label.tab}
-          </p>
-        ))}
-        {/* Hover targets for the folder tabs. The tab artwork is a
-            full-width band, so the exposed lip needs its own hit area. */}
-        <div aria-hidden className="absolute inset-0 pointer-events-none">
-          <div
-            className="pointer-events-auto absolute left-[828px] top-[111px] h-[36px] w-[292px]"
-            data-tab="email"
-          />
-          <div
-            className="pointer-events-auto absolute left-[102px] top-[147px] h-[36px] w-[292px]"
-            data-tab="github"
-          />
-          <div
-            className="pointer-events-auto absolute left-[502px] top-[183px] h-[37px] w-[292px]"
-            data-tab="instagram"
-          />
-          <div
-            className="pointer-events-auto absolute left-[948px] top-[220px] h-[40px] w-[292px]"
-            data-tab="linkedin"
-          />
-          <div
-            className="pointer-events-auto absolute left-[218px] top-[260px] h-[30px] w-[292px]"
-            data-tab="medium"
-          />
-        </div>
+        {/* Interactive folder tab links with hover top-right arrow and underline */}
+        {FOOTER.tabs.map((tab) => {
+          const cfg = {
+            EMAIL: { id: "297:25", left: 826, top: 111, w: 292, h: 72, pt: 24, slug: "email" },
+            GITHUB: { id: "297:27", left: 105.5, top: 147, w: 292, h: 72, pt: 24, slug: "github" },
+            INSTAGRAM: { id: "297:23", left: 511, top: 183, w: 292, h: 72, pt: 24, slug: "instagram" },
+            LINKEDIN: { id: "297:24", left: 945.5, top: 220, w: 292, h: 72, pt: 24, slug: "linkedin" },
+            MEDIUM: { id: "297:26", left: 211.5, top: 260, w: 292, h: 64, pt: 22, slug: "medium" },
+          }[tab.name];
+
+          if (!cfg) return null;
+          const isExternal = tab.href.startsWith("http");
+
+          return (
+            <a
+              key={tab.name}
+              href={tab.href}
+              target={isExternal ? "_blank" : undefined}
+              rel={isExternal ? "noopener noreferrer" : undefined}
+              className="group pointer-events-auto absolute flex justify-center items-start no-underline cursor-pointer"
+              style={{
+                left: cfg.left,
+                top: cfg.top,
+                width: cfg.w,
+                height: cfg.h,
+                paddingTop: cfg.pt,
+                color: tab.color,
+              }}
+              data-tab={cfg.slug}
+              data-tab-part={cfg.slug}
+              data-node-id={cfg.id}
+            >
+              <span className="relative inline-flex items-center font-rotonto text-[28px] leading-none whitespace-nowrap">
+                <span>{tab.name}</span>
+                <svg
+                  aria-hidden="true"
+                  className="absolute left-full ml-2 -top-1 size-5 shrink-0 opacity-0 -translate-x-1 translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 -bottom-1 h-[2px] w-0 bg-current transition-all duration-200 group-hover:w-full"
+                />
+              </span>
+            </a>
+          );
+        })}
       </div>
       <div className="absolute content-stretch flex items-center justify-center left-[-382px] p-[10px] top-[428px]" data-marquee="footer" data-node-id="297:28">
         <p className="[word-break:break-word] scripts leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" data-node-id="297:29">{FOOTER.marquee}</p>

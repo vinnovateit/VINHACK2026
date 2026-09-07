@@ -276,7 +276,6 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     id: "297:3",
     name: "Footer",
     moves: [
-      { node: "297:39", settle: { rotation: -5 } },
       { node: "297:20", drift: -40, end: "bottom top+=45%" },
     ],
   },
