@@ -1,8 +1,9 @@
 import { TRACKS } from "@/content/site";
+import { FEATURES } from "@/content/features";
 
 export default function TracksSection() {
   return (
-    <section aria-label="Tracks" className="-translate-x-1/2 absolute bg-black h-[1352px] left-1/2 top-[3342px] w-[1280px]" data-node-id="594:33" data-name="TRACKS">
+    <section aria-label="Tracks" className={`-translate-x-1/2 absolute bg-black left-1/2 top-[3342px] w-[1280px] ${FEATURES.tracks ? "h-[1352px]" : "h-[600px]"}`} data-node-id="594:33" data-name="TRACKS">
       <div className="-translate-x-1/2 absolute h-[298px] left-[calc(50%-0.32px)] top-[99px] w-[1155.364px]" data-node-id="594:34">
         <div className="absolute h-[298px] left-0 top-0 w-[819.022px]" data-node-id="594:35">
           <div className="absolute content-stretch flex gap-[20px] items-center left-0 top-0" data-node-id="594:36">
@@ -58,7 +59,12 @@ export default function TracksSection() {
           </div>
         </div>
       </div>
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute bg-black h-[805px] left-1/2 top-[calc(50%+235.5px)] w-[1142px]" data-node-id="596:376">
+      <div className="coming-soon-wrap">
+        <p className="coming-soon font-rotonto text-[42px] text-[#bfea88] whitespace-nowrap">
+          {TRACKS.comingSoon}
+        </p>
+      </div>
+      <div className={`${FEATURES.tracks ? "" : "hidden"} -translate-x-1/2 -translate-y-1/2 absolute bg-black h-[805px] left-1/2 top-[calc(50%+235.5px)] w-[1142px]`} data-node-id="596:376">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute contents h-[352.183px] left-[calc(50%-308.91px)] top-[calc(50%+201.83px)] w-[352.988px]" data-node-id="596:377">
           <div className="-translate-x-1/2 -translate-y-1/2 absolute flex h-[352.183px] items-center justify-center left-[calc(50%-308.91px)] top-[calc(50%+201.83px)] w-[352.988px]" data-node-id="596:378">
             <div className="flex-none rotate-15 scale-y-97 skew-x-15">

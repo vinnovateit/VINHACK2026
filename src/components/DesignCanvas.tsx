@@ -26,13 +26,19 @@ import type { ReactNode } from "react";
  */
 export default function DesignCanvas({
   hero,
+  compact = false,
+  tracksCompact = false,
   children,
 }: {
   hero: ReactNode;
+  compact?: boolean;
+  tracksCompact?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="canvas-container bg-black">
+    <div
+      className={`canvas-container bg-black ${compact ? "projects-disabled" : ""} ${tracksCompact ? "tracks-disabled" : ""}`}
+    >
       <div className="canvas-frame hero-frame">
         <div className="canvas-plate bg-black">{hero}</div>
       </div>

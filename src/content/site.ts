@@ -197,6 +197,7 @@ export const PROJECTS = {
 export const TRACKS = {
   /** Three lines with a rule under each, the middle one the section heading. */
   lines: ["solve what matters", "TRACKS", "build what lasts"],
+  comingSoon: "COMING SOON",
   sticker: "INNOVATE FOR IMPACT",
 } as const;
 

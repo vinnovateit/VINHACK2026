@@ -11,6 +11,7 @@ import NowSvg from "@/components/NowSvg";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
 import { PASS_START } from "@/components/pass/variants";
+import { FEATURES } from "@/content/features";
 import {
   ABOUT,
   FOOTER,
@@ -65,7 +66,7 @@ export default function MobileSite() {
       <MobileHero />
       <MobileAbout />
       <MobileWhoAreWe />
-      <MobileProjects />
+      {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
       <MobileTimelineSection />
       <MobileRules />
@@ -682,7 +683,13 @@ function MobileTracks() {
         })}
       </div>
 
-      <div className="mt-10 flex justify-center">
+      <div className="coming-soon-wrap mt-10 flex justify-center">
+        <p className="coming-soon relative text-center text-[24px] text-[#bfea88]">
+          {TRACKS.comingSoon}
+        </p>
+      </div>
+
+      {FEATURES.tracks && <div className="mt-10 flex justify-center">
         <Piece
           width={270.424}
           height={211.237}
@@ -704,7 +711,7 @@ function MobileTracks() {
             </div>
           </div>
         </Piece>
-      </div>
+      </div>}
     </section>
   );
 }
