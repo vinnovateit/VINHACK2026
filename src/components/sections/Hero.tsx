@@ -78,56 +78,27 @@ export default function HeroSection() {
                   </div>
                 </div>
                 <div className="absolute flex h-[67.097px] items-center justify-center left-[60.48px] top-[68.06px] w-[290.935px]" data-node-id="343:1256">
-                  <div className="-rotate-8 flex-none">
-                    {/* The line types itself, so its width changes constantly —
-                        and this box centres its contents, which would walk the
-                        text left and right on every character. So the sticker
-                        reserves a fixed width once and lays the live line over
-                        it from a fixed left edge, growing rightwards inside the
-                        space that reservation already claimed. Nothing moves
-                        but the characters.
-
-                        The reservation is every message stacked in one grid
-                        cell, so its width is the *widest* of them. It used to
-                        be `commits[0]` alone, on the reasoning that it is the
-                        longest — but longest in characters is not widest in
-                        pixels in a proportional face, and "innit to vinnit" is
-                        all i/n/t/v while "ship it anyway" is not. Whichever
-                        message actually measures widest now sets the width, and
-                        no message can overflow the bubble.
-
-                        The last cell is the caret's own 12px, reserved with the
-                        text rather than hanging off the end of it.
-
-                        `commits[0]` is still what the markup ships in the live
-                        line, so with JavaScript off, or before the timeline
-                        arms, the sticker reads exactly as Figma drew it. */}
-                    <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">
-                      <span aria-hidden className="grid invisible">
-                        {HERO.commits.map((message) => (
-                          <span className="col-start-1 row-start-1" key={message}>
-                            {message}
-                            <span className="inline-block w-[12px]" />
-                          </span>
-                        ))}
+                  <div className="-rotate-8 relative inline-flex items-center">
+                    <span
+                      aria-hidden="true"
+                      className="font-rotonto leading-none not-italic text-[21.35px] whitespace-nowrap invisible select-none pointer-events-none"
+                      data-hero="commit-ghost"
+                    >
+                      {HERO.commits[0]}
+                    </span>
+                    <div className="absolute inset-y-0 left-0 flex items-center whitespace-nowrap">
+                      <span
+                        className="font-rotonto leading-none not-italic text-[#bfea88] text-[21.35px] whitespace-nowrap"
+                        data-hero="commit-line"
+                      >
+                        {HERO.commits[0]}
                       </span>
-                      {/* `inset-0` rather than `left-0`: the overlay is exactly
-                          as wide as the reservation, which is what lets the
-                          line shrink inside it. The entrance spins random
-                          glyphs through this line and a glyph is not the width
-                          of the letter it stands in for, so a spinning line can
-                          measure wider than any real message — clipped to the
-                          reservation instead of pushed out of the bubble. It is
-                          nonsense characters for the 0.62s it lasts, so there
-                          is nothing there to read. */}
-                      <span className="absolute inset-0 flex items-center">
-                        <span className="min-w-0 overflow-hidden" data-hero="commit-line">{HERO.commits[0]}</span>
-                        {/* Drawn as a box rather than typed as a character:
-                            Rotonto is a display face and there is no promise it
-                            carries a bar or block glyph to spare. */}
-                        <span aria-hidden className="bg-[#bfea88] h-[19px] inline-block ml-[3px] shrink-0 w-[9px]" data-hero="commit-caret" />
-                      </span>
-                    </p>
+                      <span
+                        aria-hidden="true"
+                        className="bg-[#bfea88] h-[18px] inline-block ml-[3px] shrink-0 w-[9px]"
+                        data-hero="commit-caret"
+                      />
+                    </div>
                   </div>
                 </div>
                 </div>

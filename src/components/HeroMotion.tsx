@@ -9,7 +9,6 @@ import {
   DESKTOP,
   hover,
   neonStrike,
-  reelIn,
   typewriter,
 } from "@/components/motion/recipes";
 import { wireSpeaker } from "@/components/motion/speaker";
@@ -97,7 +96,7 @@ const ARROW_ROWS = 6;
  * plate, not the sticker, so it stays x and y only.
  */
 const DEALT: { role: string; at: number; from: gsap.TweenVars }[] = [
-  { role: "git", at: 0.86, from: { x: -150, y: -54, rotation: -12, scale: 0.86 } },
+  { role: "git", at: 0.86, from: { x: -150, rotation: -12, scale: 0.86 } },
   { role: "speaker", at: 0.95, from: { x: 132, y: -62, rotation: 14, scale: 0.78 } },
   { role: "note", at: 1.04, from: { x: -104, y: 104, rotation: 14, scale: 0.82 } },
   { role: "qr", at: 1.13, from: { x: 148, y: 46 } },
@@ -284,6 +283,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
       mm.add(`${DESKTOP} and (prefers-reduced-motion: no-preference)`, () => {
         const line = one("commit-line");
         const caret = one("commit-caret");
+        const ghost = one("commit-ghost");
 
         /**
          * Everything that runs forever, started only once the entrance is over.
@@ -301,7 +301,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           // starts. This replaces the rocking it used to do — a command being
           // written is a better reason for the sticker to be alive than a
           // wobble is.
-          if (line) typewriter(line, HERO.commits, { trigger: hero });
+          if (line) typewriter(line, HERO.commits, { trigger: hero, ghost });
 
           // The disc's lit cells spell an arrow pointing down, and the disc
           // sits above "scroll down for more" — so instead of turning the whole
@@ -416,17 +416,8 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           );
         }
 
-        // The commit display lands mechanically while its sticker is still
-        // arriving, holds the line the markup shipped, and hands over.
-        let landed = REEL_AT;
-        if (line) {
-          const reel = reelIn(line, HERO.commits[0]);
-          show.add(reel, REEL_AT);
-          // Measured off the tween rather than restated: the reel's duration is
-          // its own business, and a relative `">"` here would hang off whatever
-          // was added last instead — which is the caret, and much shorter.
-          landed = REEL_AT + reel.duration();
-        }
+        // The commit display holds its landed line, reveals the caret,
+        // and hands over to the typewriter loop.
         if (caret) {
           show.fromTo(
             caret,
@@ -436,7 +427,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           );
         }
 
-        const handover = landed + REEL_HOLD;
+        const handover = REEL_AT + REEL_HOLD;
         show.call(armLoops, undefined, handover);
 
         if (caret) {

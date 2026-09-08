@@ -454,7 +454,13 @@ export function marquee(
 export function typewriter(
   line: HTMLElement,
   messages: readonly string[],
-  { trigger, perChar = 0.055, hold = 1.6, gap = 0.35 }: {
+  {
+    trigger,
+    perChar = 0.055,
+    hold = 1.6,
+    gap = 0.35,
+    ghost,
+  }: {
     trigger: Element;
     /** Seconds a single character takes to appear. */
     perChar?: number;
@@ -462,9 +468,17 @@ export function typewriter(
     hold?: number;
     /** Seconds of empty bubble between one message and the next. */
     gap?: number;
+    /** Ghost element reserving text-only width for length-based centering. */
+    ghost?: HTMLElement | null;
   },
 ) {
   if (!messages.length) return;
+
+  const targetGhost =
+    ghost ??
+    line.parentElement?.parentElement?.querySelector<HTMLElement>(
+      '[data-hero="commit-ghost"]',
+    );
 
   const order = [...messages];
   for (let i = order.length - 1; i > 0; i--) {
@@ -472,29 +486,32 @@ export function typewriter(
     [order[i], order[j]] = [order[j], order[i]];
   }
 
-  const clear = () => {
-    line.textContent = "";
-  };
-
   const tl = gsap
-    .timeline({ repeat: -1, scrollTrigger: whenSeen(trigger) })
-    .call(clear);
+    .timeline({ repeat: -1, scrollTrigger: whenSeen(trigger) });
 
   for (const message of order) {
-    // GSAP tweens the index on a plain object and the text is written from it,
-    // which keeps the whole thing on the one timeline — pausable, scrubbable
-    // and torn down with everything else — rather than on a stray interval.
     const head = { chars: 0 };
-    tl.to(head, {
-      chars: message.length,
-      duration: message.length * perChar,
-      ease: `steps(${message.length})`,
-      onUpdate: () => {
-        line.textContent = message.slice(0, Math.round(head.chars));
-      },
+    tl.call(() => {
+      if (targetGhost) targetGhost.textContent = message;
+      line.textContent = "";
     })
+      .to(head, {
+        chars: message.length,
+        duration: message.length * perChar,
+        ease: `steps(${message.length})`,
+        onUpdate: () => {
+          line.textContent = message.slice(0, Math.round(head.chars));
+        },
+      })
       .to({}, { duration: hold })
-      .call(clear)
+      .to(head, {
+        chars: 0,
+        duration: message.length * (perChar * 0.35),
+        ease: `steps(${message.length})`,
+        onUpdate: () => {
+          line.textContent = message.slice(0, Math.round(head.chars));
+        },
+      })
       .to({}, { duration: gap });
   }
 
