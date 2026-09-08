@@ -90,7 +90,7 @@ const ARROW_ROWS = 6;
  * well. Pressing closes most of it — not all, or the cap looks like it fell
  * through the plate rather than bottoming out on it.
  */
-const KEY_TRAVEL = { x: -4.05, y: 2.1 };
+const KEY_TRAVEL = { x: 3*0.3, y: 3 };
 
 /**
  * How each sticker is thrown onto the black, and when.
