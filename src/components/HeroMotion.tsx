@@ -81,16 +81,7 @@ const CELL = 26.46;
  *  at both ends, so the arrow is fully hidden before it turns around. */
 const ARROW_ROWS = 6;
 
-/**
- * How far the cap sinks when pressed, in the key's own drawing.
- *
- * The artwork already encodes the travel: the bright cap is drawn at
- * (6.52, 2.48) and the dim plate under it at (1.47, 5.07), and that 5.05 left /
- * 2.59 down difference is exactly the parallax of a cap standing above its
- * well. Pressing closes most of it — not all, or the cap looks like it fell
- * through the plate rather than bottoming out on it.
- */
-const KEY_TRAVEL = { x: -4.05, y: 2.1 };
+
 
 /**
  * How each sticker is thrown onto the black, and when.
@@ -200,10 +191,9 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         // the cap's own legend is ":" over ";", so the key it depicts is the
         // one the visitor's keyboard has in the same place.
         const key = one("key");
-        const cap = boxes("key-cap");
-        if (key && cap.length) {
+        if (key) {
           // Pointer and keyboard can hold it down at the same time, so the
-          // press is reference-counted: the cap goes down when the first hold
+          // press is reference-counted: the key goes down when the first hold
           // arrives and comes back up when the last one lets go.
           const held = new Set<string>();
           const press = (source: string) => {
@@ -212,8 +202,9 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
             held.add(source);
             if (!wasUp) return;
             keyDown();
-            gsap.to(cap, {
-              ...KEY_TRAVEL,
+            gsap.to(key, {
+              y: 6,
+              scale: 0.93,
               duration: 0.09,
               ease: "power2.out",
               overwrite: "auto",
@@ -222,12 +213,9 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           const release = (source: string) => {
             if (!held.delete(source) || held.size) return;
             keyUp();
-            // `back.out` on the way up only: a switch is damped going down and
-            // sprung coming back, and matching that is most of why it reads as
-            // a key rather than a rectangle sliding.
-            gsap.to(cap, {
-              x: 0,
+            gsap.to(key, {
               y: 0,
+              scale: 1,
               duration: 0.24,
               ease: "back.out(2.6)",
               overwrite: "auto",

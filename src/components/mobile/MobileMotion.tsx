@@ -7,7 +7,7 @@ import { useGSAP } from "@gsap/react";
 import { keyDown, keyUp } from "@/components/motion/click";
 import { draggable } from "@/components/motion/drag";
 import { slideIn, slideOut } from "@/components/motion/pinboard";
-import { boxesOf, MOBILE } from "@/components/motion/recipes";
+import { MOBILE } from "@/components/motion/recipes";
 import { reveal } from "@/components/motion/reveal";
 import { wireSpeaker } from "@/components/motion/speaker";
 import { stampIn } from "@/components/motion/stamp";
@@ -45,10 +45,7 @@ gsap.registerPlugin(useGSAP);
  * a request to stop the page moving by itself, not to take the controls away.
  */
 
-/** How far the cap sinks when pressed, in the key's own drawing — the same
- *  figure `HeroMotion` uses, and for the same reason: the artwork draws the cap
- *  5.05 left and 2.59 up from its plate, and a press closes most of that. */
-const KEY_TRAVEL = { x: -4.05, y: 2.1 };
+
 
 /** How far a sheet travels across the phone. The collage's 620 is drawn for a
  *  1280px plate; a column is half that, and a sheet that overshoots simply
@@ -159,39 +156,27 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
         // — the keyboard half of the collage's version has nothing to listen
         // for here.
         const key = scope.querySelector<HTMLElement>('[data-hero="key"]');
-        // `boxesOf` rather than the nodes themselves: the cap's two glyphs are
-        // tagged through a `display: contents` wrapper, which generates no box,
-        // and a transform on it would move nothing.
-        const cap = key
-          ? Array.from(
-              key.querySelectorAll<HTMLElement>('[data-hero="key-cap"]'),
-            ).flatMap((node) => boxesOf(node))
-          : [];
-        if (key && cap.length) {
+        if (key) {
           const press = () => {
             keyDown();
-            gsap.to(cap, {
-              ...KEY_TRAVEL,
+            gsap.to(key, {
+              y: 6,
+              scale: 0.93,
               duration: 0.09,
               ease: "power2.out",
               overwrite: "auto",
             });
           };
-          // `back.out` on the way up only: a switch is damped going down and
-          // sprung coming back, and matching that is most of why it reads as a
-          // key rather than a rectangle sliding.
           const release = () => {
             keyUp();
-            gsap.to(cap, {
-              x: 0,
+            gsap.to(key, {
               y: 0,
+              scale: 1,
               duration: 0.24,
               ease: "back.out(2.6)",
               overwrite: "auto",
             });
           };
-          // Released on the window rather than on the cap: dragging off a held
-          // key and letting go elsewhere must not leave it stuck down.
           key.addEventListener("pointerdown", press);
           window.addEventListener("pointerup", release);
           window.addEventListener("pointercancel", release);

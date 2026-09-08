@@ -182,7 +182,7 @@ export default function HeroSection() {
                 <div className="bg-[#2b24fc] border-[#74d4f0] border-[1.32px] border-solid h-[81.18px] opacity-75 relative rounded-[15.84px] w-[81.84px]" />
               </div>
             </div>
-            <div className="absolute flex h-[85.705px] items-center justify-center left-[6.52px] top-[2.48px] w-[85.256px]" data-hero="key-cap" data-node-id="343:1546">
+            <div className="absolute flex h-[85.705px] items-center justify-center left-[6.52px] top-[2.48px] w-[85.256px]" data-node-id="343:1546">
               <div className="flex-none rotate-[-16.21deg]">
                 <div className="bg-[#2b24fc] border-[#74d4f0] border-[1.32px] border-solid h-[69.3px] opacity-95 relative rounded-[15.84px] w-[68.64px]" />
               </div>
@@ -205,7 +205,7 @@ export default function HeroSection() {
                 </div>
               </div>
             </div>
-            <div className="absolute contents h-[55.853px] left-[37.39px] top-[10.3px] w-[21.51px]" data-hero="key-cap" data-node-id="343:1549">
+            <div className="absolute contents h-[55.853px] left-[37.39px] top-[10.3px] w-[21.51px]" data-node-id="343:1549">
               <div className="-translate-y-1/2 absolute flex h-[32.403px] items-center justify-center left-[37.39px] top-[26.5px] w-[14.694px]" data-node-id="343:1550">
                 <div className="flex-none rotate-[-16.21deg]">
                   <div className="[word-break:break-word] flex flex-col font-rotonto justify-center leading-[0] not-italic relative text-[#74d4f0] text-[26.4px] whitespace-nowrap">

@@ -334,7 +334,7 @@ function MobileHero() {
                 <div className="relative h-[81.18px] w-[81.84px] rounded-[15.84px] border-[1.32px] border-[#74d4f0] border-solid bg-[#2b24fc] opacity-75" />
               </div>
             </div>
-            <div className="absolute top-[2.48px] left-[6.52px] flex h-[85.705px] w-[85.256px] items-center justify-center" data-hero="key-cap">
+            <div className="absolute top-[2.48px] left-[6.52px] flex h-[85.705px] w-[85.256px] items-center justify-center">
               <div className="flex-none rotate-[-16.21deg]">
                 <div className="relative h-[69.3px] w-[68.64px] rounded-[15.84px] border-[1.32px] border-[#74d4f0] border-solid bg-[#2b24fc] opacity-95" />
               </div>
@@ -357,7 +357,7 @@ function MobileHero() {
                 </div>
               </div>
             </div>
-            <div className="absolute contents" data-hero="key-cap">
+            <div className="absolute contents">
               <div className="-translate-y-1/2 absolute top-[26.5px] left-[37.39px] flex h-[32.403px] w-[14.694px] items-center justify-center">
                 <div className="flex-none rotate-[-16.21deg]">
                   <div className="relative flex flex-col justify-center font-rotonto text-[26.4px] leading-[0] whitespace-nowrap text-[#74d4f0]">
