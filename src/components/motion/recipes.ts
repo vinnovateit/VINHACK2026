@@ -21,9 +21,9 @@ gsap.registerPlugin(ScrollTrigger);
  * nothing fades in, and nothing staggers. Content is simply present, and the
  * page stays alive through endless loops and scroll-linked drift instead.
  *
- * The exception is the "entrance" section near the bottom — `neonStrike` and
- * `reelIn` — which is not transcribed from anywhere. The hero now opens with a
- * deliberate reveal rather than being simply present, and those two are its
+ * The exception is the "entrance" section near the bottom — `neonStrike` —
+ * which is not transcribed from anywhere. The hero now opens with a
+ * deliberate reveal rather than being simply present, and that is its
  * vocabulary. Everything above that heading still follows the source's rule,
  * and nothing below the hero has an entrance at all.
  */
@@ -454,7 +454,13 @@ export function marquee(
 export function typewriter(
   line: HTMLElement,
   messages: readonly string[],
-  { trigger, perChar = 0.055, hold = 1.6, gap = 0.35 }: {
+  {
+    trigger,
+    perChar = 0.055,
+    hold = 1.6,
+    gap = 0.35,
+    ghost,
+  }: {
     trigger: Element;
     /** Seconds a single character takes to appear. */
     perChar?: number;
@@ -462,9 +468,17 @@ export function typewriter(
     hold?: number;
     /** Seconds of empty bubble between one message and the next. */
     gap?: number;
+    /** Ghost element reserving text-only width for length-based centering. */
+    ghost?: HTMLElement | null;
   },
 ) {
   if (!messages.length) return;
+
+  const targetGhost =
+    ghost ??
+    line.parentElement?.parentElement?.querySelector<HTMLElement>(
+      '[data-hero="commit-ghost"]',
+    );
 
   const order = [...messages];
   for (let i = order.length - 1; i > 0; i--) {
@@ -472,29 +486,32 @@ export function typewriter(
     [order[i], order[j]] = [order[j], order[i]];
   }
 
-  const clear = () => {
-    line.textContent = "";
-  };
-
   const tl = gsap
-    .timeline({ repeat: -1, scrollTrigger: whenSeen(trigger) })
-    .call(clear);
+    .timeline({ repeat: -1, scrollTrigger: whenSeen(trigger) });
 
   for (const message of order) {
-    // GSAP tweens the index on a plain object and the text is written from it,
-    // which keeps the whole thing on the one timeline — pausable, scrubbable
-    // and torn down with everything else — rather than on a stray interval.
     const head = { chars: 0 };
-    tl.to(head, {
-      chars: message.length,
-      duration: message.length * perChar,
-      ease: `steps(${message.length})`,
-      onUpdate: () => {
-        line.textContent = message.slice(0, Math.round(head.chars));
-      },
+    tl.call(() => {
+      if (targetGhost) targetGhost.textContent = message;
+      line.textContent = "";
     })
+      .to(head, {
+        chars: message.length,
+        duration: message.length * perChar,
+        ease: `steps(${message.length})`,
+        onUpdate: () => {
+          line.textContent = message.slice(0, Math.round(head.chars));
+        },
+      })
       .to({}, { duration: hold })
-      .call(clear)
+      .to(head, {
+        chars: 0,
+        duration: message.length * (perChar * 0.35),
+        ease: `steps(${message.length})`,
+        onUpdate: () => {
+          line.textContent = message.slice(0, Math.round(head.chars));
+        },
+      })
       .to({}, { duration: gap });
   }
 
@@ -503,71 +520,6 @@ export function typewriter(
 
 /* ----------------------------------------------------------------- entrance */
 
-/**
- * The glyphs a reel spins through on its way to a letter.
- *
- * Not the alphabet: a split-flap or a slot reel shows you *hardware* between
- * stops, and what sells that is characters with a lot of ink and no meaning.
- * Letters and digits would read as words being typed, which is the thing the
- * commit sticker already does for the rest of its life.
- */
-const REEL_GLYPHS = "#@$%&*/\\|<>=+-_~^:;!?0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-/**
- * A line of text landing one column at a time, like a split-flap board coming
- * to rest — the "reels" half of the hero's entrance.
- *
- * Every frame writes a string of exactly `message.length` characters: the part
- * that has already landed, then random glyphs for the part still spinning. The
- * length never changes, so the sticker's reserved width (see `HERO.commits` in
- * content/site.ts) holds from the first frame and nothing shifts sideways while
- * it resolves.
- *
- * `steps(length)` is what makes the resolve advance a whole column at a time
- * rather than easing an index between two letters, and the spinning glyphs are
- * re-rolled on a divisor of the frame rate rather than every frame — at 60fps a
- * fresh random glyph per frame per column is visual noise, not a reel.
- *
- * Spaces are left alone. A reel with no flap on it does not spin.
- */
-export function reelIn(
-  line: HTMLElement,
-  message: string,
-  { duration = 0.62, churn = 3 }: {
-    /** Seconds from all-spinning to fully landed. */
-    duration?: number;
-    /** Frames a spinning glyph is held before it is re-rolled. */
-    churn?: number;
-  } = {},
-) {
-  const head = { landed: 0 };
-  let frame = 0;
-  let spun = "";
-
-  const roll = () =>
-    Array.from(message, (char) =>
-      char === " "
-        ? " "
-        : REEL_GLYPHS[Math.floor(Math.random() * REEL_GLYPHS.length)],
-    ).join("");
-
-  spun = roll();
-  line.textContent = spun;
-
-  return gsap.to(head, {
-    landed: message.length,
-    duration,
-    ease: `steps(${message.length})`,
-    onUpdate: () => {
-      if (frame++ % churn === 0) spun = roll();
-      const at = Math.round(head.landed);
-      line.textContent = message.slice(0, at) + spun.slice(at);
-    },
-    onComplete: () => {
-      line.textContent = message;
-    },
-  });
-}
 
 /**
  * A cold neon tube striking: the current catches, drops out, catches harder,
