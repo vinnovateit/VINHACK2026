@@ -96,13 +96,13 @@ const ARROW_ROWS = 6;
  * plate, not the sticker, so it stays x and y only.
  */
 const DEALT: { role: string; at: number; from: gsap.TweenVars }[] = [
-  { role: "git", at: 0.86, from: { x: -150, rotation: -12, scale: 0.86 } },
-  { role: "speaker", at: 0.95, from: { x: 132, y: -62, rotation: 14, scale: 0.78 } },
-  { role: "note", at: 1.04, from: { x: -104, y: 104, rotation: 14, scale: 0.82 } },
-  { role: "qr", at: 1.13, from: { x: 148, y: 46 } },
-  { role: "lede", at: 1.2, from: { y: 58, rotation: 8 } },
-  { role: "key", at: 1.28, from: { x: -84, y: 62, rotation: -22, scale: 0.72 } },
-  { role: "disc", at: 1.36, from: { y: 96, scale: 0.62 } },
+  { role: "git", at: 0.86, from: { x: -560, rotation: -12, scale: 0.86 } },
+  { role: "speaker", at: 0.95, from: { x: 320, y: -120, rotation: 14, scale: 0.78 } },
+  { role: "note", at: 1.04, from: { x: -440, y: 160, rotation: 14, scale: 0.82 } },
+  { role: "qr", at: 1.13, from: { x: 380, y: 50 } },
+  { role: "lede", at: 1.2, from: { x: 200, y: 180, rotation: 8 } },
+  { role: "key", at: 1.28, from: { x: -160, y: 100, rotation: -22, scale: 0.72 } },
+  { role: "disc", at: 1.36, from: { y: 220, scale: 0.62 } },
 ];
 
 /** Where on the entrance the commit display starts spinning, and how long it
@@ -469,22 +469,42 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         // spends the rest of its 0.55s settling onto the outline, which is what
         // reads as smooth. Leaving is slower still and eased at both ends,
         // because there is nothing to arrive at on the way back.
-        const wordmarkHit = scope.querySelector('[data-hero="wordmark"]');
+        const wordmarkHit = scope.querySelector<SVGElement>('[data-hero="wordmark-hit"]');
         const fill = boxes("wordmark-fill");
         if (wordmarkHit && fill.length) {
-          cleanups.push(
-            hover(
-              wordmarkHit,
-              fill,
-              {
-                x: LAYER_OFFSET.x,
-                y: LAYER_OFFSET.y,
-                duration: 0.55,
-                ease: "expo.out",
-              },
-              { x: 0, y: 0, duration: 0.45, ease: "power2.inOut" },
-            ),
-          );
+          let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+          const enter = () => {
+            if (leaveTimer) {
+              clearTimeout(leaveTimer);
+              leaveTimer = null;
+            }
+            gsap.to(fill, {
+              x: LAYER_OFFSET.x,
+              y: LAYER_OFFSET.y,
+              duration: 0.55,
+              ease: "expo.out",
+              overwrite: "auto",
+            });
+          };
+          const leave = () => {
+            if (leaveTimer) clearTimeout(leaveTimer);
+            leaveTimer = setTimeout(() => {
+              gsap.to(fill, {
+                x: 0,
+                y: 0,
+                duration: 0.45,
+                ease: "power2.inOut",
+                overwrite: "auto",
+              });
+            }, 60);
+          };
+          wordmarkHit.addEventListener("pointerenter", enter);
+          wordmarkHit.addEventListener("pointerleave", leave);
+          cleanups.push(() => {
+            if (leaveTimer) clearTimeout(leaveTimer);
+            wordmarkHit.removeEventListener("pointerenter", enter);
+            wordmarkHit.removeEventListener("pointerleave", leave);
+          });
         }
 
         // The "Register Now" note lifts under the cursor. The tagged node is a

@@ -1,11 +1,12 @@
 import QrArt from "@/components/hero/QrArt";
 import ScrollCue from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
+import WordmarkArt from "@/components/hero/WordmarkArt";
 import { HERO } from "@/content/site";
 
 export default function HeroSection() {
   return (
-    <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
+    <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-visible top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
       {/* The HOME / EXPLORE pair used to sit across the top of the plate and
           took the first ~90px of it with them. With the pair gone that strip is
           dead black above the wordmark, so the whole collage is lifted by
@@ -20,18 +21,8 @@ export default function HeroSection() {
       <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
           <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
-            <h1 className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px]" data-hero="wordmark" data-node-id="343:1178">
-              {/* The wordmark ships as two layers rather than one flattened
-                  file: the solid lettering, and the offset outline drawn behind
-                  it. They are the two paths the Figma export had in a single
-                  SVG, and stack back to exactly it — but split, they can move
-                  independently, which is what lets HeroMotion slide the
-                  lettering onto the outline on hover while the outline stays
-                  where it is drawn. */}
-              <div className="absolute inset-[0_-0.22%_-0.48%_0]">
-                <img alt="VinHack" className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-fill" src="/figma/vinhack-fill.svg" />
-                <img alt="" aria-hidden className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-outline" src="/figma/vinhack-outline.svg" />
-              </div>
+            <h1 className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px] pointer-events-none" data-hero="wordmark" data-node-id="343:1178">
+              <WordmarkArt />
             </h1>
             <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1182">
               <div className="absolute contents h-[280.357px] left-[765px] top-[528px] w-[463.743px]" data-hero="lede" data-node-id="343:1187">
