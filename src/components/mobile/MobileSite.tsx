@@ -265,7 +265,7 @@ function MobileHero() {
             </div>
             <div className="absolute top-[68.06px] left-[60.48px] flex h-[67.097px] w-[290.935px] items-center justify-center">
               <div className="-rotate-8 flex-none">
-                <p className="relative font-rotonto text-[22.68px] whitespace-nowrap text-[#bfea88]">
+                <p className="relative font-rotonto text-[21.35px] whitespace-nowrap text-[#bfea88]">
                   {HERO.commits[0]}
                 </p>
               </div>

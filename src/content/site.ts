@@ -97,8 +97,11 @@ export const PASS = {
  * The photobooth at `/memories`, reached from the shutter on the attendee pass
  * and from nowhere else — it is not in any nav.
  *
- * Two stages: the camera, then the card. The copy below is grouped the same
- * way, `booth` first and the editor's after it.
+ * Two screens: the title, the words and the loose stickers; then the studio,
+ * where the camera sits in the card's own photo window and the filters, the
+ * stickers and the line are all on the one page under it. The copy below is
+ * grouped the same way — `intro`, then `booth` for the camera's own words,
+ * `fx` for the filter row, and the editor's after them.
  *
  * The card is drawn on the hero's black ground, so the lines are set in Rotonto
  * at display size over it. Keep them short: the card fits three lines and
@@ -108,8 +111,25 @@ export const PASS = {
  */
 export const MEMORIES = {
   heading: "VinHack Memories",
+  /** What the page's cursive title says. The h1 is artwork — pen-drawn strokes
+   *  like "register now" — so this is the words it draws, read out for anything
+   *  that cannot see it. `heading` stays the name in the browser tab. */
+  mark: "memories @vinhack",
   back: "back to vinhack",
   lede: "Take the shot, throw some stickers at it, keep the picture.",
+
+  /** The first screen. Words and the pieces the page is made of, and nothing
+   *  that switches a camera on — the booth is one press further in, which is
+   *  the whole reason this screen exists. */
+  intro: {
+    lines: [
+      "Thirty-six hours, one photo booth.",
+      "Take the shot, add filters & stickers, keep your VinHack memory.",
+    ],
+    start: "OPEN THE BOOTH",
+    /** Names the loose stickers for anything that cannot see them. */
+    scatter: "Stickers from around the site",
+  },
 
   /** The camera stage. Nothing here opens the camera on its own: `enable` is
    *  the label on a panel that is off until it is pressed. */
@@ -125,14 +145,57 @@ export const MEMORIES = {
     unavailable: "CAMERA UNAVAILABLE",
     shoot: "TAKE THE SHOT",
     counting: "HOLD IT…",
-    filter: "FILTER",
-    skip: "SKIP THE CAMERA",
-    /** In the editor, back to the camera — the stickers already placed stay
-     *  where they are. */
+    /** Back to the camera from a card that already has a shot on it. The
+     *  stickers and the line stay exactly where they were put. */
     retake: "RETAKE",
     /** Said out loud, for anything not watching the count. */
     countdown: (n: number) => `${n}`,
+    /** Back to the title screen. */
+    back: "back to the title",
   },
+
+  /** Names the filter row. One at a time, so nothing here counts anything —
+   *  which chip is lit is the whole of the state. */
+  fx: { label: "FILTERS" },
+
+  /**
+   * The AR drawer: what gets hung on a face and what goes behind it.
+   *
+   * Every one of the notices is about the same fact — the face tracker and the
+   * cut-out are fetched from a CDN when the drawer is opened, and a hall full
+   * of people on one router is exactly where that fails. So there is a line for
+   * waiting and a line for having given up, and both of them say what still
+   * works, because all of it does: the camera, the filters, the stickers and
+   * the save have never needed any of this.
+   */
+  ar: {
+    /** The button on the card that opens it. */
+    open: "AR",
+    label: "PROPS & BACKDROPS",
+    close: "DONE",
+    backdrops: "BACKDROPS",
+    /** The window as the camera left it — a choice in the row, not a clear
+     *  button, the same way STRAIGHT is in the filters. */
+    plain: "NONE",
+    loading: "Finding faces — one moment.",
+    loadingScene: "Loading the cut-out — one moment.",
+    blocked:
+      "Face tracking could not load. Close and reopen to try again; the camera, filters and stickers are unaffected.",
+    sceneBlocked:
+      "The cut-out could not load, so the scenes are off. The frames need nothing and still work.",
+    /** The one case that is nobody's fault and looks like a broken feature: the
+     *  cut-out is made at the shutter, so a scene chosen after the photograph
+     *  has nothing to stand you in front of. Said plainly, with the fix. */
+    sceneLate:
+      "This photo was taken without a cut-out. Choose the scene first, then RETAKE to stand in it.",
+    /** Under the picture while something is being worn. */
+    hint: "Props are placed by the camera and freeze where they land — drag, turn and resize them after the shot.",
+  },
+
+  /** The two camera controls on the picture. Both are labels for a control
+   *  with no words on it, so they are sentence case rather than shouted. */
+  zoom: "Zoom",
+  flip: "Switch camera",
 
   messages: [
     "WE SURVIVED VINHACK",
@@ -146,14 +209,17 @@ export const MEMORIES = {
   ],
   prev: "Previous line",
   next: "Next line",
+  /** The two shapes the card is posted at. The switch sits on the picture
+   *  itself, so these are the whole of its labels. */
   aspects: { square: "SQUARE", story: "STORY" },
+  aspectLabel: "Card shape",
   tray: "STICKERS",
   save: "SAVE IMAGE",
   saving: "DRAWING…",
   /** There is no share button. A static export cannot hand a file to
    *  Instagram or LinkedIn, so the page says where to put it instead of
    *  offering a button that would not do it. */
-  tag: "TAG @VINNOVATEIT · #VINHACK2026",
+  tag: "SHARE YOUR MEMORY: @VINNOVATEIT #VINHACK26",
   hint: "Drag anything to move it — the line too. The corner handle turns and resizes, × takes a sticker off.",
   empty: "Tap a sticker to put it on the card. Drag the line anywhere you like.",
   /** Names the movable line, for a keyboard and a screen reader. */

@@ -260,7 +260,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
       { node: "343:757", slideIn: true, reveal: { select: "p", stagger: 0 } },
       // Both stamped once the sheet has actually landed — `top 40%` rather
       // than the default `top 70%`, which is still inside the pan.
-      { node: "343:760", stamp: 0.1, stampAt: "top 40%" },
+      { node: "343:760", stamp: 0.1, stampAt: "top 40%", slideIn: true },
       { node: "343:761", stamp: 0.25, stampAt: "top 40%", loop: "bounce", offset: 0.9 },
     ],
   },

@@ -9,7 +9,6 @@ import {
   DESKTOP,
   hover,
   neonStrike,
-  reelIn,
   typewriter,
 } from "@/components/motion/recipes";
 import { wireSpeaker } from "@/components/motion/speaker";
@@ -90,7 +89,7 @@ const ARROW_ROWS = 6;
  * well. Pressing closes most of it — not all, or the cap looks like it fell
  * through the plate rather than bottoming out on it.
  */
-const KEY_TRAVEL = { x: -4.05, y: 2.1 };
+const KEY_TRAVEL = { x: 3*0.3, y: 3 };
 
 /**
  * How each sticker is thrown onto the black, and when.
@@ -106,13 +105,13 @@ const KEY_TRAVEL = { x: -4.05, y: 2.1 };
  * plate, not the sticker, so it stays x and y only.
  */
 const DEALT: { role: string; at: number; from: gsap.TweenVars }[] = [
-  { role: "git", at: 0.86, from: { x: -150, y: -54, rotation: -12, scale: 0.86 } },
-  { role: "speaker", at: 0.95, from: { x: 132, y: -62, rotation: 14, scale: 0.78 } },
-  { role: "note", at: 1.04, from: { x: -104, y: 104, rotation: 14, scale: 0.82 } },
-  { role: "qr", at: 1.13, from: { x: 148, y: 46 } },
-  { role: "lede", at: 1.2, from: { y: 58, rotation: 8 } },
-  { role: "key", at: 1.28, from: { x: -84, y: 62, rotation: -22, scale: 0.72 } },
-  { role: "disc", at: 1.36, from: { y: 96, scale: 0.62 } },
+  { role: "git", at: 0.86, from: { x: -560, rotation: -12, scale: 0.86 } },
+  { role: "speaker", at: 0.95, from: { x: 320, y: -120, rotation: 14, scale: 0.78 } },
+  { role: "note", at: 1.04, from: { x: -440, y: 160, rotation: 14, scale: 0.82 } },
+  { role: "qr", at: 1.13, from: { x: 380, y: 50 } },
+  { role: "lede", at: 1.2, from: { x: 200, y: 180, rotation: 8 } },
+  { role: "key", at: 1.28, from: { x: -160, y: 100, rotation: -22, scale: 0.72 } },
+  { role: "disc", at: 1.36, from: { y: 220, scale: 0.62 } },
 ];
 
 /** Where on the entrance the commit display starts spinning, and how long it
@@ -296,6 +295,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
       mm.add(`${DESKTOP} and (prefers-reduced-motion: no-preference)`, () => {
         const line = one("commit-line");
         const caret = one("commit-caret");
+        const ghost = one("commit-ghost");
 
         /**
          * Everything that runs forever, started only once the entrance is over.
@@ -313,7 +313,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           // starts. This replaces the rocking it used to do — a command being
           // written is a better reason for the sticker to be alive than a
           // wobble is.
-          if (line) typewriter(line, HERO.commits, { trigger: hero });
+          if (line) typewriter(line, HERO.commits, { trigger: hero, ghost });
 
           // The disc's lit cells spell an arrow pointing down, and the disc
           // sits above "scroll down for more" — so instead of turning the whole
@@ -428,17 +428,8 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           );
         }
 
-        // The commit display lands mechanically while its sticker is still
-        // arriving, holds the line the markup shipped, and hands over.
-        let landed = REEL_AT;
-        if (line) {
-          const reel = reelIn(line, HERO.commits[0]);
-          show.add(reel, REEL_AT);
-          // Measured off the tween rather than restated: the reel's duration is
-          // its own business, and a relative `">"` here would hang off whatever
-          // was added last instead — which is the caret, and much shorter.
-          landed = REEL_AT + reel.duration();
-        }
+        // The commit display holds its landed line, reveals the caret,
+        // and hands over to the typewriter loop.
         if (caret) {
           show.fromTo(
             caret,
@@ -448,7 +439,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           );
         }
 
-        const handover = landed + REEL_HOLD;
+        const handover = REEL_AT + REEL_HOLD;
         show.call(armLoops, undefined, handover);
 
         if (caret) {
@@ -490,22 +481,42 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         // spends the rest of its 0.55s settling onto the outline, which is what
         // reads as smooth. Leaving is slower still and eased at both ends,
         // because there is nothing to arrive at on the way back.
-        const wordmarkHit = scope.querySelector('[data-hero="wordmark"]');
+        const wordmarkHit = scope.querySelector<SVGElement>('[data-hero="wordmark-hit"]');
         const fill = boxes("wordmark-fill");
         if (wordmarkHit && fill.length) {
-          cleanups.push(
-            hover(
-              wordmarkHit,
-              fill,
-              {
-                x: LAYER_OFFSET.x,
-                y: LAYER_OFFSET.y,
-                duration: 0.55,
-                ease: "expo.out",
-              },
-              { x: 0, y: 0, duration: 0.45, ease: "power2.inOut" },
-            ),
-          );
+          let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+          const enter = () => {
+            if (leaveTimer) {
+              clearTimeout(leaveTimer);
+              leaveTimer = null;
+            }
+            gsap.to(fill, {
+              x: LAYER_OFFSET.x,
+              y: LAYER_OFFSET.y,
+              duration: 0.55,
+              ease: "expo.out",
+              overwrite: "auto",
+            });
+          };
+          const leave = () => {
+            if (leaveTimer) clearTimeout(leaveTimer);
+            leaveTimer = setTimeout(() => {
+              gsap.to(fill, {
+                x: 0,
+                y: 0,
+                duration: 0.45,
+                ease: "power2.inOut",
+                overwrite: "auto",
+              });
+            }, 60);
+          };
+          wordmarkHit.addEventListener("pointerenter", enter);
+          wordmarkHit.addEventListener("pointerleave", leave);
+          cleanups.push(() => {
+            if (leaveTimer) clearTimeout(leaveTimer);
+            wordmarkHit.removeEventListener("pointerenter", enter);
+            wordmarkHit.removeEventListener("pointerleave", leave);
+          });
         }
 
         // The "Register Now" note lifts under the cursor. The tagged node is a
