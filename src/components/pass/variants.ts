@@ -24,11 +24,13 @@
  * is the one with the webcam in it. Index 0 is deliberately `none` — the
  * unfiltered camera is a state you must be able to get back to.
  *
- * The photobooth at `/memories` borrows the same five filters, which is why
- * each one also carries the name of its *treatment*. On the pass the colourway
- * is what you are choosing and the filter comes along with it; in the booth it
- * is the other way round, and "Purple" is no use as the label on a button that
- * drains the colour out of your face.
+ * `treatment` names what each filter does rather than what colour the card is,
+ * which is the one thing about a colourway that is worth saying out loud
+ * anywhere the pass itself is not on screen.
+ *
+ * The photobooth at `/memories` does not use this table. It stacks several
+ * filters at once and none of them is a colourway, so it keeps its own — see
+ * `memories/filters.ts`, which says why the two are apart.
  */
 export type PassVariant = {
   /** For `aria-live`, so a keyboard user is told what they landed on. */

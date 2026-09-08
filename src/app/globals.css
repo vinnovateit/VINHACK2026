@@ -633,6 +633,172 @@
   }
 }
 
+/* The photobooth's overlay treatments — the half of a filter a `filter` cannot
+   do. Same three ideas as `.glitch` above, but pointed at a picture that is
+   actually there rather than at a dead panel, so they are stronger, faster and
+   they blend rather than sit on top: `screen` is what a chroma split does to a
+   signal, and a flat wash over a face would only grey it.
+
+   `--fx-period` is the scanline pitch, set by whoever mounts the layer — a card
+   unit on the card, a CSS pixel in the booth. See `memories/filters.ts`, which
+   owns that number because `paint.ts` steps the canvas by it too.
+
+   Nothing here sets a filter. The layers sit *inside* the filtered box with the
+   picture, exactly like `.glitch`, so the stack the viewer chose treats the
+   overlay and the frame as one image. */
+.fx-scan {
+  position: absolute;
+  inset: calc(-2 * var(--fx-period)) 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.3) 0 var(--fx-ink),
+    transparent var(--fx-ink) var(--fx-period)
+  );
+  animation: fx-scan 4s linear infinite;
+}
+
+/* Exactly one period, so the loop is seamless and reads as a rolling frame
+   rather than as a jump. */
+@keyframes fx-scan {
+  to {
+    transform: translateY(var(--fx-period));
+  }
+}
+
+/* Wider than the box it sits in, by more than the split ever moves it.
+   `inset: 0` looked right and was not: the layer steps 2.5% of its own width
+   sideways inside a parent that clips, so every step dragged its tinted edge
+   off one side and left a strip of untreated ground on the other. Over the
+   black of `/memories` that strip is not a subtle absence of tint, it is a
+   black bar down the edge of the window, appearing and disappearing on the
+   beat of the animation. The tear has always been drawn 120% wide for exactly
+   this reason; the split needs the same allowance, and 4% each side against a
+   2.5% step is comfortably more than enough. */
+.fx-chroma {
+  position: absolute;
+  inset: 0 -4%;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    90deg,
+    rgb(250 26 29 / 0.4),
+    transparent 22%,
+    transparent 78%,
+    rgb(116 212 240 / 0.42)
+  );
+  /* Stepped rather than eased: a signal does not slide out of alignment, it
+     lands somewhere wrong and stays there for a frame. */
+  animation: fx-chroma 2.4s steps(4, end) infinite alternate;
+}
+
+@keyframes fx-chroma {
+  from {
+    transform: translateX(-2.5%);
+  }
+  to {
+    transform: translateX(2.5%);
+  }
+}
+
+.fx-tear {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: 8%;
+  mix-blend-mode: screen;
+  background: linear-gradient(
+    90deg,
+    rgb(250 26 29 / 0.34),
+    rgb(252 252 252 / 0.22),
+    rgb(116 212 240 / 0.34)
+  );
+  animation: fx-tear 3.6s cubic-bezier(0.85, 0, 0.15, 1) infinite;
+}
+
+@keyframes fx-tear {
+  0% {
+    top: -10%;
+    transform: translateX(0) scaleY(1);
+  }
+  46% {
+    transform: translateX(-4%) scaleY(1.6);
+  }
+  50% {
+    transform: translateX(5%) scaleY(0.7);
+  }
+  54% {
+    transform: translateX(-2%) scaleY(1.3);
+  }
+  100% {
+    top: 102%;
+    transform: translateX(0) scaleY(1);
+  }
+}
+
+/* The zoom slider on the photo window. A range input is the one control the
+   browser will not let a stylesheet near without `appearance: none` and a
+   thumb drawn by hand, and it needs both vendor thumbs because they are two
+   different pseudo-elements that cannot be listed in one selector — a browser
+   that does not know one of them throws the whole rule away.
+
+   Sized for a thumb rather than a mouse: 18px of green on a 3px track, which
+   is small on a laptop and exactly right on the phone this is mostly used on. */
+.zoom-range {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.zoom-range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: #4a4a4a;
+}
+
+.zoom-range::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: #4a4a4a;
+}
+
+.zoom-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5.5px;
+  border: 0;
+  border-radius: 50%;
+  background: #bfea88;
+}
+
+.zoom-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #bfea88;
+}
+
+/* The stickers loose on the first screen of `/memories`. Each one carries its
+   own resting angle in `--r` and its own delay, so a scatter of nine reads as
+   nine pieces of paper on a wall rather than one animation played nine times.
+   The transform ends where it starts, so the piece never leaves its place. */
+.sticker-drift {
+  animation: sticker-drift 7s ease-in-out infinite alternate;
+  transform: rotate(var(--r, 0deg));
+}
+
+@keyframes sticker-drift {
+  from {
+    transform: rotate(var(--r, 0deg)) translateY(0);
+  }
+  to {
+    transform: rotate(calc(var(--r, 0deg) + 3deg)) translateY(-12px);
+  }
+}
+
 /* An entrance is the one kind of motion a visitor cannot opt out of by not
    scrolling, so it is the first thing this query switches off. `animation: none`
    rather than a shortened one: with `both` removed along with the animation,
@@ -676,6 +842,26 @@
 
   .glitch-tear {
     display: none;
+  }
+
+  /* Same bargain for the booth's treatments, and here it is not only about
+     comfort: a filter the viewer picked is a filter they have to be able to
+     see. The scanlines and the chroma split stay drawn and stop moving, so
+     CRT still looks like CRT and GLITCH still tears the colour apart — it just
+     does it in one held frame. The sweep has nowhere to be held, so it goes. */
+  .fx-scan,
+  .fx-chroma {
+    animation: none;
+  }
+
+  .fx-tear {
+    display: none;
+  }
+
+  /* The scatter is decoration, and decoration that moves is the first thing to
+     stop. Every piece stays exactly where it was pinned, at its own angle. */
+  .sticker-drift {
+    animation: none;
   }
 }
 

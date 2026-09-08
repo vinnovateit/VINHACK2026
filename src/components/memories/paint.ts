@@ -15,7 +15,16 @@ import {
   type Placed,
   type PlacedText,
 } from "@/components/memories/card";
+import { SCAN, type FeedOverlay } from "@/components/memories/filters";
 import { BY_ID, badgeLines, boxOf } from "@/components/memories/stickers";
+import {
+  PROP_BY_ID,
+  drawProp,
+  photoMap,
+  type PlacedProp,
+} from "@/components/memories/ar";
+import { backdropOf } from "@/components/memories/backdrops";
+import type { Shot } from "@/components/memories/useCamera";
 
 /**
  * The card, drawn onto a canvas at full size — the file the viewer saves.
@@ -34,6 +43,17 @@ import { BY_ID, badgeLines, boxOf } from "@/components/memories/stickers";
  * Draw order, and the one place it is a decision rather than an accident: the
  * ground, the photo, the message, then the stickers. The stickers go over both
  * because that is what a sticker does to the thing it is stuck on.
+ *
+ * The backdrop splits across that order rather than sitting at one point in it,
+ * because the two kinds of backdrop are not the same kind of thing. A *scene*
+ * is part of the photograph — it goes behind the person, inside the filter,
+ * before the overlay treatments, and it is composed off to one side first
+ * because `ctx.filter` treats each draw as it is made and the scene and the
+ * person have to be treated as the one picture they now are. A *frame* is ink
+ * on the window: after the overlay, unfiltered, clipped to the photo. The AR
+ * props come after both and are clipped to nothing at all, because by the time
+ * they reach this file they are pieces on the card that happen to have been
+ * placed by a camera.
  *
  * The last step is the one the preview deliberately does not have. The saved
  * image gets a single black bar across the top with the two marks in it, and
@@ -62,6 +82,71 @@ function load(src: string): Promise<HTMLImageElement> {
   const pending = image(src);
   cache.set(src, pending);
   return pending;
+}
+
+/**
+ * The overlay treatments, drawn into the photo window — the half of a filter
+ * that is ink rather than a filter, and the only part of the booth's stack this
+ * file has to render itself.
+ *
+ * Same three layers as the `.fx-` block in `globals.css`, at the same strengths
+ * and in the same order, because they are the same treatment: what the viewer
+ * chose on the camera has to be what lands in the file. What does not come
+ * across is the motion — a still cannot roll, drift or tear its way down the
+ * frame, so each layer is drawn at one moment of its loop. The tear is placed
+ * at the point in its sweep where it is on the picture rather than off the top
+ * of it, which is the frame anybody would have picked to keep.
+ *
+ * Clipped to the window, so nothing lands on the black the message is written
+ * on: the treatment is on the photograph, not on the card.
+ */
+function drawOverlays(
+  ctx: CanvasRenderingContext2D,
+  box: { x: number; y: number; w: number; h: number },
+  overlays: readonly FeedOverlay[],
+) {
+  if (!overlays.length) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(box.x, box.y, box.w, box.h);
+  ctx.clip();
+
+  // Legacy `rgba()` rather than the space-separated form the stylesheet
+  // uses: a canvas parses colours with its own parser, and the older syntax is
+  // the one every engine that can run this page agrees on.
+  if (overlays.includes("scan")) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    for (let y = box.y; y < box.y + box.h; y += SCAN.period) {
+      ctx.fillRect(box.x, y, box.w, SCAN.ink);
+    }
+  }
+
+  // `screen` is what a chroma split does to a signal — it adds a channel back
+  // rather than washing one over the top.
+  ctx.globalCompositeOperation = "screen";
+
+  if (overlays.includes("chroma")) {
+    const chroma = ctx.createLinearGradient(box.x, 0, box.x + box.w, 0);
+    chroma.addColorStop(0, "rgba(250, 26, 29, 0.4)");
+    chroma.addColorStop(0.22, "rgba(0, 0, 0, 0)");
+    chroma.addColorStop(0.78, "rgba(0, 0, 0, 0)");
+    chroma.addColorStop(1, "rgba(116, 212, 240, 0.42)");
+    ctx.fillStyle = chroma;
+    ctx.fillRect(box.x, box.y, box.w, box.h);
+  }
+
+  if (overlays.includes("tear")) {
+    const tearH = box.h * 0.08;
+    const tearY = box.y + box.h * 0.38;
+    const tear = ctx.createLinearGradient(box.x, 0, box.x + box.w, 0);
+    tear.addColorStop(0, "rgba(250, 26, 29, 0.34)");
+    tear.addColorStop(0.5, "rgba(252, 252, 252, 0.22)");
+    tear.addColorStop(1, "rgba(116, 212, 240, 0.34)");
+    ctx.fillStyle = tear;
+    ctx.fillRect(box.x, tearY, box.w, tearH);
+  }
+
+  ctx.restore();
 }
 
 /** Centred text, tracked between the glyphs rather than after each of them.
@@ -142,16 +227,22 @@ async function paintArt({
   size,
   text,
   placed,
+  props,
   photo,
+  backdrop,
   filter,
+  overlays,
 }: {
   aspect: Aspect;
   lines: readonly Line[];
   size: number;
   text: PlacedText;
   placed: readonly Placed[];
-  photo: { url: string; w: number; h: number } | null;
+  props: readonly PlacedProp[];
+  photo: Shot | null;
+  backdrop: string;
   filter: string;
+  overlays: readonly FeedOverlay[];
 }): Promise<HTMLCanvasElement> {
   const { w, h } = CARD[aspect];
   const canvas = document.createElement("canvas");
@@ -163,11 +254,22 @@ async function paintArt({
   ctx.fillStyle = GROUND;
   ctx.fillRect(0, 0, w, h);
 
+  const art = backdropOf(backdrop);
+
   if (photo) {
     const shot = await image(photo.url).catch(() => null);
     if (shot) {
       const box = WINDOW[aspect];
       const crop = cover(photo, box);
+      // A scene goes behind the person, and only where the shutter kept a
+      // cut-out to put them in front of it with. Without one — the segmenter
+      // never arrived, or the photograph was taken before a scene was picked —
+      // this is a plain window, which is the graceful version of the failure.
+      const cut =
+        art?.kind === "scene" && photo.mask
+          ? await image(photo.mask).catch(() => null)
+          : null;
+
       ctx.save();
       // The filter is the colourway's, applied here rather than baked into the
       // capture — so a filter picked before the shot can still be changed after
@@ -175,8 +277,65 @@ async function paintArt({
       // browser has no `ctx.filter` the photo lands untreated, which is the one
       // graceful thing to do with a missing filter.
       if (filter && filter !== "none" && "filter" in ctx) ctx.filter = filter;
-      ctx.drawImage(shot, crop.x, crop.y, crop.w, crop.h, box.x, box.y, box.w, box.h);
+      if (art && cut) {
+        // Composed off to the side and drawn in as one image, because the
+        // filter has to treat the scene and the person together — they are one
+        // photograph as far as the card is concerned — and `ctx.filter` treats
+        // each draw as it is made.
+        const stage = document.createElement("canvas");
+        stage.width = box.w;
+        stage.height = box.h;
+        const scene = stage.getContext("2d");
+        if (scene) {
+          art.draw(scene, box.w, box.h);
+          const person = document.createElement("canvas");
+          person.width = box.w;
+          person.height = box.h;
+          const front = person.getContext("2d");
+          if (front) {
+            front.drawImage(shot, crop.x, crop.y, crop.w, crop.h, 0, 0, box.w, box.h);
+            // The mask is the photo's own size, so it takes the same rectangle.
+            front.globalCompositeOperation = "destination-in";
+            front.drawImage(cut, crop.x, crop.y, crop.w, crop.h, 0, 0, box.w, box.h);
+            scene.drawImage(person, 0, 0);
+          }
+        }
+        ctx.drawImage(stage, box.x, box.y);
+      } else {
+        ctx.drawImage(shot, crop.x, crop.y, crop.w, crop.h, box.x, box.y, box.w, box.h);
+      }
       ctx.restore();
+      // After the photo and before anything else: the overlay treats the
+      // picture, and the message and the stickers go on top of the treated
+      // picture the same way they sit on top of it in the preview.
+      drawOverlays(ctx, box, overlays);
+
+      // The frame is ink on the window rather than a treatment of it, so it
+      // goes on after the overlay and is not filtered — the same order, and the
+      // same reasoning, as `ArStage` draws it in.
+      if (art?.kind === "frame") {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(box.x, box.y, box.w, box.h);
+        ctx.clip();
+        ctx.translate(box.x, box.y);
+        art.draw(ctx, box.w, box.h);
+        ctx.restore();
+      }
+    }
+  }
+
+  // The props the camera hung on a face, where the shutter left them and
+  // wherever they have been dragged since. Not clipped to the window: they are
+  // pieces on the card now, and a piece dragged off the picture has to survive
+  // the trip into the file the same way a sticker does.
+  if (photo && props.length) {
+    const map = photoMap(photo, aspect);
+    for (const item of props) {
+      const prop = PROP_BY_ID.get(item.prop);
+      if (!prop) continue;
+      const at = map.toCard(item.px, item.py);
+      drawProp(ctx, prop, at.x, at.y, map.size(item.span) * item.scale, item.rotation);
     }
   }
 
@@ -245,8 +404,13 @@ export async function paintCard(options: {
   size: number;
   text: PlacedText;
   placed: readonly Placed[];
-  photo: { url: string; w: number; h: number } | null;
+  /** The AR props, frozen at the shutter and moved by hand since. */
+  props: readonly PlacedProp[];
+  photo: Shot | null;
+  /** A `Backdrop.id`, or `PLAIN`. */
+  backdrop: string;
   filter: string;
+  overlays: readonly FeedOverlay[];
 }): Promise<HTMLCanvasElement> {
   const { aspect } = options;
   const { w, h } = CARD[aspect];
