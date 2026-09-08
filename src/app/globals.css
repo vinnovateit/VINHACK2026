@@ -694,6 +694,64 @@ body {
   font-weight: 400;
 }
 
+/* ---- non-selectable stickers, media, and controls ----------------------- */
+
+img,
+svg {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+button,
+[role="button"],
+[role="switch"],
+[role="tab"],
+input[type="button"],
+input[type="submit"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.marquee,
+.scripts,
+.piece,
+.piece-frame,
+.deal-in,
+.asterisk,
+.glitch,
+.cursor-pointer,
+[data-hero]:not([data-hero="lede"]),
+[data-name*="sticker" i],
+[data-name*="pin" i],
+[data-name*="vector" i],
+[data-name*="image" i],
+[data-name*="logo" i],
+[data-name*="mask group" i],
+[data-name="key"],
+[data-card],
+[data-tab-part],
+[data-node-id="343:2115"],
+[data-node-id="343:2120"],
+[data-node-id="343:2215"],
+[data-node-id="343:2216"],
+[data-node-id="343:2217"],
+[data-node-id="343:2221"],
+[data-node-id="343:2222"],
+[data-node-id="343:2223"],
+[data-node-id="594:50"],
+[data-node-id="594:56"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+[data-hero="lede"],
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* ---- section-specific text selection ------------------------------------ */
 
 ::selection {
