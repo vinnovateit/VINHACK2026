@@ -15,15 +15,16 @@ export default function HeroSection() {
           A wrapper rather than 40 edited `top` values: `inset-0` makes this box
           the section's own frame, so it becomes the containing block every
           child already resolved against and every Figma offset below stays
-          true to the design file. The section keeps `overflow-clip`, so the
-          lift crops against the plate rather than escaping it. */}
+          true to the design file. The section uses `overflow-visible` so
+          stickers sweep in cleanly from edges while `.canvas-frame` manages
+          viewport clipping. */}
       <div className="absolute inset-0 -translate-y-[90px]">
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
-        <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
-          <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
-            <h1 className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px] pointer-events-none" data-hero="wordmark" data-node-id="343:1178">
-              <WordmarkArt />
-            </h1>
+        <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
+            <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
+              <h1 aria-label="VinHack" className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px] pointer-events-none" data-hero="wordmark" data-node-id="343:1178">
+                <WordmarkArt />
+              </h1>
             <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1182">
               <div className="absolute contents h-[280.357px] left-[765px] top-[528px] w-[463.743px]" data-hero="lede" data-node-id="343:1187">
                 <div className="-translate-x-1/2 absolute flex h-[195.473px] items-center justify-center left-[996.87px] top-[570.44px] w-[435.054px]" data-node-id="343:1188">

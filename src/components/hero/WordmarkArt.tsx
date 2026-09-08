@@ -39,11 +39,11 @@ export default function WordmarkArt() {
         viewBox="0 0 1023.16 357.889"
         fill="none"
         aria-hidden="true"
-        className="absolute inset-0 block size-full max-w-none pointer-events-none"
+        className="absolute inset-0 block size-full max-w-none"
       >
         <g
           data-hero="wordmark-hit"
-          className="pointer-events-auto cursor-pointer"
+          className="cursor-pointer"
         >
           <path
             d={FILL_PATH}
