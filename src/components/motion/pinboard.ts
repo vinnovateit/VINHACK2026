@@ -98,7 +98,7 @@ export function slideIn(
     // `overflow-clip` hides it, so the pan is longer without the landing
     // moving — which matters, because the pin is stamped against that landing.
     start = "top 115%",
-    end = "top 15%",
+    end = "top 40%",
   }: {
     trigger: Element;
     /** How far it starts to the left of its resting place, in layout px. */
