@@ -25,6 +25,7 @@ import {
   TRACKS,
   WHO_ARE_WE,
 } from "@/content/site";
+import { TrackCard, TRACK_COLORS } from "@/components/tracks/TrackCard";
 
 /**
  * The page below `md`.
@@ -683,13 +684,37 @@ function MobileTracks() {
         })}
       </div>
 
-      <div className="coming-soon-wrap mt-10 flex justify-center">
-        <p className="coming-soon relative text-center text-[24px] text-[#bfea88]">
-          {TRACKS.comingSoon}
-        </p>
+      {/* Mini Layered Cards for Mobile */}
+      <div className="my-10 flex justify-center items-center py-6 overflow-hidden">
+        <div className="relative h-[160px] w-[220px]">
+          {[
+            { color: TRACK_COLORS.white, offset: 40, zIndex: 1 },
+            { color: TRACK_COLORS.lightBlue, offset: 32, zIndex: 2 },
+            { color: TRACK_COLORS.darkBlue, offset: 24, zIndex: 3 },
+            { color: TRACK_COLORS.red, offset: 16, zIndex: 4 },
+            { color: TRACK_COLORS.pink, offset: 8, zIndex: 5 },
+            { color: TRACK_COLORS.grey, offset: 0, zIndex: 6, isFront: true },
+          ].map((c, idx) => (
+            <div
+              key={idx}
+              className="absolute top-0 left-0 transition-transform duration-300 hover:-translate-y-2"
+              style={{
+                transform: `translate(${c.offset}px, ${-c.offset * 0.55}px) rotate(15deg) scaleY(0.97) skewX(15deg)`,
+                zIndex: c.zIndex,
+              }}
+            >
+              <TrackCard
+                color={c.color}
+                isFront={c.isFront}
+                width={140}
+                height={95}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {FEATURES.tracks && <div className="mt-10 flex justify-center">
+      <div className="mt-6 flex justify-center">
         <Piece
           width={270.424}
           height={211.237}
@@ -711,7 +736,7 @@ function MobileTracks() {
             </div>
           </div>
         </Piece>
-      </div>}
+      </div>
     </section>
   );
 }
