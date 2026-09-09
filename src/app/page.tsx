@@ -8,6 +8,7 @@ import AboutSection from "@/components/sections/About";
 import WhoAreWeSection from "@/components/sections/WhoAreWe";
 import ProjectsSection from "@/components/sections/Projects";
 import TracksSection from "@/components/sections/Tracks";
+import SponsorsSection from "@/components/sections/Sponsors";
 import TimelineSection from "@/components/sections/Timeline";
 import RulesSection from "@/components/sections/Rules";
 import GuidelinesSection from "@/components/sections/Guidelines";
@@ -56,6 +57,7 @@ export default function Home() {
             <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>
               <TracksSection />
               <div className={!FEATURES.tracks ? "tracks-disabled-sections" : ""}>
+                <SponsorsSection />
                 <TimelineSection />
                 <RulesSection />
                 <GuidelinesSection />

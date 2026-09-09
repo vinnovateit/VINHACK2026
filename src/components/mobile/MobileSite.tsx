@@ -4,6 +4,7 @@ import CameraFeed from "@/components/CameraFeed";
 import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
 import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
+import MobileSponsors from "@/components/mobile/MobileSponsors";
 import MobileTimeline from "@/components/mobile/MobileTimeline";
 import Piece from "@/components/mobile/Piece";
 import RegisterSvg from "@/components/RegisterSvg";
@@ -69,6 +70,7 @@ export default function MobileSite() {
       <MobileWhoAreWe />
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
+      <MobileSponsors />
       <MobileTimelineSection />
       <MobileRules />
       <MobileGuidelines />

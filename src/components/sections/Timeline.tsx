@@ -116,7 +116,7 @@ function DaySheet({ index }: { index: number }) {
 
 export default function TimelineSection() {
   return (
-    <section aria-label="Timeline" className="absolute bg-black h-[832px] left-0 overflow-clip top-[4680px] w-[1280px]" data-node-id="343:2038" data-name="MacBook Air - 17">
+    <section aria-label="Timeline" className="absolute bg-black h-[832px] left-0 overflow-clip top-[5600px] w-[1280px]" data-node-id="343:2038" data-name="MacBook Air - 17">
       <div className="-translate-x-1/2 absolute bg-[#fa1a1d] h-[98.736px] left-[calc(50%+360.18px)] rounded-[19.747px] top-[126px] w-[440.363px]" data-node-id="343:2039">
         <div className="-translate-x-1/2 -translate-y-1/2 absolute bg-black h-[18.76px] left-1/2 top-1/2 w-[380.134px]" data-node-id="343:2040" />
         <div className="absolute h-[595.872px] left-[39.49px] overflow-clip top-[49.37px] w-[361.867px]" data-node-id="343:2041">

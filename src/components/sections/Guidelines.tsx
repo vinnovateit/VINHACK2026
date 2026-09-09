@@ -4,7 +4,7 @@ import { GUIDELINES } from "@/content/site";
 
 export default function GuidelinesSection() {
   return (
-    <section aria-label="Guidelines" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[6760px] w-[1280px]" data-node-id="343:751" data-name="GUIDELINES">
+    <section aria-label="Guidelines" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[7680px] w-[1280px]" data-node-id="343:751" data-name="GUIDELINES">
       <div className="absolute contents h-[1674.302px] left-[-178px] top-[-421px] w-[1686.703px]" data-node-id="343:752">
         <div className="absolute flex h-[1590.388px] items-center justify-center left-[-134.38px] top-[-379.04px] w-[1599.46px]" data-node-id="343:753">
           <div className="-scale-y-100 flex-none rotate-[-143.32deg]">

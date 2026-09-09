@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 9250px;
+  --canvas-height: 10170px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -36,15 +36,15 @@
 }
 
 .projects-disabled {
-  --canvas-height: 8418px;
+  --canvas-height: 9338px;
 }
 
 .tracks-disabled {
-  --canvas-height: 8498px;
+  --canvas-height: 9418px;
 }
 
 .projects-disabled.tracks-disabled {
-  --canvas-height: 7666px;
+  --canvas-height: 8586px;
 }
 
 .projects-disabled-sections {
@@ -102,6 +102,128 @@
   50% {
     opacity: 1;
     transform: translateY(4px) rotate(2deg);
+  }
+}
+
+/* A sponsor tile's arrival: held invisible until `Sponsors` / `MobileSponsors`
+   mark their grid `data-in-view` (an IntersectionObserver firing once, so this
+   never depends on GSAP or the scaled desktop canvas doing the measuring).
+   `--pop-delay` staggers the tiles, biggest first. */
+.sponsor-pop {
+  opacity: 0;
+}
+
+[data-in-view] .sponsor-pop {
+  animation: sponsor-pop 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) var(--pop-delay, 0s) both;
+}
+
+@keyframes sponsor-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.78) translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The ring a small sponsor tile gets on hover — drawn as a sibling rather than
+   a border, so it can scale in from just outside the card instead of the card
+   itself resizing under the pointer. */
+.sponsor-ring {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.group:hover .sponsor-ring,
+.group:focus-visible .sponsor-ring {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* A project card's arrival — same `data-in-view` gate as `.sponsor-pop`, but
+   alternating which edge each card drops in from (`Projects` assigns
+   `.project-pop-up`/`.project-pop-down` by index) so the row reads as cards
+   dealt in from alternating sides rather than one uniform rise. */
+.project-pop {
+  opacity: 0;
+}
+
+[data-in-view] .project-pop-up {
+  animation: project-pop-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--pop-delay, 0s) both;
+}
+
+[data-in-view] .project-pop-down {
+  animation: project-pop-down 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--pop-delay, 0s) both;
+}
+
+@keyframes project-pop-up {
+  from {
+    opacity: 0;
+    transform: translateY(-70px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes project-pop-down {
+  from {
+    opacity: 0;
+    transform: translateY(70px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The stars scattered round the sponsor tiles — same `data-in-view` gate as
+   `.sponsor-pop`, but with a spin thrown in on top of the scale so it reads
+   as a sticker landing rather than a card sliding up. */
+.sticker-pop {
+  opacity: 0;
+}
+
+[data-in-view] .sticker-pop {
+  animation: sticker-pop 0.8s cubic-bezier(0.18, 1.4, 0.3, 1) var(--pop-delay, 0s) both;
+}
+
+@keyframes sticker-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2) rotate(var(--sticker-rotate-from, -24deg));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(var(--sticker-rotate-to, 0deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-pop,
+  .project-pop {
+    opacity: 1;
+    animation: none;
+  }
+  [data-in-view] .sponsor-pop,
+  [data-in-view] .project-pop-up,
+  [data-in-view] .project-pop-down {
+    animation: none;
+  }
+  .sponsor-ring {
+    transition: none;
+  }
+  .sticker-pop {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+  [data-in-view] .sticker-pop {
+    animation: none;
   }
 }
 

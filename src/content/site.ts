@@ -252,10 +252,11 @@ export const PROJECTS = {
   /** In the order the design stacks them, left to right. */
   cards: [
     {
-      name: "BUNKKBUDDIES",
+      name: "BUNKBUDDIES",
       displayName: "BunkBuddies",
-      bg: "#fa1a1d",
-      hoverBg: "#2e5946",
+      bg: "#fee3d2",
+      hoverBg: "#fa1a1d",
+      hoverTextColor: "#ffffff",
       shapeSvg: "/projects/shape_flower.svg",
       textColor: "#000000",
       logo: "/projects/bunkbuddies.svg",
@@ -269,6 +270,7 @@ export const PROJECTS = {
       displayName: "Studyhub",
       bg: "#ffffff",
       hoverBg: "#fdbbff",
+      hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_star.svg",
       textColor: "#000000",
       logo: "/projects/studyhub.png",
@@ -280,10 +282,11 @@ export const PROJECTS = {
     {
       name: "LATCH",
       displayName: "Latch",
-      bg: "#74d4f0",
-      hoverBg: "#ff4337",
+      bg: "#c01221",
+      hoverBg: "#0F0A0B",
+      hoverTextColor: "#ffffff",
       shapeSvg: "/projects/shape_notched.svg",
-      textColor: "#000000",
+      textColor: "#ffffff",
       logo: "/projects/latch.svg",
       icon: "/projects/latch.svg",
       url: "https://latch.vinnovateit.com",
@@ -294,7 +297,8 @@ export const PROJECTS = {
       name: "MESSIT",
       displayName: "MessIT",
       bg: "#2849cb",
-      hoverBg: "#bfea88",
+      hoverBg: "#ffffff",
+      hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_blob.svg",
       textColor: "#ffffff",
       logo: "/projects/messit.png",
@@ -313,6 +317,42 @@ export const TRACKS = {
   lines: ["solve what matters", "TRACKS", "build what lasts"],
   comingSoon: "COMING SOON",
   sticker: "INNOVATE FOR IMPACT",
+} as const;
+
+/* ------------------------------------------------------------ sponsors */
+
+export const SPONSORS = {
+  label: "SPONSORS //",
+  heading: "Our Sponsors",
+  /**
+   * In paint order — biggest first. The first two carry a description, the
+   * rest just a header and a name; `Sponsors` and `MobileSponsors` size the
+   * tiers down the list (title, then gold, then the row of supporters).
+   */
+  tiers: [
+    {
+      header: "TITLE SPONSOR",
+      name: "Your Company",
+      desc: "Powering VinHack 2026 as our title sponsor.",
+      bg: "#fa1a1d",
+    },
+    {
+      header: "GOLD SPONSOR",
+      name: "Your Company",
+      desc: "Backing the builders with tools, prizes, and mentorship.",
+      bg: "#74d4f0",
+    },
+    { header: "SPONSOR", name: "Your Company", bg: "#2849cb" },
+    { header: "SPONSOR", name: "Your Company", bg: "#bfea88" },
+    { header: "SPONSOR", name: "Your Company", bg: "#e2b5f0" },
+    { header: "SPONSOR", name: "Your Company", bg: "#d9d9d9" },
+    { header: "SPONSOR", name: "Your Company", bg: "#db9eef" },
+  ],
+  /** The back of the title and gold tiles, shown on click. Placeholder copy —
+   *  swap for the real sponsor write-up once one exists. */
+  blurb:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  flipHint: "Tap to flip back",
 } as const;
 
 /* ----------------------------------------------------------- timeline */

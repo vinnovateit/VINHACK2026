@@ -1,4 +1,8 @@
+"use client";
+
+import type { CSSProperties } from "react";
 import { PROJECTS } from "@/content/site";
+import { useInView } from "@/components/useInView";
 
 type ProjectName = (typeof PROJECTS.cards)[number]["name"];
 
@@ -13,6 +17,11 @@ type CardConfig = {
   tilt: string;
   popupClass: string;
 };
+
+/** Base stacking order, lowest to highest paint — kept as real classes
+ *  (not an inline `zIndex`) so `hover:z-100` in the card's className can
+ *  actually win: an inline style always beats a class, hover state or not. */
+const Z_CLASSES = ["z-10", "z-20", "z-30", "z-40"];
 
 /**
  * Where each card sits on the collage, in paint order — the largest goes down
@@ -56,7 +65,7 @@ const CARDS: CardConfig[] = [
     popupClass: "left-4 right-4 bottom-4",
   },
   {
-    name: "BUNKKBUDDIES",
+    name: "BUNKBUDDIES",
     id: "297:308",
     label: "297:309",
     left: 14,
@@ -72,9 +81,12 @@ export default function ProjectsSection() {
   const projectMap = new Map<string, (typeof PROJECTS.cards)[number]>(
     PROJECTS.cards.map((card) => [card.name, card]),
   );
+  const [sectionRef, inView] = useInView<HTMLElement>(0.15);
 
   return (
     <section
+      ref={sectionRef}
+      data-in-view={inView || undefined}
       aria-label="Projects"
       className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[2496px] w-[1280px]"
       data-node-id="297:300"
@@ -87,6 +99,7 @@ export default function ProjectsSection() {
 
           const isDarkCard = info.textColor === "#ffffff";
           const frameColor = isDarkCard ? "#ffffff" : "#000000";
+          const dropDirection = idx % 2 === 0 ? "project-pop-up" : "project-pop-down";
 
           return (
             <a
@@ -94,14 +107,14 @@ export default function ProjectsSection() {
               href={info.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group absolute block select-none overflow-visible transition-shadow duration-300 hover:z-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#bfea88]"
+              className={`group project-pop ${dropDirection} ${Z_CLASSES[idx]} absolute block select-none overflow-visible transition-shadow duration-300 hover:z-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#bfea88]`}
               style={{
                 left: card.left,
                 top: card.top,
                 width: card.width,
                 height: card.height,
-                zIndex: (idx + 1) * 10,
-              }}
+                "--pop-delay": `${idx * 140}ms`,
+              } as CSSProperties}
               data-card
               data-node-id={card.id}
               data-name={card.name}
@@ -164,16 +177,17 @@ export default function ProjectsSection() {
                   style={card.name === "LATCH" ? { color: info.textColor } : undefined}
                 />
                 <p
-                  className="font-rotonto not-italic text-center tracking-tight whitespace-nowrap"
+                  className="font-rotonto not-italic text-center tracking-tight whitespace-nowrap text-[color:var(--text-color)] transition-colors duration-300 group-hover:text-[color:var(--hover-text-color)]"
                   style={{
-                    color: info.textColor,
+                    "--text-color": info.textColor,
+                    "--hover-text-color": info.hoverTextColor,
                     fontSize:
                       card.name === "STUDYHUB"
                         ? "34px"
                         : card.name === "MESSIT"
                           ? "32px"
                           : "28px",
-                  }}
+                  } as CSSProperties}
                   data-node-id={card.label}
                 >
                   {card.name}
@@ -215,7 +229,6 @@ export default function ProjectsSection() {
 
                   {/* Pop-up Footer */}
                   <div className="mt-2.5 flex items-center justify-between font-mono text-[9.5px] text-neutral-400">
-                    <span>VINNOVATEIT</span>
                     <span className="flex items-center gap-1 font-semibold text-[#bfea88]">
                       OPEN APP &rarr;
                     </span>
