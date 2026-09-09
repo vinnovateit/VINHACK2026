@@ -634,18 +634,82 @@ function MobileProjects() {
       {/* The collage overlaps these four at four different sizes; on one column
           they are a grid, which keeps the four-colour block the section reads
           as. */}
-      <div className="mt-8 grid grid-cols-2 gap-3">
-        {PROJECTS.cards.map((card, i) => (
-          <div
-            key={card.name}
-            className={`flex items-center justify-center overflow-clip px-2 ${
-              i % 3 === 0 ? "h-[150px]" : "h-[190px]"
-            }`}
-            style={{ background: card.bg }}
-          >
-            <p className="text-[24px] text-black">{card.name}</p>
-          </div>
-        ))}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {PROJECTS.cards.map((card) => {
+          const isDark = card.textColor === "#ffffff";
+          return (
+            <a
+              key={card.name}
+              href={card.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex flex-col justify-between overflow-clip p-5 transition-transform duration-200 active:scale-[0.98] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              style={{ background: card.bg }}
+            >
+              {/* Corner brackets */}
+              <div className="pointer-events-none absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity">
+                <span className="absolute top-1 left-1 size-2 border-t-2 border-l-2 border-current" />
+                <span className="absolute top-1 right-1 size-2 border-t-2 border-r-2 border-current" />
+                <span className="absolute bottom-1 left-1 size-2 border-b-2 border-l-2 border-current" />
+                <span className="absolute bottom-1 right-1 size-2 border-b-2 border-r-2 border-current" />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <img
+                    src={card.icon}
+                    alt={`${card.displayName} logo`}
+                    className="size-12 object-contain"
+                    style={card.name === "LATCH" ? { color: card.textColor } : undefined}
+                  />
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider"
+                    style={{
+                      background: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
+                      color: card.textColor,
+                    }}
+                  >
+                    VISIT ↗
+                  </span>
+                </div>
+
+                <h3
+                  className="mt-3 font-rotonto text-[24px] tracking-tight"
+                  style={{ color: card.textColor }}
+                >
+                  {card.name}
+                </h3>
+
+                <p
+                  className="mt-1 font-rotonto text-[13px] leading-snug opacity-90"
+                  style={{ color: card.textColor }}
+                >
+                  “{card.tagline}”
+                </p>
+
+                <p
+                  className="mt-2 text-[12px] leading-relaxed opacity-80"
+                  style={{ color: card.textColor }}
+                >
+                  {card.body}
+                </p>
+              </div>
+
+              <div
+                className="mt-4 flex items-center justify-between border-t pt-2.5 text-[10px] font-mono tracking-wider"
+                style={{
+                  borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
+                  color: card.textColor,
+                }}
+              >
+                <span>VINNOVATEIT</span>
+                <span className="font-bold flex items-center gap-1">
+                  EXPLORE APP &rarr;
+                </span>
+              </div>
+            </a>
+          );
+        })}
       </div>
     </section>
   );
