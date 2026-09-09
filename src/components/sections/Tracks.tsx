@@ -1,5 +1,6 @@
 import { TRACKS } from "@/content/site";
 import TracksCardDeck from "@/components/tracks/TracksCardDeck";
+import { FEATURES } from "@/content/features";
 
 export default function TracksSection() {
   return (

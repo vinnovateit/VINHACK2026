@@ -2,9 +2,11 @@ import type { ReactNode } from "react";
 
 /**
  * The Figma frame this page is drawn against (node 297:2, "FINAL"): a fixed
- * 1280 x 8834 collage. Sections overlap and every element sits at an exact
- * pixel offset, so there is no meaningful reflow — the canvas is scaled as a
- * whole instead.
+ * 1280 x 8834 collage, rendered 9250 tall — the one place the page departs from
+ * the file is the gap opened between Rules and Guidelines, and everything below
+ * Rules carries its Figma top plus that 416 (see `--canvas-height`). Sections
+ * overlap and every element sits at an exact pixel offset, so there is no
+ * meaningful reflow — the canvas is scaled as a whole instead.
  *
  * It is split into two independently scaled halves (see `.canvas-frame` and
  * below it in globals.css):
@@ -24,13 +26,19 @@ import type { ReactNode } from "react";
  */
 export default function DesignCanvas({
   hero,
+  compact = false,
+  tracksCompact = false,
   children,
 }: {
   hero: ReactNode;
+  compact?: boolean;
+  tracksCompact?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="canvas-container bg-black">
+    <div
+      className={`canvas-container bg-black ${compact ? "projects-disabled" : ""} ${tracksCompact ? "tracks-disabled" : ""}`}
+    >
       <div className="canvas-frame hero-frame">
         <div className="canvas-plate bg-black">{hero}</div>
       </div>

@@ -1,4 +1,7 @@
 import CameraFeed from "@/components/CameraFeed";
+import PassCard from "@/components/pass/PassCard";
+import ShutterButton from "@/components/pass/ShutterButton";
+import { PASS_START } from "@/components/pass/variants";
 import { ABOUT } from "@/content/site";
 
 export default function AboutSection() {
@@ -7,14 +10,14 @@ export default function AboutSection() {
       <div className="absolute contents h-[726.044px] left-[701.43px] top-[71.7px] w-[638.182px]" data-node-id="297:329">
         <div className="absolute flex h-[577.055px] items-center justify-center left-[810.08px] top-[146.2px] w-[420.873px]" data-node-id="297:330">
           <div className="flex-none rotate-5">
-            <div className="bg-[#9b83f0] h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
+            <PassCard start={PASS_START.behind} className="h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[267.14px] not-italic opacity-14 text-[#313855] text-[112.64px] text-right top-[131.1px] whitespace-nowrap" data-node-id="297:331">
                 VH26
               </p>
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[432.58px] not-italic opacity-14 text-[#313855] text-[112.64px] text-right top-[279.82px] whitespace-nowrap" data-node-id="297:332">
                 VH26
               </p>
-              <div className="[word-break:break-word] absolute font-rotonto leading-[0] left-[209.91px] not-italic text-[#fdbbff] text-[31.68px] top-[58.77px] whitespace-nowrap" data-node-id="297:333">
+              <div className="[word-break:break-word] absolute font-rotonto leading-[0] left-[209.91px] not-italic text-(--pass-ink) text-[31.68px] top-[58.77px] whitespace-nowrap" data-node-id="297:333">
                 <p className="leading-[normal] mb-0">Attendee</p>
                 <p className="leading-[normal]">Pass</p>
               </div>
@@ -30,7 +33,7 @@ export default function AboutSection() {
                 </div>
                 <div className="-translate-x-1/2 absolute flex h-[33.509px] items-center justify-center left-[102.39px] top-[66px] w-[164.641px]" data-node-id="297:336">
                   <div className="flex-none rotate-[5.46deg]">
-                    <div className="[word-break:break-word] font-rotonto h-[18.023px] leading-[0] not-italic relative text-[#db9eef] text-[21.12px] text-center w-[163.668px] whitespace-pre-wrap">
+                    <div className="[word-break:break-word] font-rotonto h-[18.023px] leading-[0] not-italic relative text-(--pass-stub) text-[21.12px] text-center w-[163.668px] whitespace-pre-wrap">
                       <p className="leading-[normal] mb-0">VINHACK</p>
                       <p className="leading-[normal]">{` 2026`}</p>
                     </div>
@@ -38,16 +41,16 @@ export default function AboutSection() {
                 </div>
               </div>
               <div className="absolute bg-[#fcfcfc] h-[126.72px] left-[26.1px] overflow-clip top-[191.25px] w-[316.8px]" data-node-id="297:337">
-                <div className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[0] left-1/2 not-italic text-[#fdbbff] text-[21.12px] text-center top-[calc(50%-37.84px)] w-[276.32px] whitespace-pre-wrap" data-node-id="297:338">
+                <div className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[0] left-1/2 not-italic text-(--pass-ink) text-[21.12px] text-center top-[calc(50%-37.84px)] w-[276.32px] whitespace-pre-wrap" data-node-id="297:338">
                   <p className="leading-[normal] mb-0">{`LIVE `}</p>
                   <p className="leading-[normal] mb-0">CAMERA</p>
                   <p className="leading-[normal]">FEED</p>
                 </div>
               </div>
-              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[304.32px] not-italic text-[#fdbbff] text-[21.12px] text-center top-[327.25px] whitespace-nowrap" data-node-id="297:339">
+              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[304.32px] not-italic text-(--pass-ink) text-[21.12px] text-center top-[327.25px] whitespace-nowrap" data-node-id="297:339">
                 Duration
               </p>
-              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[48.96px] not-italic text-[#fdbbff] text-[21.12px] text-center top-[332.98px] whitespace-nowrap" data-node-id="297:340">
+              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[48.96px] not-italic text-(--pass-ink) text-[21.12px] text-center top-[332.98px] whitespace-nowrap" data-node-id="297:340">
                 Type
               </p>
               <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[67.84px] not-italic text-[#105266] text-[17.6px] text-center top-[357.17px] whitespace-nowrap" data-node-id="297:341">
@@ -177,25 +180,26 @@ export default function AboutSection() {
                 <div className="absolute inset-[74.38%_13.27%_7.9%_85.69%]" data-node-id="297:383" data-name="Vector">
                   <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector22.svg" />
                 </div>
-                <p className="[word-break:break-word] absolute font-rotonto inset-[93.51%_39.56%_3.92%_38.28%] leading-[normal] not-italic text-[#fdbbff] text-[11.616px] text-center whitespace-nowrap" data-node-id="297:384">
+                <p className="[word-break:break-word] absolute font-rotonto inset-[93.51%_39.56%_3.92%_38.28%] leading-[normal] not-italic text-(--pass-ink) text-[11.616px] text-center whitespace-nowrap" data-node-id="297:384">
                   VINHACK2026
                 </p>
               </div>
-            </div>
+              <ShutterButton />
+            </PassCard>
           </div>
         </div>
       </div>
       <div className="-translate-x-1/2 absolute contents h-[685.605px] left-[calc(50%+380.64px)] top-[91.92px] w-[584.861px]" data-node-id="297:385">
         <div className="-translate-x-1/2 absolute flex h-[606.285px] items-center justify-center left-[calc(50%+380.64px)] top-[131.58px] w-[469.169px]" data-node-id="297:386">
           <div className="flex-none rotate-[10.64deg]">
-            <div className="bg-[#74d4f0] h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
+            <PassCard start={PASS_START.front} className="h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[267.14px] not-italic opacity-5 text-[#313855] text-[112.64px] text-right top-[131.1px] whitespace-nowrap" data-node-id="297:387">
                 VH26
               </p>
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[432.58px] not-italic opacity-5 text-[#313855] text-[112.64px] text-right top-[279.82px] whitespace-nowrap" data-node-id="297:388">
                 VH26
               </p>
-              <div className="[word-break:break-word] absolute font-rotonto leading-[0] left-[209.91px] not-italic text-[#2849cb] text-[31.68px] top-[58.77px] whitespace-nowrap" data-node-id="297:389">
+              <div className="[word-break:break-word] absolute font-rotonto leading-[0] left-[209.91px] not-italic text-(--pass-ink) text-[31.68px] top-[58.77px] whitespace-nowrap" data-node-id="297:389">
                 <p className="leading-[normal] mb-0">Attendee</p>
                 <p className="leading-[normal]">Pass</p>
               </div>
@@ -211,22 +215,25 @@ export default function AboutSection() {
                 </div>
                 <div className="-translate-x-1/2 absolute flex h-[33.509px] items-center justify-center left-[102.39px] top-[66px] w-[164.641px]" data-node-id="297:392">
                   <div className="flex-none rotate-[5.46deg]">
-                    <div className="[word-break:break-word] font-rotonto h-[18.023px] leading-[0] not-italic relative text-[#74d4f0] text-[21.12px] text-center w-[163.668px] whitespace-pre-wrap">
+                    <div className="[word-break:break-word] font-rotonto h-[18.023px] leading-[0] not-italic relative text-(--pass-stub) text-[21.12px] text-center w-[163.668px] whitespace-pre-wrap">
                       <p className="leading-[normal] mb-0">VINHACK</p>
                       <p className="leading-[normal]">{` 2026`}</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="-translate-x-1/2 absolute bg-[#fcfcfc] h-[145.618px] left-[calc(50%-1.3px)] overflow-clip top-[169.22px] w-[316.8px]" data-node-id="297:393">
+              {/* The panel carries the colourway's filter rather than the feed
+                  inside it, so a still frame and the live video are graded the
+                  same and `CameraFeed` stays a component about the camera. */}
+              <div className="-translate-x-1/2 absolute bg-[#fcfcfc] h-[145.618px] left-[calc(50%-1.3px)] overflow-clip top-[169.22px] w-[316.8px] filter-(--pass-feed) transition-[filter] duration-300" data-node-id="297:393">
                 {/* The design's "LIVE CAMERA FEED" placeholder (297:394),
                     replaced by the real webcam panel. */}
                 <CameraFeed />
               </div>
-              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[304.32px] not-italic text-[#2849cb] text-[21.12px] text-center top-[327.25px] whitespace-nowrap" data-node-id="297:395">
+              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[304.32px] not-italic text-(--pass-ink) text-[21.12px] text-center top-[327.25px] whitespace-nowrap" data-node-id="297:395">
                 Duration
               </p>
-              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[48.96px] not-italic text-[#2849cb] text-[21.12px] text-center top-[332.98px] whitespace-nowrap" data-node-id="297:396">
+              <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[48.96px] not-italic text-(--pass-ink) text-[21.12px] text-center top-[332.98px] whitespace-nowrap" data-node-id="297:396">
                 Type
               </p>
               <p className="-translate-x-1/2 [word-break:break-word] absolute font-rotonto leading-[normal] left-[67.84px] not-italic text-[#105266] text-[17.6px] text-center top-[357.17px] whitespace-nowrap" data-node-id="297:397">
@@ -356,11 +363,12 @@ export default function AboutSection() {
                 <div className="absolute inset-[74.38%_13.27%_7.9%_85.69%]" data-node-id="297:439" data-name="Vector">
                   <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector28.svg" />
                 </div>
-                <p className="[word-break:break-word] absolute font-rotonto inset-[93.51%_39.56%_3.92%_38.28%] leading-[normal] not-italic text-[#2849cb] text-[11.616px] text-center whitespace-nowrap" data-node-id="297:440">
+                <p className="[word-break:break-word] absolute font-rotonto inset-[93.51%_39.56%_3.92%_38.28%] leading-[normal] not-italic text-(--pass-ink) text-[11.616px] text-center whitespace-nowrap" data-node-id="297:440">
                   VINHACK2026
                 </p>
               </div>
-            </div>
+              <ShutterButton />
+            </PassCard>
           </div>
         </div>
       </div>

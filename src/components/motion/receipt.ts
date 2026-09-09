@@ -1,5 +1,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { audio } from "@/components/motion/audio";
+import { feedTick, tearRip } from "@/components/motion/machine";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -24,6 +26,13 @@ gsap.registerPlugin(ScrollTrigger);
  *                            advances in discrete line feeds.
  *   the tear is a snap       a fast rip against the slot, then a damped swing
  *                            as the freed strip settles.
+ *
+ * And it is audible. One tick per line feed and a rip on the tear, both from
+ * `motion/machine.ts` — the same synthesized construction as the keycap and the
+ * shutter, so there is no audio file to fetch and nothing to 404. The ticks are
+ * fired off the step index rather than off `onUpdate`, because `steps()` holds
+ * a value across many frames and a tick a frame would be a buzz; the sound and
+ * the picture then advance on exactly the same beat.
  *
  * Revealed with `clip-path` rather than by animating `height`: the paper holds
  * two dozen absolutely positioned children, and clipping keeps the whole feed
@@ -69,23 +78,43 @@ export function printReceipt(
 
   const build = () => {
     const roll = { p: 0 };
+    let fed = 0;
     feed(0);
     gsap.set(paper, { rotation: 0, transformOrigin: "50% 0%" });
+
+    const stepTo = (targetP: number, dur: number, stepCount: number) => ({
+      p: targetP,
+      duration: dur,
+      ease: `steps(${stepCount})`,
+      onUpdate: () => {
+        feed(roll.p);
+        const currentStep = Math.round(roll.p * 26);
+        if (currentStep > fed) {
+          fed = currentStep;
+          feedTick();
+        }
+      },
+    });
+
+    const scale = duration / 1.86;
 
     return (
       gsap
         .timeline()
-        .to(roll, {
-          p: 1,
-          duration,
-          // ~14 line feeds a second, which is about the rate a receipt
-          // printer actually advances at.
-          ease: `steps(${Math.round(duration * 14)})`,
-          onUpdate: () => feed(roll.p),
-        })
+        // Chunk 1: Header / logo emerges
+        .to(roll, stepTo(0.28, 0.35 * scale, 7))
+        .to({}, { duration: 0.18 * scale })
+        // Chunk 2: Masthead & date divider
+        .to(roll, stepTo(0.55, 0.38 * scale, 7))
+        .to({}, { duration: 0.16 * scale })
+        // Chunk 3: Schedule entries & checkpoints
+        .to(roll, stepTo(0.82, 0.36 * scale, 7))
+        .to({}, { duration: 0.15 * scale })
+        // Chunk 4: Footer lines & feed out to tear line
+        .to(roll, stepTo(1.0, 0.28 * scale, 5))
         // The tear: a quick rip across the slot, then the freed strip swings
-        // and settles. Small numbers — the paper is only 360px wide, and
-        // anything more reads as a flag rather than a receipt.
+        // and settles.
+        .call(tearRip)
         .to(paper, { rotation: 1.1, duration: 0.09, ease: "power3.in" })
         .to(paper, { rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" })
     );
@@ -102,13 +131,19 @@ export function printReceipt(
   });
 
   // Already past it on load — a refresh partway down the page — so there is
-  // nobody to watch it print. Leave the paper out rather than blank.
+  // nobody to watch it print. Leave the paper out rather than blank, and put
+  // it there in silence: events are suppressed so the whole feed's worth of
+  // ticks and the tear do not all fire at once on an unwatched sheet, which
+  // means the paper has to be laid out by hand rather than by `onUpdate`.
   if (trigger.getBoundingClientRect().bottom < window.innerHeight) {
-    tl.progress(1);
+    feed(1);
+    tl.progress(1, true);
   }
 
   return {
     reprint: () => {
+      const ac = audio();
+      if (ac && ac.state === "suspended") void ac.resume();
       tl.kill();
       tl = build();
       tl.play(0);

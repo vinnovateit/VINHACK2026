@@ -11,11 +11,14 @@ export default function RulesSection() {
             <div className="bg-[#bfea88] h-[642.978px] opacity-80 relative w-[1087.506px]" />
           </div>
         </div>
-        <div className="absolute h-[642.978px] left-[80.77px] top-[108.51px] w-[1087.506px]" data-node-id="343:712">
-          <div className="absolute inset-[-2.93%_-1.73%]">
-            <img alt="" className="block max-w-none size-full" src="/figma/rectangle167.svg" />
-          </div>
-        </div>
+        <div
+          className="absolute h-[642.978px] left-[80.77px] top-[108.51px] w-[1087.506px] bg-[#bfea88]"
+          data-node-id="343:712"
+          style={{
+            boxShadow:
+              "0 15px 4px rgba(0,0,0,0.25), 0 -15px 4px rgba(0,0,0,0.25), -15px 4px 4px rgba(0,0,0,0.25), 15px 4px 4px rgba(0,0,0,0.25)",
+          }}
+        />
         <div className="absolute h-[587.412px] left-[108.56px] top-[138.28px] w-[1031.94px]" data-node-id="343:713">
           <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/rectangle169.svg" />
         </div>
@@ -50,7 +53,22 @@ export default function RulesSection() {
           <div className="absolute flex h-[195.34px] items-center justify-center left-[896.4px] top-[574.86px] w-[226.452px]" data-node-id="343:720">
             <div className="-scale-y-100 flex-none rotate-180">
               <div className="h-[195.34px] relative w-[226.452px]">
-                <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095564.svg" />
+                {/* The badge ships as two files rather than the one Figma
+                    exported. The asterisk beside the globe pulses on its own
+                    clock, and a group inside a flat `<img>` cannot be reached
+                    to animate — so it is lifted out into its own file and laid
+                    back over the globe at the same size, which puts it exactly
+                    where the single file had it. `transform-origin` is the
+                    asterisk's own centre in the shared 226.452 x 195.34
+                    viewBox, so it swells about its middle instead of about the
+                    badge's. */}
+                <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/group48095564-globe.svg" />
+                <img
+                  alt=""
+                  aria-hidden
+                  className="asterisk absolute block inset-0 max-w-none size-full"
+                  src="/figma/group48095566-asterisk.svg"
+                />
               </div>
             </div>
           </div>

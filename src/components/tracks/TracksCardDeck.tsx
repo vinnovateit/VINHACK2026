@@ -304,8 +304,8 @@ export function TracksCardDeck() {
       if (!sequenceLocked) {
         const canEnterFromDirection = delta > 0
           ? rect.top < window.innerHeight * 0.85 && targetP < SEQUENCE_LENGTH
-          : rect.top < window.innerHeight * 0.1
-            && rect.bottom > window.innerHeight * 0.7
+          : rect.top < window.innerHeight * -0.18
+            && rect.bottom > window.innerHeight * 0.45
             && targetP > 0;
         if (!canEnterFromDirection) return;
         sequenceLocked = true;
@@ -402,10 +402,15 @@ export function TracksCardDeck() {
                     }}
                     className="absolute inset-0 p-5 flex flex-col justify-end opacity-0 will-change-transform pointer-events-none"
                   >
-                    <h3 className="font-rotonto text-[#2849cb] text-[18px] font-bold tracking-tight mb-1 leading-tight">
+                    <img
+                      src="/placeholder.jpg"
+                      alt=""
+                      className="absolute inset-0 size-full object-cover opacity-20 pointer-events-none"
+                    />
+                    <h3 className="relative z-10 font-rotonto text-[#2849cb] text-[18px] font-bold tracking-tight mb-1 leading-tight">
                       {SEQUENCE_CONTENT[SEQUENCE_CARDS.indexOf(card)]}
                     </h3>
-                    <p className="font-rotonto text-[#2849cb]/90 text-[7.5px] leading-[1.38] tracking-tight">
+                    <p className="relative z-10 font-rotonto text-[#2849cb]/90 text-[7.5px] leading-[1.38] tracking-tight">
                       Step into the world where ideas ignite revolutions. Dream big, solve pressing problems, and create solutions that spark meaningful change.
                     </p>
                   </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { printRun, toggleSnap } from "@/components/motion/machine";
 import { TIMELINE } from "@/content/site";
 
 /**
@@ -15,10 +16,31 @@ import { TIMELINE } from "@/content/site";
  * instead of at fixed offsets, and the paper feeds out on a CSS animation that
  * re-runs whenever the day changes. `key` on the paper is what re-runs it: a
  * new key is a new element, so the animation starts again from nothing.
+ *
+ * It is also audible, but only from the day switch. The sound is scheduled to
+ * match `.receipt-feed` exactly — thirteen line feeds over 0.9s and then the
+ * tear — and it is fired from the press rather than from the animation because
+ * a browser will not start audio until the visitor has touched the page: the
+ * first print, on arrival, has nobody's permission to make a noise yet.
  */
+
+/** Matches `.receipt-feed` in globals.css: 1.8s with realistic pauses. */
+const FEED = { steps: 16, duration: 1.8 };
+
 export default function MobileTimeline() {
   const [dayIndex, setDayIndex] = useState(0);
   const day = TIMELINE.days[dayIndex];
+
+  const pick = (index: number) => {
+    if (index === dayIndex) {
+      toggleSnap();
+      printRun(FEED);
+      return;
+    }
+    setDayIndex(index);
+    setTimeout(() => toggleSnap(), 300);
+    printRun(FEED);
+  };
 
   return (
     <div>
@@ -30,17 +52,17 @@ export default function MobileTimeline() {
         role="group"
         aria-label="Schedule day"
       >
-        {/* The filled pill, sliding to the selected half. */}
+        {/* The filled pill, sliding to the selected half without overshooting edges. */}
         <div
           aria-hidden
-          className="absolute inset-y-[2px] left-[2px] w-[calc(50%-2px)] rounded-[11.7px] border-[1.8px] border-[#74d4f0] bg-[#2849cb] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none"
+          className="absolute inset-y-[2px] left-[2px] w-[calc(50%-2px)] rounded-[11.7px] border-[1.8px] border-[#74d4f0] bg-[#2849cb] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
           style={{ transform: `translateX(${dayIndex * 100}%)` }}
         />
         {TIMELINE.days.map((option, i) => (
           <button
             key={option.name}
             type="button"
-            onClick={() => setDayIndex(i)}
+            onClick={() => pick(i)}
             aria-pressed={i === dayIndex}
             className={`relative z-1 flex-1 cursor-pointer py-[11px] text-center text-[17px] transition-colors duration-300 ${
               i === dayIndex ? "text-[#74d4f0]" : "text-[#2849cb]"
@@ -56,34 +78,43 @@ export default function MobileTimeline() {
       <div className="mt-9">
         <div className="relative mx-auto h-[62px] w-full max-w-[340px] rounded-[19.747px] bg-[#fa1a1d]">
           <div className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-[12px] w-[86%] bg-black" />
+          {/* Cutter lip anchoring the paper to the slot */}
+          <div
+            aria-hidden
+            className="-translate-x-1/2 pointer-events-none absolute top-[30px] left-1/2 h-[5px] w-[86%] rounded-full bg-[#161616] shadow-[0_2px_4px_rgba(0,0,0,0.55)] z-10"
+          />
         </div>
 
         <div
           key={day.name}
-          className="receipt-feed -mt-[6px] relative mx-auto w-full max-w-[300px] bg-[#f1f0f0] px-[22px] pt-[26px] pb-[30px] text-black"
+          className="receipt-feed -mt-[31px] relative mx-auto w-full max-w-[300px] px-[22px] pt-[26px] pb-[30px] text-black"
         >
+          <div
+            aria-hidden
+            className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0]"
+          />
           <img
             alt=""
-            className="mx-auto block w-[170px] max-w-none"
+            className="relative mx-auto block w-[170px] max-w-none"
             src="/figma/logo.svg"
           />
 
-          <p className="mt-[18px] text-center text-[26px] leading-none">
+          <p className="relative mt-[18px] text-center text-[26px] leading-none">
             {day.name}
           </p>
-          <p className="mt-[8px] text-center text-[14px]">{TIMELINE.masthead}</p>
+          <p className="relative mt-[8px] text-center text-[14px]">{TIMELINE.masthead}</p>
 
-          <div className="mt-[18px] border-t-2 border-dashed border-black/60" />
+          <div className="receipt-rule relative mt-[18px] h-[1px] w-full" />
 
-          <div className="flex justify-between py-[10px] text-[15px]">
+          <div className="relative flex justify-between py-[10px] text-[15px]">
             <span>{TIMELINE.dateLabel}</span>
             <span>{day.date}</span>
           </div>
 
-          <div className="border-t-2 border-dashed border-black/60" />
+          <div className="receipt-rule relative h-[1px] w-full" />
 
-          <ul className="mt-[6px]">
-            {day.entries.map((entry) =>
+          <ul className="relative mt-[6px]">
+            {day.entries.map((entry, i) =>
               entry.kind === "row" ? (
                 <li
                   key={entry.label}
@@ -97,30 +128,24 @@ export default function MobileTimeline() {
                 // columns, bracketed by rules — which is how the design marks
                 // it out from the rows either side.
                 <li key={entry.label} className="my-[6px]">
-                  <div className="border-t-2 border-dashed border-black/60" />
+                  {i !== 0 && (
+                    <div className="receipt-rule h-[1px] w-full" />
+                  )}
                   <p className="py-[9px] text-center text-[15px]">
                     {entry.label}
                   </p>
-                  <div className="border-t-2 border-dashed border-black/60" />
+                  <div className="receipt-rule h-[1px] w-full" />
                 </li>
               ),
             )}
           </ul>
 
-          <div className="mt-[10px] border-t-2 border-dashed border-black/60" />
+          <div className="receipt-rule relative mt-5 h-[1px] w-full" />
 
-          <div className="flex justify-between gap-2 pt-[8px] text-[9px]">
+          <div className="relative flex justify-between gap-2 pt-[8px] text-[9px]">
             <span>{TIMELINE.site}</span>
             <span>{TIMELINE.email}</span>
           </div>
-
-          {/* The torn edge, which is the paper's own artwork. */}
-          <img
-            alt=""
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 block h-[14px] w-full max-w-none rotate-180"
-            src="/figma/group48095503.svg"
-          />
         </div>
       </div>
     </div>
