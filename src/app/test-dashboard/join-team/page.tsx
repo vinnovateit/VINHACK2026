@@ -5,7 +5,7 @@ import { requireTeamlessParticipant } from "../access";
 async function joinTeam(formData: FormData) {
   "use server";
 
-  const teamCode = String(formData.get("teamCode") ?? "").trim();
+  const teamCode = String(formData.get("teamCode") ?? "").trim().toUpperCase();
   const participant = await requireTeamlessParticipant();
 
   if (!teamCode) {
@@ -49,15 +49,15 @@ async function joinTeam(formData: FormData) {
 export default async function JoinTeamPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ success?: string; error?: string; message?: string }>;
+  searchParams?: Promise<{ success?: string; error?: string; message?: string; code?: string }>;
 }) {
   const participant = await requireTeamlessParticipant();
   const params = await searchParams;
-  const teams = await prisma.team.findMany({ orderBy: { createdAt: "desc" } });
+  const initialCode = params?.code ?? "";
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-400">VinHack test dashboard</p>
@@ -79,32 +79,39 @@ export default async function JoinTeamPage({
           </div>
         )}
         {params?.message && (
-          <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-3 text-sm text-cyan-200">{params.message}</div>
+          <div className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 p-3 text-sm text-cyan-200">
+            {params.message}
+          </div>
         )}
 
         <form action={joinTeam} className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
           <div>
             <p className="mb-2 text-sm text-slate-300">Joining as</p>
-            <p className="rounded-xl border border-slate-700 bg-slate-950 p-3">{participant.name} ({participant.type === "vit" ? "VIT" : "External"})</p>
+            <p className="rounded-xl border border-slate-700 bg-slate-950 p-3">
+              {participant.name} ({participant.type === "vit" ? "VIT" : "External"})
+            </p>
             <label className="mb-2 mt-4 block text-sm text-slate-300">Team code</label>
-            <input name="teamCode" required className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+            <input
+              name="teamCode"
+              defaultValue={initialCode}
+              required
+              placeholder="e.g. 7K9XP2"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 uppercase tracking-widest outline-none focus:border-cyan-500"
+            />
           </div>
 
-          <button type="submit" className="mt-6 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400">
-            Join team
-          </button>
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              type="submit"
+              className="rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400 transition"
+            >
+              Join team
+            </button>
+            <a href="/test-dashboard/create-team" className="text-sm text-cyan-300 hover:text-cyan-200">
+              Create a new team →
+            </a>
+          </div>
         </form>
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-          <h2 className="mb-3 text-xl font-semibold">Available teams</h2>
-          <ul className="space-y-2 text-sm text-slate-300">
-            {teams.map((team) => (
-              <li key={team.id} className="rounded-xl border border-slate-800 bg-slate-950 p-3">
-                <span className="font-semibold text-slate-100">{team.name}</span> — {team.teamType} — code: {team.code} — capacity: {team.capacity}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </main>
   );

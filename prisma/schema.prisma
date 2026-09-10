@@ -126,8 +126,7 @@ model Team {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   code        String    @unique
-  description String?
-  capacity    Int       @default(5)
+  capacity    Int       @default(4)
   teamType    TeamType
   track       String?
   createdAt   DateTime  @default(now()) @map("created_at")
