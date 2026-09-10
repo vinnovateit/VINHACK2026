@@ -114,6 +114,25 @@ const DEALT: { role: string; at: number; from: gsap.TweenVars }[] = [
   { role: "disc", at: 1.36, from: { y: 220, scale: 0.62 } },
 ];
 
+/**
+ * The navigation sticker, which is drawn as one of the hero's and arrives as
+ * one — after the last piece in `DEALT` and before the scroll cue's letters
+ * run in, so the deal reads as eight pieces rather than seven and a latecomer.
+ *
+ * It is not in `DEALT` because it is not in this scope. The sticker is fixed to
+ * the viewport, a sibling of the whole canvas rather than a child of the hero
+ * (see the note in `nav/SiteNav.tsx`), so the timeline reaches out of the scope
+ * for it by hand — and it is dealt as a `fromTo`, because `.nav-dock` is held
+ * at `opacity: 0` by CSS until this runs and a `from` would read that hold as
+ * the value to land on.
+ *
+ * What moves is the dock, not the button inside it. The button carries the turn
+ * it rests at and the turns it takes under the pointer and when the shelf is
+ * out, and a deal landing on the same box would overwrite all three.
+ */
+const NAV_AT = 1.44;
+const NAV_FROM: gsap.TweenVars = { x: 120, y: -90, rotation: 22, scale: 0.72 };
+
 /** Where on the entrance the commit display starts spinning, and how long it
  *  then holds its landed line before the typewriter takes the sticker over. */
 const REEL_AT = 1.28;
@@ -139,6 +158,10 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
 
       const hero = scope.querySelector('[data-node-id="343:1172"]');
       if (!hero) return;
+
+      /** The navigation sticker. Outside `scope` on purpose — see `NAV_AT`. */
+      const navDock = () =>
+        document.querySelector<HTMLElement>('[data-hero="nav"]');
 
       /** The same "arm once it has been scrolled into view" the recipes use. */
       const seen = {
@@ -288,6 +311,9 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
       // arm.
       mm.add(`${DESKTOP} and (prefers-reduced-motion: reduce)`, () => {
         gsap.set(scope, { opacity: 1 });
+        // Held at zero by `.nav-dock` for the deal that is not going to run.
+        const dock = navDock();
+        if (dock) gsap.set(dock, { opacity: 1 });
         const cleanups = wireControls(false);
         return () => cleanups.forEach((fn) => fn());
       });
@@ -406,6 +432,31 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
             { ...from, opacity: 0, duration: 0.72, ease: "back.out(1.4)" },
             at,
           );
+        }
+
+        // The navigation sticker, dealt after the last of `DEALT` — same throw,
+        // same `back.out`, in from the corner it lives in. `clearProps` once it
+        // has landed so the dock is not left holding a transform matrix (and
+        // with it a containing block and a raster layer) for the rest of the
+        // page's life, for a move that is over.
+        const dock = navDock();
+        if (dock) {
+          show
+            .fromTo(
+              dock,
+              { ...NAV_FROM, opacity: 0 },
+              {
+                x: 0,
+                y: 0,
+                rotation: 0,
+                scale: 1,
+                opacity: 1,
+                duration: 0.72,
+                ease: "back.out(1.4)",
+              },
+              NAV_AT,
+            )
+            .set(dock, { clearProps: "transform" }, NAV_AT + 0.72);
         }
 
         // "scroll down for more" is set as twenty separately rotated letters

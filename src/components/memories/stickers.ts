@@ -100,7 +100,7 @@ export const STICKERS: readonly Sticker[] = [
   },
   {
     id: "hello",
-    label: "hello, I’m",
+    label: "Vinhack 2026",
     src: "/figma/image205.png",
     w: 4096,
     h: 1617,

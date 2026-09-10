@@ -2,6 +2,7 @@ import DesignCanvas from "@/components/DesignCanvas";
 import HeroMotion from "@/components/HeroMotion";
 import MobileMotion from "@/components/mobile/MobileMotion";
 import MobileSite from "@/components/mobile/MobileSite";
+import SiteNav from "@/components/nav/SiteNav";
 import PageMotion from "@/components/PageMotion";
 import HeroSection from "@/components/sections/Hero";
 import AboutSection from "@/components/sections/About";
@@ -40,6 +41,12 @@ import { FEATURES } from "@/content/features";
 export default function Home() {
   return (
     <main className="bg-black">
+      {/* Outside the canvas, and outside the `md` swap: the drawer is fixed to
+          the viewport, and the collage below is a scaled transform — which
+          would become the containing block for anything fixed inside it. One
+          copy serves both layouts; see the note in `SiteNav`. */}
+      <SiteNav />
+
       <div className="hidden md:block">
         <DesignCanvas
           compact={!FEATURES.projects}
@@ -56,7 +63,13 @@ export default function Home() {
             {FEATURES.projects && <ProjectsSection />}
             <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>
               <TracksSection />
-              <div className={!FEATURES.tracks ? "tracks-disabled-sections" : ""}>
+              <div
+                className={
+                  FEATURES.tracks
+                    ? "tracks-extended-sections"
+                    : "tracks-disabled-sections"
+                }
+              >
                 <SponsorsSection />
                 <TimelineSection />
                 <RulesSection />

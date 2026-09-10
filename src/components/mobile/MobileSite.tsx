@@ -1,4 +1,7 @@
+"use client";
+
 import type { CSSProperties, ReactNode } from "react";
+import { motion } from "framer-motion";
 
 import CameraFeed from "@/components/CameraFeed";
 import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
@@ -26,7 +29,7 @@ import {
   TRACKS,
   WHO_ARE_WE,
 } from "@/content/site";
-import { TrackCard, TRACK_COLORS } from "@/components/tracks/TrackCard";
+import MobileTracksDeck from "@/components/tracks/MobileTracksDeck";
 
 /**
  * The page below `md`.
@@ -627,89 +630,126 @@ function MobileWhoAreWe() {
 
 /* ----------------------------------------------------------- projects */
 
+/**
+ * The desktop cards (`sections/Projects.tsx`) only show their best face — the
+ * shape graphic, the viewfinder frame, the tagline pop-up — on `:hover`, which
+ * a phone has no equivalent of. Rather than falling back to the plain resting
+ * card, the phone renders that hovered face directly and permanently: the
+ * `hoverBg` fill, the shape SVG, the viewfinder corners and the tagline/body
+ * copy are all always on, one card per row so each gets the full width the
+ * desktop pop-up needs.
+ */
 function MobileProjects() {
   return (
     <section aria-label="Projects" className={`${COL} ${PAD} py-16`}>
       <h2 className="text-[20px] text-[#fa1a1d]">{PROJECTS.heading}</h2>
       <div className="mt-3 h-px w-full bg-[#fa1a1d]" />
 
-      {/* The collage overlaps these four at four different sizes; on one column
-          they are a grid, which keeps the four-colour block the section reads
-          as. */}
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {PROJECTS.cards.map((card) => {
-          const isDark = card.textColor === "#ffffff";
+      {/* One column: the desktop's hovered face needs the full row, and a
+          two-up grid would crush the shape graphic and pop-up copy. */}
+      <div className="mt-8 flex flex-col gap-5">
+        {PROJECTS.cards.map((card, idx) => {
+          // BunkBuddies' hover fill is red, and white text on it reads too
+          // hot on a phone at rest with no dark card underneath it — black
+          // matches the resting-card colour it already uses on desktop.
+          const textColor = card.name === "BUNKBUDDIES" ? "#000000" : card.hoverTextColor;
+          const isDark = textColor === "#ffffff";
+          const fromLeft = idx % 2 === 0;
+
           return (
-            <a
+            <motion.a
               key={card.name}
               href={card.url}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative flex flex-col justify-between overflow-clip p-5 transition-transform duration-200 active:scale-[0.98] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-              style={{ background: card.bg }}
+              style={{ background: card.hoverBg }}
+              initial={{ opacity: 0, x: fromLeft ? -60 : 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* Corner brackets */}
-              <div className="pointer-events-none absolute inset-0 opacity-40 group-hover:opacity-100 transition-opacity">
-                <span className="absolute top-1 left-1 size-2 border-t-2 border-l-2 border-current" />
-                <span className="absolute top-1 right-1 size-2 border-t-2 border-r-2 border-current" />
-                <span className="absolute bottom-1 left-1 size-2 border-b-2 border-l-2 border-current" />
-                <span className="absolute bottom-1 right-1 size-2 border-b-2 border-r-2 border-current" />
+              {/* Shape graphic, sat behind everything else. */}
+              <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-3.5 opacity-90">
+                <img
+                  src={card.shapeSvg}
+                  alt=""
+                  className="size-full max-h-[92%] max-w-[92%] object-contain drop-shadow-sm"
+                />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between">
-                  <img
-                    src={card.icon}
-                    alt={`${card.displayName} logo`}
-                    className="size-12 object-contain"
-                    style={card.name === "LATCH" ? { color: card.textColor } : undefined}
-                  />
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider"
-                    style={{
-                      background: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
-                      color: card.textColor,
-                    }}
-                  >
-                    VISIT ↗
-                  </span>
-                </div>
+              {/* Viewfinder frame */}
+              <div
+                className="pointer-events-none absolute inset-0 z-10"
+                style={{ color: isDark ? "#ffffff" : "#000000" }}
+              >
+                <div className="absolute inset-1 border-2 border-current opacity-90" />
+                <span className="absolute top-1 left-1 size-2.5 border-t-[3px] border-l-[3px] border-current" />
+                <span className="absolute top-1 right-1 size-2.5 border-t-[3px] border-r-[3px] border-current" />
+                <span className="absolute bottom-1 left-1 size-2.5 border-b-[3px] border-l-[3px] border-current" />
+                <span className="absolute bottom-1 right-1 size-2.5 border-b-[3px] border-r-[3px] border-current" />
+              </div>
 
+              <div className="relative z-20 flex justify-end">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider"
+                  style={{
+                    background: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
+                    color: textColor,
+                  }}
+                >
+                  VISIT ↗
+                </span>
+              </div>
+
+              <div className="relative z-20 flex flex-col items-center py-2">
+                <img
+                  src={card.icon}
+                  alt={`${card.displayName} logo`}
+                  className="size-16 object-contain"
+                  style={card.name === "LATCH" ? { color: textColor } : undefined}
+                />
                 <h3
                   className="mt-3 font-rotonto text-[24px] tracking-tight"
-                  style={{ color: card.textColor }}
+                  style={{ color: textColor }}
                 >
                   {card.name}
                 </h3>
+              </div>
 
-                <p
-                  className="mt-1 font-rotonto text-[13px] leading-snug opacity-90"
-                  style={{ color: card.textColor }}
-                >
+              {/* The desktop's green pop-up, shown here without waiting for a
+                  hover a phone cannot give. */}
+              <div className="relative z-20 mt-2 rounded-xl border-2 border-[#bfea88] bg-[#0c0c0c]/95 p-3.5 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-white/15 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex size-2">
+                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#bfea88] opacity-75" />
+                      <span className="relative inline-flex size-2 rounded-full bg-[#bfea88]" />
+                    </span>
+                    <span className="font-rotonto text-[15px] tracking-wide text-white">
+                      {card.displayName}
+                    </span>
+                  </div>
+                  <span className="rounded bg-[#bfea88]/15 px-2 py-0.5 font-rotonto text-[11px] text-[#bfea88]">
+                    EXPLORE ↗
+                  </span>
+                </div>
+
+                <p className="mt-2 font-rotonto text-[13px] leading-snug text-[#bfea88]">
                   “{card.tagline}”
                 </p>
 
-                <p
-                  className="mt-2 text-[12px] leading-relaxed opacity-80"
-                  style={{ color: card.textColor }}
-                >
+                <p className="mt-1 text-[11.5px] leading-relaxed font-sans text-neutral-300">
                   {card.body}
                 </p>
-              </div>
 
-              <div
-                className="mt-4 flex items-center justify-between border-t pt-2.5 text-[10px] font-mono tracking-wider"
-                style={{
-                  borderColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
-                  color: card.textColor,
-                }}
-              >
-                <span>VINNOVATEIT</span>
-                <span className="font-bold flex items-center gap-1">
-                  EXPLORE APP &rarr;
-                </span>
+                <div className="mt-2.5 flex items-center justify-between font-mono text-[9.5px] text-neutral-400">
+                  <span className="flex items-center gap-1 font-semibold text-[#bfea88]">
+                    OPEN APP &rarr;
+                  </span>
+                </div>
               </div>
-            </a>
+            </motion.a>
           );
         })}
       </div>
@@ -750,35 +790,10 @@ function MobileTracks() {
         })}
       </div>
 
-      {/* Mini Layered Cards for Mobile */}
-      <div className="my-10 flex justify-center items-center py-6 overflow-hidden">
-        <div className="relative h-[160px] w-[220px]">
-          {[
-            { color: TRACK_COLORS.white, offset: 40, zIndex: 1 },
-            { color: TRACK_COLORS.lightBlue, offset: 32, zIndex: 2 },
-            { color: TRACK_COLORS.darkBlue, offset: 24, zIndex: 3 },
-            { color: TRACK_COLORS.red, offset: 16, zIndex: 4 },
-            { color: TRACK_COLORS.pink, offset: 8, zIndex: 5 },
-            { color: TRACK_COLORS.grey, offset: 0, zIndex: 6, isFront: true },
-          ].map((c, idx) => (
-            <div
-              key={idx}
-              className="absolute top-0 left-0 transition-transform duration-300 hover:-translate-y-2"
-              style={{
-                transform: `translate(${c.offset}px, ${-c.offset * 0.55}px) rotate(15deg) scaleY(0.97) skewX(15deg)`,
-                zIndex: c.zIndex,
-              }}
-            >
-              <TrackCard
-                color={c.color}
-                isFront={c.isFront}
-                width={140}
-                height={95}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* The deck deals its four tracks as the page scrolls past — see
+          `MobileTracksDeck`, which is the phone's answer to the collage's
+          scroll-locked deck. */}
+      <MobileTracksDeck />
 
       <div className="mt-6 flex justify-center">
         <Piece

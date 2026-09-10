@@ -1,8 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { motion } from "framer-motion";
 import { PROJECTS } from "@/content/site";
-import { useInView } from "@/components/useInView";
 
 type ProjectName = (typeof PROJECTS.cards)[number]["name"];
 
@@ -81,12 +81,8 @@ export default function ProjectsSection() {
   const projectMap = new Map<string, (typeof PROJECTS.cards)[number]>(
     PROJECTS.cards.map((card) => [card.name, card]),
   );
-  const [sectionRef, inView] = useInView<HTMLElement>(0.15);
-
   return (
     <section
-      ref={sectionRef}
-      data-in-view={inView || undefined}
       aria-label="Projects"
       className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[2496px] w-[1280px]"
       data-node-id="297:300"
@@ -99,22 +95,32 @@ export default function ProjectsSection() {
 
           const isDarkCard = info.textColor === "#ffffff";
           const frameColor = isDarkCard ? "#ffffff" : "#000000";
-          const dropDirection = idx % 2 === 0 ? "project-pop-up" : "project-pop-down";
+          // Alternating drop direction: even cards fall in from above, odd
+          // ones rise from below — the same "dealt from alternating sides"
+          // read the old `.project-pop-up`/`.project-pop-down` CSS gave.
+          const fromAbove = idx % 2 === 0;
 
           return (
-            <a
+            <motion.a
               key={card.name}
               href={info.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group project-pop ${dropDirection} ${Z_CLASSES[idx]} absolute block select-none overflow-visible transition-shadow duration-300 hover:z-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#bfea88]`}
+              className={`group ${Z_CLASSES[idx]} absolute block select-none overflow-visible hover:z-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#bfea88]`}
               style={{
                 left: card.left,
                 top: card.top,
                 width: card.width,
                 height: card.height,
-                "--pop-delay": `${idx * 140}ms`,
-              } as CSSProperties}
+              }}
+              initial={{ opacity: 0, y: fromAbove ? -70 : 70 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{
+                duration: 0.7,
+                delay: idx * 0.14,
+                ease: [0.22, 1, 0.36, 1],
+              }}
               data-card
               data-node-id={card.id}
               data-name={card.name}
@@ -235,7 +241,7 @@ export default function ProjectsSection() {
                   </div>
                 </div>
               </div>
-            </a>
+            </motion.a>
           );
         })}
       </div>

@@ -14,6 +14,11 @@
  * layouts, GITHUB the cyan tab.
  */
 
+/* Type-only, so this stays a module of words with no runtime dependency on the
+   feature switches — it is here purely so `NavItem.flag` cannot name a switch
+   that does not exist. */
+import type { FEATURES } from "@/content/features";
+
 /* --------------------------------------------------------------- hero */
 
 export const HERO = {
@@ -62,6 +67,81 @@ export const HERO = {
    * screen, and `aria-checked` on the switch says it to them properly.
    */
   sound: { label: "Page sound" },
+} as const;
+
+/* ---------------------------------------------------------------- nav */
+
+/**
+ * A book on the shelf that slides out from behind the logo button.
+ *
+ * `target` is the destination section's `aria-label`. That is deliberately the
+ * handle rather than an `id`: the page is drawn twice — the collage in
+ * `components/sections/` and the reflowed column in `components/mobile/` — and
+ * both trees are in the document at once, so an `id` would have to be spelled
+ * differently in each and the nav would then need to know which one is on
+ * screen. The two drawings share no markup, but they do already label every
+ * section with the same words, and `SiteNav` picks whichever of the pair is
+ * currently laid out.
+ *
+ * `spine` is the board, `cap` the top edge the book is seen from below, `ink`
+ * the lettering — the trio the design gives each one.
+ */
+export type NavItem = {
+  name: string;
+  target: string;
+  spine: string;
+  cap: string;
+  ink: string;
+  /**
+   * How thick the book is, as a multiple of the shelf's base width. No two
+   * next to each other are the same: a shelf of identically thick books reads
+   * as a chart, and the design draws ten different ones — a fat GUIDELINES
+   * beside a thin one is most of what makes it a shelf.
+   */
+  book: number;
+  /** Set when the destination is behind a switch in `content/features.ts`. */
+  flag?: keyof typeof FEATURES;
+};
+
+/**
+ * The shelf, in the order the page runs.
+ *
+ * The numbers printed on the spines are not written here. `PROJECTS` comes
+ * and goes with `FEATURES.projects`, and a shelf that then reads 01 02 03 05 06
+ * is a typo the reader can see — so `SiteNav` counts them off the list that
+ * actually renders.
+ *
+ * No two neighbours share a spine colour; two colours repeat further apart,
+ * which is what a shelf looks like.
+ */
+export const NAV = {
+  /** The eyebrow over the shelf. */
+  label: "// EXPLORE",
+  /** Names the drawer itself, once it is open. */
+  title: "Site navigation",
+  open: "Open the navigation shelf",
+  close: "Close the navigation shelf",
+  /**
+   * The word curving over the mark on the button, the way "PLAY AROUND" curves
+   * over the gamepad in the hero — the button is a sticker off the same sheet,
+   * thrown into the corner the design gives the gamepad.
+   *
+   * Short on purpose. It is set along a fixed arc in `SiteNav`, and a word much
+   * past seven or eight characters runs off the end of it.
+   */
+  badge: { closed: "PLAY ALONG", open: "CLOSE" },
+  items: [
+    { name: "HOME",        target: "VinHack",       spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
+    { name: "ABOUT",       target: "About VinHack", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
+    { name: "WHO ARE WE?", target: "Who are we",    spine: "#2849cb", cap: "#16296f", ink: "#74d4f0", book: 0.9 },
+    { name: "PROJECTS",    target: "Projects",      spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
+    { name: "TRACKS",      target: "Tracks",        spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
+    { name: "SPONSORS",    target: "Sponsors",      spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
+    { name: "TIMELINE",    target: "Timeline",      spine: "#ee1b1e", cap: "#7d1113", ink: "#131b24", book: 1.02 },
+    { name: "RULES",       target: "Rules",         spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
+    { name: "GUIDELINES",  target: "Guidelines",    spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
+    { name: "REGISTER",    target: "Register now",  spine: "#13472b", cap: "#0a2a19", ink: "#bfea88", book: 0.92 },
+  ] satisfies readonly NavItem[],
 } as const;
 
 /* -------------------------------------------------------------- about */
@@ -282,8 +362,8 @@ export const PROJECTS = {
     {
       name: "LATCH",
       displayName: "Latch",
-      bg: "#c01221",
-      hoverBg: "#0F0A0B",
+      bg: "#0F0A0B",
+      hoverBg: "#c01221",
       hoverTextColor: "#ffffff",
       shapeSvg: "/projects/shape_notched.svg",
       textColor: "#ffffff",
@@ -317,6 +397,33 @@ export const TRACKS = {
   lines: ["solve what matters", "TRACKS", "build what lasts"],
   comingSoon: "COMING SOON",
   sticker: "INNOVATE FOR IMPACT",
+  /**
+   * The cards the deck deals out, in order. Both lines are printed on the card
+   * face itself, at the card's own scale — the blurb sits under the title in
+   * small type, so keep it to roughly three lines at that size.
+   */
+  items: [
+    {
+      title: "INNOVATE FOR IMPACT",
+      blurb:
+        "Step into the world where ideas ignite revolutions. Dream big, solve pressing problems, and build change that outlasts the weekend.",
+    },
+    {
+      title: "DESIGN FOR PEOPLE",
+      blurb:
+        "Interfaces that get out of the way. Make something a stranger can pick up and understand without being taught how.",
+    },
+    {
+      title: "BUILD WHAT LASTS",
+      blurb:
+        "Ship past the demo. Systems that hold up under real load, real users, and the Monday after the hackathon ends.",
+    },
+    {
+      title: "MAKE IT MATTER",
+      blurb:
+        "Pick a problem you would still care about untimed. The best builds here answer a question somebody actually asked.",
+    },
+  ],
 } as const;
 
 /* ------------------------------------------------------------ sponsors */

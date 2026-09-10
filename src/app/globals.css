@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 10170px;
+  --canvas-height: 11718px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -36,7 +36,7 @@
 }
 
 .projects-disabled {
-  --canvas-height: 9338px;
+  --canvas-height: 10886px;
 }
 
 .tracks-disabled {
@@ -53,6 +53,16 @@
 
 .tracks-disabled-sections {
   transform: translateY(-752px);
+}
+
+/* The other half of the same switch. With tracks on, the section is drawn
+   1548px taller than the artwork on it — that surplus is the scrolling room
+   `TracksCardDeck` parks over, one card per stretch of it — so everything below
+   Tracks carries the same 1548, and so does `--canvas-height` above. Sections
+   are positioned against the fixed frame rather than stacked, so this is one
+   shift on the group instead of six edited `top` values. */
+.tracks-extended-sections {
+  transform: translateY(1548px);
 }
 
 .coming-soon-wrap {
@@ -143,44 +153,6 @@
   transform: scale(1);
 }
 
-/* A project card's arrival — same `data-in-view` gate as `.sponsor-pop`, but
-   alternating which edge each card drops in from (`Projects` assigns
-   `.project-pop-up`/`.project-pop-down` by index) so the row reads as cards
-   dealt in from alternating sides rather than one uniform rise. */
-.project-pop {
-  opacity: 0;
-}
-
-[data-in-view] .project-pop-up {
-  animation: project-pop-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--pop-delay, 0s) both;
-}
-
-[data-in-view] .project-pop-down {
-  animation: project-pop-down 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--pop-delay, 0s) both;
-}
-
-@keyframes project-pop-up {
-  from {
-    opacity: 0;
-    transform: translateY(-70px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes project-pop-down {
-  from {
-    opacity: 0;
-    transform: translateY(70px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* The stars scattered round the sponsor tiles — same `data-in-view` gate as
    `.sponsor-pop`, but with a spin thrown in on top of the scale so it reads
    as a sticker landing rather than a card sliding up. */
@@ -204,14 +176,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sponsor-pop,
-  .project-pop {
+  .sponsor-pop {
     opacity: 1;
     animation: none;
   }
-  [data-in-view] .sponsor-pop,
-  [data-in-view] .project-pop-up,
-  [data-in-view] .project-pop-down {
+  [data-in-view] .sponsor-pop {
     animation: none;
   }
   .sponsor-ring {
@@ -1189,3 +1158,555 @@ footer ::selection,
   );
 }
 
+/* ---- the navigation shelf (SiteNav) ------------------------------------- */
+
+/* The one piece of chrome drawn once for both layouts. The page itself is two
+   drawings — the 1280px collage above `md`, the reflowed column below — but a
+   drawer is a drawer at either width. It covers the screen at both of them and
+   all that changes is which way the shelf inside it runs:
+
+     phone     long   a column of books lying flat, toppling in from the right
+     desktop   wide   a row of books standing up, dropping onto the shelf
+
+   Everything enters from the right, because that is the corner the sticker is
+   thrown into and a drawer should come from the thing that opens it.
+
+   Written here rather than as utilities because the two arrangements share one
+   set of parts and differ only in axis, and because the tumble is a six-stop
+   keyframe that no utility expresses. Every colour on a book, and its
+   thickness, comes in from `SiteNav` as `--spine` / `--cap` / `--ink` /
+   `--book`, so the palette stays in `content/site.ts` with the rest of the
+   design's colours. */
+
+/* ---- the sticky sticker ------------------------------------------------- */
+
+/* The corner the sticker holds, and the box that carries it onto the page.
+
+   Split from the button below because two things move this sticker and a box
+   has one transform: the dock is thrown on with the hero's stickers and then
+   holds still forever, and the button inside it turns — at rest, under the
+   pointer, and again when the shelf is out. One box doing both would mean the
+   arrival overwriting the resting turn the moment it landed.
+
+   Fixed rather than `position: sticky`: it holds this corner over 10,000 pixels
+   of page, and sticky needs a scrolling ancestor to stick inside. It outranks
+   the drawer so that it is still there once the shelf is out — open, it is the
+   close button, and on a shelf that covers the screen it is the only one. */
+.nav-dock {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 220;
+}
+
+@media (min-width: 768px) {
+  .nav-dock {
+    top: 14px;
+    right: 18px;
+  }
+}
+
+/* The arrival, hooked to the hero — this sticker is drawn as one of the hero's
+   and it should land as one, after the last of them and before the scroll cue's
+   letters run in.
+
+   Which half deals it depends on the width, the same way the rest of the hero
+   is split. Above `md` it is `HeroMotion`'s own timeline, so it lands in step
+   with the collage's stickers rather than a fixed delay away from them — hence
+   the bare `opacity: 0` here, which is the same hold `.hero-motion` takes and
+   which GSAP lifts when it deals. Below `md` the collage is `display: none` and
+   no timeline arms, so it takes the phone's `deal-in` keyframes on the beat
+   after the last sticker there.
+
+   Thrown in from up and to the right, which is off the corner it lives in — the
+   same rule every other piece of the deal follows. */
+@media (min-width: 768px) {
+  .nav-dock {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-dock {
+    --deal-x: 70px;
+    --deal-y: -56px;
+    --deal-r: 20deg;
+    --deal-s: 0.74;
+
+    animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) 1.75s both;
+  }
+}
+
+/* The sticker itself. Drawn off the hero's own sheet — the word curving over
+   the mark, the way "PLAY AROUND" curves over the gamepad — and thrown into the
+   corner the design gives that gamepad. So: no disc, no ring, no plate behind
+   it. What keeps it legible where it crosses the collage is the drop shadow,
+   which darkens whatever is immediately behind the strokes without drawing a
+   box. */
+.nav-button {
+  --logo-fill: #131b24;
+  --logo-ink: #fa1a1d;
+
+  display: flex;
+  width: 94px;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  cursor: pointer;
+  transform: rotate(6deg);
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.9));
+  transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+@media (min-width: 768px) {
+  .nav-button {
+    width: 118px;
+  }
+}
+
+/* `overflow: visible` because the ascenders on the arc sit above the box the
+   curve is measured in, and a clipped E is worse than a taller sticker. */
+.nav-button-arc {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.nav-button-arc text {
+  fill: #fcfcfc;
+  font-family: var(--font-rotonto);
+  font-size: 15px;
+  letter-spacing: 1.6px;
+}
+
+/* Pulled up under the word. The mark is drawn 108 x 86 with the outer half of a
+   6.6 stroke outside that box, so it carries a gap of its own at the top on top
+   of whatever the arc leaves. */
+.nav-button-mark {
+  width: 64%;
+  height: auto;
+  margin-top: -11px;
+}
+
+.nav-button:hover {
+  transform: rotate(11deg) scale(1.07);
+}
+
+/* Open, the mark is the sticker's filled state and it has swung the other way —
+   which is the tell that pressing it again puts it back. */
+.nav-button[aria-expanded="true"] {
+  --logo-fill: #fa1a1d;
+  --logo-ink: #131b24;
+
+  transform: rotate(-7deg) scale(1.04);
+}
+
+.nav-button:focus-visible {
+  border-radius: 12px;
+  outline: 3px solid #bfea88;
+  outline-offset: 4px;
+}
+
+/* The mark's eye. Rotating a circle about its own centre is a no-op, so
+   overriding the export's `transform` attribute here costs nothing and the
+   origin only has to be right for the squash. */
+.nav-eye {
+  transform-origin: 35.1266px 32.5686px;
+}
+
+.nav-button[aria-expanded="true"] .nav-eye {
+  animation: nav-blink 3.4s ease-in-out infinite;
+}
+
+@keyframes nav-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* ---- the drawer --------------------------------------------------------- */
+
+/* The whole screen, at both widths, pulled in from the right edge. It is opaque
+   and covers everything, so there is no scrim under it and nothing behind it to
+   click — the sticker in the corner and Escape are what close it, and the
+   sticker is drawn above the panel so it is on hand the whole time.
+
+   `100dvh` rather than `100vh`: the mobile browser chrome that `vh` ignores is
+   exactly what would put the last book past the bottom of the screen. */
+.nav-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  width: 100vw;
+  height: 100dvh;
+  flex-direction: column;
+  /* Clears the sticker, which floats over the top-right corner and is turned
+     6 degrees, so it reaches a little past its own box. */
+  padding: 118px 20px 28px;
+  /* A book is thrown in tipped 34 degrees and swings a couple of hundred pixels
+     wide of where it lands. The panel is the screen, so clipping at its edge is
+     clipping at the screen edge — and it keeps that swing off the root, which
+     is the difference between a book falling and the page growing sideways. */
+  overflow: hidden;
+  background-color: #000000;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.3, 1),
+    visibility 0s linear 0.5s;
+}
+
+.nav-panel[data-open="true"] {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.56s cubic-bezier(0.22, 1, 0.3, 1);
+}
+
+.nav-panel:focus {
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .nav-panel {
+    padding: 132px 64px 64px;
+  }
+}
+
+.nav-eyebrow {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  color: #fa1a1d;
+  font-family: var(--font-rotonto);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+}
+
+/* The rule running off the label to the panel's edge. */
+.nav-eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #fa1a1d;
+  opacity: 0.55;
+}
+
+/* ---- the shelf ---------------------------------------------------------- */
+
+/* Phone: a scrolling column. Ten books at their smallest are still taller than
+   a short phone held sideways, and a shelf that runs off the bottom of the
+   screen is a shelf with unreachable books on it. */
+.nav-shelf {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  min-height: 0;
+  margin-top: 26px;
+  padding-bottom: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Desktop: a row standing on its bottom edge, centred in what the eyebrow
+   leaves. `align-items: flex-end` is the shelf itself — every book rests on the
+   same line whatever its height, and it is the line the tumble lands on. */
+@media (min-width: 768px) {
+  .nav-shelf {
+    flex: none;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(9px, 1.2vw, 18px);
+    margin-block: auto;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+}
+
+/* ---- one book ----------------------------------------------------------- */
+
+/* The book's own box, and the layer the tumble moves.
+
+   On the phone every book is the same bar: one column of ten, and ten bars that
+   each stopped somewhere different along the line would read as a chart with
+   values in it rather than a list of ten equal destinations. Thickness is a
+   thing you see on a shelf of books standing up, so it is kept for the width
+   that has one — `--book` below. */
+.nav-book {
+  flex: none;
+  width: 100%;
+  height: clamp(50px, 7.4vh, 66px);
+  transition: margin 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+/* The shelf parts around the book being pulled.
+
+   The pull tilts the board, and a tilted board is wider than the upright one it
+   was measured for — so without this it leans across whatever is next to it and
+   the two read as one damaged object. The neighbours are pushed off instead,
+   which is what a shelf does when you take a book off it.
+
+   Margin rather than anything on the transform layer, because margin is the one
+   thing that moves the *other* books. And on the phone it is margin-bottom
+   alone: the row above must not be pushed, or the hovered bar goes down with it
+   and out from under the pointer that is holding it there — the same flicker
+   the three layers above were split to avoid. The tilt is negative for exactly
+   this reason, so the end that drops is the one with room under it. */
+.nav-book:hover,
+.nav-book:focus-within {
+  margin-bottom: clamp(10px, 1.6vh, 16px);
+}
+
+/* Standing up, and each one its own thickness — `--book` is how thick the
+   design draws this one, and no two beside each other are alike. A shelf of
+   identical spines reads as a chart; the varied ones are most of what makes it
+   a shelf. */
+@media (min-width: 768px) {
+  .nav-book {
+    width: calc(var(--book, 1) * clamp(52px, 5.6vw, 84px));
+    height: clamp(300px, 58vh, 520px);
+  }
+
+  /* Standing up, the space is wanted either side, and it has to be *both*
+     sides even though the book only leans one way. The row is centred, so equal
+     margins leave the hovered book exactly where it was and part its neighbours
+     around it; a margin on one side alone would slide the book itself half that
+     distance sideways, out from under the pointer holding it open. */
+  .nav-book:hover,
+  .nav-book:focus-within {
+    margin-bottom: 0;
+    margin-inline: clamp(16px, 2.6vw, 44px);
+  }
+}
+
+/* The hit area. It fills the book's box and it never moves — see the note in
+   `SiteNav` about the shelf that used to flicker. `overflow: visible` so the
+   body inside it can be pulled clear without being clipped back, and
+   `position: relative` so that body has something to be `inset: 0` against. */
+.nav-spine {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  cursor: pointer;
+}
+
+/* The board, and everything printed on it. This is the layer that moves under
+   the pointer, and the one that clips the cap to the book's corners.
+
+   Phone: lying down, hinged on its right edge — which is both the end it
+   topples in from and the one it swings out on. */
+.nav-spine-body {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  inset: 0;
+  padding-inline: 26px 20px;
+  overflow: hidden;
+  background-color: var(--spine);
+  color: var(--ink);
+  font-family: var(--font-rotonto);
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  transform-origin: right center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    box-shadow 0.3s ease;
+}
+
+/* Desktop: standing up, hinged on the bottom edge it rests on. */
+@media (min-width: 768px) {
+  .nav-spine-body {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0 46px;
+    padding-inline: 0;
+    font-size: clamp(14px, 1.15vw, 18px);
+    transform-origin: bottom center;
+  }
+}
+
+/* The top edge of the book, seen from below — on its right while it is lying
+   down head to the right, across its top once it stands up. */
+.nav-cap {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 13px;
+  background-color: var(--cap);
+}
+
+@media (min-width: 768px) {
+  .nav-cap {
+    inset: 0 0 auto 0;
+    width: auto;
+    height: 30px;
+  }
+}
+
+.nav-spine-label {
+  position: relative;
+  white-space: nowrap;
+}
+
+/* Reading bottom to top, the way a spine on a shelf does. `vertical-rl` alone
+   reads top to bottom; the half-turn is what puts it the other way up. */
+@media (min-width: 768px) {
+  .nav-spine-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+}
+
+/* Printed on the board rather than set beside it, at the foot of the spine.
+   Positioned out of the flow so that the number does not shift where the name
+   sits — the names have to line up across the shelf. */
+.nav-spine-index {
+  position: absolute;
+  left: 20px;
+  color: var(--ink);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+  opacity: 0.75;
+}
+
+@media (min-width: 768px) {
+  .nav-spine-index {
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    font-size: clamp(13px, 1.05vw, 16px);
+    text-align: center;
+  }
+}
+
+/* The pull — the tilted book in the design, on whichever one the pointer or the
+   keyboard is on. Out and tipped on the desktop, where the hinge is the bottom
+   edge; sideways on the phone, where it is the right. */
+.nav-spine:hover .nav-spine-body,
+.nav-spine:focus-visible .nav-spine-body {
+  transform: translateX(-16px) rotate(-2.2deg);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+}
+
+/* The sideways nudge is half of what the tilt costs. Turned about its foot, a
+   520px spine at 6 degrees throws its head 54px to the right and nothing to the
+   left — so it is shifted back by half of that first, and what it then needs is
+   27px either side rather than 54px on one. That is a gap the shelf can open
+   symmetrically, which is the gap that leaves the book itself standing still. */
+@media (min-width: 768px) {
+  .nav-spine:hover .nav-spine-body,
+  .nav-spine:focus-visible .nav-spine-body {
+    transform: translate(-22px, -30px) rotate(6deg);
+    box-shadow: 0 24px 36px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.nav-spine:focus-visible {
+  outline: 3px solid #fcfcfc;
+  outline-offset: 5px;
+}
+
+/* ---- the tumble --------------------------------------------------------- */
+
+/* Armed by the panel opening and staggered by `--tumble-delay`, so the books
+   land one after another rather than all at once. It moves the book's own box,
+   a layer up from the pull above, so the two never contend for one transform —
+   a book can be caught mid-fall by the pointer and still answer it.
+
+   `backwards` rather than `both`: each list ends on the resting state the box
+   already has, so once it is over the element is simply back under its own
+   rules, with nothing held over it. */
+.nav-panel[data-open="true"] .nav-book {
+  animation: nav-tumble-long 0.62s cubic-bezier(0.2, 0.8, 0.28, 1)
+    var(--tumble-delay, 0ms) backwards;
+  transform-origin: right center;
+}
+
+@media (min-width: 768px) {
+  .nav-panel[data-open="true"] .nav-book {
+    animation-name: nav-tumble-wide;
+    animation-duration: 0.74s;
+    transform-origin: bottom center;
+  }
+}
+
+/* Phone: it topples in through the panel's right edge and rocks on its hinge. */
+@keyframes nav-tumble-long {
+  0% {
+    opacity: 0;
+    transform: translateX(115%) rotate(14deg);
+  }
+  52% {
+    opacity: 1;
+    transform: translateX(0) rotate(-4deg);
+  }
+  72% {
+    transform: rotate(2.4deg);
+  }
+  87% {
+    transform: rotate(-1.1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Desktop: it drops onto the shelf tipped over, catches on its bottom edge and
+   rocks upright — three swings, each smaller than the last. */
+@keyframes nav-tumble-wide {
+  0% {
+    opacity: 0;
+    transform: translateY(-56px) rotate(34deg);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(0) rotate(-11deg);
+  }
+  64% {
+    transform: rotate(7deg);
+  }
+  80% {
+    transform: rotate(-4deg);
+  }
+  91% {
+    transform: rotate(1.6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The drawer still opens and the books are still there; nothing travels or
+   rocks to get them on screen. The pull on hover is kept — it is a few pixels
+   answering the pointer, not motion crossing the screen — but it arrives
+   without a transition. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-button,
+  .nav-panel,
+  .nav-book,
+  .nav-spine-body {
+    transition: none;
+  }
+
+  .nav-button[aria-expanded="true"] .nav-eye,
+  .nav-panel[data-open="true"] .nav-book {
+    animation: none;
+  }
+}

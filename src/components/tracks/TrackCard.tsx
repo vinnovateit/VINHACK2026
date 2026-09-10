@@ -31,6 +31,24 @@ export const TRACK_COLORS = {
   white: "#FFFFFF",
 } as const;
 
+/** The two card colors dark enough to need light ink on top of them. */
+const DARK_CARDS = new Set(["#2849cb", "#fa1a1d"]);
+
+export function isDarkCard(color: string): boolean {
+  return DARK_CARDS.has(color.toLowerCase());
+}
+
+/**
+ * Ink for anything printed on a card face. Light cards take the deck's blue,
+ * the two dark ones take white, so a face reads the same whichever color the
+ * cycle happens to deal it.
+ */
+export function trackInk(color: string): { ink: string; rule: string } {
+  return isDarkCard(color)
+    ? { ink: "#FFFFFF", rule: "rgba(255,255,255,0.4)" }
+    : { ink: "#2849CB", rule: "rgba(40,73,203,0.35)" };
+}
+
 /**
  * Reusable TrackCard component.
  * Renders an isometric styled card with smooth border radius, subtle depth,
@@ -48,8 +66,7 @@ export function TrackCard({
   onClick,
   children,
 }: TrackCardProps) {
-  const isDark =
-    color.toLowerCase() === "#2849cb" || color.toLowerCase() === "#fa1a1d";
+  const isDark = isDarkCard(color);
   const textColor = isDark ? "text-white" : "text-black";
 
   return (
