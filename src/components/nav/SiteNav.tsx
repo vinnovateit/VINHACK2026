@@ -75,13 +75,9 @@ function prefersReducedMotion() {
  * where the section actually is on screen.
  */
 function scrollToSection(target: string) {
-  const section =
-    Array.from(
-      document.querySelectorAll<HTMLElement>(`section[aria-label="${target}"]`),
-    ).find((el) => el.getClientRects().length > 0) ||
-    (target === "Who are we"
-      ? document.querySelector<HTMLElement>('section[aria-label="Recap"]')
-      : null);
+  const section = Array.from(
+    document.querySelectorAll<HTMLElement>(`section[aria-label="${target}"]`),
+  ).find((el) => el.getClientRects().length > 0);
   if (!section) return;
 
   window.scrollTo({

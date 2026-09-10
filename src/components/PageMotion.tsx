@@ -164,15 +164,6 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     ],
   },
   {
-    id: "297:312",
-    name: "Who are we",
-    moves: [
-      { node: "297:316", settle: { scale: 0.8 } },
-      { node: "297:317", drift: -79 },
-      { node: "297:326", settle: { rotation: 9 } },
-    ],
-  },
-  {
     id: "297:300",
     name: "Projects",
     moves: [
@@ -264,14 +255,6 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     ],
   },
   {
-    id: "297:166",
-    name: "Register",
-    moves: [
-      // "register now" cursive strokes are drawn by RegisterSvg and NowSvg.
-      { node: "297:167", drift: -40 },
-    ],
-  },
-  {
     id: "297:3",
     name: "Footer",
     moves: [
@@ -282,7 +265,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
 
 /** `speed: 100` at every breakpoint is what the source's marquees carry, and
  *  `direction: ltr` is content travelling leftwards. */
-const MARQUEES = ["footer", "who"];
+const MARQUEES = ["footer", "sneak"];
 
 const TABS = ["email", "github", "instagram", "linkedin", "medium"];
 
@@ -487,7 +470,7 @@ export default function PageMotion({ children }: { children: ReactNode }) {
           const row = scope.querySelector(
             `[data-marquee="${key}"]`,
           ) as HTMLElement | null;
-          if (row) marquee(row, { unscale });
+          if (row) cleanups.push(marquee(row, { unscale }));
         }
 
         // ---- Footer folder tabs ----------------------------------------

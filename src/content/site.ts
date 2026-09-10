@@ -133,14 +133,12 @@ export const NAV = {
   items: [
     { name: "HOME",        target: "VinHack",       spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
     { name: "ABOUT",       target: "About VinHack", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
-    { name: "WHO ARE WE?", target: "Who are we",    spine: "#2849cb", cap: "#16296f", ink: "#74d4f0", book: 0.9 },
     { name: "PROJECTS",    target: "Projects",      spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
     { name: "TRACKS",      target: "Tracks",        spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
     { name: "SPONSORS",    target: "Sponsors",      spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
     { name: "TIMELINE",    target: "Timeline",      spine: "#ee1b1e", cap: "#7d1113", ink: "#131b24", book: 1.02 },
     { name: "RULES",       target: "Rules",         spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
     { name: "GUIDELINES",  target: "Guidelines",    spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
-    { name: "REGISTER",    target: "Register now",  spine: "#13472b", cap: "#0a2a19", ink: "#bfea88", book: 0.92 },
   ] satisfies readonly NavItem[],
 } as const;
 
@@ -304,25 +302,6 @@ export const MEMORIES = {
   empty: "Tap a sticker to put it on the card. Drag the line anywhere you like.",
   /** Names the movable line, for a keyboard and a screen reader. */
   textLabel: "The message. Drag to move it, corner handle to turn and resize.",
-} as const;
-
-/* -------------------------------------------------------- who are we */
-
-export const WHO_ARE_WE = {
-  heading: "Who are we?",
-  /** The eight notes scattered either side of the panel on the collage, read
-   *  top-left to bottom-right; a plain list on the phone. */
-  taglines: [
-    "HOME OF MIDNIGHT CODERS",
-    "ORGANIZERS OF VINHACK",
-    "BUILDERS OF CRAZY IDEAS",
-    "FUELED BY COFFEE & CURIOSITY",
-    "WHERE CODE MEETS CREATIVITY",
-    "TURNING IDEAS INTO IMPACT",
-    "A PLAYGROUND FOR INNOVATORS",
-    "MORE THAN JUST A TECH CLUB",
-  ],
-  connect: "LET’S CONNECT",
 } as const;
 
 /* ----------------------------------------------------------- projects */
@@ -559,16 +538,12 @@ export const GUIDELINES = {
   sticker: ["KEEP IT SAFE ", "KEEP IT FAIR"],
 } as const;
 
-/* ----------------------------------------------------------- register */
+/* -------------------------------------------------------- sneak peek */
 
-export const REGISTER = {
-  /** Drawn as cursive artwork, so the words live in `register.svg` / `now.svg`
-   *  and this is the alternative text for them. */
-  heading: "Register now",
-  tagline: [
-    "Bring your curiosity, creativity, and code.",
-    " We'll provide the challenge, community, and opportunity.",
-  ],
+/** The two lines tiled behind the attendee pass in the About section, now
+ *  moved to sit just above the footer. Read top to bottom, alternating. */
+export const SNEAK_PEEK = {
+  lines: ["SNEAK PEEK", "VINHACK '26"],
 } as const;
 
 /* ------------------------------------------------------------- footer */

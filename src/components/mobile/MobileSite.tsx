@@ -11,10 +11,9 @@ import MobileRecap from "@/components/mobile/MobileRecap";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
 import MobileTimeline from "@/components/mobile/MobileTimeline";
 import Piece from "@/components/mobile/Piece";
-import RegisterSvg from "@/components/RegisterSvg";
-import NowSvg from "@/components/NowSvg";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
+import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
 import { FEATURES } from "@/content/features";
 import {
@@ -23,8 +22,8 @@ import {
   HERO,
   PASS,
   PROJECTS,
-  REGISTER,
   RULES,
+  SNEAK_PEEK,
   TIMELINE,
   TRACKS,
 } from "@/content/site";
@@ -66,9 +65,8 @@ const COL = "mx-auto max-w-[560px] w-full";
 
 export default function MobileSite() {
   return (
-    <div className="md:hidden bg-black text-[#fcfcfc] overflow-x-hidden w-full max-w-full">
+    <div className="md:hidden bg-black text-[#fcfcfc] w-full overflow-x-clip">
       <MobileHero />
-      <MobileAbout />
       <MobileRecap />
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
@@ -76,7 +74,7 @@ export default function MobileSite() {
       <MobileTimelineSection />
       <MobileRules />
       <MobileGuidelines />
-      <MobileRegister />
+      <MobileAbout />
       <MobileFooter />
     </div>
   );
@@ -177,7 +175,7 @@ function MobileHero() {
           would start under it. */}
       <section
         aria-label="VinHack"
-        className="flex min-h-[92svh] flex-col items-center justify-center overflow-hidden px-2 pt-10 pb-6 w-full max-w-full"
+        className="flex min-h-[92svh] w-full flex-col items-center justify-center overflow-clip px-2 pt-10 pb-6"
       >
         <Piece
           width={STAGE.width}
@@ -457,44 +455,36 @@ function MobileAbout() {
   return (
     <section
       aria-label="About VinHack"
-      className="relative w-full overflow-hidden flex flex-col items-center justify-center py-12"
+      className="relative w-full overflow-clip flex flex-col items-center justify-center py-12"
     >
-      {/* Background typography layer - two columns touching both left and right edges with non-overlapping spacing */}
+      {/* The background layer: the same two lines, tiled and scrolling — the
+          CSS `.marquee` class the footer's own row uses below, which loops by
+          translating the row exactly half its width. Six columns, so each half
+          of that loop is already wider than the widest phone: fewer and the row
+          would run out mid-loop and the seam would show as blank ground. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[40px] leading-[52px] text-[#0a3a48] whitespace-nowrap z-0 flex flex-col justify-center"
+        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[40px] leading-[52px] text-[#0a3a48] whitespace-nowrap z-0"
       >
-        <div className="relative w-full h-[520px]">
-          <div className="absolute left-[4px] top-0 shrink-0">
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-          </div>
-          <div className="absolute left-[272px] top-0 shrink-0">
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-            <div>SNEAK PEEK</div>
-            <div>VINHACK &apos;26</div>
-          </div>
+        <div
+          className="marquee flex h-full items-stretch"
+          style={{ "--marquee-duration": "20s" } as CSSProperties}
+        >
+          {Array.from({ length: 6 }, (_, col) => (
+            <div key={col} className="flex flex-col shrink-0 px-4">
+              {Array.from({ length: 12 }, (_, i) => (
+                <div key={i}>{SNEAK_PEEK.lines[i % SNEAK_PEEK.lines.length]}</div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="relative z-10 w-full flex justify-center px-4">
+      {/* The pass tumbles in the way the collage's pair do — same wrapper,
+          no resting tilt, because the phone carries one pass square on. */}
+      <PassTumble tilt={0} className="relative z-10 flex w-full justify-center px-4">
         <AttendeePass />
-      </div>
+      </PassTumble>
     </section>
   );
 }
@@ -615,7 +605,7 @@ function AttendeePass() {
  */
 function MobileProjects() {
   return (
-    <section aria-label="Projects" className={`${COL} ${PAD} py-16 overflow-hidden`}>
+    <section aria-label="Projects" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       <h2 className="text-[20px] text-[#fa1a1d]">{PROJECTS.heading}</h2>
       <div className="mt-3 h-px w-full bg-[#fa1a1d]" />
 
@@ -735,7 +725,7 @@ function MobileProjects() {
 
 function MobileTracks() {
   return (
-    <section aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-hidden`}>
+    <section aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       <div className="border-t border-[#fa1a1d]">
         {TRACKS.lines.map((line, i) => {
           const Tag = i === 1 ? "h2" : "p";
@@ -846,7 +836,7 @@ function Loose({
 
 function MobileTimelineSection() {
   return (
-    <section aria-label="Timeline" className={`${COL} ${PAD} py-16 overflow-hidden`}>
+    <section aria-label="Timeline" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       {/* The two that ride above the schedule. */}
       <div className="mb-10 flex items-end justify-center gap-4">
         <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
@@ -1183,36 +1173,11 @@ function MobileGuidelines() {
   );
 }
 
-/* ----------------------------------------------------------- register */
-
-function MobileRegister() {
-  return (
-    <section aria-label="Register now" className={`${COL} ${PAD} py-16 overflow-hidden`}>
-      {/* Cursive artwork rather than type — the collage draws it on with a
-          clip-path; here it is simply present. */}
-      <Piece width={779.141} height={342.48}>
-        <h2 className="absolute top-0 left-0 h-[327.438px] w-[779.141px]">
-          <RegisterSvg className="absolute inset-0 block size-full max-w-none" />
-        </h2>
-        <div className="absolute top-[208.44px] left-[281.96px] h-[134.04px] w-[388.209px]">
-          <NowSvg className="absolute inset-0 block size-full max-w-none" />
-        </div>
-      </Piece>
-
-      <p className="mt-10 text-center text-[17px] leading-[1.5] text-[#bfea88]">
-        {REGISTER.tagline[0]}
-        <br aria-hidden />
-        {REGISTER.tagline[1]}
-      </p>
-    </section>
-  );
-}
-
 /* ------------------------------------------------------------- footer */
 
 function MobileFooter() {
   return (
-    <footer className="pt-16 overflow-hidden">
+    <footer className="pt-16 overflow-x-clip">
       {/* The five folder tabs. The collage files them into a drawer, each band
           overlapping the last with only its lip showing; stacked, the lip is
           the whole tab. */}

@@ -7,14 +7,12 @@ import PageMotion from "@/components/PageMotion";
 import HeroSection from "@/components/sections/Hero";
 import AboutSection from "@/components/sections/About";
 import RecapSection from "@/components/sections/Recap";
-import WhoAreWeSection from "@/components/sections/WhoAreWe";
 import ProjectsSection from "@/components/sections/Projects";
 import TracksSection from "@/components/sections/Tracks";
 import SponsorsSection from "@/components/sections/Sponsors";
 import TimelineSection from "@/components/sections/Timeline";
 import RulesSection from "@/components/sections/Rules";
 import GuidelinesSection from "@/components/sections/Guidelines";
-import RegisterSection from "@/components/sections/Register";
 import SiteFooter from "@/components/sections/SiteFooter";
 import { FEATURES } from "@/content/features";
 
@@ -41,7 +39,7 @@ import { FEATURES } from "@/content/features";
  */
 export default function Home() {
   return (
-    <main className="bg-black overflow-x-hidden w-full max-w-full">
+    <main className="bg-black w-full overflow-x-clip">
       {/* Outside the canvas, and outside the `md` swap: the drawer is fixed to
           the viewport, and the collage below is a scaled transform — which
           would become the containing block for anything fixed inside it. One
@@ -59,10 +57,8 @@ export default function Home() {
           }
         >
           <PageMotion>
-            <AboutSection />
             <RecapSection />
             <div className="recap-extended-sections">
-              <WhoAreWeSection />
               {FEATURES.projects && <ProjectsSection />}
               <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>
                 <TracksSection />
@@ -77,7 +73,7 @@ export default function Home() {
                   <TimelineSection />
                   <RulesSection />
                   <GuidelinesSection />
-                  <RegisterSection />
+                  <AboutSection />
                   <SiteFooter />
                 </div>
               </div>
