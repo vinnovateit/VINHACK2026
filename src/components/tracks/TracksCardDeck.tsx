@@ -42,9 +42,10 @@ import { TRACKS } from "@/content/site";
  * at every scale; there is nothing there to divide.
  *
  * A counter-translate is only as steady as its timing, and it is worth being
- * plain about why: this one is written synchronously on the scroll event and
- * never from a `requestAnimationFrame`, because a frame of lag between the page
- * and the stage is exactly the bob the park exists to avoid. See `onScroll`.
+ * plain about why: this one is written from a `requestAnimationFrame` loop
+ * rather than the `scroll` event, because the event is throttled under
+ * momentum scrolling and a frame of lag between the page and the stage is
+ * exactly the bob the park exists to avoid. See `tick`.
  *
  * The heading parks with the deck rather than scrolling away above it, and that
  * is what decides how big the card can be: it is fitted to the band left under
@@ -463,22 +464,35 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
     };
 
     /**
-     * Synchronously, on the scroll event itself — *not* inside a
-     * `requestAnimationFrame`.
+     * Driven from a `requestAnimationFrame` loop rather than the `scroll`
+     * event.
      *
-     * A rAF scheduled from a scroll event runs at the *next* frame, so the page
-     * would already have been painted at its new offset while the stage still
-     * carried the previous one: every scroll tick would show the heading a
-     * frame's worth of scrolling out of place, and the constant correction is
-     * what reads as a bob. Scroll handlers run before paint, so writing the
-     * transform here puts the stage and the page on screen at the same offset
-     * in the same frame.
+     * That was tried first, on the reasoning that scroll handlers run before
+     * paint so writing the transform there puts the stage and the page on
+     * screen at the same offset in the same frame. It still bobbed: under
+     * momentum/trackpad/fling scrolling the browser does not dispatch a
+     * `scroll` event for every frame the compositor actually moves the page
+     * by — it coalesces several frames' worth of movement into one event on
+     * whatever cadence it chooses. The compositor keeps painting the page at
+     * 60fps regardless, so the stage's own transform — only ever updated on
+     * the throttled event — visibly falls behind and snaps forward each time
+     * an event finally lands. rAF has no such throttle: it runs once per
+     * rendered frame no matter what is driving the scroll, so reading
+     * `scrollY` there is reading it exactly as often as the page's own
+     * position changes on screen.
      *
-     * The cost of dropping the throttle is bounded: `update` reads no geometry
-     * (everything it needs was measured in `measure`) and skips the cards
+     * The loop runs for the component's whole lifetime rather than only
+     * while scrolling is in progress. There is no reliable "scroll ended"
+     * event to stop it on, and the cost of the alternative is small: `update`
+     * reads no geometry (everything it needs was measured in `measure`),
+     * bails immediately when the section isn't armed, and skips the cards
      * entirely unless the deck has actually moved.
      */
-    const onScroll = () => update();
+    let rafId = 0;
+    const tick = () => {
+      update();
+      rafId = requestAnimationFrame(tick);
+    };
 
     const onLayout = () => {
       measure();
@@ -489,14 +503,14 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
     };
 
     onLayout();
+    rafId = requestAnimationFrame(tick);
 
-    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayout);
     desktop.addEventListener("change", onLayout);
     calm.addEventListener("change", onLayout);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onLayout);
       desktop.removeEventListener("change", onLayout);
       calm.removeEventListener("change", onLayout);
@@ -537,80 +551,79 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
 
         {/* Origin at the focused card's centre; `top` is set once measured. */}
         <div ref={railRef} className="absolute left-1/2 top-0">
-            {SLOTS.map((slot) => {
-              // Slots run negative, so the cycle is taken the long way round —
-              // `-2 % 6` is `-2` in JS, which is not an index.
-              const color =
-                COLOR_CYCLE[
-                  ((slot % COLOR_CYCLE.length) + COLOR_CYCLE.length) %
-                    COLOR_CYCLE.length
-                ];
-              const { ink, rule } = trackInk(color);
-              const item =
-                slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
+          {SLOTS.map((slot) => {
+            // Slots run negative, so the cycle is taken the long way round —
+            // `-2 % 6` is `-2` in JS, which is not an index.
+            const color =
+              COLOR_CYCLE[
+                ((slot % COLOR_CYCLE.length) + COLOR_CYCLE.length) %
+                  COLOR_CYCLE.length
+              ];
+            const { ink, rule } = trackInk(color);
+            const item = slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
 
-              return (
-                <div
-                  key={slot}
-                  ref={(node) => {
-                    if (node) cardRefs.current.set(slot, node);
-                    else cardRefs.current.delete(slot);
-                  }}
-                  className="absolute will-change-transform"
-                  style={{
-                    left: 0,
-                    top: 0,
-                    marginLeft: -CARD_WIDTH / 2,
-                    marginTop: -CARD_HEIGHT / 2,
-                    transformOrigin: "center center",
-                  }}
-                  aria-hidden
+            return (
+              <div
+                key={slot}
+                ref={(node) => {
+                  if (node) cardRefs.current.set(slot, node);
+                  else cardRefs.current.delete(slot);
+                }}
+                className="absolute will-change-transform"
+                style={{
+                  left: 0,
+                  top: 0,
+                  marginLeft: -CARD_WIDTH / 2,
+                  marginTop: -CARD_HEIGHT / 2,
+                  transformOrigin: "center center",
+                }}
+                aria-hidden
+              >
+                <TrackCard
+                  color={color}
+                  // Only the cards that say something take the deeper shadow;
+                  // the blanks padding either stack sit flatter behind them.
+                  isFront={item !== null}
+                  width={CARD_WIDTH}
+                  height={CARD_HEIGHT}
                 >
-                  <TrackCard
-                    color={color}
-                    // Only the cards that say something take the deeper shadow;
-                    // the blanks padding either stack sit flatter behind them.
-                    isFront={item !== null}
-                    width={CARD_WIDTH}
-                    height={CARD_HEIGHT}
-                  >
-                    {item ? (
-                      // Everything the track has to say is printed on the card
-                      // itself. Sizes are in the card's own 365x258 units, so the
-                      // whole face scales as one piece with the zoom instead of
-                      // type drifting out of proportion with the box holding it.
-                      <div
-                        ref={(node) => {
-                          if (node) contentRefs.current.set(slot, node);
-                          else contentRefs.current.delete(slot);
-                        }}
-                        className="absolute inset-0 flex flex-col justify-between p-5.5 opacity-0 will-change-transform pointer-events-none"
-                        style={{ color: ink }}
-                      >
-                        <div className="flex items-start justify-between">
-                          <span className="font-rotonto text-[8.5px] uppercase tracking-[0.34em]">
-                            Track {pad(slot + 1)} / {pad(COUNT)}
-                          </span>
-                          <TrackAsterisk size={13} />
-                        </div>
-                        <div>
-                          <div
-                            className="mb-2.5 h-px w-full"
-                            style={{ background: rule }}
-                          />
-                          <h3 className="font-rotonto text-[26px] leading-[0.94] tracking-tight">
-                            {item.title}
-                          </h3>
-                          <p className="mt-2 max-w-[84%] font-rotonto text-[9.5px] leading-[1.5] tracking-tight opacity-80">
-                            {item.blurb}
-                          </p>
-                        </div>
+                  {item ? (
+                    // Everything the track has to say is printed on the card
+                    // itself. Sizes are in the card's own 365x258 units, so the
+                    // whole face scales as one piece with the zoom instead of
+                    // type drifting out of proportion with the box holding it.
+                    <div
+                      ref={(node) => {
+                        if (node) contentRefs.current.set(slot, node);
+                        else contentRefs.current.delete(slot);
+                      }}
+                      className="absolute inset-0 flex flex-col justify-between p-5.5 opacity-0 will-change-transform pointer-events-none"
+                      style={{ color: ink }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <span className="font-rotonto text-[8.5px] uppercase tracking-[0.34em]">
+                          Track {pad(slot + 1)} / {pad(COUNT)}
+                        </span>
+                        <TrackAsterisk size={13} />
                       </div>
-                    ) : null}
-                  </TrackCard>
-                </div>
-              );
-            })}
+                      <div>
+                        <div
+                          className="mb-2.5 h-px w-full"
+                          style={{ background: rule }}
+                        />
+                        <h3 className="font-rotonto text-[26px] leading-[0.94] tracking-tight">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 max-w-[84%] font-rotonto text-[9.5px] leading-[1.5] tracking-tight opacity-80">
+                          {item.blurb}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                </TrackCard>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
