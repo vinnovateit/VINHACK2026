@@ -6,6 +6,7 @@ import SiteNav from "@/components/nav/SiteNav";
 import PageMotion from "@/components/PageMotion";
 import HeroSection from "@/components/sections/Hero";
 import AboutSection from "@/components/sections/About";
+import RecapSection from "@/components/sections/Recap";
 import WhoAreWeSection from "@/components/sections/WhoAreWe";
 import ProjectsSection from "@/components/sections/Projects";
 import TracksSection from "@/components/sections/Tracks";
@@ -59,23 +60,26 @@ export default function Home() {
         >
           <PageMotion>
             <AboutSection />
-            <WhoAreWeSection />
-            {FEATURES.projects && <ProjectsSection />}
-            <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>
-              <TracksSection />
-              <div
-                className={
-                  FEATURES.tracks
-                    ? "tracks-extended-sections"
-                    : "tracks-disabled-sections"
-                }
-              >
-                <SponsorsSection />
-                <TimelineSection />
-                <RulesSection />
-                <GuidelinesSection />
-                <RegisterSection />
-                <SiteFooter />
+            <RecapSection />
+            <div className="recap-extended-sections">
+              <WhoAreWeSection />
+              {FEATURES.projects && <ProjectsSection />}
+              <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>
+                <TracksSection />
+                <div
+                  className={
+                    FEATURES.tracks
+                      ? "tracks-extended-sections"
+                      : "tracks-disabled-sections"
+                  }
+                >
+                  <SponsorsSection />
+                  <TimelineSection />
+                  <RulesSection />
+                  <GuidelinesSection />
+                  <RegisterSection />
+                  <SiteFooter />
+                </div>
               </div>
             </div>
           </PageMotion>

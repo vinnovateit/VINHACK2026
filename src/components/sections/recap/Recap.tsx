@@ -1,0 +1,270 @@
+"use client";
+
+import { type FC, useEffect, useState } from "react";
+import Image from "next/image";
+import FilmCanister from "./FilmCanister";
+import CollegesBadge from "./CollegesBadge";
+import BuildersCounter from "./BuildersCounter";
+import PixelSmiley from "./PixelSmiley";
+
+const EVENT_PHOTOS = [
+  "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
+  "/about_us/67637ab629928adcbde8469183aac1877a08026b.webp",
+  "/about_us/924203fb63dc0f4fd3cb3bfe64c9230caf80a54e.webp",
+  "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
+];
+
+const SPROCKET_COUNT = 65;
+
+interface RecapProps {
+  inView?: boolean;
+}
+
+export const RECAP: FC<RecapProps> = ({ inView = true }) => {
+  const [stampTrigger, setStampTrigger] = useState(false);
+
+  useEffect(() => {
+    if (!inView) {
+      setStampTrigger(false);
+      return;
+    }
+    const timer = setTimeout(() => setStampTrigger(true), 1100);
+    return () => clearTimeout(timer);
+  }, [inView]);
+
+  const handleRestamp = () => {
+    setStampTrigger(false);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setStampTrigger(true));
+    });
+  };
+
+  return (
+    <div className="relative w-full h-full bg-black overflow-hidden select-none font-rotonto">
+      {/* 1. 15+ Colleges Badge (Top-Left) with Animated Circle Draw */}
+      <div className="absolute top-[122px] left-[200px] z-20 w-[130px] h-[95px] -rotate-6 transition-transform duration-300 hover:scale-105 hover:rotate-0">
+        <CollegesBadge inView={inView} />
+      </div>
+
+      {/* 2. 300+ BUILDERS (Top-Center) - "BUILDERS" stays steady, "300+" counts up and locks into original text */}
+      <div className="absolute top-[120px] left-[570px] z-20 flex items-center">
+        <BuildersCounter inView={inView} />
+        <Image
+          className="w-[30px] h-[30px] object-contain ml-[6px] mt-[14px] pointer-events-none transition-transform duration-500 delay-500"
+          style={{
+            transform: inView ? "translate(0, 0)" : "translate(12px, 12px)",
+          }}
+          src="/recap/blue_mouse.svg"
+          width={49}
+          height={48}
+          alt="Arrow"
+          unoptimized
+        />
+      </div>
+
+      {/* 3. Green Rotating Badge with Corner Fly-In & Dynamic Pixel Smiley + 99+ Projects Ticket */}
+      <div className="absolute top-[100px] right-[24px] z-20 flex items-center gap-[6px]">
+        {/* Dynamic LED Pixel Smiley flying in from corner */}
+        <div
+          className="w-[74px] h-[74px] cursor-pointer"
+          style={{
+            transform: inView
+              ? "translate(0, 0) scale(1)"
+              : "translate(80px, -60px) scale(0)",
+            transition: "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s",
+          }}
+          title="Click or watch random smiley expressions!"
+        >
+          <div className="w-full h-full animate-[spin_20s_linear_infinite]">
+            <PixelSmiley />
+          </div>
+        </div>
+
+        {/* 99+ Projects Built Ticket with rubber stamp effect */}
+        <div
+          className="w-[135px] h-[88px] -rotate-6 transition-all duration-500 hover:scale-105 hover:rotate-0"
+          style={{
+            transform: inView
+              ? "scale(1) rotate(-6deg)"
+              : "scale(1.8) rotate(-16deg)",
+            opacity: inView ? 1 : 0,
+            transition:
+              "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2) 0.4s, opacity 0.35s ease 0.4s",
+          }}
+        >
+          <Image
+            className="w-full h-full object-contain"
+            src="/recap/project.svg"
+            width={195}
+            height={128}
+            alt="99+ Projects Built"
+            unoptimized
+          />
+        </div>
+      </div>
+
+      {/* Filmstrip Assembly - Rolls out from canister on reveal and touches right screen edge */}
+      <div
+        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 ${
+          inView ? "film-rollout-open" : "film-rollout-closed"
+        }`}
+      >
+        {/* Top Film Sprocket Holes (stretching all the way to right screen edge) */}
+        <div className="absolute top-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
+          {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+            <div
+              key={`top-sprocket-${i}`}
+              className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+            />
+          ))}
+        </div>
+
+        {/* Infinite Photo Marquee - Seamless loop flowing from left to right */}
+        <div className="absolute top-[36px] left-[14px] right-0 h-[165px] overflow-hidden">
+          <div className="film-marquee-track flex gap-[26px]">
+            {/* Set A */}
+            {EVENT_PHOTOS.map((src, i) => (
+              <div
+                key={`photo-a-${i}`}
+                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative"
+              >
+                <Image
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  src={src}
+                  width={360}
+                  height={255}
+                  alt={`VinHack memory ${i + 1}`}
+                />
+              </div>
+            ))}
+
+            {/* Set B (Exact clone for seamless loop) */}
+            {EVENT_PHOTOS.map((src, i) => (
+              <div
+                key={`photo-b-${i}`}
+                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative"
+              >
+                <Image
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  src={src}
+                  width={360}
+                  height={255}
+                  alt={`VinHack memory clone ${i + 1}`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Film Sprocket Holes (stretching all the way to right screen edge) */}
+        <div className="absolute bottom-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
+          {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+            <div
+              key={`bottom-sprocket-${i}`}
+              className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 35mm Film Roll Canister Assembly */}
+      <FilmCanister />
+
+      {/* Bottom Details & Badges */}
+      {/* 4. Quote text - Smooth Fade-and-Rise Entrance Animation */}
+      <div
+        className="absolute top-[456px] left-[190px] w-[210px] text-left font-rotonto text-[13px] font-normal text-[#D9D9D9] leading-[1.4] tracking-wide"
+        style={{
+          transform: inView ? "translateY(0)" : "translateY(16px)",
+          opacity: inView ? 1 : 0,
+          transition:
+            "transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s, opacity 1s ease 0.8s",
+        }}
+      >
+        it was loud, chaotic, exhausting, and somehow one of those weekends you
+        wish you could do all over again.
+      </div>
+
+      {/* 5. 36 HOURS Red Grunge Stamp - Authentic Rubber Stamp Slam Animation (Click to stamp again!) */}
+      <div
+        className={`absolute top-[442px] left-[550px] z-20 flex items-center cursor-pointer select-none ${
+          stampTrigger ? "stamp-active" : "opacity-0 scale-[2.8]"
+        }`}
+        onClick={handleRestamp}
+        title="Click to stamp again!"
+      >
+        <Image
+          className="w-[136px] h-[70px] object-contain transition-transform duration-200 hover:scale-105 active:scale-95"
+          src="/recap/hours.svg"
+          width={193}
+          height={98}
+          alt="36 HOURS"
+          unoptimized
+        />
+        <Image
+          className="w-[30px] h-[30px] object-contain -ml-[14px] -mt-[6px] pointer-events-none"
+          src="/recap/flowers.svg"
+          width={47}
+          height={47}
+          alt="Flower accent"
+          unoptimized
+        />
+      </div>
+
+      {/* 6. Curved "core memory" Infinite Flowing Marquee Disappearing into Corner */}
+      <div
+        className="absolute top-[460px] right-[20px] w-[340px] h-[72px] overflow-hidden z-20 pointer-events-none"
+        style={{
+          maskImage:
+            "linear-gradient(to right, black 55%, transparent 95%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, black 55%, transparent 95%)",
+        }}
+      >
+        <div className="core-marquee-track flex gap-[30px] items-center">
+          {/* Repeating instances flowing continuously into the corner */}
+          <div className="w-[250px] h-[66px] shrink-0">
+            <Image
+              className="w-full h-full object-contain"
+              src="/recap/core.svg"
+              width={372}
+              height={100}
+              alt="core memory"
+              unoptimized
+            />
+          </div>
+          <div className="w-[250px] h-[66px] shrink-0">
+            <Image
+              className="w-full h-full object-contain"
+              src="/recap/core.svg"
+              width={372}
+              height={100}
+              alt="core memory"
+              unoptimized
+            />
+          </div>
+        </div>
+
+        {/* Star & cyan heart accents */}
+        <Image
+          className="absolute top-[32px] left-[60px] w-[14px] h-[14px] object-contain pointer-events-none"
+          src="/figma/star2.svg"
+          width={28}
+          height={26}
+          alt=""
+          unoptimized
+        />
+        <Image
+          className="absolute -top-[4px] right-[70px] w-[13px] h-[13px] object-contain pointer-events-none"
+          src="/figma/vector51.svg"
+          width={22}
+          height={20}
+          alt=""
+          unoptimized
+        />
+      </div>
+    </div>
+  );
+};
+
+export default RECAP;

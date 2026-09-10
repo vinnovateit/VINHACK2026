@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 11718px;
+  --canvas-height: 12278px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -36,15 +36,15 @@
 }
 
 .projects-disabled {
-  --canvas-height: 10886px;
+  --canvas-height: 11446px;
 }
 
 .tracks-disabled {
-  --canvas-height: 9418px;
+  --canvas-height: 9978px;
 }
 
 .projects-disabled.tracks-disabled {
-  --canvas-height: 8586px;
+  --canvas-height: 9146px;
 }
 
 .projects-disabled-sections {
@@ -63,6 +63,10 @@
    shift on the group instead of six edited `top` values. */
 .tracks-extended-sections {
   transform: translateY(1548px);
+}
+
+.recap-extended-sections {
+  transform: translateY(560px);
 }
 
 .coming-soon-wrap {
@@ -173,6 +177,83 @@
     opacity: 1;
     transform: scale(1) rotate(var(--sticker-rotate-to, 0deg));
   }
+}
+
+/* ---- recap animations --------------------------------------------------- */
+
+@keyframes film-marquee {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.film-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: film-marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.film-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes core-marquee {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.core-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: core-marquee 14s linear infinite;
+  will-change: transform;
+}
+
+@keyframes stamp-slam {
+  0% {
+    opacity: 0;
+    transform: scale(2.8) rotate(-6deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(0.9) rotate(-24deg);
+  }
+  75% {
+    transform: scale(1.08) rotate(-20deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-22deg);
+  }
+}
+
+.stamp-active {
+  animation: stamp-slam 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes film-rollout {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+.film-rollout-closed {
+  clip-path: inset(0 100% 0 0);
+}
+
+.film-rollout-open {
+  animation: film-rollout 2.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
