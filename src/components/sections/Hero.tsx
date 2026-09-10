@@ -190,7 +190,13 @@ export default function HeroSection() {
         {/* Real box — see the note on `git`. The card no longer loops, but it
             still scales under the cursor, and the red tab and arrow badge have
             to stay attached to it when it does. */}
-        <div className="absolute h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px]" data-hero="note" data-node-id="343:1552">
+        <a
+          href="/setup/login"
+          aria-label="Register now"
+          className="absolute block h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px] no-underline"
+          data-hero="note"
+          data-node-id="343:1552"
+        >
           {/* The artwork layer, scaled about the note's centre. The hover lift
               stays on the box outside it, so the two scales compose instead of
               overwriting each other. */}
@@ -228,7 +234,7 @@ export default function HeroSection() {
             </div>
           </div>
           </div>
-        </div>
+        </a>
         {/* The "Idea Found ! / Submit your Magic!" folder stood here (Figma
             343:1558, at 706.85, 144). It has been taken off the collage: it
             named no destination, carried no state and duplicated the call to

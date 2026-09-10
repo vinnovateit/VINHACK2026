@@ -1110,14 +1110,16 @@ function MobileRegister() {
     <section aria-label="Register now" className={`${COL} ${PAD} py-16`}>
       {/* Cursive artwork rather than type — the collage draws it on with a
           clip-path; here it is simply present. */}
-      <Piece width={779.141} height={342.48}>
-        <h2 className="absolute top-0 left-0 h-[327.438px] w-[779.141px]">
-          <RegisterSvg className="absolute inset-0 block size-full max-w-none" />
-        </h2>
-        <div className="absolute top-[208.44px] left-[281.96px] h-[134.04px] w-[388.209px]">
-          <NowSvg className="absolute inset-0 block size-full max-w-none" />
-        </div>
-      </Piece>
+      <a href="/setup/login" aria-label="Register now" className="block no-underline">
+        <Piece width={779.141} height={342.48}>
+          <h2 className="absolute top-0 left-0 h-[327.438px] w-[779.141px]">
+            <RegisterSvg className="absolute inset-0 block size-full max-w-none" />
+          </h2>
+          <div className="absolute top-[208.44px] left-[281.96px] h-[134.04px] w-[388.209px]">
+            <NowSvg className="absolute inset-0 block size-full max-w-none" />
+          </div>
+        </Piece>
+      </a>
 
       <p className="mt-10 text-center text-[17px] leading-[1.5] text-[#bfea88]">
         {REGISTER.tagline[0]}
