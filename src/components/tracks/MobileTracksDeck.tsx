@@ -190,7 +190,7 @@ export default function MobileTracksDeck() {
   return (
     <div
       ref={wrapRef}
-      className="relative my-8"
+      className="relative my-8 overflow-hidden"
       style={{ height: COUNT * TRAVEL_PER_CARD + STAGE_HEIGHT }}
     >
       {/* Only one card is square to the reader at a time, and only part-way

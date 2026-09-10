@@ -35,6 +35,29 @@
   --hero-height: 832px;
 }
 
+/* Hide scrollbar completely across all browsers and devices */
+html,
+body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
 .projects-disabled {
   --canvas-height: 11446px;
 }
@@ -586,23 +609,24 @@
 .piece {
   container-type: inline-size;
   width: 100%;
+  overflow: hidden;
 }
 
 .piece-frame {
   --piece-fit: tan(atan2(100cqw, var(--piece-w)));
   --piece-scale: min(var(--piece-max, 1), var(--piece-fit));
 
-  /* Sized to the artwork rather than to the column: past `--piece-max` the
-     scale stops growing, and a frame still spanning the full column would leave
-     the drawing pinned to its left edge — the plate scales from its top left.
-     At exactly the artwork's width the auto margins centre it instead. */
   width: calc(var(--piece-w) * var(--piece-scale));
   height: calc(var(--piece-h) * var(--piece-scale));
   margin-inline: auto;
+  position: relative;
+  overflow: hidden;
 }
 
 .piece-plate {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: var(--piece-w);
   height: var(--piece-h);
   transform: scale(var(--piece-scale));

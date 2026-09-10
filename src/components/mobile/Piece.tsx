@@ -1,26 +1,22 @@
-import type { CSSProperties, ReactNode } from "react";
+"use client";
+
+import {
+  useState,
+  useRef,
+  useEffect,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 /**
  * A drawing from the design file, dropped in at its own size and scaled to fit
  * the column.
  *
- * The collage's stickers, folders and speech bubbles are each a small collage
- * in their own right — a dozen boxes at exact offsets and exact angles, with
- * type set into them. There is no reflowed version of a sticker: rotating type
- * inside a rounded blob either is that drawing or is a different one. So on the
- * phone they are kept whole and scaled, while everything around them reflows.
+ * It uses ResizeObserver on the client so that switching between screen sizes,
+ * rotating devices, or toggling mobile emulation in DevTools IMMEDIATELY measures
+ * and centers the piece without needing a page refresh.
  *
- * `width` and `height` are the artwork's size in the Figma frame; children are
- * positioned against that box exactly as they are on the collage. `max` caps
- * the scale so a piece is never enlarged past the size it was drawn at — on a
- * wide phone the column outgrows the smaller stickers, and blowing them up
- * would only soften them.
- *
- * A piece fills its parent and centres the drawing inside itself. To make one
- * narrower, pass a `max-width` through `className` — never a shrink-to-fit
- * context, which collapses it (see `.piece` in globals.css for why).
- *
- * See `.piece` in globals.css for the scaling itself.
+ * Pure CSS container queries and tan(atan2) are preserved as CSS fallback variables.
  */
 export default function Piece({
   width,
@@ -35,19 +31,67 @@ export default function Piece({
   className?: string;
   children: ReactNode;
 }) {
-  return (
-    <div className={className ? `piece ${className}` : "piece"}>
-      <div
-        className="piece-frame"
-        style={
-          {
-            "--piece-w": `${width}px`,
-            "--piece-h": `${height}px`,
-            "--piece-max": max,
-          } as CSSProperties
+  const pieceRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = pieceRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const containerW = el.clientWidth;
+      if (containerW > 0) {
+        const fit = containerW / width;
+        const computed = Math.min(max, fit);
+        setScale((prev) => (prev !== computed ? computed : prev));
+      }
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(() => {
+      measure();
+    });
+    ro.observe(el);
+
+    window.addEventListener("resize", measure);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [width, max]);
+
+  const frameStyle: CSSProperties = {
+    "--piece-w": `${width}px`,
+    "--piece-h": `${height}px`,
+    "--piece-max": max,
+    ...(scale !== null
+      ? {
+          "--piece-scale": scale,
+          width: `${width * scale}px`,
+          height: `${height * scale}px`,
         }
-      >
-        <div className="piece-plate">{children}</div>
+      : {}),
+  } as CSSProperties;
+
+  const plateStyle: CSSProperties = {
+    ...(scale !== null
+      ? {
+          transform: `scale(${scale})`,
+        }
+      : {}),
+  };
+
+  return (
+    <div
+      ref={pieceRef}
+      className={className ? `piece ${className}` : "piece"}
+    >
+      <div className="piece-frame" style={frameStyle}>
+        <div className="piece-plate" style={plateStyle}>
+          {children}
+        </div>
       </div>
     </div>
   );

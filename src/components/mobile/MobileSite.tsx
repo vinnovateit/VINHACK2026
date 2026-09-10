@@ -63,11 +63,11 @@ const PAD = "px-5";
  * Full-bleed pieces — the two marquees, the footer's coloured bands — are
  * deliberately outside it: they are meant to run edge to edge.
  */
-const COL = "mx-auto max-w-[560px]";
+const COL = "mx-auto max-w-[560px] w-full";
 
 export default function MobileSite() {
   return (
-    <div className="md:hidden bg-black text-[#fcfcfc]">
+    <div className="md:hidden bg-black text-[#fcfcfc] overflow-x-hidden w-full max-w-full">
       <MobileHero />
       <MobileAbout />
       <MobileRecap />
@@ -102,7 +102,7 @@ export default function MobileSite() {
  * rather than 1: past about 670px the stage would otherwise stop growing and
  * sit as an island in the middle of a large phone held sideways.
  */
-const STAGE = { width: 393, height: 682 };
+const STAGE = { width: 393, height: 540 };
 
 /**
  * A drawing from the design file, placed on the stage at a size of this
@@ -179,13 +179,13 @@ function MobileHero() {
           would start under it. */}
       <section
         aria-label="VinHack"
-        className="flex min-h-[100svh] flex-col justify-center overflow-clip px-2 py-8"
+        className="flex min-h-[92svh] flex-col items-center justify-center overflow-hidden px-2 pt-10 pb-6 w-full max-w-full"
       >
         <Piece
           width={STAGE.width}
           height={STAGE.height}
-          max={1.7}
-          className="mobile-stage w-full"
+          max={1}
+          className="mobile-stage w-full max-w-[393px] mx-auto"
         >
           {/* The orbit the wordmark sits in the middle of, and the two sparks
               caught on it. A ring rather than an exported shape — it is a
@@ -197,17 +197,17 @@ function MobileHero() {
           <div
             aria-hidden
             className="deal-in absolute [--deal-delay:1.05s] [--deal-s:0.86]"
-            style={{ left: 18, top: 236, width: 344, height: 200 }}
+            style={{ left: 18, top: 116, width: 344, height: 200 }}
           >
             <div className="size-full rotate-[-8deg] rounded-[50%] border border-white/30" />
           </div>
-          <Spark x={240} y={244} size={20} />
-          <Spark x={116} y={424} size={16} />
+          <Spark x={240} y={124} size={20} />
+          <Spark x={116} y={304} size={16} />
 
           {/* The wordmark, as two layers — the solid lettering and the offset
               outline drawn behind it — which stack back to exactly the Figma
               export.
-
+ 
               They are also the phone's half of the hero entrance. The collage
               drives its version from GSAP in `HeroMotion`, which does not run
               at this width at all (see `DESKTOP` in motion/recipes.ts); here
@@ -218,7 +218,7 @@ function MobileHero() {
               globals.css. */}
           <h1
             className="neon-sign absolute z-10"
-            style={{ left: 32, top: 272, width: 330, height: 115.14 }}
+            style={{ left: 32, top: 152, width: 330, height: 115.14 }}
           >
             <img
               alt="VinHack"
@@ -242,7 +242,7 @@ function MobileHero() {
           {/* The git commit bubble. */}
           <Placed
             x={8}
-            y={168}
+            y={48}
             w={411.659}
             h={207.988}
             scale={0.5}
@@ -285,7 +285,7 @@ function MobileHero() {
               collage. */}
           <Placed
             x={298}
-            y={196}
+            y={76}
             w={128.981}
             h={109.634}
             scale={0.62}
@@ -299,15 +299,10 @@ function MobileHero() {
             <SpeakerArt />
           </Placed>
 
-          {/* The QR sticker. Every piece of it is positioned in the 1280 x 832
-              plate the collage draws it on — several in percentages of that
-              plate and eight in container query units — so it cannot be
-              re-based onto a box its own size. The plate comes with it instead,
-              and a hole the size of the sticker is cut over the part of it that
-              is the sticker. See `QR_STICKER` in hero/QrArt. */}
+          {/* The QR sticker. */}
           <Placed
             x={270}
-            y={404}
+            y={284}
             w={QR_STICKER.width}
             h={QR_STICKER.height}
             scale={0.37}
@@ -323,13 +318,10 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The keycap. Drawn as a key already — a wide plate at 75% opacity
-              with a smaller, brighter cap up and to the left of it, which is
-              the parallax of a cap standing above its well — so it presses
-              under a finger too. `MobileMotion` drives the cap. */}
+          {/* The keycap. */}
           <Placed
             x={14}
-            y={398}
+            y={278}
             w={102.721}
             h={105.868}
             scale={0.6}
@@ -382,14 +374,10 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The "Register Now" note. Held tight to the left edge and no wider
-              than 127: the cue's curved line starts at x 147, and a note any
-              further across sits on top of the first four letters of "scroll
-              down for more" — which is the one piece of type on this screen
-              that has a job to do. */}
+          {/* The "Register Now" note. */}
           <Placed
             x={8}
-            y={486}
+            y={366}
             w={275.16}
             h={287.765}
             scale={0.46}
@@ -439,13 +427,10 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The scroll cue, exactly the collage's — the LED disc with the
-              arrow falling through it and "scroll down for more" curving
-              underneath. Same drawing (`hero/ScrollCue`), same roles, so
-              `MobileMotion` finds and wires it the way `HeroMotion` does. */}
+          {/* The scroll cue. */}
           <Placed
             x={130}
-            y={450}
+            y={330}
             w={SCROLL_CUE.width}
             h={SCROLL_CUE.height}
             scale={0.68}
@@ -474,37 +459,23 @@ function MobileAbout() {
   return (
     <section
       aria-label="About VinHack"
-      className={`${COL} ${PAD} py-16 relative overflow-hidden flex justify-center`}
+      className={`${COL} ${PAD} py-12 relative overflow-hidden flex flex-col items-center justify-center w-full`}
     >
-      {/* Background typography layer */}
+      {/* Background typography layer - single centered column, zero overlapping */}
       <div
         aria-hidden="true"
-        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[50px] leading-[58px] text-[#041a21] whitespace-nowrap z-0"
+        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[46px] leading-[56px] text-[#041a21] whitespace-nowrap z-0 flex flex-col items-center justify-center"
       >
-        <div className="absolute -top-4 -left-2 shrink-0">
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-        </div>
-        <div className="absolute -top-4 left-[330px] shrink-0">
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-          <div>SNEAK PEEK</div>
-          <div>VINHACK `26</div>
-        </div>
+        <div>SNEAK PEEK</div>
+        <div>VINHACK &apos;26</div>
+        <div>SNEAK PEEK</div>
+        <div>VINHACK &apos;26</div>
+        <div>SNEAK PEEK</div>
+        <div>VINHACK &apos;26</div>
+        <div>SNEAK PEEK</div>
+        <div>VINHACK &apos;26</div>
+        <div>SNEAK PEEK</div>
+        <div>VINHACK &apos;26</div>
       </div>
 
       <div className="relative z-10 w-full flex justify-center">
@@ -525,7 +496,7 @@ function AttendeePass() {
     <Piece
       width={374.669}
       height={546.48}
-      max={0.92}
+      max={1}
       className="w-full max-w-[360px]"
     >
       <PassCard
@@ -620,7 +591,7 @@ function AttendeePass() {
 
 function MobileWhoAreWe() {
   return (
-    <section aria-label="Who are we" className="py-16">
+    <section aria-label="Who are we" className="py-16 overflow-hidden">
       <div className="overflow-clip">
         {/* Twice over, so translating the row by exactly half its width loops
             seamlessly. The spacing between copies is each copy's own trailing
@@ -666,7 +637,7 @@ function MobileWhoAreWe() {
  */
 function MobileProjects() {
   return (
-    <section aria-label="Projects" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Projects" className={`${COL} ${PAD} py-16 overflow-hidden`}>
       <h2 className="text-[20px] text-[#fa1a1d]">{PROJECTS.heading}</h2>
       <div className="mt-3 h-px w-full bg-[#fa1a1d]" />
 
@@ -786,7 +757,7 @@ function MobileProjects() {
 
 function MobileTracks() {
   return (
-    <section aria-label="Tracks" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-hidden`}>
       <div className="border-t border-[#fa1a1d]">
         {TRACKS.lines.map((line, i) => {
           const Tag = i === 1 ? "h2" : "p";
@@ -897,7 +868,7 @@ function Loose({
 
 function MobileTimelineSection() {
   return (
-    <section aria-label="Timeline" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Timeline" className={`${COL} ${PAD} py-16 overflow-hidden`}>
       {/* The two that ride above the schedule. */}
       <div className="mb-10 flex items-end justify-center gap-4">
         <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
@@ -1238,7 +1209,7 @@ function MobileGuidelines() {
 
 function MobileRegister() {
   return (
-    <section aria-label="Register now" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Register now" className={`${COL} ${PAD} py-16 overflow-hidden`}>
       {/* Cursive artwork rather than type — the collage draws it on with a
           clip-path; here it is simply present. */}
       <Piece width={779.141} height={342.48}>
@@ -1263,7 +1234,7 @@ function MobileRegister() {
 
 function MobileFooter() {
   return (
-    <footer className="pt-16">
+    <footer className="pt-16 overflow-hidden">
       {/* The five folder tabs. The collage files them into a drawer, each band
           overlapping the last with only its lip showing; stacked, the lip is
           the whole tab. */}

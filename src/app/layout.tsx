@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Anek_Bangla,
   Anek_Devanagari,
@@ -88,6 +88,12 @@ const SCRIPTS = [
 ]
   .map((face) => face.variable)
   .join(" ");
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "VinHack 2026 — VinnovateIT",

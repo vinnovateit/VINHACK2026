@@ -41,7 +41,7 @@ import { FEATURES } from "@/content/features";
  */
 export default function Home() {
   return (
-    <main className="bg-black">
+    <main className="bg-black overflow-x-hidden w-full max-w-full">
       {/* Outside the canvas, and outside the `md` swap: the drawer is fixed to
           the viewport, and the collage below is a scaled transform — which
           would become the containing block for anything fixed inside it. One
