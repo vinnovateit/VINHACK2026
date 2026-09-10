@@ -21,8 +21,19 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  * (much taller) wrapper travels past, and that travel is what deals the cards.
  * Same idea, native scrolling, no hijack.
  *
- * What replaced the old mini-stack is the whole point of it: that was six blank
- * cards whose only motion was a `hover:` translate, and a phone has no hover.
+ * Where it deliberately parts company with the collage is the *shape* of the
+ * deal. The collage deals on the diagonal, corner to corner, because a 1280px
+ * plate has width to spend and the isometric lean is the drawing's own pose. A
+ * phone has no width to spend: the same diagonal on a 390px screen puts the
+ * stacks half off the edge and skews the type on the card face at exactly the
+ * size it is hardest to read. So the phone deals straight down a single column
+ * instead — a stack at the top, one card square in the middle to be read, a
+ * stack at the bottom — with no rotation and no skew anywhere in it. The only
+ * things that move are `y` and `scale`, which is also the cheapest pair of
+ * properties a phone can be asked to animate.
+ *
+ * Both stacks are real and both are stocked from the first frame, the same way
+ * the collage does it: see `SLOTS`.
  */
 
 /** The stack's own colours, in the cycle the collage's deck uses. */
@@ -33,27 +44,77 @@ const CARD_COLORS = [
   TRACK_COLORS.darkBlue,
 ] as const;
 
-const CARD_WIDTH = 286;
-const CARD_HEIGHT = 202;
+/* -------------------------------------------------------------- the column */
+
+const CARD_WIDTH = 258;
+const CARD_HEIGHT = 182;
 const COUNT = TRACKS.items.length;
 
-/** Scroll travel per card. The wrapper is this tall once over, plus the stage. */
-const TRAVEL_PER_CARD = 340;
 /**
- * Half the stretch, either side of face-on, that a card holds square to the
- * reader before it starts folding away — as a fraction of one card's pass.
- * Without it a card is only ever face-on for the single instant it crosses
- * `d === 0`, which is a flicker rather than a card you are given time to read.
+ * The three zones, in pixels from the middle of the stage.
+ *
+ * `PILE_OFFSET` is where a stack's front card sits. It is a little tighter than
+ * the two half-heights added together, so the card being read overlaps the top
+ * of each stack by a few pixels rather than floating in a gap between them —
+ * that overlap is what makes the column read as one deck seen edge-on instead
+ * of three separate objects.
  */
-const DWELL = 0.34;
-const STAGE_HEIGHT = 250;
-/** Where the stage sticks, as a fraction of viewport height. */
-const STICK_AT = 0.26;
+const PILE_SCALE = 0.58;
+const PILE_OFFSET = 126;
+/** One card further back in a stack: straight on up (or down) and a shade
+ *  smaller. No sideways step and no lean — that is the whole point of this
+ *  layout, and a stack of sheets seen square on is what is left. */
+const STEP_Y = 7;
+const STEP_SHRINK = 0.04;
 
-/** Waiting its turn: back in the pile, up and to the right. */
-const PILE = { x: 46, y: -30, rotate: 15, skew: 15, scale: 0.9 };
-/** Done: gone down and to the left, the way the collage's deck clears a card. */
-const EXIT = { x: -168, y: 96, rotate: 15, skew: 15, scale: 0.88 };
+/** How far back either stack is drawn, and how many blanks stock each one — the
+ *  far stack seeded before the deck starts, the near one padding out under the
+ *  last track. Shallower than the collage's: a phone stack is ~105px tall and
+ *  six visible steps of it would run off the end of the stage. */
+const PILE_DEPTH = 3;
+const SEED = 4;
+const BACKING = 4;
+
+/**
+ * Every card in the deck, named by the deck position it is face-on at — the
+ * same slot model `TracksCardDeck` uses, and for the same reason. Negative
+ * slots are already dealt at `p === -1`, so they stock the bottom stack with no
+ * special case anywhere in `render`; -1 itself is skipped because a card
+ * sitting exactly on `p` is the one square to the reader, and that must be a
+ * track rather than a blank.
+ */
+const SLOTS: readonly number[] = [
+  ...Array.from({ length: SEED }, (_, s) => -2 - s),
+  ...Array.from({ length: COUNT + BACKING }, (_, i) => i),
+];
+
+/**
+ * The stage is sized to hold all three zones and nothing more, then centred in
+ * whatever height the phone has.
+ *
+ * The three zones reach 193px either side of the middle at their deepest —
+ * `PILE_OFFSET`, plus `PILE_DEPTH` steps of `STEP_Y`, plus the half-height of a
+ * card that far back. Half of this is 210, so there is about 16px of clear
+ * stage past the end of each stack, which is what the tick strip sits in.
+ */
+const STAGE_HEIGHT = 420;
+const STAGE_MIN_TOP = 12;
+
+/* -------------------------------------------------------------- the timing */
+
+/** Scroll travel per card. The wrapper is this tall once over, plus the stage. */
+const TRAVEL_PER_CARD = 400;
+/**
+ * The pause, as a fraction of one card's travel — the same staircase the
+ * collage's deck runs on. During a hold the deck position sits on an exact
+ * integer and not a single card moves, so the card in the middle is genuinely
+ * stopped for the stretch you are reading it rather than merely slow.
+ */
+const HOLD = 1.4;
+const UNIT = 1 + HOLD;
+/** A last touch of settle at either end of a card's travel, so it is square to
+ *  the reader for a moment before the hold proper. */
+const DWELL = 0.08;
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -69,8 +130,16 @@ function mix(from: number, to: number, t: number): number {
   return from + (to - from) * t;
 }
 
+/** Where the stage parks: centred in the window, never tighter than the margin
+ *  on a short phone. Read by both the sticky offset and the ScrollTrigger start,
+ *  so the two cannot drift apart. */
+function stickTop(): number {
+  return Math.max(STAGE_MIN_TOP, (window.innerHeight - STAGE_HEIGHT) / 2);
+}
+
 export default function MobileTracksDeck() {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const tickRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
@@ -78,48 +147,58 @@ export default function MobileTracksDeck() {
   useGSAP(
     () => {
       const wrap = wrapRef.current;
-      if (!wrap) return;
+      const stage = stageRef.current;
+      if (!wrap || !stage) return;
 
       const mm = gsap.matchMedia();
 
       /**
-       * `p` runs 0 to COUNT; card `i` is face-on at exactly `p === i`.
-       * Everything is derived from `d = p - i`, so a card only ever knows how
-       * far past it the deck has got — coming forward below zero, leaving above.
+       * `p` runs from -1 to COUNT-1; card `slot` is square to the reader at
+       * exactly `p === slot`. Everything is derived from `raw = p - slot`, so a
+       * card only ever knows how far past it the deck has got — still waiting
+       * in the top stack below zero, already dealt into the bottom one above —
+       * and freezing `p` freezes the whole column.
        */
       const render = (p: number) => {
-        for (let i = 0; i < COUNT; i++) {
-          const el = cardRefs.current.get(i);
-          const content = contentRefs.current.get(i);
+        for (const slot of SLOTS) {
+          const el = cardRefs.current.get(slot);
           if (!el) continue;
+          const content = contentRefs.current.get(slot);
 
-          const raw = p - i;
+          const raw = p - slot;
           const d = gsap.utils.clamp(-1, 1, raw);
-          // Cards further back than the next one step away again, so the pile
-          // reads as four cards deep and slides forward as the deck advances.
-          const behind = Math.min(3, Math.max(0, -raw - 1));
+          const waiting = raw <= 0;
+          // How deep in its stack the card is sitting. The same distance either
+          // side of the card in the middle, so the stack it is leaving and the
+          // one it is joining are drawn by one rule.
+          const depth = Math.min(PILE_DEPTH, Math.max(0, Math.abs(raw) - 1));
 
           // How far outside the dwell the card has got: 0 for the whole stretch
-          // it holds face-on, ramping to 1 at either end of its pass. `t` is
-          // its mirror — 1 face-on, 0 fully in the pile or fully gone — so one
-          // set of mixes covers arriving and leaving alike.
+          // it holds square, ramping to 1 at either end of its travel. `t` is
+          // its mirror — 1 square to the reader, 0 fully back in a stack — so
+          // one set of mixes covers arriving and leaving alike.
           const away = Math.max(0, (Math.abs(d) - DWELL) / (1 - DWELL));
           const t = smooth(1 - away);
-          const from = d <= 0 ? PILE : EXIT;
+
+          // The waiting stack is above and recedes upward; the dealt stack is
+          // below and recedes downward. One sign carries both.
+          const side = waiting ? -1 : 1;
+          const restY = side * (PILE_OFFSET + depth * STEP_Y);
+          const restScale = PILE_SCALE * (1 - depth * STEP_SHRINK);
 
           gsap.set(el, {
-            x: mix(from.x, 0, t) + behind * 15,
-            y: mix(from.y, 0, t) - behind * 9,
-            rotate: mix(from.rotate, 0, t),
-            skewX: mix(from.skew, 0, t),
-            scale: mix(from.scale, 1, t),
-            // Only the outgoing card fades; the next one is simply behind it.
-            // It clears faster than the arriving card comes forward, so the two
-            // are not superimposed half-way through the swap.
-            opacity: d <= 0 ? 1 : smooth(1 - Math.min(1, away * 1.8)),
+            x: 0,
+            y: mix(restY, 0, t),
+            scale: mix(restScale, 1, t),
           });
-          // The face only prints while the card is square to the reader; at an
-          // angle it would be unreadable anyway.
+
+          // The card in the middle is in front of both stacks; within a stack
+          // the one nearest its turn — just dealt, or about to be — is on top.
+          const layer = String(Math.round(1000 - Math.abs(raw) * 10));
+          if (el.style.zIndex !== layer) el.style.zIndex = layer;
+
+          // The face only prints while the card is square to the reader and at
+          // full size; in a stack it is 58% scale and unreadable anyway.
           if (content) {
             gsap.set(content, {
               opacity: smooth(1 - Math.min(1, away * 1.9)),
@@ -127,38 +206,66 @@ export default function MobileTracksDeck() {
           }
         }
 
-        const active = Math.min(COUNT - 1, Math.max(0, Math.round(p)));
+        const active = gsap.utils.clamp(0, COUNT - 1, Math.round(p));
         for (let i = 0; i < COUNT; i++) {
           const tick = tickRefs.current.get(i);
           if (tick) gsap.set(tick, { opacity: i === active ? 1 : 0.25 });
         }
       };
 
+      /**
+       * Scroll position to deck position: the staircase described at `HOLD`.
+       * The value this returns is flat — exactly `k` — for the whole of card
+       * `k`'s hold, which is what stops the column dead while it is being read.
+       */
+      const deckPosition = (q: number) => {
+        const u = gsap.utils.clamp(0, 1, q) * COUNT * UNIT;
+        const k = Math.min(COUNT - 1, Math.floor(u / UNIT));
+        const flight = Math.min(1, u - k * UNIT);
+        // The first card travels in from the stack, so the run starts one back.
+        return k - 1 + smooth(flight);
+      };
+
       mm.add(`${MOBILE} and (prefers-reduced-motion: no-preference)`, () => {
+        // The sticky offset and the trigger's start are the same number by
+        // construction, so a phone that rotates cannot leave them disagreeing.
+        const place = () => {
+          stage.style.top = `${stickTop()}px`;
+        };
+        place();
+        ScrollTrigger.addEventListener("refreshInit", place);
+
         const st = ScrollTrigger.create({
           trigger: wrap,
-          start: () => `top top+=${window.innerHeight * STICK_AT}`,
+          start: () => `top top+=${stickTop()}`,
           // Exactly the distance the stage can stay stuck for, so the last card
           // lands just as the deck lets go — independent of viewport height,
           // which a `bottom`-relative end is not.
           end: `+=${COUNT * TRAVEL_PER_CARD}`,
           scrub: 0.4,
-          onUpdate: (self) => render(self.progress * (COUNT - 1)),
-          onRefresh: (self) => render(self.progress * (COUNT - 1)),
+          onUpdate: (self) => render(deckPosition(self.progress)),
+          onRefresh: (self) => render(deckPosition(self.progress)),
         });
-        render(0);
-        return () => st.kill();
+        render(deckPosition(0));
+
+        return () => {
+          ScrollTrigger.removeEventListener("refreshInit", place);
+          st.kill();
+        };
       });
 
-      // Reduced motion gets the same four cards as a plain column: no pile, no
-      // travel, no sticky stage — every face square and readable at once.
+      // Reduced motion gets the same four tracks as a plain column: no stacks,
+      // no travel, no sticky stage — every face square and readable at once.
+      // The blanks stocking the two stacks have nothing to say, so they go.
       mm.add(`${MOBILE} and (prefers-reduced-motion: reduce)`, () => {
-        const stage = wrap.querySelector<HTMLElement>("[data-deck-stage]");
         const rail = wrap.querySelector<HTMLElement>("[data-deck-rail]");
         const ticks = wrap.querySelector<HTMLElement>("[data-deck-ticks]");
         const touched: HTMLElement[] = [];
 
-        const lay = (el: HTMLElement | null, css: Partial<CSSStyleDeclaration>) => {
+        const lay = (
+          el: HTMLElement | null,
+          css: Partial<CSSStyleDeclaration>,
+        ) => {
           if (!el) return;
           Object.assign(el.style, css);
           touched.push(el);
@@ -169,13 +276,16 @@ export default function MobileTracksDeck() {
         lay(rail, { width: "auto", height: "auto" });
         lay(ticks, { display: "none" });
 
-        for (let i = 0; i < COUNT; i++) {
-          const el = cardRefs.current.get(i);
-          const content = contentRefs.current.get(i);
-          lay(el ?? null, { position: "relative", marginBottom: "18px" });
-          if (el) {
-            gsap.set(el, { x: 0, y: 0, rotate: 0, skewX: 0, scale: 1, opacity: 1 });
-          }
+        for (const slot of SLOTS) {
+          const el = cardRefs.current.get(slot);
+          const content = contentRefs.current.get(slot);
+          const blank = slot < 0 || slot >= COUNT;
+          lay(el ?? null, {
+            position: "relative",
+            marginBottom: "18px",
+            display: blank ? "none" : "block",
+          });
+          if (el) gsap.set(el, { x: 0, y: 0, scale: 1, opacity: 1 });
           if (content) gsap.set(content, { opacity: 1 });
         }
 
@@ -206,69 +316,83 @@ export default function MobileTracksDeck() {
       </ul>
 
       <div
+        ref={stageRef}
         className="sticky flex items-center justify-center"
-        style={{ top: `${STICK_AT * 100}vh`, height: STAGE_HEIGHT }}
+        style={{ top: STAGE_MIN_TOP, height: STAGE_HEIGHT }}
         data-deck-stage
       >
+        {/* Origin at the middle of the column: the card being read sits here at
+            `y: 0`, and both stacks are written as offsets from it. */}
         <div
           className="relative"
           style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
           data-deck-rail
         >
-          {TRACKS.items.map((item, i) => {
-            const color = CARD_COLORS[i % CARD_COLORS.length];
+          {SLOTS.map((slot) => {
+            // Slots run negative, so the cycle is taken the long way round —
+            // `-2 % 4` is `-2` in JS, which is not an index.
+            const color =
+              CARD_COLORS[
+                ((slot % CARD_COLORS.length) + CARD_COLORS.length) %
+                  CARD_COLORS.length
+              ];
             const { ink, rule } = trackInk(color);
+            const item = slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
 
             return (
               <div
-                key={item.title}
+                key={slot}
                 ref={(node) => {
-                  if (node) cardRefs.current.set(i, node);
-                  else cardRefs.current.delete(i);
+                  if (node) cardRefs.current.set(slot, node);
+                  else cardRefs.current.delete(slot);
                 }}
                 className="absolute left-0 top-0 will-change-transform"
-                style={{ zIndex: COUNT - i, transformOrigin: "center center" }}
+                style={{ transformOrigin: "center center" }}
                 aria-hidden
               >
                 <TrackCard
                   color={color}
-                  isFront={i === 0}
+                  // Only the cards that say something take the deeper shadow;
+                  // the blanks stocking either stack sit flatter behind them.
+                  isFront={item !== null}
                   width={CARD_WIDTH}
                   height={CARD_HEIGHT}
                 >
-                  <div
-                    ref={(node) => {
-                      if (node) contentRefs.current.set(i, node);
-                      else contentRefs.current.delete(i);
-                    }}
-                    className="absolute inset-0 flex flex-col justify-between p-4"
-                    style={{ color: ink }}
-                  >
-                    <span className="font-rotonto text-[8px] uppercase tracking-[0.3em]">
-                      Track {pad(i + 1)} / {pad(COUNT)}
-                    </span>
-                    <div>
-                      <div
-                        className="mb-2 h-px w-full"
-                        style={{ background: rule }}
-                      />
-                      <h3 className="font-rotonto text-[21px] leading-[0.96] tracking-tight">
-                        {item.title}
-                      </h3>
-                      <p className="mt-1.5 font-rotonto text-[9.5px] leading-[1.45] tracking-tight opacity-80">
-                        {item.blurb}
-                      </p>
+                  {item ? (
+                    <div
+                      ref={(node) => {
+                        if (node) contentRefs.current.set(slot, node);
+                        else contentRefs.current.delete(slot);
+                      }}
+                      className="absolute inset-0 flex flex-col justify-between p-4 opacity-0"
+                      style={{ color: ink }}
+                    >
+                      <span className="font-rotonto text-[8px] uppercase tracking-[0.3em]">
+                        Track {pad(slot + 1)} / {pad(COUNT)}
+                      </span>
+                      <div>
+                        <div
+                          className="mb-2 h-px w-full"
+                          style={{ background: rule }}
+                        />
+                        <h3 className="font-rotonto text-[21px] leading-[0.96] tracking-tight">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1.5 font-rotonto text-[9.5px] leading-[1.45] tracking-tight opacity-80">
+                          {item.blurb}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </TrackCard>
               </div>
             );
           })}
         </div>
 
-        {/* Which of the four is face-on. */}
+        {/* Which of the four is square to the reader. */}
         <div
-          className="absolute -bottom-1 left-0 flex w-full justify-center gap-2"
+          className="absolute bottom-1 left-0 flex w-full justify-center gap-2"
           data-deck-ticks
         >
           {TRACKS.items.map((item, i) => (
