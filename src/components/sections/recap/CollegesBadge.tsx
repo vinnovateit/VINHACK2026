@@ -11,12 +11,12 @@ export default function CollegesBadge({ inView = true }: CollegesBadgeProps) {
   const [drawn, setDrawn] = useState(false);
 
   useEffect(() => {
-    if (!inView) {
-      setDrawn(false);
-      return;
-    }
+    if (!inView) return;
     const timer = setTimeout(() => setDrawn(true), 150);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setDrawn(false);
+    };
   }, [inView]);
 
   return (

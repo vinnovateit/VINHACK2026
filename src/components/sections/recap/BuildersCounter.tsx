@@ -12,11 +12,7 @@ export default function BuildersCounter({ inView = true }: BuildersCounterProps)
   const [completed, setCompleted] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!inView) {
-      setCount(0);
-      setCompleted(false);
-      return;
-    }
+    if (!inView) return;
 
     const start = 0;
     const target = 300;
@@ -39,7 +35,11 @@ export default function BuildersCounter({ inView = true }: BuildersCounterProps)
     };
 
     const animFrame = requestAnimationFrame(updateCounter);
-    return () => cancelAnimationFrame(animFrame);
+    return () => {
+      cancelAnimationFrame(animFrame);
+      setCount(0);
+      setCompleted(false);
+    };
   }, [inView]);
 
   return (

@@ -24,12 +24,12 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
   const [stampTrigger, setStampTrigger] = useState(false);
 
   useEffect(() => {
-    if (!inView) {
-      setStampTrigger(false);
-      return;
-    }
+    if (!inView) return;
     const timer = setTimeout(() => setStampTrigger(true), 1100);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setStampTrigger(false);
+    };
   }, [inView]);
 
   const handleRestamp = () => {
