@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 12818px;
+  --canvas-height: 11154px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -35,41 +35,56 @@
   --hero-height: 832px;
 }
 
-/* Hide scrollbar completely across all browsers and devices */
+/* No horizontal scrollbar, anywhere.
+
+   `clip` and not `hidden`, and this is the whole of the difference: `hidden`
+   is a *scroll container* that happens to have no scrollbar, and the one it
+   makes of `<body>` becomes the nearest scrollport for everything on the page.
+   Every `position: sticky` below then sticks inside a box that never scrolls —
+   the two card decks stop holding, and the scroll-linked tweens hung off them
+   measure against a scrollport that is not the one the reader is moving. It
+   also forces the other axis to `auto`, so `overflow-x: hidden` quietly buys a
+   second vertical scroller nobody asked for.
+
+   `clip` only paints less. No scroll container, no new scrollport, and the
+   other axis stays `visible` — which is exactly the fix wanted here and
+   nothing else. `hidden` first as the fallback for Safari before 16, the same
+   pairing `.canvas-frame` uses further down.
+
+   No `max-width: 100vw` either: `100vw` counts the classic scrollbar's width,
+   so on a scrollbar-reserving browser that rule is itself worth a few pixels
+   of horizontal overflow. */
 html,
 body {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-  width: 100% !important;
-  scrollbar-width: none !important;
-  /* Firefox */
-  -ms-overflow-style: none !important;
-  /* IE and Edge */
+  overflow-x: hidden;
+  overflow-x: clip;
+  width: 100%;
 }
 
+/* Hide the scrollbars themselves across browsers. */
 * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 ::-webkit-scrollbar,
 *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 .projects-disabled {
-  --canvas-height: 11986px;
+  --canvas-height: 10322px;
 }
 
 .tracks-disabled {
-  --canvas-height: 9978px;
+  --canvas-height: 8314px;
 }
 
 .projects-disabled.tracks-disabled {
-  --canvas-height: 9146px;
+  --canvas-height: 7482px;
 }
 
 .projects-disabled-sections {
@@ -104,7 +119,7 @@ body {
 }
 
 .recap-extended-sections {
-  transform: translateY(560px);
+  transform: translateY(-1104px);
 }
 
 .coming-soon-wrap {
@@ -332,7 +347,7 @@ body {
 
      hero   1:1, never enlarged, centred, black either side past 1280px
      body   fills the width at any size, so the full-bleed bands (footer
-            strips, the "Who are we?" marquee, the track card stacks) keep
+            strips, the sneak-peek marquee, the track card stacks) keep
             running edge to edge
 
    Both still scale *down* below 1280px. A fixed collage cannot reflow, and
@@ -349,6 +364,17 @@ body {
 .overflow-clip {
   overflow: hidden;
   overflow: clip;
+}
+
+/* The one-axis half of the same fallback. Everything that only needs its
+   horizontal edge held — the page root, the mobile column, the sections that
+   carry a deck or a draggable — uses `overflow-x-clip` rather than
+   `overflow-x-hidden`, so that it stays a clip and does not become a scroll
+   container: `hidden` on one axis computes the other to `auto`, and the
+   scrollport that makes swallows every `position: sticky` beneath it. */
+.overflow-x-clip {
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .canvas-frame {
@@ -672,9 +698,19 @@ body {
 .piece {
   container-type: inline-size;
   width: 100%;
-  overflow: hidden;
 }
 
+/* Sized to the artwork rather than to the column: past `--piece-max` the scale
+   stops growing, and a frame still spanning the full column would leave the
+   drawing pinned to its left edge — the plate scales from its top left. At
+   exactly the artwork's width the auto margins centre it instead.
+
+   Nothing is clipped here. The plate is out of flow and already scaled to
+   exactly these bounds, so there is no overflow to catch in the steady state —
+   only the entrances, which overshoot on purpose (`sticker-pop` opens at
+   scale 2.8, `stamp-in` and `deal-in` arrive from outside their own box). A
+   frame drawn tight to the artwork cropped every one of them to nothing. The
+   page's horizontal edge is held at the root instead, where it belongs. */
 .piece-frame {
   --piece-fit: tan(atan2(100cqw, var(--piece-w)));
   --piece-scale: min(var(--piece-max, 1), var(--piece-fit));
@@ -683,7 +719,6 @@ body {
   height: calc(var(--piece-h) * var(--piece-scale));
   margin-inline: auto;
   position: relative;
-  overflow: hidden;
 }
 
 .piece-plate {
@@ -1220,12 +1255,6 @@ textarea {
   color: #000000;
 }
 
-[aria-label="Who are we"] ::selection,
-[data-name="WHO ARE WE"] ::selection {
-  background-color: #bfea88;
-  color: #000000;
-}
-
 [aria-label="Projects"] ::selection,
 [data-name="PROJECTS"] ::selection {
   background-color: #fbee35;
@@ -1260,12 +1289,6 @@ textarea {
 [data-name="GUIDELINES"] ::selection {
   background-color: #74d4f0;
   color: #0f172a;
-}
-
-[aria-label="Register now"] ::selection,
-[data-name="REGISTER NOW"] ::selection {
-  background-color: #bfea88;
-  color: #000000;
 }
 
 footer ::selection,

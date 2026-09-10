@@ -74,7 +74,7 @@ export default function RecapSection() {
       ref={sectionRef}
       data-in-view={inView || undefined}
       aria-label="Recap"
-      className="absolute bg-black h-[560px] left-0 w-full overflow-hidden top-[1664px] z-10"
+      className="absolute bg-black h-[560px] left-0 w-full overflow-hidden top-[832px] z-10"
       data-name="RECAP"
     >
       <RECAP inView={inView} />
