@@ -186,9 +186,8 @@ export default function MobileRecap() {
         <div className="flex items-center justify-between gap-2 pt-1">
           {/* 36 Hours Stamp */}
           <div
-            className={`flex items-center cursor-pointer select-none ${
-              stampTrigger ? "stamp-active" : "opacity-0 scale-[2]"
-            }`}
+            className={`flex items-center cursor-pointer select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2]"
+              }`}
             onClick={handleRestamp}
             title="Click to stamp again!"
           >

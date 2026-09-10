@@ -27,7 +27,6 @@ import {
   RULES,
   TIMELINE,
   TRACKS,
-  WHO_ARE_WE,
 } from "@/content/site";
 import MobileTracksDeck from "@/components/tracks/MobileTracksDeck";
 
@@ -71,7 +70,6 @@ export default function MobileSite() {
       <MobileHero />
       <MobileAbout />
       <MobileRecap />
-      <MobileWhoAreWe />
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
       <MobileSponsors />
@@ -459,26 +457,42 @@ function MobileAbout() {
   return (
     <section
       aria-label="About VinHack"
-      className={`${COL} ${PAD} py-12 relative overflow-hidden flex flex-col items-center justify-center w-full`}
+      className="relative w-full overflow-hidden flex flex-col items-center justify-center py-12"
     >
-      {/* Background typography layer - single centered column, zero overlapping */}
+      {/* Background typography layer - two columns touching both left and right edges with non-overlapping spacing */}
       <div
         aria-hidden="true"
-        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[46px] leading-[56px] text-[#041a21] whitespace-nowrap z-0 flex flex-col items-center justify-center"
+        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[40px] leading-[52px] text-[#0a3a48] whitespace-nowrap z-0 flex flex-col justify-center"
       >
-        <div>SNEAK PEEK</div>
-        <div>VINHACK &apos;26</div>
-        <div>SNEAK PEEK</div>
-        <div>VINHACK &apos;26</div>
-        <div>SNEAK PEEK</div>
-        <div>VINHACK &apos;26</div>
-        <div>SNEAK PEEK</div>
-        <div>VINHACK &apos;26</div>
-        <div>SNEAK PEEK</div>
-        <div>VINHACK &apos;26</div>
+        <div className="relative w-full h-[520px]">
+          <div className="absolute left-[4px] top-0 shrink-0">
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+          </div>
+          <div className="absolute left-[272px] top-0 shrink-0">
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+            <div>SNEAK PEEK</div>
+            <div>VINHACK &apos;26</div>
+          </div>
+        </div>
       </div>
 
-      <div className="relative z-10 w-full flex justify-center">
+      <div className="relative z-10 w-full flex justify-center px-4">
         <AttendeePass />
       </div>
     </section>
@@ -496,8 +510,8 @@ function AttendeePass() {
     <Piece
       width={374.669}
       height={546.48}
-      max={1}
-      className="w-full max-w-[360px]"
+      max={0.71}
+      className="w-full max-w-[265px]"
     >
       <PassCard
         start={PASS_START.front}
@@ -555,9 +569,8 @@ function AttendeePass() {
               {field.label}
             </p>
             <p
-              className={`absolute font-rotonto text-[17.6px] whitespace-nowrap text-[#105266] ${
-                i === 0 ? "-translate-x-1/2 text-center" : "-translate-x-full text-right"
-              }`}
+              className={`absolute font-rotonto text-[17.6px] whitespace-nowrap text-[#105266] ${i === 0 ? "-translate-x-1/2 text-center" : "-translate-x-full text-right"
+                }`}
               style={
                 i === 0 ? { left: 67.84, top: 357.17 } : { left: 345.86, top: 357.17 }
               }
@@ -587,42 +600,7 @@ function AttendeePass() {
   );
 }
 
-/* -------------------------------------------------------- who are we */
 
-function MobileWhoAreWe() {
-  return (
-    <section aria-label="Who are we" className="py-16 overflow-hidden">
-      <div className="overflow-clip">
-        {/* Twice over, so translating the row by exactly half its width loops
-            seamlessly. The spacing between copies is each copy's own trailing
-            padding rather than a flex `gap` — a gap sits *between* the two and
-            not after the second, so half the row would no longer be one whole
-            copy and the seam would drift. */}
-        <div
-          className="marquee"
-          style={{ "--marquee-duration": "18s" } as CSSProperties}
-        >
-          <h2 className="shrink-0 pr-[40px] text-[56px] whitespace-nowrap text-[#bfea88]">
-            {WHO_ARE_WE.heading}
-          </h2>
-          <p aria-hidden className="shrink-0 pr-[40px] text-[56px] whitespace-nowrap text-[#bfea88]">
-            {WHO_ARE_WE.heading}
-          </p>
-        </div>
-      </div>
-
-      <ul className={`${COL} ${PAD} mt-10 space-y-4 text-center text-[16px] tracking-[0.06em] text-[#bfea88]`}>
-        {WHO_ARE_WE.taglines.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-
-      <p className="mt-10 text-center text-[26px] text-[#bfea88]">
-        {WHO_ARE_WE.connect}
-      </p>
-    </section>
-  );
-}
 
 /* ----------------------------------------------------------- projects */
 

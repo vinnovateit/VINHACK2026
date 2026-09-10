@@ -41,8 +41,10 @@ body {
   overflow-x: hidden !important;
   max-width: 100vw !important;
   width: 100% !important;
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE and Edge */
 }
 
 * {
@@ -109,10 +111,13 @@ body {
 }
 
 @keyframes coming-soon-group {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.74;
     transform: translateX(-50%) translateY(0) rotate(-2deg);
   }
+
   50% {
     opacity: 1;
     transform: translateX(-50%) translateY(4px) rotate(2deg);
@@ -132,10 +137,13 @@ body {
 }
 
 @keyframes coming-soon-group-mobile {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.74;
     transform: translateY(0) rotate(-2deg);
   }
+
   50% {
     opacity: 1;
     transform: translateY(4px) rotate(2deg);
@@ -159,6 +167,7 @@ body {
     opacity: 0;
     transform: scale(0.78) translateY(22px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -196,6 +205,7 @@ body {
     opacity: 0;
     transform: scale(0.2) rotate(var(--sticker-rotate-from, -24deg));
   }
+
   to {
     opacity: 1;
     transform: scale(1) rotate(var(--sticker-rotate-to, 0deg));
@@ -208,6 +218,7 @@ body {
   0% {
     transform: translateX(-50%);
   }
+
   100% {
     transform: translateX(0%);
   }
@@ -228,6 +239,7 @@ body {
   0% {
     transform: translateX(-50%);
   }
+
   100% {
     transform: translateX(0%);
   }
@@ -245,13 +257,16 @@ body {
     opacity: 0;
     transform: scale(2.8) rotate(-6deg);
   }
+
   50% {
     opacity: 1;
     transform: scale(0.9) rotate(-24deg);
   }
+
   75% {
     transform: scale(1.08) rotate(-20deg);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) rotate(-22deg);
@@ -278,17 +293,21 @@ body {
     opacity: 1;
     animation: none;
   }
+
   [data-in-view] .sponsor-pop {
     animation: none;
   }
+
   .sponsor-ring {
     transition: none;
   }
+
   .sticker-pop {
     opacity: 1;
     animation: none;
     transform: none;
   }
+
   [data-in-view] .sticker-pop {
     animation: none;
   }
@@ -351,7 +370,7 @@ body {
   height: calc(var(--hero-height) * var(--canvas-scale));
 }
 
-.hero-frame > .canvas-plate {
+.hero-frame>.canvas-plate {
   height: var(--hero-height);
 
   /* Centres the hero once the viewport is wider than it. Narrower, the auto
@@ -366,12 +385,10 @@ body {
 .body-frame {
   --canvas-scale: var(--canvas-fit);
 
-  height: calc(
-    (var(--canvas-height) - var(--hero-height)) * var(--canvas-scale)
-  );
+  height: calc((var(--canvas-height) - var(--hero-height)) * var(--canvas-scale));
 }
 
-.body-frame > .canvas-plate {
+.body-frame>.canvas-plate {
   height: calc(var(--canvas-height) - var(--hero-height));
 }
 
@@ -396,7 +413,7 @@ body {
   pointer-events: none;
 }
 
-.body-sheet > * {
+.body-sheet>* {
   pointer-events: auto;
 }
 
@@ -450,14 +467,37 @@ body {
    what makes a tube look cold is intervals that do not divide into each other.
    These are the same fractions `neonStrike` uses on the collage. */
 @keyframes neon-strike {
-  0% { opacity: 0; }
-  7% { opacity: 0.55; }
-  17% { opacity: 0.05; }
-  23% { opacity: 0.85; }
-  36% { opacity: 0.12; }
-  43% { opacity: 1; }
-  51% { opacity: 0.3; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+
+  7% {
+    opacity: 0.55;
+  }
+
+  17% {
+    opacity: 0.05;
+  }
+
+  23% {
+    opacity: 0.85;
+  }
+
+  36% {
+    opacity: 0.12;
+  }
+
+  43% {
+    opacity: 1;
+  }
+
+  51% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .neon-fill {
@@ -469,6 +509,7 @@ body {
     opacity: 0;
     transform: scale(1.03);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -487,9 +528,11 @@ body {
   from {
     filter: drop-shadow(0 0 24px rgba(191, 234, 136, 0.75));
   }
+
   99% {
     filter: drop-shadow(0 0 0 rgba(191, 234, 136, 0));
   }
+
   to {
     filter: none;
   }
@@ -505,16 +548,15 @@ body {
    arrives and settles in one animation and there is no midpoint at which it is
    past its own layout position when the animation is cancelled. */
 .deal-in {
-  animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) var(--deal-delay, 0s)
-    both;
+  animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) var(--deal-delay, 0s) both;
 }
 
 @keyframes deal-in {
   from {
     opacity: 0;
-    transform: translate3d(var(--deal-x, 0), var(--deal-y, 34px), 0)
-      rotate(var(--deal-r, 0deg)) scale(var(--deal-s, 0.92));
+    transform: translate3d(var(--deal-x, 0), var(--deal-y, 34px), 0) rotate(var(--deal-r, 0deg)) scale(var(--deal-s, 0.92));
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -549,14 +591,17 @@ body {
     transform: translateY(-158.76px);
     animation-timing-function: steps(6, end);
   }
+
   13.8% {
     transform: translateY(0);
     animation-timing-function: linear;
   }
+
   78.2% {
     transform: translateY(0);
     animation-timing-function: steps(6, end);
   }
+
   92%,
   100% {
     transform: translateY(158.76px);
@@ -564,19 +609,24 @@ body {
 }
 
 @keyframes cue-breathe {
+
   0%,
   13.8% {
     opacity: 1;
   }
+
   29.9% {
     opacity: 0.4;
   }
+
   46% {
     opacity: 1;
   }
+
   62.1% {
     opacity: 0.4;
   }
+
   78.2%,
   100% {
     opacity: 1;
@@ -688,10 +738,12 @@ body {
 }
 
 @keyframes asterisk-pulse {
+
   0%,
   100% {
     transform: scale(0.72);
   }
+
   50% {
     transform: scale(1.35);
   }
@@ -710,24 +762,31 @@ body {
   0% {
     clip-path: inset(0 0 100% 0);
   }
+
   22% {
     clip-path: inset(0 0 72% 0);
   }
+
   32% {
     clip-path: inset(0 0 72% 0);
   }
+
   54% {
     clip-path: inset(0 0 45% 0);
   }
+
   64% {
     clip-path: inset(0 0 45% 0);
   }
+
   82% {
     clip-path: inset(0 0 18% 0);
   }
+
   90% {
     clip-path: inset(0 0 18% 0);
   }
+
   100% {
     clip-path: inset(0 0 0 0);
   }
@@ -758,11 +817,9 @@ body {
 .glitch-scan {
   position: absolute;
   inset: -8px 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.14) 0 2px,
-    transparent 2px 5px
-  );
+  background: repeating-linear-gradient(to bottom,
+      rgb(0 0 0 / 0.14) 0 2px,
+      transparent 2px 5px);
   animation: glitch-scan 5.5s linear infinite;
 }
 
@@ -775,13 +832,11 @@ body {
 .glitch-split {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgb(250 26 29 / 0.18),
-    transparent 24%,
-    transparent 76%,
-    rgb(116 212 240 / 0.2)
-  );
+  background: linear-gradient(90deg,
+      rgb(250 26 29 / 0.18),
+      transparent 24%,
+      transparent 76%,
+      rgb(116 212 240 / 0.2));
   animation: glitch-drift 7s ease-in-out infinite alternate;
 }
 
@@ -789,6 +844,7 @@ body {
   from {
     transform: translateX(-7px);
   }
+
   to {
     transform: translateX(7px);
   }
@@ -808,15 +864,19 @@ body {
     top: -13%;
     transform: translateX(0);
   }
+
   46% {
     transform: translateX(-9px);
   }
+
   50% {
     transform: translateX(10px);
   }
+
   54% {
     transform: translateX(-5px);
   }
+
   100% {
     top: 102%;
     transform: translateX(0);
@@ -839,11 +899,9 @@ body {
 .fx-scan {
   position: absolute;
   inset: calc(-2 * var(--fx-period)) 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.3) 0 var(--fx-ink),
-    transparent var(--fx-ink) var(--fx-period)
-  );
+  background: repeating-linear-gradient(to bottom,
+      rgb(0 0 0 / 0.3) 0 var(--fx-ink),
+      transparent var(--fx-ink) var(--fx-period));
   animation: fx-scan 4s linear infinite;
 }
 
@@ -868,13 +926,11 @@ body {
   position: absolute;
   inset: 0 -4%;
   mix-blend-mode: screen;
-  background: linear-gradient(
-    90deg,
-    rgb(250 26 29 / 0.4),
-    transparent 22%,
-    transparent 78%,
-    rgb(116 212 240 / 0.42)
-  );
+  background: linear-gradient(90deg,
+      rgb(250 26 29 / 0.4),
+      transparent 22%,
+      transparent 78%,
+      rgb(116 212 240 / 0.42));
   /* Stepped rather than eased: a signal does not slide out of alignment, it
      lands somewhere wrong and stays there for a frame. */
   animation: fx-chroma 2.4s steps(4, end) infinite alternate;
@@ -884,6 +940,7 @@ body {
   from {
     transform: translateX(-2.5%);
   }
+
   to {
     transform: translateX(2.5%);
   }
@@ -895,12 +952,10 @@ body {
   width: 120%;
   height: 8%;
   mix-blend-mode: screen;
-  background: linear-gradient(
-    90deg,
-    rgb(250 26 29 / 0.34),
-    rgb(252 252 252 / 0.22),
-    rgb(116 212 240 / 0.34)
-  );
+  background: linear-gradient(90deg,
+      rgb(250 26 29 / 0.34),
+      rgb(252 252 252 / 0.22),
+      rgb(116 212 240 / 0.34));
   animation: fx-tear 3.6s cubic-bezier(0.85, 0, 0.15, 1) infinite;
 }
 
@@ -909,15 +964,19 @@ body {
     top: -10%;
     transform: translateX(0) scaleY(1);
   }
+
   46% {
     transform: translateX(-4%) scaleY(1.6);
   }
+
   50% {
     transform: translateX(5%) scaleY(0.7);
   }
+
   54% {
     transform: translateX(-2%) scaleY(1.3);
   }
+
   100% {
     top: 102%;
     transform: translateX(0) scaleY(1);
@@ -984,6 +1043,7 @@ body {
   from {
     transform: rotate(var(--r, 0deg)) translateY(0);
   }
+
   to {
     transform: rotate(calc(var(--r, 0deg) + 3deg)) translateY(-12px);
   }
@@ -1204,57 +1264,53 @@ footer ::selection,
 /* ---- receipt printer details (Timeline & MobileTimeline) ----------------- */
 
 .receipt-rule {
-  background-image: repeating-linear-gradient(
-    to right,
-    #000 0,
-    #000 6px,
-    transparent 6px,
-    transparent 12px
-  );
+  background-image: repeating-linear-gradient(to right,
+      #000 0,
+      #000 6px,
+      transparent 6px,
+      transparent 12px);
 }
 
 .receipt-paper-sheet {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 14px),
-    97.22% 100%,
-    94.44% calc(100% - 14px),
-    91.67% 100%,
-    88.89% calc(100% - 14px),
-    86.11% 100%,
-    83.33% calc(100% - 14px),
-    80.56% 100%,
-    77.78% calc(100% - 14px),
-    75.00% 100%,
-    72.22% calc(100% - 14px),
-    69.44% 100%,
-    66.67% calc(100% - 14px),
-    63.89% 100%,
-    61.11% calc(100% - 14px),
-    58.33% 100%,
-    55.56% calc(100% - 14px),
-    52.78% 100%,
-    50.00% calc(100% - 14px),
-    47.22% 100%,
-    44.44% calc(100% - 14px),
-    41.67% 100%,
-    38.89% calc(100% - 14px),
-    36.11% 100%,
-    33.33% calc(100% - 14px),
-    30.56% 100%,
-    27.78% calc(100% - 14px),
-    25.00% 100%,
-    22.22% calc(100% - 14px),
-    19.44% 100%,
-    16.67% calc(100% - 14px),
-    13.89% 100%,
-    11.11% calc(100% - 14px),
-    8.33% 100%,
-    5.56% calc(100% - 14px),
-    2.78% 100%,
-    0.00% calc(100% - 14px)
-  );
+  clip-path: polygon(0 0,
+      100% 0,
+      100% calc(100% - 14px),
+      97.22% 100%,
+      94.44% calc(100% - 14px),
+      91.67% 100%,
+      88.89% calc(100% - 14px),
+      86.11% 100%,
+      83.33% calc(100% - 14px),
+      80.56% 100%,
+      77.78% calc(100% - 14px),
+      75.00% 100%,
+      72.22% calc(100% - 14px),
+      69.44% 100%,
+      66.67% calc(100% - 14px),
+      63.89% 100%,
+      61.11% calc(100% - 14px),
+      58.33% 100%,
+      55.56% calc(100% - 14px),
+      52.78% 100%,
+      50.00% calc(100% - 14px),
+      47.22% 100%,
+      44.44% calc(100% - 14px),
+      41.67% 100%,
+      38.89% calc(100% - 14px),
+      36.11% 100%,
+      33.33% calc(100% - 14px),
+      30.56% 100%,
+      27.78% calc(100% - 14px),
+      25.00% 100%,
+      22.22% calc(100% - 14px),
+      19.44% 100%,
+      16.67% calc(100% - 14px),
+      13.89% 100%,
+      11.11% calc(100% - 14px),
+      8.33% 100%,
+      5.56% calc(100% - 14px),
+      2.78% 100%,
+      0.00% calc(100% - 14px));
 }
 
 /* ---- the navigation shelf (SiteNav) ------------------------------------- */
@@ -1419,11 +1475,13 @@ footer ::selection,
 }
 
 @keyframes nav-blink {
+
   0%,
   90%,
   100% {
     transform: scaleY(1);
   }
+
   95% {
     transform: scaleY(0.1);
   }
@@ -1708,6 +1766,7 @@ footer ::selection,
    27px either side rather than 54px on one. That is a gap the shelf can open
    symmetrically, which is the gap that leaves the book itself standing still. */
 @media (min-width: 768px) {
+
   .nav-spine:hover .nav-spine-body,
   .nav-spine:focus-visible .nav-spine-body {
     transform: translate(-22px, -30px) rotate(6deg);
@@ -1731,8 +1790,7 @@ footer ::selection,
    already has, so once it is over the element is simply back under its own
    rules, with nothing held over it. */
 .nav-panel[data-open="true"] .nav-book {
-  animation: nav-tumble-long 0.62s cubic-bezier(0.2, 0.8, 0.28, 1)
-    var(--tumble-delay, 0ms) backwards;
+  animation: nav-tumble-long 0.62s cubic-bezier(0.2, 0.8, 0.28, 1) var(--tumble-delay, 0ms) backwards;
   transform-origin: right center;
 }
 
@@ -1750,16 +1808,20 @@ footer ::selection,
     opacity: 0;
     transform: translateX(115%) rotate(14deg);
   }
+
   52% {
     opacity: 1;
     transform: translateX(0) rotate(-4deg);
   }
+
   72% {
     transform: rotate(2.4deg);
   }
+
   87% {
     transform: rotate(-1.1deg);
   }
+
   100% {
     opacity: 1;
     transform: none;
@@ -1773,19 +1835,24 @@ footer ::selection,
     opacity: 0;
     transform: translateY(-56px) rotate(34deg);
   }
+
   45% {
     opacity: 1;
     transform: translateY(0) rotate(-11deg);
   }
+
   64% {
     transform: rotate(7deg);
   }
+
   80% {
     transform: rotate(-4deg);
   }
+
   91% {
     transform: rotate(1.6deg);
   }
+
   100% {
     opacity: 1;
     transform: none;
@@ -1797,6 +1864,7 @@ footer ::selection,
    answering the pointer, not motion crossing the screen — but it arrives
    without a transition. */
 @media (prefers-reduced-motion: reduce) {
+
   .nav-button,
   .nav-panel,
   .nav-book,
