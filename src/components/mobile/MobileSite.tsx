@@ -7,6 +7,7 @@ import CameraFeed from "@/components/CameraFeed";
 import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
 import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
+import MobileRecap from "@/components/mobile/MobileRecap";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
 import MobileTimeline from "@/components/mobile/MobileTimeline";
 import Piece from "@/components/mobile/Piece";
@@ -17,7 +18,6 @@ import ShutterButton from "@/components/pass/ShutterButton";
 import { PASS_START } from "@/components/pass/variants";
 import { FEATURES } from "@/content/features";
 import {
-  ABOUT,
   FOOTER,
   GUIDELINES,
   HERO,
@@ -70,6 +70,7 @@ export default function MobileSite() {
     <div className="md:hidden bg-black text-[#fcfcfc]">
       <MobileHero />
       <MobileAbout />
+      <MobileRecap />
       <MobileWhoAreWe />
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
@@ -471,18 +472,42 @@ function MobileHero() {
 
 function MobileAbout() {
   return (
-    <section aria-label="About VinHack" className={`${COL} ${PAD} py-16`}>
-      <h2 className="text-[40px] leading-[1.05] text-[#fc2425]">
-        {ABOUT.heading}
-      </h2>
-
-      <div className="mt-7 space-y-5 text-[15px] leading-[1.65] tracking-[0.02em] text-[#fc2425]">
-        {ABOUT.paragraphs.map((para) => (
-          <p key={para}>{para}</p>
-        ))}
+    <section
+      aria-label="About VinHack"
+      className={`${COL} ${PAD} py-16 relative overflow-hidden flex justify-center`}
+    >
+      {/* Background typography layer */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[50px] leading-[58px] text-[#041a21] whitespace-nowrap z-0"
+      >
+        <div className="absolute -top-4 -left-2 shrink-0">
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+        </div>
+        <div className="absolute -top-4 left-[330px] shrink-0">
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+          <div>SNEAK PEEK</div>
+          <div>VINHACK `26</div>
+        </div>
       </div>
 
-      <div className="mt-12 flex justify-center">
+      <div className="relative z-10 w-full flex justify-center">
         <AttendeePass />
       </div>
     </section>

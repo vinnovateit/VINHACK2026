@@ -43,6 +43,8 @@ if (typeof window !== "undefined") {
   };
   window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
   window.addEventListener("keydown", unlock, { capture: true, passive: true });
+  window.addEventListener("wheel", unlock, { capture: true, passive: true });
+  window.addEventListener("touchstart", unlock, { capture: true, passive: true });
 }
 
 /** 50ms of white noise, generated once and re-triggered for every hit. */

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { playLatchClick } from "@/components/motion/film";
 
 interface BuildersCounterProps {
   inView?: boolean;
@@ -31,6 +32,7 @@ export default function BuildersCounter({ inView = true }: BuildersCounterProps)
         requestAnimationFrame(updateCounter);
       } else {
         setCompleted(true);
+        playLatchClick();
       }
     };
 

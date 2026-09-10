@@ -39,8 +39,8 @@ const CARDS: CardConfig[] = [
     top: 307,
     width: 318,
     height: 364,
-    tilt: "rotate-[1.5deg]",
-    popupClass: "right-2 bottom-3 w-[295px]",
+    tilt: "rotate-[1deg]",
+    popupClass: "left-3 right-3 bottom-3.5",
   },
   {
     name: "LATCH",
@@ -50,8 +50,8 @@ const CARDS: CardConfig[] = [
     top: 350,
     width: 335,
     height: 280,
-    tilt: "rotate-[-2deg]",
-    popupClass: "left-[-10px] bottom-3 w-[270px]",
+    tilt: "rotate-0",
+    popupClass: "left-3.5 right-3.5 bottom-3.5",
   },
   {
     name: "STUDYHUB",

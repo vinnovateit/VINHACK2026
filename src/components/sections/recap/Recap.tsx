@@ -6,6 +6,7 @@ import FilmCanister from "./FilmCanister";
 import CollegesBadge from "./CollegesBadge";
 import BuildersCounter from "./BuildersCounter";
 import PixelSmiley from "./PixelSmiley";
+import { playStampSlam, playPhotoClick, playSmileyChirp } from "@/components/motion/film";
 
 const EVENT_PHOTOS = [
   "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
@@ -25,7 +26,10 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
 
   useEffect(() => {
     if (!inView) return;
-    const timer = setTimeout(() => setStampTrigger(true), 1100);
+    const timer = setTimeout(() => {
+      setStampTrigger(true);
+      playStampSlam();
+    }, 1100);
     return () => {
       clearTimeout(timer);
       setStampTrigger(false);
@@ -35,7 +39,10 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
   const handleRestamp = () => {
     setStampTrigger(false);
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => setStampTrigger(true));
+      requestAnimationFrame(() => {
+        setStampTrigger(true);
+        playStampSlam();
+      });
     });
   };
 
@@ -73,7 +80,8 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
               : "translate(80px, -60px) scale(0)",
             transition: "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s",
           }}
-          title="Click or watch random smiley expressions!"
+          onClick={playSmileyChirp}
+          title="Click to hear smiley chime!"
         >
           <div className="w-full h-full animate-[spin_20s_linear_infinite]">
             <PixelSmiley />
@@ -82,7 +90,7 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
 
         {/* 99+ Projects Built Ticket with rubber stamp effect */}
         <div
-          className="w-[135px] h-[88px] -rotate-6 transition-all duration-500 hover:scale-105 hover:rotate-0"
+          className="w-[135px] h-[88px] -rotate-6 transition-all duration-500 hover:scale-105 hover:rotate-0 cursor-pointer"
           style={{
             transform: inView
               ? "scale(1) rotate(-6deg)"
@@ -91,6 +99,8 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
             transition:
               "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2) 0.4s, opacity 0.35s ease 0.4s",
           }}
+          onClick={playPhotoClick}
+          title="Click ticket"
         >
           <Image
             className="w-full h-full object-contain"
@@ -105,8 +115,8 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
 
       {/* Filmstrip Assembly - Rolls out from canister on reveal and touches right screen edge */}
       <div
-        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 ${
-          inView ? "film-rollout-open" : "film-rollout-closed"
+        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${
+          inView ? "film-rollout-open" : ""
         }`}
       >
         {/* Top Film Sprocket Holes (stretching all the way to right screen edge) */}
@@ -126,7 +136,9 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
             {EVENT_PHOTOS.map((src, i) => (
               <div
                 key={`photo-a-${i}`}
-                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative"
+                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative cursor-pointer"
+                onClick={playPhotoClick}
+                title="Click to snap photo shutter!"
               >
                 <Image
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -142,7 +154,9 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
             {EVENT_PHOTOS.map((src, i) => (
               <div
                 key={`photo-b-${i}`}
-                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative"
+                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative cursor-pointer"
+                onClick={playPhotoClick}
+                title="Click to snap photo shutter!"
               >
                 <Image
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -171,18 +185,23 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
       <FilmCanister />
 
       {/* Bottom Details & Badges */}
-      {/* 4. Quote text - Smooth Fade-and-Rise Entrance Animation */}
+      {/* 4. Quote text - Rotonto, pure white, exact 5-line break matching design */}
       <div
-        className="absolute top-[456px] left-[190px] w-[210px] text-left font-rotonto text-[13px] font-normal text-[#D9D9D9] leading-[1.4] tracking-wide"
+        className="absolute top-[452px] left-[190px] text-left select-none pointer-events-none"
         style={{
-          transform: inView ? "translateY(0)" : "translateY(16px)",
+          transform: inView ? "translateY(0)" : "translateY(14px)",
           opacity: inView ? 1 : 0,
           transition:
-            "transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s, opacity 1s ease 0.8s",
+            "transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s, opacity 0.8s ease 0.5s",
         }}
       >
-        it was loud, chaotic, exhausting, and somehow one of those weekends you
-        wish you could do all over again.
+        <p className="font-rotonto text-[16px] text-white leading-[1.3] tracking-normal font-normal whitespace-nowrap">
+          it was loud, chaotic,<br />
+          exhausting, and somehow<br />
+          one of those weekends<br />
+          you wish you could do all<br />
+          over again.
+        </p>
       </div>
 
       {/* 5. 36 HOURS Red Grunge Stamp - Authentic Rubber Stamp Slam Animation (Click to stamp again!) */}
