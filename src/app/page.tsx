@@ -70,11 +70,13 @@ export default function Home() {
                   }
                 >
                   <SponsorsSection />
-                  <TimelineSection />
-                  <RulesSection />
-                  <GuidelinesSection />
-                  <AboutSection />
-                  <SiteFooter />
+                  <div className="sponsors-extended-sections">
+                    <TimelineSection />
+                    <RulesSection />
+                    <GuidelinesSection />
+                    <AboutSection />
+                    <SiteFooter />
+                  </div>
                 </div>
               </div>
             </div>

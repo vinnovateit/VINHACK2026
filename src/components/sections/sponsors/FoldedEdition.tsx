@@ -149,7 +149,10 @@ function BookCover() {
   );
 }
 
+const TRAVEL_PLATE = 700;
+
 export default function FoldedEdition() {
+  const parkRef = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   /** Latches the rustle to one per opening, and re-arms if you scroll back up
@@ -160,7 +163,9 @@ export default function FoldedEdition() {
   useGSAP(
     () => {
       const root = stageRef.current;
-      if (!root) return;
+      const parkEl = parkRef.current;
+      const fit = fitRef.current;
+      if (!root || !parkEl || !fit) return;
 
       const q = gsap.utils.selector(root);
       const [cover] = q("[data-cover]") as HTMLElement[];
@@ -170,21 +175,22 @@ export default function FoldedEdition() {
       const [headline] = q("[data-headline]") as HTMLElement[];
       const [rule] = q("[data-headline-rule]") as HTMLElement[];
 
-      const fit = fitRef.current;
+      const desktop = window.matchMedia(DESKTOP);
+      const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      let canvasScale = 1;
+      let parkStart = 0;
+      let travelPx = TRAVEL_PLATE;
+      let armed = false;
+      let drawn = Number.NaN;
 
       /**
        * Scales the whole sheet down so it fits inside the window's height at
        * `VIEWPORT_FIT`, on a short window where the sheet at its drawn size
        * would otherwise be taller than the viewport and never on screen whole
        * at once.
-       *
-       * Measured off `root`'s own rendered height with the fit scale reset
-       * first, the same way `TracksCardDeck` measures its plate — reading a
-       * rect that already carries a scale this function is about to
-       * overwrite would compound on every resize.
        */
       const fitToViewport = () => {
-        if (!fit) return;
         fit.style.transform = "";
         const rendered = root.getBoundingClientRect().height;
         const s =
@@ -192,34 +198,29 @@ export default function FoldedEdition() {
             ? Math.min(1, (window.innerHeight * VIEWPORT_FIT) / rendered)
             : 1;
         fit.style.transform = s < 1 ? `scale(${s})` : "";
+        return s;
       };
 
-      const mm = gsap.matchMedia();
+      const park = (plateY: number) => {
+        parkEl.style.transform = `translate3d(0, ${plateY}px, 0)`;
+      };
 
       const render = (p: number) => {
-        // The edition is held closed for the first stretch, so a reader who has
-        // only just brought it on screen gets to see that it *is* a closed
-        // edition before it stops being one.
-        const swing = stage(p, 0.16, 0.86);
-        const travel = stage(p, 0.34, 0.9);
+        // Generous scroll distance and smooth staging so the unfold animation
+        // feels paced, deliberate and rock-solid while screen locked.
+        const swing = stage(p, 0.05, 0.92);
+        const travel = stage(p, 0.15, 0.94);
 
         const angle = SWING * swing;
 
         if (cover) {
           gsap.set(cover, {
             rotateY: -angle,
-            // Gone by the time it is edge-on — see `SWING`. Held solid for the
-            // first half so the sheet is never seen through the cover still
-            // covering it.
             opacity: 1 - smooth(Math.max(0, (swing - 0.58) / 0.36)),
           });
         }
         if (shade) gsap.set(shade, { opacity: swing });
 
-        // The pages stacked under the cover go with it. They fade rather than
-        // `[data-book]` itself doing so: opacity below 1 forces
-        // `transform-style: flat` on the element it is set on, which would
-        // collapse the cover's perspective part-way through the swing.
         for (const bit of dressing) {
           gsap.set(bit, {
             opacity: 1 - smooth(Math.max(0, (swing - 0.1) / 0.35)),
@@ -229,27 +230,12 @@ export default function FoldedEdition() {
         if (headline) {
           gsap.set(headline, {
             y: mix(HEADLINE_CLOSED_Y, HEADLINE_OPEN_Y, travel),
-            // Big while it is the cover's title, settling to the size the band
-            // wants once it is furniture on the page.
             scale: mix(HEADLINE_CLOSED_SCALE, 1, travel),
           });
         }
         if (rule) gsap.set(rule, { opacity: travel });
 
         if (sheet) {
-          // Exactly what the cover still covers. A panel on a hinge projects
-          // `cos(angle)` of its own width back onto the page, so that is where
-          // its edge is and that is where the sheet starts — which makes the
-          // paper appear from the right edge inward at the cover's own rate,
-          // with no second timing to keep in step with the first.
-          //
-          // Taken against a full quarter turn rather than against `angle`,
-          // which stops at `SWING`. The two are a couple of degrees apart at
-          // the very end and identical everywhere else, and the difference is
-          // the point: `cos(88°)` is not zero, so an edge that stopped where
-          // the cover stops would leave the sheet's leftmost 3% clipped off
-          // for good — under `prefers-reduced-motion`, which renders the end
-          // state and nothing else, permanently.
           const covered = Math.cos((90 * swing * Math.PI) / 180) * 100;
           gsap.set(sheet, {
             clipPath: `inset(0% 0% 0% ${covered.toFixed(3)}%)`,
@@ -257,83 +243,109 @@ export default function FoldedEdition() {
         }
 
         // One rustle, on the way in, as the cover actually gives.
-        if (p > 0.2 && !soundedRef.current) {
+        if (p > 0.18 && !soundedRef.current) {
           soundedRef.current = true;
           paperUnfold();
-        } else if (p < 0.06) {
+        } else if (p < 0.05) {
           soundedRef.current = false;
         }
       };
 
-      // The cover fills this box, so its middle is the middle of the box and
-      // there is nothing to correct for — but the trigger is still taken from a
-      // marker of its own rather than from `root`, because `root` is also what
-      // the swinging cover reaches outside of, and a trigger should not be
-      // measured against something the animation moves.
-      const [anchor] = q("[data-cover-anchor]") as HTMLElement[];
+      const measure = () => {
+        if (!desktop.matches) {
+          armed = false;
+          park(0);
+          return;
+        }
 
-      mm.add(DESKTOP, () => {
-        fitToViewport();
-        window.addEventListener("resize", fitToViewport);
-        return () => window.removeEventListener("resize", fitToViewport);
-      });
+        const container = parkEl.parentElement;
+        if (!container) {
+          armed = false;
+          return;
+        }
 
-      mm.add(DESKTOP + " and (prefers-reduced-motion: no-preference)", () => {
-        const st = ScrollTrigger.create({
-          trigger: anchor ?? root,
-          // Doesn't start the moment the cover appears at the bottom of the
-          // window — it waits until the cover's own centre has reached the
-          // middle of the viewport, so the reader sees a closed, centred
-          // edition before anything moves.
-          //
-          // `end` used to be "top 8%", which sounds like a small, safe
-          // number but isn't one: `anchor` is the sheet's own *centre*, at
-          // roughly `VIEWPORT_FIT` of the viewport's height, so by the time
-          // that centre point had scrolled up to 8% from the top, the sheet's
-          // own top edge was already off the top of the screen — the reveal
-          // was finishing on a paper that had already started leaving, which
-          // is exactly the "going down" the open edition read as. Stopping at
-          // 30% instead keeps the whole sheet on screen, a little above
-          // centre, for the entire reveal. It also does the opposite of
-          // shortchanging the reader on time with it open: nothing past this
-          // point moves the sheet at all, so the *remaining* distance until
-          // it scrolls fully off — governed by its own height, not by
-          // anything tuned here — is where it actually spends most of its
-          // time on screen, open and still.
-          start: "center center",
-          end: "top 30%",
-          scrub: 0.8,
-          onUpdate: (self) => render(self.progress),
-          onRefresh: (self) => render(self.progress),
-        });
-        // Not `render(0)`: a reader who lands already scrolled past this
-        // section should be given the opened sheet, and `st.progress` is
-        // already 1 for them.
-        render(st.progress);
-        return () => st.kill();
-      });
+        const fitScale = fitToViewport();
+        const rect = container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+          armed = false;
+          return;
+        }
+        armed = true;
 
-      // Reduced motion is handed the opened edition: the cover is a flourish,
-      // and the sponsors are the content. Nothing moves and nothing makes a
-      // noise.
-      mm.add(DESKTOP + " and (prefers-reduced-motion: reduce)", () => {
-        render(1);
-        return () => undefined;
-      });
+        canvasScale = rect.width / SHEET_W || 1;
+        const renderedHeight = SHEET_H * fitScale * canvasScale;
+        const targetTop = Math.max(0, (window.innerHeight - renderedHeight) / 2);
+        const containerTopDoc = window.scrollY + rect.top;
+        parkStart = containerTopDoc - targetTop;
+        travelPx = TRAVEL_PLATE * canvasScale;
+      };
 
-      return () => mm.revert();
+      // Cache scrollY from the scroll event so the rAF tick always reads the
+      // freshest value. window.scrollY inside rAF can be one composited frame
+      // behind the browser's actual scroll position, which is what causes the
+      // visible bob. The scroll event fires synchronously before paint on the
+      // same frame the position changes, so caching it here gives rAF the
+      // correct value with no lag — exactly as TracksCardDeck does.
+      let cachedScrollY = window.scrollY;
+      const onScroll = () => {
+        cachedScrollY = window.scrollY;
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+
+      const update = () => {
+        if (!armed) return;
+        if (calm.matches) {
+          park(0);
+          render(1);
+          return;
+        }
+
+        const stuck = gsap.utils.clamp(0, travelPx, cachedScrollY - parkStart);
+        park(stuck / canvasScale);
+
+        const p = stuck / travelPx;
+        if (p !== drawn) {
+          drawn = p;
+          render(p);
+        }
+      };
+
+      let rafId = 0;
+      const tick = () => {
+        update();
+        rafId = requestAnimationFrame(tick);
+      };
+
+      const onLayout = () => {
+        measure();
+        drawn = Number.NaN;
+        update();
+      };
+
+      onLayout();
+      rafId = requestAnimationFrame(tick);
+
+      window.addEventListener("resize", onLayout);
+      desktop.addEventListener("change", onLayout);
+      calm.addEventListener("change", onLayout);
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onLayout);
+        desktop.removeEventListener("change", onLayout);
+        calm.removeEventListener("change", onLayout);
+      };
     },
     { scope: stageRef },
   );
 
   return (
-    // Carries the fit-to-viewport scale (see `fitToViewport`), kept off
-    // `stageRef` itself so it stays a plain resize of the whole sheet rather
-    // than one more transform for the cover's own 3D one to compose with.
-    <div
-      ref={fitRef}
-      style={{ width: SHEET_W, height: SHEET_H, transformOrigin: "top center" }}
-    >
+    <div ref={parkRef} className="relative">
+      <div
+        ref={fitRef}
+        style={{ width: SHEET_W, height: SHEET_H, transformOrigin: "top center" }}
+      >
       <div
         ref={stageRef}
         className="relative select-none"
@@ -434,5 +446,6 @@ export default function FoldedEdition() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

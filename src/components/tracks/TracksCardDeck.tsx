@@ -444,14 +444,21 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
       stage.style.transform = `translate3d(0, ${plateY}px, 0)`;
     };
 
-    // The deck position last drawn. During a hold this is an exact integer that
-    // does not change, so the cards are left alone and a held frame costs only
-    // the park write above.
+    // Cache scrollY from the scroll event so the rAF tick always reads the
+    // freshest value. window.scrollY inside rAF can be one composited frame
+    // behind the browser's actual scroll position, which is what causes the
+    // visible bob. The scroll event fires synchronously before paint on the
+    // same frame the position changes, so caching it here gives rAF the
+    // correct value with no lag.
+    let cachedScrollY = window.scrollY;
+    const onScroll = () => { cachedScrollY = window.scrollY; };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     let drawn = Number.NaN;
 
     const update = () => {
       if (!armed) return;
-      const stuck = gsap.utils.clamp(0, travelPx, window.scrollY - parkStart);
+      const stuck = gsap.utils.clamp(0, travelPx, cachedScrollY - parkStart);
       // Exactly the page's own travel, back in plate units. Any smoothing here
       // and the parked heading would visibly drift against the scroll.
       park(stuck / canvasScale);
@@ -505,12 +512,14 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
     onLayout();
     rafId = requestAnimationFrame(tick);
 
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayout);
     desktop.addEventListener("change", onLayout);
     calm.addEventListener("change", onLayout);
 
     return () => {
       cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       desktop.removeEventListener("change", onLayout);
       calm.removeEventListener("change", onLayout);
