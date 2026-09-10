@@ -7,7 +7,7 @@ import MEMORIES from "./about/MemoriesBg";
 
 export default function AboutSection() {
   return (
-    <section aria-label="About VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[8512px] w-[1280px]" data-node-id="297:328" data-name="ABOUT VINHACK">
+    <section aria-label="About VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[9092px] w-[1280px]" data-node-id="297:328" data-name="ABOUT VINHACK">
       {/* Background layer */}
       <div
         aria-hidden="true"

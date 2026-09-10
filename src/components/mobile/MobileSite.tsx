@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
 import { motion } from "framer-motion";
 
 import CameraFeed from "@/components/CameraFeed";
@@ -17,6 +17,8 @@ import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
 import { FEATURES } from "@/content/features";
 import {
+  FAQS,
+  type FaqCategory,
   FOOTER,
   GUIDELINES,
   HERO,
@@ -74,6 +76,7 @@ export default function MobileSite() {
       <MobileTimelineSection />
       <MobileRules />
       <MobileGuidelines />
+      <MobileFAQs />
       <MobileAbout />
       <MobileFooter />
     </div>
@@ -1066,9 +1069,9 @@ function MobileGuidelines() {
             is the short ends that go. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-1/2 w-auto -translate-x-1/2 -translate-y-1/2"
+          className="pointer-events-none absolute top-[48%] left-1/2 w-auto -translate-x-1/2 -translate-y-1/2"
           style={{
-            height: "calc(218.2% + 210px)",
+            height: "calc(220% + 260px)",
             aspectRatio: "1599.46 / 1590.388",
           }}
         >
@@ -1086,14 +1089,14 @@ function MobileGuidelines() {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative pt-3">
           <img
             alt=""
             aria-hidden
-            className="-top-[34px] absolute right-2 z-1 block h-[76px] w-[42px] max-w-none"
+            className="top-[2px] absolute right-4 z-1 block h-[76px] w-[42px] max-w-none"
             src="/figma/pin1.svg"
           />
-          <h2 className="text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
+          <h2 className="font-rotonto font-light text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
         </div>
 
         <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white" data-m-reveal>
@@ -1172,6 +1175,435 @@ function MobileGuidelines() {
     </section>
   );
 }
+
+/* ---------------------------------------------------------------- faqs */
+
+function MobileFAQs() {
+  const [activeCategory, setActiveCategory] = useState<FaqCategory | null>(null);
+  const [openingCardId, setOpeningCardId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [cardIndex, setCardIndex] = useState<number>(0);
+  const [slidingOut, setSlidingOut] = useState<boolean>(false);
+
+  const handleOpen = (category: FaqCategory) => {
+    if (openingCardId) return;
+    setOpeningCardId(category.id);
+    setCardIndex(0);
+    setSlidingOut(false);
+    setIsOpen(false);
+    setActiveCategory(category);
+
+    setTimeout(() => {
+      setIsOpen(true);
+    }, 40);
+  };
+
+  const handleClose = () => {
+    if (!isOpen) return;
+    setIsOpen(false);
+    setTimeout(() => {
+      setActiveCategory(null);
+      setOpeningCardId(null);
+    }, 380);
+  };
+
+  const handleNext = () => {
+    if (!activeCategory || slidingOut) return;
+    setSlidingOut(true);
+    setTimeout(() => {
+      setCardIndex((prev) => (prev + 1) % activeCategory.questions.length);
+      setSlidingOut(false);
+    }, 260);
+  };
+
+  const handlePrev = () => {
+    if (!activeCategory || slidingOut) return;
+    setCardIndex((prev) => (prev - 1 + activeCategory.questions.length) % activeCategory.questions.length);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeCategory) return;
+      if (e.key === "Escape") {
+        handleClose();
+      } else if (e.key === "ArrowRight" || e.key === " ") {
+        handleNext();
+      } else if (e.key === "ArrowLeft") {
+        handlePrev();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeCategory, slidingOut, isOpen]);
+
+  return (
+    <section
+      aria-label="Frequently Asked Questions"
+      className={`${COL} ${PAD} overflow-x-clip pt-14 pb-20 select-none`}
+    >
+      {/* Header */}
+      <div className="border-t-[1.2px] border-[#fa1a1d] pt-4 mb-6">
+        <h2 className="text-[24px] font-rotonto font-light text-[#fa1a1d] tracking-[0.05em] uppercase">
+          {FAQS.heading}
+        </h2>
+      </div>
+
+      {/* 2x2 Grid of Folder Cards */}
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-4 max-w-[440px] mx-auto w-full">
+        {FAQS.categories.map((category) => {
+          const frontPaper = category.questions[0];
+
+          return (
+            <div
+              key={category.id}
+              onClick={() => handleOpen(category)}
+              role="button"
+              tabIndex={0}
+              aria-label={`${category.subtitle} FAQs`}
+              className={`group relative h-[345px] w-full cursor-pointer transition-all duration-300 ease-out active:scale-[0.96] ${
+                openingCardId === category.id ? "scale-[1.03] -translate-y-2 z-20 shadow-xl" : ""
+              }`}
+            >
+              {/* Back Plate */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-[290px] rounded-[18px] border-[0.8px] border-black transition-all duration-300 shadow-md"
+                style={{ backgroundColor: category.color }}
+              />
+
+              {/* Fanned Paper Sheets Inside Pocket */}
+              <div
+                className={`absolute bottom-[20px] left-0 right-0 h-[315px] pointer-events-none transition-transform duration-300 ease-out ${
+                  openingCardId === category.id ? "-translate-y-12" : ""
+                }`}
+              >
+                {/* Sheet 1 */}
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-5 left-[-4px] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[7deg] origin-bottom-left"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
+                  }}
+                />
+
+                {/* Sheet 2 */}
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-3 left-[3px] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom-left"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
+                  }}
+                />
+
+                {/* Sheet 3 */}
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-2.5 left-[2px] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom-right"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
+                  }}
+                />
+
+                {/* Sheet 4 (Front Main Paper) */}
+                <div className="absolute bottom-0 left-[2px] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-4deg] origin-bottom-center overflow-hidden flex flex-col justify-start">
+                  <div className="pt-2 px-2.5">
+                    <div className="font-rotonto text-[8px] tracking-wider text-neutral-500 uppercase">
+                      VINHACK 2026
+                    </div>
+                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase -mt-0.5 truncate">
+                      {category.subtitle}
+                    </div>
+                  </div>
+                  <div className="mt-1 border-t border-[#8cd6ee]" />
+                  <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">
+                    {frontPaper.q}
+                  </div>
+                  <div className="border-t border-[#8cd6ee]" />
+                  <div
+                    className="flex-1 p-2"
+                    style={{
+                      backgroundImage:
+                        "repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(140, 214, 238, 0.35) 12px, rgba(140, 214, 238, 0.35) 13px)",
+                    }}
+                  >
+                    <div className="flex items-start gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-black shrink-0 mt-0.5" />
+                      <span className="font-rotonto text-[8px] leading-tight text-neutral-800 line-clamp-4">
+                        {frontPaper.a}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pocket Front Flap */}
+              <div className="absolute bottom-0 left-0 right-0 h-[220px] pointer-events-none">
+                <svg
+                  viewBox="0 0 160 220"
+                  fill="none"
+                  className="w-full h-full block"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
+                    fill={category.color}
+                  />
+                  <path
+                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
+                    stroke="#000000"
+                    strokeWidth="0.8"
+                  />
+                  <line
+                    x1="10"
+                    y1="202"
+                    x2="150"
+                    y2="202"
+                    stroke="rgba(0,0,0,0.35)"
+                    strokeWidth="0.8"
+                  />
+                </svg>
+
+                {/* Title (Right-aligned 3-line) */}
+                <div className="absolute bottom-[46px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
+                  {category.title[0]}
+                  <br />
+                  {category.title[1]}
+                  <br />
+                  {category.title[2]}
+                </div>
+
+                {/* Subtitle */}
+                <div className="absolute bottom-[28px] right-[10px] font-rotonto font-light text-[9.5px] text-right tracking-wide lowercase text-black max-w-[90%] truncate">
+                  {category.subtitle}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Interactive Paper Stack Modal Dialog */}
+      {activeCategory && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 cursor-default ${
+            isOpen
+              ? "bg-black/85 backdrop-blur-md opacity-100 transition-all duration-350 ease-out"
+              : "bg-black/0 backdrop-blur-none opacity-0 transition-all duration-380 ease-in"
+          }`}
+          onClick={handleClose}
+        >
+          {/* Deck Container with Navigation */}
+          <div className="relative flex items-center justify-center gap-3 w-full max-w-[420px]">
+            {/* Left Arrow Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrev();
+              }}
+              aria-label="Previous question"
+              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
+                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* === The Stack of Pages (Tap to advance) === */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              className={`relative w-[280px] sm:w-[320px] h-[430px] cursor-pointer ${
+                isOpen
+                  ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  : "opacity-0 scale-[0.5] translate-y-[400px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
+              }`}
+            >
+              {/* Close Button Attached Above Paper */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClose();
+                }}
+                aria-label="Close"
+                className={`absolute -top-9 right-0 flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-mono text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 ${
+                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+                }`}
+              >
+                <span>CLOSE</span>
+                <span className="text-xs">✕</span>
+              </button>
+
+              {activeCategory.questions.map((faq, idx) => {
+                const total = activeCategory.questions.length;
+                const diff = (idx - cardIndex + total) % total;
+
+                if (diff > 3) return null;
+                const isTop = diff === 0;
+
+                let transformStyle = "";
+                let zIndex = 10;
+                let opacity = 1;
+
+                if (!isOpen) {
+                  transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
+                  opacity = isTop ? 1 : 0.85;
+                } else if (isTop) {
+                  zIndex = 30;
+                  opacity = slidingOut ? 0 : 1;
+                  transformStyle = slidingOut
+                    ? "translate(180px, -40px) rotate(20deg) scale(0.92)"
+                    : "translate(0px, 0px) rotate(0deg) scale(1)";
+                } else if (diff === 1) {
+                  zIndex = 20;
+                  opacity = 0.96;
+                  transformStyle = slidingOut
+                    ? "translate(0px, 0px) rotate(0deg) scale(1)"
+                    : "translate(10px, -10px) rotate(3deg) scale(0.97)";
+                } else if (diff === 2) {
+                  zIndex = 10;
+                  opacity = 0.88;
+                  transformStyle = slidingOut
+                    ? "translate(10px, -10px) rotate(3deg) scale(0.97)"
+                    : "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
+                } else {
+                  zIndex = 5;
+                  opacity = 0.76;
+                  transformStyle = slidingOut
+                    ? "translate(-10px, -20px) rotate(-3deg) scale(0.94)"
+                    : "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                }
+
+                return (
+                  <div
+                    key={faq.q}
+                    style={{
+                      transform: transformStyle,
+                      zIndex,
+                      opacity,
+                      transitionDelay: isOpen && !slidingOut ? `${(3 - diff) * 45}ms` : "0ms",
+                    }}
+                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
+                      isOpen
+                        ? "transition-all duration-[260ms] ease-[cubic-bezier(0.2,0.9,0.3,1.15)]"
+                        : "transition-all duration-[200ms] ease-in"
+                    } ${isTop ? "cursor-pointer" : "pointer-events-none"}`}
+                  >
+                    {/* Header */}
+                    <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
+                      <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
+                        VINHACK 2026 // FAQ
+                      </span>
+                      <span className="font-mono text-[9.5px] text-neutral-500 font-semibold uppercase">
+                        PAGE 0{idx + 1} / 0{total}
+                      </span>
+                    </div>
+
+                    {/* Category bar */}
+                    <div className="py-1.5 px-3 bg-neutral-100/60 border-b border-[#8cd6ee] flex items-center justify-between">
+                      <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
+                        {activeCategory.subtitle}
+                      </span>
+                      <span className="font-mono text-[8.5px] text-neutral-500 uppercase shrink-0">
+                        {isTop ? "[TAP FOR NEXT →]" : ""}
+                      </span>
+                    </div>
+
+                    {/* Main Question */}
+                    <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
+                      <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
+                        {faq.q}
+                      </h3>
+                    </div>
+
+                    {/* Answer Content */}
+                    <div
+                      className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)",
+                      }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
+                        <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">
+                          {faq.a}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-3 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[9.5px] font-mono text-neutral-500 bg-neutral-50">
+                      <span>OFFICIAL FAQ</span>
+                      <span className="text-black font-semibold">TAP FOR NEXT →</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right Arrow Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              aria-label="Next question"
+              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
+                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Bottom Pagination */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`mt-4 flex flex-col items-center gap-1.5 transition-all duration-300 ${
+              isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              {activeCategory.questions.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCardIndex(i);
+                  }}
+                  aria-label={`Go to question ${i + 1}`}
+                  className={`h-1.5 transition-all duration-300 cursor-pointer ${
+                    i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-[9.5px] font-mono text-white/60 tracking-wider">
+              TAP PAGE FOR NEXT • TAP OUTSIDE TO EXIT
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 
 /* ------------------------------------------------------------- footer */
 

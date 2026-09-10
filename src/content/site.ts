@@ -131,14 +131,15 @@ export const NAV = {
    */
   badge: { closed: "PLAY ALONG", open: "CLOSE" },
   items: [
-    { name: "HOME",        target: "VinHack",       spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
-    { name: "ABOUT",       target: "About VinHack", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
-    { name: "PROJECTS",    target: "Projects",      spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
-    { name: "TRACKS",      target: "Tracks",        spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
-    { name: "SPONSORS",    target: "Sponsors",      spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
-    { name: "TIMELINE",    target: "Timeline",      spine: "#ee1b1e", cap: "#7d1113", ink: "#131b24", book: 1.02 },
-    { name: "RULES",       target: "Rules",         spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
-    { name: "GUIDELINES",  target: "Guidelines",    spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
+    { name: "HOME", target: "VinHack", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
+    { name: "ABOUT", target: "About VinHack", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
+    { name: "PROJECTS", target: "Projects", spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
+    { name: "TRACKS", target: "Tracks", spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
+    { name: "SPONSORS", target: "Sponsors", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
+    { name: "TIMELINE", target: "Timeline", spine: "#ee1b1e", cap: "#7d1113", ink: "#131b24", book: 1.02 },
+    { name: "RULES", target: "Rules", spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
+    { name: "GUIDELINES", target: "Guidelines", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
+    { name: "FAQS", target: "Frequently Asked Questions", spine: "#ee1b1e", cap: "#7d1113", ink: "#ffffff", book: 1.05 },
   ] satisfies readonly NavItem[],
 } as const;
 
@@ -332,8 +333,8 @@ export const PROJECTS = {
       hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_star.svg",
       textColor: "#000000",
-      logo: "/projects/studyhub.png",
-      icon: "/projects/studyhub.png",
+      logo: "/projects/studyhub.svg",
+      icon: "/projects/studyhub.svg",
       url: "https://studyhub.vinnovateit.com",
       tagline: "Study what matters.",
       body: "VIT's academic survival kit. Find notes, question papers, and study material, all in one place.",
@@ -360,8 +361,8 @@ export const PROJECTS = {
       hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_blob.svg",
       textColor: "#ffffff",
-      logo: "/projects/messit.png",
-      icon: "/projects/messit.png",
+      logo: "/projects/messit.svg",
+      icon: "/projects/messit.svg",
       url: "https://messit.vinnovateit.com",
       tagline: "Know what's cooking",
       body: "VIT's go-to mess menu app, trusted by 40,000+ students.",
@@ -536,6 +537,135 @@ export const GUIDELINES = {
   ],
   tldr: "TL;DR: Be respectful towards everyone, be it participants, organizers, or anyone related to the event. Incase of any incidents with conduct not being abided, feel free to reach out to anyone on organizing team.",
   sticker: ["KEEP IT SAFE ", "KEEP IT FAIR"],
+} as const;
+
+/* ------------------------------------------------------------- faqs */
+
+export type FaqQuestion = { q: string; a: string };
+
+export type FaqCategory = {
+  id: string;
+  index: string;
+  title: [string, string, string];
+  subtitle: string;
+  color: string;
+  textColor: string;
+  border: string;
+  questions: FaqQuestion[];
+};
+
+export const FAQS = {
+  heading: "FREQUENTLY ASKED QUESTIONS //",
+  categories: [
+    {
+      id: "general",
+      index: "01",
+      title: ["FIRST", "THINGS", "FIRST"],
+      subtitle: "general information",
+      color: "#fa1a1d",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What is VinHack 2026?",
+          a: "VinHack is a premier 36-hour hackathon organized by VinnovateIT at Vellore Institute of Technology. It brings together creative thinkers, developers, and designers to build innovative prototypes for real-world challenges.",
+        },
+        {
+          q: "When and where does it take place?",
+          a: "VinHack 2026 takes place on September 18th–19th, 2026, hosted live at the VIT Vellore campus with hybrid participation options for select tracks.",
+        },
+        {
+          q: "Is there any registration fee?",
+          a: "No! Registration for VinHack 2026 is completely free of cost.",
+        },
+        {
+          q: "Who is eligible to participate?",
+          a: "Any undergraduate or postgraduate student currently enrolled in an accredited college or university is welcome to apply.",
+        },
+      ],
+    },
+    {
+      id: "logistics",
+      index: "02",
+      title: ["NEED", "TO", "KNOWS"],
+      subtitle: "logistics and requirements",
+      color: "#74d4f0",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What should I bring to the hackathon?",
+          a: "Bring your valid student ID card, government ID, laptop, chargers, extension cords, any specialized hardware you plan to use, and personal essentials for the 36-hour duration.",
+        },
+        {
+          q: "Will food and accommodation be provided?",
+          a: "Yes! Meals, snacks, midnight refreshments, and rest areas will be provided to all verified onsite attendees throughout the 36 hours.",
+        },
+        {
+          q: "What are the project submission requirements?",
+          a: "Submissions must include a working prototype demo, a pitch deck or documentation, and a public GitHub repository with code written entirely during the event.",
+        },
+        {
+          q: "Can we use existing code or pre-built projects?",
+          a: "No. All code and designs must be created during the official 36-hour hackathon window. You are free to use open-source libraries, frameworks, APIs, and AI developer tools.",
+        },
+      ],
+    },
+    {
+      id: "teams",
+      index: "03",
+      title: ["FIND", "YOUR", "CREW"],
+      subtitle: "participation + teams",
+      color: "#bfea88",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What is the allowed team size?",
+          a: "Teams must consist of 2 to 4 members. Solo participation is not permitted to encourage collaboration.",
+        },
+        {
+          q: "Can team members be from different colleges or departments?",
+          a: "Absolutely! Cross-college, cross-department, and cross-year teams are actively encouraged.",
+        },
+        {
+          q: "Can I register if I don't have a team yet?",
+          a: "Yes! You can register individually and use our official Discord server's #team-formation channel or the pre-hackathon networking mixer to find teammates.",
+        },
+        {
+          q: "Can I be part of multiple teams?",
+          a: "No, each participant can only be a registered member of one team.",
+        },
+      ],
+    },
+    {
+      id: "external",
+      index: "04",
+      title: ["FROM", "OUTSIDE", "IN"],
+      subtitle: "external participants",
+      color: "#2849cb",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "Are non-VIT students allowed to participate onsite?",
+          a: "Yes! VinHack welcomes hackers from colleges and universities across the nation. Shortlisted external teams will receive an official invitation letter for college OD/leave approval.",
+        },
+        {
+          q: "Will travel reimbursement or accommodation be offered?",
+          a: "Accommodation on campus is arranged for external participants during the event days. Specific travel subsidies or sponsorships will be communicated to shortlisted outstation teams.",
+        },
+        {
+          q: "What documentation is required for external entry at campus gates?",
+          a: "External participants must present their original college ID card, government-issued photo ID, and the official VinHack confirmation email/pass at the security gate.",
+        },
+        {
+          q: "Can international or remote participants join online?",
+          a: "Yes, select tracks and online review slots are available for remote participants who cannot travel onsite. Communication is coordinated through our Discord server.",
+        },
+      ],
+    },
+  ] as const satisfies readonly FaqCategory[],
 } as const;
 
 /* -------------------------------------------------------- sneak peek */

@@ -13,6 +13,7 @@ import SponsorsSection from "@/components/sections/Sponsors";
 import TimelineSection from "@/components/sections/Timeline";
 import RulesSection from "@/components/sections/Rules";
 import GuidelinesSection from "@/components/sections/Guidelines";
+import FAQsSection from "@/components/sections/FAQs";
 import SiteFooter from "@/components/sections/SiteFooter";
 import { FEATURES } from "@/content/features";
 
@@ -74,6 +75,7 @@ export default function Home() {
                     <TimelineSection />
                     <RulesSection />
                     <GuidelinesSection />
+                    <FAQsSection />
                     <AboutSection />
                     <SiteFooter />
                   </div>
