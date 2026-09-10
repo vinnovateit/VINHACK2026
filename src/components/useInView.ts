@@ -12,16 +12,20 @@ import { useEffect, useRef, useState } from "react";
  */
 export function useInView<T extends HTMLElement>(threshold = 0.2) {
   const ref = useRef<T>(null);
-  // Browsers without IntersectionObserver just start visible — there is
-  // nothing to observe with, and a permanently-hidden section is worse than
-  // one that skips its pop-in.
-  const [inView, setInView] = useState(
-    () => typeof IntersectionObserver === "undefined",
-  );
+  // Initial state must be identical on server (SSR) and client to avoid hydration mismatch.
+  const [inView, setInView] = useState(false);
 
   useEffect(() => {
+    // Browsers without IntersectionObserver just start visible — there is
+    // nothing to observe with, and a permanently-hidden section is worse than
+    // one that skips its pop-in.
+    if (typeof IntersectionObserver === "undefined") {
+      const frame = requestAnimationFrame(() => setInView(true));
+      return () => cancelAnimationFrame(frame);
+    }
+
     const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
