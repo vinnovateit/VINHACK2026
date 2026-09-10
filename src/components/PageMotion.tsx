@@ -470,7 +470,7 @@ export default function PageMotion({ children }: { children: ReactNode }) {
           const row = scope.querySelector(
             `[data-marquee="${key}"]`,
           ) as HTMLElement | null;
-          if (row) marquee(row, { unscale });
+          if (row) cleanups.push(marquee(row, { unscale }));
         }
 
         // ---- Footer folder tabs ----------------------------------------

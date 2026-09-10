@@ -1,6 +1,7 @@
 import CameraFeed from "@/components/CameraFeed";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
+import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
 import MEMORIES from "./about/MemoriesBg";
 
@@ -17,7 +18,7 @@ export default function AboutSection() {
 
       <div className="-translate-x-1/2 absolute contents h-[726.044px] left-1/2 top-[71.7px] w-[638.182px]" data-node-id="297:329">
         <div className="-translate-x-1/2 absolute flex h-[577.055px] items-center justify-center left-1/2 top-[146.2px] w-[420.873px]" data-node-id="297:330">
-          <div className="flex-none rotate-5">
+          <PassTumble tilt={5} delay={0.12} className="flex-none">
             <PassCard start={PASS_START.behind} className="h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[267.14px] not-italic opacity-14 text-[#313855] text-[112.64px] text-right top-[131.1px] whitespace-nowrap" data-node-id="297:331">
                 VH26
@@ -194,12 +195,12 @@ export default function AboutSection() {
               </div>
               <ShutterButton />
             </PassCard>
-          </div>
+          </PassTumble>
         </div>
       </div>
       <div className="-translate-x-1/2 absolute contents h-[685.605px] left-1/2 top-[91.92px] w-[584.861px]" data-node-id="297:385">
         <div className="-translate-x-1/2 absolute flex h-[606.285px] items-center justify-center left-1/2 top-[131.58px] w-[469.169px]" data-node-id="297:386">
-          <div className="flex-none rotate-[10.64deg]">
+          <PassTumble tilt={10.64} className="flex-none">
             <PassCard start={PASS_START.front} className="h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[267.14px] not-italic opacity-5 text-[#313855] text-[112.64px] text-right top-[131.1px] whitespace-nowrap" data-node-id="297:387">
                 VH26
@@ -377,7 +378,7 @@ export default function AboutSection() {
               </div>
               <ShutterButton />
             </PassCard>
-          </div>
+          </PassTumble>
         </div>
       </div>
     </section>

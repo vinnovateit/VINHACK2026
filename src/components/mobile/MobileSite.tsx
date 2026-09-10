@@ -13,6 +13,7 @@ import MobileTimeline from "@/components/mobile/MobileTimeline";
 import Piece from "@/components/mobile/Piece";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
+import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
 import { FEATURES } from "@/content/features";
 import {
@@ -456,8 +457,11 @@ function MobileAbout() {
       aria-label="About VinHack"
       className="relative w-full overflow-clip flex flex-col items-center justify-center py-12"
     >
-      {/* The background layer: the same two lines, tiled and scrolling —
-          the CSS `.marquee` class the footer's own row uses below. */}
+      {/* The background layer: the same two lines, tiled and scrolling — the
+          CSS `.marquee` class the footer's own row uses below, which loops by
+          translating the row exactly half its width. Six columns, so each half
+          of that loop is already wider than the widest phone: fewer and the row
+          would run out mid-loop and the seam would show as blank ground. */}
       <div
         aria-hidden="true"
         className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[40px] leading-[52px] text-[#0a3a48] whitespace-nowrap z-0"
@@ -466,7 +470,7 @@ function MobileAbout() {
           className="marquee flex h-full items-stretch"
           style={{ "--marquee-duration": "20s" } as CSSProperties}
         >
-          {Array.from({ length: 2 }, (_, col) => (
+          {Array.from({ length: 6 }, (_, col) => (
             <div key={col} className="flex flex-col shrink-0 px-4">
               {Array.from({ length: 12 }, (_, i) => (
                 <div key={i}>{SNEAK_PEEK.lines[i % SNEAK_PEEK.lines.length]}</div>
@@ -476,9 +480,11 @@ function MobileAbout() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full flex justify-center px-4">
+      {/* The pass tumbles in the way the collage's pair do — same wrapper,
+          no resting tilt, because the phone carries one pass square on. */}
+      <PassTumble tilt={0} className="relative z-10 flex w-full justify-center px-4">
         <AttendeePass />
-      </div>
+      </PassTumble>
     </section>
   );
 }
