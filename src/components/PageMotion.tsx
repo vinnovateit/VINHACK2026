@@ -21,7 +21,7 @@ import {
 import { draggable } from "@/components/motion/drag";
 import { handwrite } from "@/components/motion/handwrite";
 import { slideIn, slideOut } from "@/components/motion/pinboard";
-import { printReceipt } from "@/components/motion/receipt";
+import { wireTimelineReceipt } from "@/components/motion/receipt";
 import { audio } from "@/components/motion/audio";
 import { toggleSnap } from "@/components/motion/machine";
 import { reveal, strikeOnce } from "@/components/motion/reveal";
@@ -286,18 +286,6 @@ const MARQUEES = ["footer", "who"];
 
 const TABS = ["email", "github", "instagram", "linkedin", "medium"];
 
-/** The timeline's receipt printer, by Figma node id. */
-const RECEIPT = {
-  /** The paper itself — clipped, so it can be fed out of the slot. Everything
-   *  printed on it, the zigzag edge included, travels with it. */
-  paper: "343:2041",
-  /** The day switch: a pill that slides under whichever day is selected. */
-  toggle: "343:2115",
-  day1Label: "343:2118",
-  day2Label: "343:2116",
-  /** The filled pill that slides between the two days. */
-  pill: "343:2117",
-} as const;
 
 export default function PageMotion({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
@@ -548,88 +536,7 @@ export default function PageMotion({ children }: { children: ReactNode }) {
         }
 
         // ---- Timeline receipt ------------------------------------------
-        const node = (id: string) =>
-          scope.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
-
-        const paper = node(RECEIPT.paper);
-        const printer = node("343:2039");
-        if (paper && printer) {
-          const receipt = printReceipt(paper, { trigger: printer });
-
-          // The day switch. The markup is two static labels and a filled pill,
-          // so the whole control is wired here: the pill slides to whichever
-          // half was clicked, the two labels trade places, and the receipt is
-          // torn off and printed again for the day now selected.
-          const toggle = node(RECEIPT.toggle);
-          const pill = node(RECEIPT.pill);
-          const day1Label = node(RECEIPT.day1Label);
-          const day2Label = node(RECEIPT.day2Label);
-
-          /** Show one day's schedule and hide the other. */
-          const showDay = (day: "1" | "2") => {
-            for (const which of ["1", "2"] as const) {
-              paper
-                .querySelectorAll<HTMLElement>(`[data-day="${which}"]`)
-                .forEach((el) => {
-                  el.style.display = which === day ? "" : "none";
-                });
-            }
-          };
-
-          if (receipt && toggle && pill && day1Label && day2Label) {
-            // How far the pill travels to cover the other half.
-            const throw_ = toggle.clientWidth - pill.offsetWidth;
-
-            let onDayTwo = false;
-
-            const pick = (wantDayTwo: boolean) => {
-              const ac = audio();
-              if (ac && ac.state === "suspended") void ac.resume();
-
-              if (wantDayTwo === onDayTwo) {
-                toggleSnap();
-                receipt.reprint();
-                return;
-              }
-              onDayTwo = wantDayTwo;
-
-              const slide = {
-                duration: 0.32,
-                ease: "power3.out",
-                overwrite: "auto" as const,
-                onComplete: () => toggleSnap(),
-              };
-              gsap.to(pill, { x: wantDayTwo ? throw_ : 0, ...slide });
-              day1Label.style.color = wantDayTwo ? "#2849cb" : "#74d4f0";
-              day2Label.style.color = wantDayTwo ? "#74d4f0" : "#2849cb";
-
-              // Swap which day's schedule is on the paper. Both are authored
-              // in `sections/Timeline.tsx`; only one is ever displayed. Done
-              // before reprinting, so the day now selected is what feeds out
-              // rather than something that changes partway.
-              showDay(wantDayTwo ? "2" : "1");
-
-              receipt.reprint();
-            };
-
-            // Each half of the pill's track is a hit area. `pointerdown`
-            // rather than `click` so the paper starts moving under the finger.
-            const onDown = (event: Event) => {
-              const ac = audio();
-              if (ac && ac.state === "suspended") void ac.resume();
-              const box = toggle.getBoundingClientRect();
-              const x = (event as PointerEvent).clientX - box.left;
-              const target = x > box.width / 2;
-              pick(target === onDayTwo ? !onDayTwo : target);
-            };
-
-            toggle.style.cursor = "pointer";
-            toggle.addEventListener("pointerdown", onDown);
-            cleanups.push(() =>
-              toggle.removeEventListener("pointerdown", onDown),
-            );
-          }
-        }
+        cleanups.push(wireTimelineReceipt(scope));
 
         return () => {
           cleanups.forEach((fn) => fn());

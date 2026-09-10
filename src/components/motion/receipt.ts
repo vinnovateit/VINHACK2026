@@ -1,7 +1,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { audio } from "@/components/motion/audio";
-import { feedTick, tearRip } from "@/components/motion/machine";
+import { feedTick, tearRip, toggleSnap } from "@/components/motion/machine";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -52,7 +52,7 @@ export function printReceipt(
     start = "top 70%",
   }: { trigger: Element; duration?: number; start?: string },
 ): Receipt | undefined {
-  const full = paper.offsetHeight;
+  const full = paper.offsetHeight || 595.872;
   if (!full) return;
 
   /** Everything printed on the paper, the ragged edge included — it is part of
@@ -150,3 +150,126 @@ export function printReceipt(
     },
   };
 }
+
+export const RECEIPT = {
+  printer: "343:2039",
+  slot: "343:2040",
+  paper: "343:2041",
+  toggle: "343:2115",
+  day1Label: "343:2118",
+  day2Label: "343:2116",
+  pill: "343:2117",
+} as const;
+
+export function wireTimelineReceipt(scope: HTMLElement): () => void {
+  const node = (id: string) =>
+    scope.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+
+  const paper = node(RECEIPT.paper);
+  const printer = node(RECEIPT.printer);
+  if (!paper || !printer) return () => {};
+
+  let receipt = printReceipt(paper, { trigger: printer });
+  const getReceipt = () => {
+    if (!receipt) {
+      receipt = printReceipt(paper, { trigger: printer });
+    }
+    return receipt;
+  };
+
+  const toggle = node(RECEIPT.toggle);
+  const pill = node(RECEIPT.pill);
+  const day1Label = node(RECEIPT.day1Label);
+  const day2Label = node(RECEIPT.day2Label);
+
+  if (!toggle || !pill || !day1Label || !day2Label) return () => {};
+
+  const cleanups: (() => void)[] = [];
+
+  const showDay = (day: "1" | "2") => {
+    for (const which of ["1", "2"] as const) {
+      paper
+        .querySelectorAll<HTMLElement>(`[data-day="${which}"]`)
+        .forEach((el) => {
+          el.style.display = which === day ? "" : "none";
+        });
+    }
+  };
+
+  let onDayTwo = false;
+
+  // Preserve yPercent: -50 so pill stays vertically centered
+  gsap.set(pill, { yPercent: -50 });
+
+  const pick = (wantDayTwo: boolean) => {
+    const ac = audio();
+    if (ac && ac.state === "suspended") void ac.resume();
+
+    const r = getReceipt();
+
+    if (wantDayTwo === onDayTwo) {
+      toggleSnap();
+      if (r) r.reprint();
+      return;
+    }
+    onDayTwo = wantDayTwo;
+
+    const throw_ =
+      toggle.clientWidth && pill.offsetWidth
+        ? toggle.clientWidth - pill.offsetWidth
+        : 174.6;
+
+    const slide = {
+      duration: 0.32,
+      ease: "power3.out",
+      overwrite: "auto" as const,
+      onComplete: () => toggleSnap(),
+    };
+    gsap.to(pill, { x: wantDayTwo ? throw_ : 0, yPercent: -50, ...slide });
+    day1Label.style.color = wantDayTwo ? "#2849cb" : "#74d4f0";
+    day2Label.style.color = wantDayTwo ? "#74d4f0" : "#2849cb";
+
+    showDay(wantDayTwo ? "2" : "1");
+    if (r) r.reprint();
+  };
+
+  let lastHandled = 0;
+  const handleAction = (clientX: number) => {
+    const now = Date.now();
+    if (now - lastHandled < 250) return;
+    lastHandled = now;
+
+    const box = toggle.getBoundingClientRect();
+    const x = clientX - box.left;
+    const target = x > box.width / 2;
+    pick(target);
+  };
+
+  const onPointerDown = (e: PointerEvent) => {
+    handleAction(e.clientX);
+  };
+  const onClick = (e: MouseEvent) => {
+    handleAction(e.clientX);
+  };
+  const onTouchEnd = (e: TouchEvent) => {
+    if (e.changedTouches && e.changedTouches[0]) {
+      handleAction(e.changedTouches[0].clientX);
+    }
+  };
+
+  toggle.style.cursor = "pointer";
+  toggle.style.touchAction = "manipulation";
+  toggle.addEventListener("pointerdown", onPointerDown);
+  toggle.addEventListener("click", onClick);
+  toggle.addEventListener("touchend", onTouchEnd);
+  cleanups.push(() => {
+    toggle.removeEventListener("pointerdown", onPointerDown);
+    toggle.removeEventListener("click", onClick);
+    toggle.removeEventListener("touchend", onTouchEnd);
+  });
+
+  return () => {
+    cleanups.forEach((fn) => fn());
+  };
+}
+

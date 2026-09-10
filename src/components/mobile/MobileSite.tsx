@@ -8,7 +8,15 @@ import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
 import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
-import MobileTimeline from "@/components/mobile/MobileTimeline";
+import ReceiptPrinter from "@/components/timeline/ReceiptPrinter";
+import TimelineToggle from "@/components/timeline/TimelineToggle";
+import {
+  TimelineExploreSticker,
+  TimelinePhoto234,
+  TimelinePhoto235,
+  TimelinePhoto236,
+  TimelineVector227,
+} from "@/components/timeline/TimelineStickers";
 import Piece from "@/components/mobile/Piece";
 import RegisterSvg from "@/components/RegisterSvg";
 import NowSvg from "@/components/NowSvg";
@@ -876,91 +884,47 @@ function MobileTimelineSection() {
       {/* The two that ride above the schedule. */}
       <div className="mb-10 flex items-end justify-center gap-4">
         <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
-          <div className="absolute inset-0 overflow-hidden">
-            <img
-              alt=""
-              className="absolute top-[-12.2%] left-0 h-[131.71%] w-full max-w-none"
-              src="/figma/image235.png"
-            />
-          </div>
+          <TimelinePhoto235 />
         </Loose>
 
         <Loose width={136.85} height={134.841} max={0.9} size={108} stamp={0.12}>
           <div className="absolute top-0 left-0 flex h-[134.841px] w-[136.85px] items-center justify-center">
-            <div className="flex-none rotate-[-13.5deg]">
-              <div className="relative h-[111.295px] w-[114.013px]">
-                <img
-                  alt=""
-                  className="absolute inset-0 size-full max-w-none object-cover"
-                  src="/figma/image234.png"
-                />
-              </div>
-            </div>
+            <TimelinePhoto234 />
           </div>
         </Loose>
       </div>
 
       <h2 className="mb-10 text-[44px] text-[#fa1a1d]">{TIMELINE.heading}</h2>
-      <MobileTimeline />
+
+      <Piece width={440.363} height={646}>
+        <ReceiptPrinter className="relative" />
+      </Piece>
+
+      {/* For mobile / android, Day 1 / Day 2 toggle placed at bottom */}
+      <div className="mt-8 relative z-20">
+        <Piece width={356.4} height={63}>
+          <TimelineToggle className="relative mx-auto" />
+        </Piece>
+      </div>
 
       {/* And the three below it. */}
       <div className="mt-12 flex flex-wrap items-start justify-center gap-4">
         <Loose width={185.111} height={166.791} max={0.95} size={150} stamp={0.24}>
-          <div className="absolute top-0 left-0 flex h-[166.791px] w-[185.111px] items-center justify-center">
-            <div className="flex-none rotate-[-14.05deg] skew-x-[-1.48deg]">
-              <div className="relative h-[130.714px] w-[161.483px]">
-                <div className="absolute inset-[-2.2%_-1.64%_-1.9%_-2.08%]">
-                  <img
-                    alt=""
-                    className="block size-full max-w-none"
-                    src="/figma/sticker.svg"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-[48.11px] left-[37.89px] flex h-[83.826px] w-[123.225px] items-center justify-center">
-            <div className="flex-none rotate-15">
-              <div className="relative h-[56.669px] w-[112.388px] font-rotonto text-[14.753px] leading-[0] tracking-[2.9506px] whitespace-pre-wrap text-[#db9eef]">
-                <p className="mb-0 leading-[16.094px]">{TIMELINE.sticker[0]}</p>
-                <p className="leading-[16.094px]">{TIMELINE.sticker[1]}</p>
-              </div>
-            </div>
-          </div>
+          <TimelineExploreSticker />
         </Loose>
 
-        {/* The collage sizes this one in container query units off its own box,
-            so the box has to be exactly the size the design gives it — 160.514
-            x 164.786 — for the `cqw` and `cqh` inside to resolve to what Figma
-            drew. `Piece` then scales the whole thing. */}
         <Loose width={160.514} height={164.786} max={0.9} size={116} stamp={0.36}>
           <div
             className="absolute top-0 left-0 flex h-[164.786px] w-[160.514px] items-center justify-center"
             style={{ containerType: "size" }}
           >
-            <div className="flex-none h-[hypot(34.0099cqw,69.1918cqh)] w-[hypot(65.9901cqw,-30.8082cqh)] rotate-[-25.61deg] skew-x-[-0.02deg]">
-              <div className="relative size-full">
-                <img
-                  alt=""
-                  className="absolute inset-0 size-full max-w-none object-cover"
-                  src="/figma/image236.png"
-                />
-              </div>
-            </div>
+            <TimelinePhoto236 />
           </div>
         </Loose>
 
         <Loose width={150.24} height={144.718} max={0.9} size={110} stamp={0.48}>
           <div className="absolute top-0 left-0 flex h-[144.718px] w-[150.24px] items-center justify-center">
-            <div className="flex-none rotate-[-7.91deg]">
-              <div className="relative h-[127.496px] w-[133.971px]">
-                <img
-                  alt=""
-                  className="absolute inset-0 block size-full max-w-none"
-                  src="/figma/image227-vectorized.svg"
-                />
-              </div>
-            </div>
+            <TimelineVector227 />
           </div>
         </Loose>
       </div>
