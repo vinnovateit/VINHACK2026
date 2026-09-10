@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 12278px;
+  --canvas-height: 12818px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -36,7 +36,7 @@
 }
 
 .projects-disabled {
-  --canvas-height: 11446px;
+  --canvas-height: 11986px;
 }
 
 .tracks-disabled {
@@ -56,13 +56,26 @@
 }
 
 /* The other half of the same switch. With tracks on, the section is drawn
-   1548px taller than the artwork on it — that surplus is the scrolling room
+   2248px taller than the artwork on it — that surplus is the scrolling room
    `TracksCardDeck` parks over, one card per stretch of it — so everything below
-   Tracks carries the same 1548, and so does `--canvas-height` above. Sections
+   Tracks carries the same 2248, and so does `--canvas-height` above. Sections
    are positioned against the fixed frame rather than stacked, so this is one
-   shift on the group instead of six edited `top` values. */
+   shift on the group instead of six edited `top` values.
+
+   The extra 400 on top of it is clear air between the two. The tracks deck
+   unparks as the section's last pixel reaches the bottom of the window, and
+   Sponsors used to start 16px below that — so the newspaper's opening began
+   while the final track card was still on screen, and the two scroll-linked
+   movements ran over each other. 400px is roughly half a window at the widths
+   this layout is used at: enough for the deck to be finished and gone before
+   the paper is asked to do anything.
+
+   Three numbers move together whenever the deck is given more room to play in:
+   this one, `--canvas-height` (and its projects-off variant), and the section's
+   own height in `sections/Tracks`. The tracks-*off* heights are untouched by
+   it — with the section gone there is no surplus to carry. */
 .tracks-extended-sections {
-  transform: translateY(1548px);
+  transform: translateY(2648px);
 }
 
 .recap-extended-sections {
@@ -1652,12 +1665,17 @@ footer ::selection,
   }
 }
 
-/* Printed on the board rather than set beside it, at the foot of the spine.
-   Positioned out of the flow so that the number does not shift where the name
-   sits — the names have to line up across the shelf. */
+/* Printed on the board rather than set beside it. Positioned out of the flow so
+   that the number does not shift where the name sits — the names have to line
+   up across the shelf.
+
+   Phone: at the foot of the spine's *far* end from the label — the label reads
+   from the hinge-less left edge, so the number sits over by the hinge on the
+   right, the way a page number sits opposite a book's spine rather than under
+   its title. */
 .nav-spine-index {
   position: absolute;
-  left: 20px;
+  right: 20px;
   color: var(--ink);
   font-size: 14px;
   font-variant-numeric: tabular-nums;
@@ -1684,7 +1702,13 @@ footer ::selection,
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
 }
 
-/* The sideways nudge is half of what the tilt costs. Turned about its foot, a
+/* No lift. `transform-origin: bottom center` already pivots this at the shelf
+   line, so a bare rotation tips the book out without it rising off the shelf —
+   which is the point: pulled forward, not levitated, so it reads as a book
+   tipping toward the reader and falling back into place on release rather than
+   floating up and dropping back down.
+
+   The sideways nudge is half of what the tilt costs. Turned about its foot, a
    520px spine at 6 degrees throws its head 54px to the right and nothing to the
    left — so it is shifted back by half of that first, and what it then needs is
    27px either side rather than 54px on one. That is a gap the shelf can open
@@ -1692,8 +1716,8 @@ footer ::selection,
 @media (min-width: 768px) {
   .nav-spine:hover .nav-spine-body,
   .nav-spine:focus-visible .nav-spine-body {
-    transform: translate(-22px, -30px) rotate(6deg);
-    box-shadow: 0 24px 36px rgba(0, 0, 0, 0.6);
+    transform: translateX(-22px) rotate(6deg);
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.55);
   }
 }
 

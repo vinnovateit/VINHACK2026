@@ -17,18 +17,34 @@ import { TRACKS } from "@/content/site";
  * 48 cards ever said anything. This keeps the shape of that drawing and throws
  * away the hijack: cards wait in the stack top right, one at a time flies into
  * the middle of the screen and stops dead there to be read, then carries on
- * into the stack in the opposite bottom corner. Both stacks are real — the one
- * on the right empties as the one on the left fills, so where you are in the
- * tracks is legible without a counter.
+ * into the stack in the opposite bottom corner. Both stacks are real and both
+ * are dealt from the first frame — the far one is seeded with blanks (`SEED`)
+ * so it is a pile rather than an empty corner, and the near one keeps blanks
+ * under the last track (`BACKING`) so it does not thin out — which is what
+ * makes where you are in the tracks legible without a counter.
  *
  * Nothing here intercepts scrolling. The section is simply drawn far taller
  * than the artwork on it, and the stage holding the heading and the deck
  * counter-translates against the page exactly as fast as the page moves, so it
- * appears parked for that whole stretch — a `position: sticky` the collage
- * cannot use directly, because the whole page is one `transform: scale()` plate
- * and a sticky offset inside it would be scaled along with everything else. The
- * next track is therefore reachable only by scrolling further down, and going
- * back up rewinds the deck, both at the reader's own pace.
+ * appears parked for that whole stretch. The next track is therefore reachable
+ * only by scrolling further down, and going back up rewinds the deck, both at
+ * the reader's own pace.
+ *
+ * It is a counter-translate rather than a `position: sticky` because the whole
+ * page is one `transform: scale()` plate, and sticky does not survive that.
+ * That has now been tried, so it is worth writing down as a result rather than
+ * leaving as an assertion: with the stage stuck at `top: 0` inside the plate,
+ * the offset the engine works out against the viewport is applied in the
+ * plate's own scaled coordinates, so the stage travels by the scale factor too
+ * much and runs away down the section — by the time it is on screen the deck
+ * has been dealt and the last track is all you ever see. Dividing the offset
+ * back through the scale is no answer either, because `top: 0` is already zero
+ * at every scale; there is nothing there to divide.
+ *
+ * A counter-translate is only as steady as its timing, and it is worth being
+ * plain about why: this one is written synchronously on the scroll event and
+ * never from a `requestAnimationFrame`, because a frame of lag between the page
+ * and the stage is exactly the bob the park exists to avoid. See `onScroll`.
  *
  * The heading parks with the deck rather than scrolling away above it, and that
  * is what decides how big the card can be: it is fitted to the band left under
@@ -56,10 +72,36 @@ const HEADER_TOP = 99;
 const HEADER_HEIGHT = 298;
 
 const COUNT = TRACKS.items.length;
-/** Blank cards under the last track, so the waiting stack has some depth to it
- *  rather than thinning to a single card by the end. */
-const BACKING = 4;
-const TOTAL = COUNT + BACKING;
+
+/** Blank cards under the last track, so the waiting stack keeps its depth
+ *  instead of thinning to a single card by the end. */
+const BACKING = 6;
+/** Blank cards dealt into the far stack before the deck starts, so the corner
+ *  the tracks are flying *into* is a pile from the first frame rather than an
+ *  empty patch of screen that fills up later. */
+const SEED = 6;
+/** How far back either stack is drawn. Past this a card stops receding and
+ *  simply hides behind the one in front, so a deep pile stays a pile rather
+ *  than a fan running off across the screen. */
+const PILE_DEPTH = 6;
+
+/**
+ * Every card in the deck, named by the deck position it is face-on at.
+ *
+ * Real tracks are 0 to COUNT-1 and the waiting stack's padding carries on
+ * above them. The seeded cards run *below* zero, which is what puts them in
+ * the far stack from the start: `render` decides which corner a card is in
+ * purely from the sign of `p - slot`, so a card at a negative slot has already
+ * been dealt before the deck has moved at all, with no special case for it.
+ *
+ * -1 is deliberately skipped. The deck opens at `p === -1` and a card sitting
+ * exactly on `p` is the one face-on in the middle of the screen, so a card
+ * there would greet the reader as a blank.
+ */
+const SLOTS: readonly number[] = [
+  ...Array.from({ length: SEED }, (_, s) => -2 - s),
+  ...Array.from({ length: COUNT + BACKING }, (_, i) => i),
+];
 
 /* --------------------------------------------------------------- the frame */
 
@@ -128,7 +170,7 @@ const LEAN_SQUASH = 0.97;
  * sit while the next one creeps forward behind it — reads as a slow deck rather
  * than a stopped one, which is the thing this is here to avoid.
  */
-const HOLD = 0.7;
+const HOLD = 1.4;
 /** One card's share of the scrolling: its flight, then its hold. */
 const UNIT = 1 + HOLD;
 
@@ -241,18 +283,18 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
     const render = (p: number) => {
       const reduced = calm.matches;
 
-      for (let i = 0; i < TOTAL; i++) {
-        const el = cardRefs.current.get(i);
+      for (const slot of SLOTS) {
+        const el = cardRefs.current.get(slot);
         if (!el) continue;
-        const content = contentRefs.current.get(i);
+        const content = contentRefs.current.get(slot);
 
-        const raw = p - i;
+        const raw = p - slot;
         const d = gsap.utils.clamp(-1, 1, raw);
         const waiting = raw <= 0;
         // How deep in its stack the card is sitting. The same distance either
         // side of the card in the air, so the stack it is leaving and the one
         // it is joining are drawn by one rule.
-        const depth = Math.min(BACKING, Math.max(0, Math.abs(raw) - 1));
+        const depth = Math.min(PILE_DEPTH, Math.max(0, Math.abs(raw) - 1));
 
         // How far outside the dwell the card has got: 0 for the whole stretch
         // it holds face-on, ramping to 1 at either end of its flight. `t` is
@@ -308,7 +350,7 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
     const measure = () => {
       // The stage may already be parked, and every figure below is a resting
       // position, so put it back before reading one.
-      gsap.set(stage, { y: 0 });
+      park(0);
 
       const rect = container.getBoundingClientRect();
       // Below `md` the whole collage is `display: none` and measures 0x0, and
@@ -331,6 +373,7 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
       const headerOffset = HEADER_TOP * headerScale * canvasScale;
       const headerHeight = HEADER_HEIGHT * headerScale * canvasScale;
       parkStart = window.scrollY + rect.top + headerOffset - HEADER_MARGIN;
+
       // Exactly what the section has left once the heading is parked and the
       // window is taken off it — so the deck finishes as the section does, at
       // every width, without the two carrying the same number separately.
@@ -388,26 +431,60 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
       return k - 1 + smooth(flight);
     };
 
+    /**
+     * The park itself: one transform, written straight to the node.
+     *
+     * Deliberately not `gsap.set`. This runs on every scroll event and is the
+     * one write whose timing is visible — see `onScroll` — so it goes through
+     * as little as possible, and `translate3d` keeps the stage on its own
+     * compositor layer rather than re-rasterising the heading each tick.
+     */
+    const park = (plateY: number) => {
+      stage.style.transform = `translate3d(0, ${plateY}px, 0)`;
+    };
+
+    // The deck position last drawn. During a hold this is an exact integer that
+    // does not change, so the cards are left alone and a held frame costs only
+    // the park write above.
+    let drawn = Number.NaN;
+
     const update = () => {
       if (!armed) return;
       const stuck = gsap.utils.clamp(0, travelPx, window.scrollY - parkStart);
       // Exactly the page's own travel, back in plate units. Any smoothing here
       // and the parked heading would visibly drift against the scroll.
-      gsap.set(stage, { y: stuck / canvasScale });
-      render(deckPosition(stuck / travelPx));
+      park(stuck / canvasScale);
+
+      const p = deckPosition(stuck / travelPx);
+      if (p !== drawn) {
+        drawn = p;
+        render(p);
+      }
     };
 
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        update();
-      });
-    };
+    /**
+     * Synchronously, on the scroll event itself — *not* inside a
+     * `requestAnimationFrame`.
+     *
+     * A rAF scheduled from a scroll event runs at the *next* frame, so the page
+     * would already have been painted at its new offset while the stage still
+     * carried the previous one: every scroll tick would show the heading a
+     * frame's worth of scrolling out of place, and the constant correction is
+     * what reads as a bob. Scroll handlers run before paint, so writing the
+     * transform here puts the stage and the page on screen at the same offset
+     * in the same frame.
+     *
+     * The cost of dropping the throttle is bounded: `update` reads no geometry
+     * (everything it needs was measured in `measure`) and skips the cards
+     * entirely unless the deck has actually moved.
+     */
+    const onScroll = () => update();
 
     const onLayout = () => {
       measure();
+      // Every card's resting position has just been recomputed, so the last
+      // drawn position no longer describes what is on screen.
+      drawn = Number.NaN;
       update();
     };
 
@@ -419,7 +496,6 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
     calm.addEventListener("change", onLayout);
 
     return () => {
-      if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       desktop.removeEventListener("change", onLayout);
@@ -461,71 +537,80 @@ export function TracksCardDeck({ children }: { children?: ReactNode }) {
 
         {/* Origin at the focused card's centre; `top` is set once measured. */}
         <div ref={railRef} className="absolute left-1/2 top-0">
-          {Array.from({ length: TOTAL }, (_, i) => {
-            const color = COLOR_CYCLE[i % COLOR_CYCLE.length];
-            const { ink, rule } = trackInk(color);
-            const item = i < COUNT ? TRACKS.items[i] : null;
+            {SLOTS.map((slot) => {
+              // Slots run negative, so the cycle is taken the long way round —
+              // `-2 % 6` is `-2` in JS, which is not an index.
+              const color =
+                COLOR_CYCLE[
+                  ((slot % COLOR_CYCLE.length) + COLOR_CYCLE.length) %
+                    COLOR_CYCLE.length
+                ];
+              const { ink, rule } = trackInk(color);
+              const item =
+                slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
 
-            return (
-              <div
-                key={i}
-                ref={(node) => {
-                  if (node) cardRefs.current.set(i, node);
-                  else cardRefs.current.delete(i);
-                }}
-                className="absolute will-change-transform"
-                style={{
-                  left: 0,
-                  top: 0,
-                  marginLeft: -CARD_WIDTH / 2,
-                  marginTop: -CARD_HEIGHT / 2,
-                  transformOrigin: "center center",
-                }}
-                aria-hidden
-              >
-                <TrackCard
-                  color={color}
-                  isFront={i === 0}
-                  width={CARD_WIDTH}
-                  height={CARD_HEIGHT}
+              return (
+                <div
+                  key={slot}
+                  ref={(node) => {
+                    if (node) cardRefs.current.set(slot, node);
+                    else cardRefs.current.delete(slot);
+                  }}
+                  className="absolute will-change-transform"
+                  style={{
+                    left: 0,
+                    top: 0,
+                    marginLeft: -CARD_WIDTH / 2,
+                    marginTop: -CARD_HEIGHT / 2,
+                    transformOrigin: "center center",
+                  }}
+                  aria-hidden
                 >
-                  {item ? (
-                    // Everything the track has to say is printed on the card
-                    // itself. Sizes are in the card's own 365x258 units, so the
-                    // whole face scales as one piece with the zoom instead of
-                    // type drifting out of proportion with the box holding it.
-                    <div
-                      ref={(node) => {
-                        if (node) contentRefs.current.set(i, node);
-                        else contentRefs.current.delete(i);
-                      }}
-                      className="absolute inset-0 flex flex-col justify-between p-5.5 opacity-0 will-change-transform pointer-events-none"
-                      style={{ color: ink }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="font-rotonto text-[8.5px] uppercase tracking-[0.34em]">
-                          Track {pad(i + 1)} / {pad(COUNT)}
-                        </span>
-                        <TrackAsterisk size={13} />
+                  <TrackCard
+                    color={color}
+                    // Only the cards that say something take the deeper shadow;
+                    // the blanks padding either stack sit flatter behind them.
+                    isFront={item !== null}
+                    width={CARD_WIDTH}
+                    height={CARD_HEIGHT}
+                  >
+                    {item ? (
+                      // Everything the track has to say is printed on the card
+                      // itself. Sizes are in the card's own 365x258 units, so the
+                      // whole face scales as one piece with the zoom instead of
+                      // type drifting out of proportion with the box holding it.
+                      <div
+                        ref={(node) => {
+                          if (node) contentRefs.current.set(slot, node);
+                          else contentRefs.current.delete(slot);
+                        }}
+                        className="absolute inset-0 flex flex-col justify-between p-5.5 opacity-0 will-change-transform pointer-events-none"
+                        style={{ color: ink }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <span className="font-rotonto text-[8.5px] uppercase tracking-[0.34em]">
+                            Track {pad(slot + 1)} / {pad(COUNT)}
+                          </span>
+                          <TrackAsterisk size={13} />
+                        </div>
+                        <div>
+                          <div
+                            className="mb-2.5 h-px w-full"
+                            style={{ background: rule }}
+                          />
+                          <h3 className="font-rotonto text-[26px] leading-[0.94] tracking-tight">
+                            {item.title}
+                          </h3>
+                          <p className="mt-2 max-w-[84%] font-rotonto text-[9.5px] leading-[1.5] tracking-tight opacity-80">
+                            {item.blurb}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <div
-                          className="mb-2.5 h-px w-full"
-                          style={{ background: rule }}
-                        />
-                        <h3 className="font-rotonto text-[26px] leading-[0.94] tracking-tight">
-                          {item.title}
-                        </h3>
-                        <p className="mt-2 max-w-[84%] font-rotonto text-[9.5px] leading-[1.5] tracking-tight opacity-80">
-                          {item.blurb}
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
-                </TrackCard>
-              </div>
-            );
-          })}
+                    ) : null}
+                  </TrackCard>
+                </div>
+              );
+            })}
         </div>
       </div>
     </div>
