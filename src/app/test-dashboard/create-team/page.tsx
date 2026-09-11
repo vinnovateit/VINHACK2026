@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireTeamlessParticipant } from "../access";
-import { TRACK_OPTIONS } from "../constants";
 import { generateUniqueTeamCode } from "../utils";
 
 async function createTeam(formData: FormData) {
@@ -9,26 +8,19 @@ async function createTeam(formData: FormData) {
 
   const participant = await requireTeamlessParticipant();
   const name = String(formData.get("name") ?? "").trim();
-  const track = String(formData.get("track") ?? "").trim();
-  const teamTypeInput = String(formData.get("teamType") ?? "").trim();
 
-  if (!name || !track) {
-    redirect("/test-dashboard/create-team?error=Please fill in the required team fields");
+  if (!name || name.length > 100) {
+    redirect("/test-dashboard/create-team?error=Team name is required and must be 100 characters or fewer");
   }
 
-  // Derive or validate teamType (participant's type if not explicitly set, or allow selection)
-  const teamType =
-    teamTypeInput === "EXTERNAL" || participant.type === "external"
-      ? "EXTERNAL"
-      : "VIT";
+  const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
 
   const code = await generateUniqueTeamCode();
 
-  const team = await prisma.team.create({
+  await prisma.team.create({
     data: {
       name,
       code,
-      track,
       teamType,
       leaderId: participant.id,
       ...(participant.type === "vit"
@@ -37,7 +29,7 @@ async function createTeam(formData: FormData) {
     },
   });
 
-  redirect(`/test-dashboard/dashboard?created=${team.id}`);
+  redirect("/test-dashboard/dashboard");
 }
 
 export default async function CreateTeamPage({
@@ -45,10 +37,8 @@ export default async function CreateTeamPage({
 }: {
   searchParams?: Promise<{ error?: string }>;
 }) {
-  const participant = await requireTeamlessParticipant();
+  await requireTeamlessParticipant();
   const params = await searchParams;
-
-  const defaultTeamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
@@ -74,32 +64,6 @@ export default async function CreateTeamPage({
               />
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">Track</label>
-              <select
-                name="track"
-                defaultValue={TRACK_OPTIONS[0]}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500"
-              >
-                {TRACK_OPTIONS.map((track) => (
-                  <option key={track} value={track}>
-                    {track}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm text-slate-300">Team Type</label>
-              <select
-                name="teamType"
-                defaultValue={defaultTeamType}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500"
-              >
-                <option value="VIT">VIT</option>
-                <option value="EXTERNAL">External</option>
-              </select>
-            </div>
           </div>
 
           <div className="mt-6 flex items-center justify-between">

@@ -84,6 +84,7 @@ model VerificationToken {
 model VITStudent {
   id            String        @id @default(auto()) @map("_id") @db.ObjectId
   name          String
+  email         String        @unique
   regNo         String        @unique
   year          Int
   phone         String

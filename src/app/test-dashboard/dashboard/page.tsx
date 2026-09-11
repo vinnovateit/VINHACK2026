@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireTeamedParticipant } from "../access";
 import { TRACK_OPTIONS } from "../constants";
+import { isValidTrack, isWithinMaxLength, validateOptionalHttpUrl } from "../validation";
 import { TeamShareCard } from "./TeamShareCard";
 
 async function leaveTeam() {
@@ -23,7 +24,7 @@ async function leaveTeam() {
     prisma.externalStudent.count({ where: { teamId } }),
   ]);
   if (vitCount + externalCount === 0) await prisma.team.delete({ where: { id: teamId } });
-  redirect("/test-dashboard/join-team?message=You left the team. Enter a new code to switch teams.");
+  redirect("/test-dashboard/join-team?message=You left the team. Enter a team code to join another team.");
 }
 
 async function saveSubmission(formData: FormData) {
@@ -40,15 +41,30 @@ async function saveSubmission(formData: FormData) {
   const value = (name: string) => String(formData.get(name) ?? "").trim();
   const track = value("track");
   const projectTitle = value("projectTitle");
-  if (!track || !projectTitle) redirect("/test-dashboard/dashboard?error=Track and project title are required");
+  const progressNote = value("progressNote");
+  const projectDescription = value("projectDescription");
+  const links = ["githubLink", "figmaLink", "deckLink", "otherLinks"].map(value);
+  if (
+    !track ||
+    !projectTitle ||
+    !isValidTrack(track) ||
+    !isWithinMaxLength(projectTitle, 200) ||
+    !isWithinMaxLength(progressNote, 5000) ||
+    !isWithinMaxLength(projectDescription, 10000)
+  ) {
+    redirect("/test-dashboard/dashboard?error=Please provide a valid track and project title");
+  }
+  if (links.some((link) => link.length > 2048 || !validateOptionalHttpUrl(link))) {
+    redirect("/test-dashboard/dashboard?error=All project links must be valid HTTP or HTTPS URLs");
+  }
 
   await prisma.team.update({
     where: { id: teamId },
     data: {
       track,
       projectTitle,
-      progressNote: value("progressNote") || null,
-      projectDescription: value("projectDescription") || null,
+      progressNote: progressNote || null,
+      projectDescription: projectDescription || null,
       githubLink: value("githubLink") || null,
       figmaLink: value("figmaLink") || null,
       deckLink: value("deckLink") || null,
@@ -56,7 +72,7 @@ async function saveSubmission(formData: FormData) {
       lastSubmittedAt: now,
     },
   });
-  redirect("/test-dashboard/dashboard?success=Submission saved");
+  redirect("/test-dashboard/dashboard");
 }
 
 const fieldClass = "w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 disabled:cursor-not-allowed disabled:opacity-60";
@@ -79,9 +95,10 @@ export default async function DashboardPage({
 
   // Determine origin for QR code generation
   const reqHeaders = await headers();
-  const host = reqHeaders.get("host") || "localhost:3000";
+  const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  const host = reqHeaders.get("x-forwarded-host") || reqHeaders.get("host") || "localhost:3000";
   const protocol = reqHeaders.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-  const origin = `${protocol}://${host}`;
+  const origin = configuredOrigin || `${protocol}://${host}`;
   const joinUrl = `${origin}/test-dashboard/join-team?code=${team.code}`;
 
   let qrDataUrl = "";
@@ -116,7 +133,7 @@ export default async function DashboardPage({
           </div>
           <form action={leaveTeam}>
             <button type="submit" className="rounded-xl border border-rose-500/60 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/10 transition">
-              Switch / Leave Team
+              Leave Team
             </button>
           </form>
         </div>
@@ -151,7 +168,7 @@ export default async function DashboardPage({
         </section>
 
         {/* Share Section: Code, QR Code, Shareable Link */}
-        <TeamShareCard teamCode={team.code} qrDataUrl={qrDataUrl} />
+        <TeamShareCard teamCode={team.code} qrDataUrl={qrDataUrl} joinUrl={joinUrl} />
 
         {/* Submission Section */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">

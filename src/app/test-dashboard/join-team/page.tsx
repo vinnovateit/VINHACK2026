@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { requireTeamlessParticipant } from "../access";
+import { isValidTeamCode } from "../validation";
 
 async function joinTeam(formData: FormData) {
   "use server";
@@ -8,8 +9,8 @@ async function joinTeam(formData: FormData) {
   const teamCode = String(formData.get("teamCode") ?? "").trim().toUpperCase();
   const participant = await requireTeamlessParticipant();
 
-  if (!teamCode) {
-    redirect("/test-dashboard/join-team?error=Please enter a team code");
+  if (!isValidTeamCode(teamCode)) {
+    redirect("/test-dashboard/join-team?error=Please enter a valid six-character team code");
   }
 
   const team = await prisma.team.findUnique({
@@ -43,7 +44,7 @@ async function joinTeam(formData: FormData) {
     });
   }
 
-  redirect(`/test-dashboard/dashboard?success=Joined team ${team.name} successfully`);
+  redirect("/test-dashboard/dashboard");
 }
 
 export default async function JoinTeamPage({

@@ -6,22 +6,34 @@ import Image from "next/image";
 interface TeamShareCardProps {
   teamCode: string;
   qrDataUrl: string;
+  joinUrl: string;
 }
 
-export function TeamShareCard({ teamCode, qrDataUrl }: TeamShareCardProps) {
+export function TeamShareCard({ teamCode, qrDataUrl, joinUrl }: TeamShareCardProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const getJoinLink = () => {
-    if (typeof window !== "undefined") {
-      return `${window.location.origin}/test-dashboard/join-team?code=${teamCode}`;
+  const copyText = async (text: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
     }
-    return `/test-dashboard/join-team?code=${teamCode}`;
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const copied = document.execCommand("copy");
+    textArea.remove();
+    if (!copied) throw new Error("Copy command was rejected");
   };
 
   const copyCode = async () => {
     try {
-      await navigator.clipboard.writeText(teamCode);
+      await copyText(teamCode);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     } catch {
@@ -31,8 +43,7 @@ export function TeamShareCard({ teamCode, qrDataUrl }: TeamShareCardProps) {
 
   const copyLink = async () => {
     try {
-      const link = getJoinLink();
-      await navigator.clipboard.writeText(link);
+      await copyText(joinUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     } catch {
@@ -75,7 +86,7 @@ export function TeamShareCard({ teamCode, qrDataUrl }: TeamShareCardProps) {
               <input
                 type="text"
                 readOnly
-                value={typeof window !== "undefined" ? getJoinLink() : `/test-dashboard/join-team?code=${teamCode}`}
+                value={joinUrl}
                 className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-950 p-2.5 text-xs text-slate-300 outline-none select-all"
               />
               <button

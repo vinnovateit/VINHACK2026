@@ -49,6 +49,9 @@ export default async function LoginAsPage({
           <p className="text-sm uppercase tracking-[0.2em] text-cyan-400">Test-only participant switcher</p>
           <h1 className="mt-2 text-3xl font-bold">Log in as</h1>
           <p className="mt-2 text-slate-400">This cookie-based selector is separate from real authentication.</p>
+          <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+            Testing only: this page is not a real login and is for testing only.
+          </p>
         </div>
         {params?.error && <p className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-rose-200">{params.error}</p>}
         <form action={loginAs} className="rounded-2xl border border-slate-800 bg-slate-900 p-6">

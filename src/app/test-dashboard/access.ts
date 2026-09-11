@@ -47,11 +47,3 @@ export async function requireTeamedParticipant() {
   return participant;
 }
 
-export async function redirectForParticipantState() {
-  const participant = await requireParticipant();
-  redirect(participant.teamId ? "/test-dashboard/dashboard" : "/test-dashboard/create-team");
-}
-
-export async function clearTestSession() {
-  (await cookies()).delete(TEST_SESSION_COOKIE);
-}

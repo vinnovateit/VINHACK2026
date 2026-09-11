@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { TRACK_OPTIONS } from "@/app/test-dashboard/constants";
-import { redirectForParticipantState } from "../access";
+import { requireTeamedParticipant } from "../access";
+import { isValidTrack, isWithinMaxLength, validateOptionalHttpUrl } from "../validation";
 
 async function saveSubmission(formData: FormData) {
   "use server";
 
-  const teamId = String(formData.get("teamId") ?? "").trim();
+  const participant = await requireTeamedParticipant();
+  const teamId = participant.teamId;
+  if (!teamId) redirect("/test-dashboard/create-team");
   const track = String(formData.get("track") ?? "").trim();
   const projectTitle = String(formData.get("projectTitle") ?? "").trim();
   const projectDescription = String(formData.get("projectDescription") ?? "").trim();
@@ -16,8 +19,19 @@ async function saveSubmission(formData: FormData) {
   const deckLink = String(formData.get("deckLink") ?? "").trim();
   const otherLinks = String(formData.get("otherLinks") ?? "").trim();
 
-  if (!teamId || !track || !projectTitle) {
-    redirect("/test-dashboard/submissions?error=Please select a team and add a track + project title");
+  const links = [githubLink, figmaLink, deckLink, otherLinks];
+  if (
+    !track ||
+    !projectTitle ||
+    !isValidTrack(track) ||
+    !isWithinMaxLength(projectTitle, 200) ||
+    !isWithinMaxLength(progressNote, 5000) ||
+    !isWithinMaxLength(projectDescription, 10000)
+  ) {
+    redirect("/test-dashboard/submissions?error=Please provide a valid track and project title");
+  }
+  if (links.some((link) => link.length > 2048 || !validateOptionalHttpUrl(link))) {
+    redirect("/test-dashboard/submissions?error=All project links must be valid HTTP or HTTPS URLs");
   }
 
   await prisma.team.update({
@@ -43,9 +57,10 @@ export default async function SubmissionsPage({
 }: {
   searchParams?: Promise<{ success?: string; error?: string }>;
 }) {
-  await redirectForParticipantState();
+  const participant = await requireTeamedParticipant();
   const params = await searchParams;
-  const teams = await prisma.team.findMany({ orderBy: { createdAt: "desc" } });
+  const team = await prisma.team.findUnique({ where: { id: participant.teamId! } });
+  if (!team) redirect("/test-dashboard/create-team");
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
@@ -76,17 +91,14 @@ export default async function SubmissionsPage({
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Team</label>
-                <select name="teamId" defaultValue="" className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500">
-                  <option value="">Select team</option>
-                  {teams.map((team) => (
-                    <option key={team.id} value={team.id}>{team.name} ({team.teamType})</option>
-                  ))}
-                </select>
+                <p className="rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100">
+                  {team.name} ({team.teamType})
+                </p>
               </div>
 
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Track</label>
-                <select name="track" defaultValue={TRACK_OPTIONS[0]} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500">
+                <select name="track" defaultValue={team.track ?? TRACK_OPTIONS[0]} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500">
                   {TRACK_OPTIONS.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
@@ -95,19 +107,19 @@ export default async function SubmissionsPage({
 
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Project title</label>
-                <input name="projectTitle" className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+                <input name="projectTitle" defaultValue={team.projectTitle ?? ""} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Progress update</label>
-                <textarea name="progressNote" rows={5} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+                <textarea name="progressNote" defaultValue={team.progressNote ?? ""} rows={5} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Description</label>
-                <textarea name="projectDescription" rows={6} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+                <textarea name="projectDescription" defaultValue={team.projectDescription ?? ""} rows={6} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
               </div>
 
               <div>
@@ -115,19 +127,19 @@ export default async function SubmissionsPage({
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">🔗</span>
-                    <input name="githubLink" placeholder="GitHub" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="githubLink" defaultValue={team.githubLink ?? ""} placeholder="GitHub" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">✦</span>
-                    <input name="figmaLink" placeholder="Figma" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="figmaLink" defaultValue={team.figmaLink ?? ""} placeholder="Figma" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">▣</span>
-                    <input name="deckLink" placeholder="Deck" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="deckLink" defaultValue={team.deckLink ?? ""} placeholder="Deck" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">＋</span>
-                    <input name="otherLinks" placeholder="Other" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="otherLinks" defaultValue={team.otherLinks ?? ""} placeholder="Other" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
                   </div>
                 </div>
               </div>
