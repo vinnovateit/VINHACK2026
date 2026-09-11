@@ -1,4 +1,4 @@
 export const FEATURES = {
-  projects: false,
-  tracks: false,
+  projects: true,
+  tracks: true,
 } as const;

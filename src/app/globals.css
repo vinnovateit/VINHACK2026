@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 9250px;
+  --canvas-height: 12434px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -35,16 +35,56 @@
   --hero-height: 832px;
 }
 
+/* No horizontal scrollbar, anywhere.
+
+   `clip` and not `hidden`, and this is the whole of the difference: `hidden`
+   is a *scroll container* that happens to have no scrollbar, and the one it
+   makes of `<body>` becomes the nearest scrollport for everything on the page.
+   Every `position: sticky` below then sticks inside a box that never scrolls —
+   the two card decks stop holding, and the scroll-linked tweens hung off them
+   measure against a scrollport that is not the one the reader is moving. It
+   also forces the other axis to `auto`, so `overflow-x: hidden` quietly buys a
+   second vertical scroller nobody asked for.
+
+   `clip` only paints less. No scroll container, no new scrollport, and the
+   other axis stays `visible` — which is exactly the fix wanted here and
+   nothing else. `hidden` first as the fallback for Safari before 16, the same
+   pairing `.canvas-frame` uses further down.
+
+   No `max-width: 100vw` either: `100vw` counts the classic scrollbar's width,
+   so on a scrollbar-reserving browser that rule is itself worth a few pixels
+   of horizontal overflow. */
+html,
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  width: 100%;
+}
+
+/* Hide the scrollbars themselves across browsers. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 .projects-disabled {
-  --canvas-height: 8418px;
+  --canvas-height: 11022px;
 }
 
 .tracks-disabled {
-  --canvas-height: 8498px;
+  --canvas-height: 9014px;
 }
 
 .projects-disabled.tracks-disabled {
-  --canvas-height: 7666px;
+  --canvas-height: 8182px;
 }
 
 .projects-disabled-sections {
@@ -53,6 +93,37 @@
 
 .tracks-disabled-sections {
   transform: translateY(-752px);
+}
+
+/* The other half of the same switch. With tracks on, the section is drawn
+   2248px taller than the artwork on it — that surplus is the scrolling room
+   `TracksCardDeck` parks over, one card per stretch of it — so everything below
+   Tracks carries the same 2248, and so does `--canvas-height` above. Sections
+   are positioned against the fixed frame rather than stacked, so this is one
+   shift on the group instead of six edited `top` values.
+
+   The extra 400 on top of it is clear air between the two. The tracks deck
+   unparks as the section's last pixel reaches the bottom of the window, and
+   Sponsors used to start 16px below that — so the newspaper's opening began
+   while the final track card was still on screen, and the two scroll-linked
+   movements ran over each other. 400px is roughly half a window at the widths
+   this layout is used at: enough for the deck to be finished and gone before
+   the paper is asked to do anything.
+
+   Three numbers move together whenever the deck is given more room to play in:
+   this one, `--canvas-height` (and its projects-off variant), and the section's
+   own height in `sections/Tracks`. The tracks-*off* heights are untouched by
+   it — with the section gone there is no surplus to carry. */
+.tracks-extended-sections {
+  transform: translateY(2648px);
+}
+
+.sponsors-extended-sections {
+  transform: translateY(700px);
+}
+
+.recap-extended-sections {
+  transform: translateY(-1104px);
 }
 
 .coming-soon-wrap {
@@ -72,10 +143,13 @@
 }
 
 @keyframes coming-soon-group {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.74;
     transform: translateX(-50%) translateY(0) rotate(-2deg);
   }
+
   50% {
     opacity: 1;
     transform: translateX(-50%) translateY(4px) rotate(2deg);
@@ -95,13 +169,278 @@
 }
 
 @keyframes coming-soon-group-mobile {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.74;
     transform: translateY(0) rotate(-2deg);
   }
+
   50% {
     opacity: 1;
     transform: translateY(4px) rotate(2deg);
+  }
+}
+
+/* A sponsor tile's arrival: held invisible until `Sponsors` / `MobileSponsors`
+   mark their grid `data-in-view` (an IntersectionObserver firing once, so this
+   never depends on GSAP or the scaled desktop canvas doing the measuring).
+   `--pop-delay` staggers the tiles, biggest first. */
+.sponsor-pop {
+  opacity: 0;
+}
+
+[data-in-view] .sponsor-pop {
+  animation: sponsor-pop 0.6s cubic-bezier(0.22, 1.2, 0.36, 1) var(--pop-delay, 0s) both;
+}
+
+@keyframes sponsor-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.78) translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The ring a small sponsor tile gets on hover — drawn as a sibling rather than
+   a border, so it can scale in from just outside the card instead of the card
+   itself resizing under the pointer. */
+.sponsor-ring {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.group:hover .sponsor-ring,
+.group:focus-visible .sponsor-ring {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* The stars scattered round the sponsor tiles — same `data-in-view` gate as
+   `.sponsor-pop`, but with a spin thrown in on top of the scale so it reads
+   as a sticker landing rather than a card sliding up. */
+.sticker-pop {
+  opacity: 0;
+}
+
+[data-in-view] .sticker-pop {
+  animation: sticker-pop 0.8s cubic-bezier(0.18, 1.4, 0.3, 1) var(--pop-delay, 0s) both;
+}
+
+@keyframes sticker-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2) rotate(var(--sticker-rotate-from, -24deg));
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(var(--sticker-rotate-to, 0deg));
+  }
+}
+
+/* ---- recap animations --------------------------------------------------- */
+
+@keyframes film-marquee {
+  0% {
+    transform: translateX(-50%);
+  }
+
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.film-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: film-marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.film-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes core-marquee {
+  0% {
+    transform: translateX(-50%);
+  }
+
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.core-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: core-marquee 14s linear infinite;
+  will-change: transform;
+}
+
+.core-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* "core memory" snake: the track scrolls horizontally while every glyph
+   (and icon) bobs on the same sine, phase-shifted per glyph (see Recap.tsx),
+   so the row reads as one S-curve slithering along its axis. The keyframes
+   sample a true sine at 16 points with linear timing, so the curve stays
+   round rather than kinking at the ease-in-out joins; tilt is its derivative. */
+@keyframes core-snake-bob {
+  0% {
+    transform: translateY(-16.00px) rotate(0.00deg);
+  }
+
+  6.25% {
+    transform: translateY(-14.78px) rotate(3.44deg);
+  }
+
+  12.5% {
+    transform: translateY(-11.31px) rotate(6.36deg);
+  }
+
+  18.75% {
+    transform: translateY(-6.12px) rotate(8.31deg);
+  }
+
+  25% {
+    transform: translateY(-0.00px) rotate(9.00deg);
+  }
+
+  31.25% {
+    transform: translateY(6.12px) rotate(8.31deg);
+  }
+
+  37.5% {
+    transform: translateY(11.31px) rotate(6.36deg);
+  }
+
+  43.75% {
+    transform: translateY(14.78px) rotate(3.44deg);
+  }
+
+  50% {
+    transform: translateY(16.00px) rotate(0.00deg);
+  }
+
+  56.25% {
+    transform: translateY(14.78px) rotate(-3.44deg);
+  }
+
+  62.5% {
+    transform: translateY(11.31px) rotate(-6.36deg);
+  }
+
+  68.75% {
+    transform: translateY(6.12px) rotate(-8.31deg);
+  }
+
+  75% {
+    transform: translateY(0.00px) rotate(-9.00deg);
+  }
+
+  81.25% {
+    transform: translateY(-6.12px) rotate(-8.31deg);
+  }
+
+  87.5% {
+    transform: translateY(-11.31px) rotate(-6.36deg);
+  }
+
+  93.75% {
+    transform: translateY(-14.78px) rotate(-3.44deg);
+  }
+
+  100% {
+    transform: translateY(-16.00px) rotate(-0.00deg);
+  }
+}
+
+.core-snake-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: core-marquee 18s linear infinite;
+  will-change: transform;
+}
+
+.core-snake-item {
+  display: inline-block;
+  white-space: pre;
+  animation: core-snake-bob 2.4s linear infinite;
+  will-change: transform;
+}
+
+.core-snake-group:hover .core-snake-track,
+.core-snake-group:hover .core-snake-item {
+  animation-play-state: paused;
+}
+
+@keyframes stamp-slam {
+  0% {
+    opacity: 0;
+    transform: scale(2.8) rotate(-6deg);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(0.9) rotate(-24deg);
+  }
+
+  75% {
+    transform: scale(1.08) rotate(-20deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-22deg);
+  }
+}
+
+.stamp-active {
+  animation: stamp-slam 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.film-rollout {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: clip-path;
+}
+
+.film-rollout.film-rollout-open {
+  clip-path: inset(0 0% 0 0);
+  transition: clip-path 2.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-pop {
+    opacity: 1;
+    animation: none;
+  }
+
+  [data-in-view] .sponsor-pop {
+    animation: none;
+  }
+
+  .sponsor-ring {
+    transition: none;
+  }
+
+  .sticker-pop {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  [data-in-view] .sticker-pop {
+    animation: none;
   }
 }
 
@@ -111,7 +450,7 @@
 
      hero   1:1, never enlarged, centred, black either side past 1280px
      body   fills the width at any size, so the full-bleed bands (footer
-            strips, the "Who are we?" marquee, the track card stacks) keep
+            strips, the sneak-peek marquee, the track card stacks) keep
             running edge to edge
 
    Both still scale *down* below 1280px. A fixed collage cannot reflow, and
@@ -128,6 +467,17 @@
 .overflow-clip {
   overflow: hidden;
   overflow: clip;
+}
+
+/* The one-axis half of the same fallback. Everything that only needs its
+   horizontal edge held — the page root, the mobile column, the sections that
+   carry a deck or a draggable — uses `overflow-x-clip` rather than
+   `overflow-x-hidden`, so that it stays a clip and does not become a scroll
+   container: `hidden` on one axis computes the other to `auto`, and the
+   scrollport that makes swallows every `position: sticky` beneath it. */
+.overflow-x-clip {
+  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .canvas-frame {
@@ -162,7 +512,7 @@
   height: calc(var(--hero-height) * var(--canvas-scale));
 }
 
-.hero-frame > .canvas-plate {
+.hero-frame>.canvas-plate {
   height: var(--hero-height);
 
   /* Centres the hero once the viewport is wider than it. Narrower, the auto
@@ -177,12 +527,10 @@
 .body-frame {
   --canvas-scale: var(--canvas-fit);
 
-  height: calc(
-    (var(--canvas-height) - var(--hero-height)) * var(--canvas-scale)
-  );
+  height: calc((var(--canvas-height) - var(--hero-height)) * var(--canvas-scale));
 }
 
-.body-frame > .canvas-plate {
+.body-frame>.canvas-plate {
   height: calc(var(--canvas-height) - var(--hero-height));
 }
 
@@ -207,7 +555,7 @@
   pointer-events: none;
 }
 
-.body-sheet > * {
+.body-sheet>* {
   pointer-events: auto;
 }
 
@@ -261,14 +609,37 @@
    what makes a tube look cold is intervals that do not divide into each other.
    These are the same fractions `neonStrike` uses on the collage. */
 @keyframes neon-strike {
-  0% { opacity: 0; }
-  7% { opacity: 0.55; }
-  17% { opacity: 0.05; }
-  23% { opacity: 0.85; }
-  36% { opacity: 0.12; }
-  43% { opacity: 1; }
-  51% { opacity: 0.3; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+
+  7% {
+    opacity: 0.55;
+  }
+
+  17% {
+    opacity: 0.05;
+  }
+
+  23% {
+    opacity: 0.85;
+  }
+
+  36% {
+    opacity: 0.12;
+  }
+
+  43% {
+    opacity: 1;
+  }
+
+  51% {
+    opacity: 0.3;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .neon-fill {
@@ -280,6 +651,7 @@
     opacity: 0;
     transform: scale(1.03);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -298,9 +670,11 @@
   from {
     filter: drop-shadow(0 0 24px rgba(191, 234, 136, 0.75));
   }
+
   99% {
     filter: drop-shadow(0 0 0 rgba(191, 234, 136, 0));
   }
+
   to {
     filter: none;
   }
@@ -316,16 +690,15 @@
    arrives and settles in one animation and there is no midpoint at which it is
    past its own layout position when the animation is cancelled. */
 .deal-in {
-  animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) var(--deal-delay, 0s)
-    both;
+  animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) var(--deal-delay, 0s) both;
 }
 
 @keyframes deal-in {
   from {
     opacity: 0;
-    transform: translate3d(var(--deal-x, 0), var(--deal-y, 34px), 0)
-      rotate(var(--deal-r, 0deg)) scale(var(--deal-s, 0.92));
+    transform: translate3d(var(--deal-x, 0), var(--deal-y, 34px), 0) rotate(var(--deal-r, 0deg)) scale(var(--deal-s, 0.92));
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -360,14 +733,17 @@
     transform: translateY(-158.76px);
     animation-timing-function: steps(6, end);
   }
+
   13.8% {
     transform: translateY(0);
     animation-timing-function: linear;
   }
+
   78.2% {
     transform: translateY(0);
     animation-timing-function: steps(6, end);
   }
+
   92%,
   100% {
     transform: translateY(158.76px);
@@ -375,19 +751,24 @@
 }
 
 @keyframes cue-breathe {
+
   0%,
   13.8% {
     opacity: 1;
   }
+
   29.9% {
     opacity: 0.4;
   }
+
   46% {
     opacity: 1;
   }
+
   62.1% {
     opacity: 0.4;
   }
+
   78.2%,
   100% {
     opacity: 1;
@@ -422,21 +803,31 @@
   width: 100%;
 }
 
+/* Sized to the artwork rather than to the column: past `--piece-max` the scale
+   stops growing, and a frame still spanning the full column would leave the
+   drawing pinned to its left edge — the plate scales from its top left. At
+   exactly the artwork's width the auto margins centre it instead.
+
+   Nothing is clipped here. The plate is out of flow and already scaled to
+   exactly these bounds, so there is no overflow to catch in the steady state —
+   only the entrances, which overshoot on purpose (`sticker-pop` opens at
+   scale 2.8, `stamp-in` and `deal-in` arrive from outside their own box). A
+   frame drawn tight to the artwork cropped every one of them to nothing. The
+   page's horizontal edge is held at the root instead, where it belongs. */
 .piece-frame {
   --piece-fit: tan(atan2(100cqw, var(--piece-w)));
   --piece-scale: min(var(--piece-max, 1), var(--piece-fit));
 
-  /* Sized to the artwork rather than to the column: past `--piece-max` the
-     scale stops growing, and a frame still spanning the full column would leave
-     the drawing pinned to its left edge — the plate scales from its top left.
-     At exactly the artwork's width the auto margins centre it instead. */
   width: calc(var(--piece-w) * var(--piece-scale));
   height: calc(var(--piece-h) * var(--piece-scale));
   margin-inline: auto;
+  position: relative;
 }
 
 .piece-plate {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: var(--piece-w);
   height: var(--piece-h);
   transform: scale(var(--piece-scale));
@@ -498,10 +889,12 @@
 }
 
 @keyframes asterisk-pulse {
+
   0%,
   100% {
     transform: scale(0.72);
   }
+
   50% {
     transform: scale(1.35);
   }
@@ -520,24 +913,31 @@
   0% {
     clip-path: inset(0 0 100% 0);
   }
+
   22% {
     clip-path: inset(0 0 72% 0);
   }
+
   32% {
     clip-path: inset(0 0 72% 0);
   }
+
   54% {
     clip-path: inset(0 0 45% 0);
   }
+
   64% {
     clip-path: inset(0 0 45% 0);
   }
+
   82% {
     clip-path: inset(0 0 18% 0);
   }
+
   90% {
     clip-path: inset(0 0 18% 0);
   }
+
   100% {
     clip-path: inset(0 0 0 0);
   }
@@ -568,11 +968,9 @@
 .glitch-scan {
   position: absolute;
   inset: -8px 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.14) 0 2px,
-    transparent 2px 5px
-  );
+  background: repeating-linear-gradient(to bottom,
+      rgb(0 0 0 / 0.14) 0 2px,
+      transparent 2px 5px);
   animation: glitch-scan 5.5s linear infinite;
 }
 
@@ -585,13 +983,11 @@
 .glitch-split {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgb(250 26 29 / 0.18),
-    transparent 24%,
-    transparent 76%,
-    rgb(116 212 240 / 0.2)
-  );
+  background: linear-gradient(90deg,
+      rgb(250 26 29 / 0.18),
+      transparent 24%,
+      transparent 76%,
+      rgb(116 212 240 / 0.2));
   animation: glitch-drift 7s ease-in-out infinite alternate;
 }
 
@@ -599,6 +995,7 @@
   from {
     transform: translateX(-7px);
   }
+
   to {
     transform: translateX(7px);
   }
@@ -618,15 +1015,19 @@
     top: -13%;
     transform: translateX(0);
   }
+
   46% {
     transform: translateX(-9px);
   }
+
   50% {
     transform: translateX(10px);
   }
+
   54% {
     transform: translateX(-5px);
   }
+
   100% {
     top: 102%;
     transform: translateX(0);
@@ -649,11 +1050,9 @@
 .fx-scan {
   position: absolute;
   inset: calc(-2 * var(--fx-period)) 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 0.3) 0 var(--fx-ink),
-    transparent var(--fx-ink) var(--fx-period)
-  );
+  background: repeating-linear-gradient(to bottom,
+      rgb(0 0 0 / 0.3) 0 var(--fx-ink),
+      transparent var(--fx-ink) var(--fx-period));
   animation: fx-scan 4s linear infinite;
 }
 
@@ -678,13 +1077,11 @@
   position: absolute;
   inset: 0 -4%;
   mix-blend-mode: screen;
-  background: linear-gradient(
-    90deg,
-    rgb(250 26 29 / 0.4),
-    transparent 22%,
-    transparent 78%,
-    rgb(116 212 240 / 0.42)
-  );
+  background: linear-gradient(90deg,
+      rgb(250 26 29 / 0.4),
+      transparent 22%,
+      transparent 78%,
+      rgb(116 212 240 / 0.42));
   /* Stepped rather than eased: a signal does not slide out of alignment, it
      lands somewhere wrong and stays there for a frame. */
   animation: fx-chroma 2.4s steps(4, end) infinite alternate;
@@ -694,6 +1091,7 @@
   from {
     transform: translateX(-2.5%);
   }
+
   to {
     transform: translateX(2.5%);
   }
@@ -705,12 +1103,10 @@
   width: 120%;
   height: 8%;
   mix-blend-mode: screen;
-  background: linear-gradient(
-    90deg,
-    rgb(250 26 29 / 0.34),
-    rgb(252 252 252 / 0.22),
-    rgb(116 212 240 / 0.34)
-  );
+  background: linear-gradient(90deg,
+      rgb(250 26 29 / 0.34),
+      rgb(252 252 252 / 0.22),
+      rgb(116 212 240 / 0.34));
   animation: fx-tear 3.6s cubic-bezier(0.85, 0, 0.15, 1) infinite;
 }
 
@@ -719,15 +1115,19 @@
     top: -10%;
     transform: translateX(0) scaleY(1);
   }
+
   46% {
     transform: translateX(-4%) scaleY(1.6);
   }
+
   50% {
     transform: translateX(5%) scaleY(0.7);
   }
+
   54% {
     transform: translateX(-2%) scaleY(1.3);
   }
+
   100% {
     top: 102%;
     transform: translateX(0) scaleY(1);
@@ -794,6 +1194,7 @@
   from {
     transform: rotate(var(--r, 0deg)) translateY(0);
   }
+
   to {
     transform: rotate(calc(var(--r, 0deg) + 3deg)) translateY(-12px);
   }
@@ -957,12 +1358,6 @@ textarea {
   color: #000000;
 }
 
-[aria-label="Who are we"] ::selection,
-[data-name="WHO ARE WE"] ::selection {
-  background-color: #bfea88;
-  color: #000000;
-}
-
 [aria-label="Projects"] ::selection,
 [data-name="PROJECTS"] ::selection {
   background-color: #fbee35;
@@ -999,12 +1394,6 @@ textarea {
   color: #0f172a;
 }
 
-[aria-label="Register now"] ::selection,
-[data-name="REGISTER NOW"] ::selection {
-  background-color: #bfea88;
-  color: #000000;
-}
-
 footer ::selection,
 [data-name="FOOTER"] ::selection {
   background-color: #ffffff;
@@ -1014,56 +1403,627 @@ footer ::selection,
 /* ---- receipt printer details (Timeline & MobileTimeline) ----------------- */
 
 .receipt-rule {
-  background-image: repeating-linear-gradient(
-    to right,
-    #000 0,
-    #000 6px,
-    transparent 6px,
-    transparent 12px
-  );
+  background-image: repeating-linear-gradient(to right,
+      #000 0,
+      #000 6px,
+      transparent 6px,
+      transparent 12px);
 }
 
 .receipt-paper-sheet {
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% calc(100% - 14px),
-    97.22% 100%,
-    94.44% calc(100% - 14px),
-    91.67% 100%,
-    88.89% calc(100% - 14px),
-    86.11% 100%,
-    83.33% calc(100% - 14px),
-    80.56% 100%,
-    77.78% calc(100% - 14px),
-    75.00% 100%,
-    72.22% calc(100% - 14px),
-    69.44% 100%,
-    66.67% calc(100% - 14px),
-    63.89% 100%,
-    61.11% calc(100% - 14px),
-    58.33% 100%,
-    55.56% calc(100% - 14px),
-    52.78% 100%,
-    50.00% calc(100% - 14px),
-    47.22% 100%,
-    44.44% calc(100% - 14px),
-    41.67% 100%,
-    38.89% calc(100% - 14px),
-    36.11% 100%,
-    33.33% calc(100% - 14px),
-    30.56% 100%,
-    27.78% calc(100% - 14px),
-    25.00% 100%,
-    22.22% calc(100% - 14px),
-    19.44% 100%,
-    16.67% calc(100% - 14px),
-    13.89% 100%,
-    11.11% calc(100% - 14px),
-    8.33% 100%,
-    5.56% calc(100% - 14px),
-    2.78% 100%,
-    0.00% calc(100% - 14px)
-  );
+  clip-path: polygon(0 0,
+      100% 0,
+      100% calc(100% - 14px),
+      97.22% 100%,
+      94.44% calc(100% - 14px),
+      91.67% 100%,
+      88.89% calc(100% - 14px),
+      86.11% 100%,
+      83.33% calc(100% - 14px),
+      80.56% 100%,
+      77.78% calc(100% - 14px),
+      75.00% 100%,
+      72.22% calc(100% - 14px),
+      69.44% 100%,
+      66.67% calc(100% - 14px),
+      63.89% 100%,
+      61.11% calc(100% - 14px),
+      58.33% 100%,
+      55.56% calc(100% - 14px),
+      52.78% 100%,
+      50.00% calc(100% - 14px),
+      47.22% 100%,
+      44.44% calc(100% - 14px),
+      41.67% 100%,
+      38.89% calc(100% - 14px),
+      36.11% 100%,
+      33.33% calc(100% - 14px),
+      30.56% 100%,
+      27.78% calc(100% - 14px),
+      25.00% 100%,
+      22.22% calc(100% - 14px),
+      19.44% 100%,
+      16.67% calc(100% - 14px),
+      13.89% 100%,
+      11.11% calc(100% - 14px),
+      8.33% 100%,
+      5.56% calc(100% - 14px),
+      2.78% 100%,
+      0.00% calc(100% - 14px));
 }
 
+/* ---- the navigation shelf (SiteNav) ------------------------------------- */
+
+/* The one piece of chrome drawn once for both layouts. The page itself is two
+   drawings — the 1280px collage above `md`, the reflowed column below — but a
+   drawer is a drawer at either width. It covers the screen at both of them and
+   all that changes is which way the shelf inside it runs:
+
+     phone     long   a column of books lying flat, toppling in from the right
+     desktop   wide   a row of books standing up, dropping onto the shelf
+
+   Everything enters from the right, because that is the corner the sticker is
+   thrown into and a drawer should come from the thing that opens it.
+
+   Written here rather than as utilities because the two arrangements share one
+   set of parts and differ only in axis, and because the tumble is a six-stop
+   keyframe that no utility expresses. Every colour on a book, and its
+   thickness, comes in from `SiteNav` as `--spine` / `--cap` / `--ink` /
+   `--book`, so the palette stays in `content/site.ts` with the rest of the
+   design's colours. */
+
+/* ---- the sticky sticker ------------------------------------------------- */
+
+/* The corner the sticker holds, and the box that carries it onto the page.
+
+   Split from the button below because two things move this sticker and a box
+   has one transform: the dock is thrown on with the hero's stickers and then
+   holds still forever, and the button inside it turns — at rest, under the
+   pointer, and again when the shelf is out. One box doing both would mean the
+   arrival overwriting the resting turn the moment it landed.
+
+   Fixed rather than `position: sticky`: it holds this corner over 10,000 pixels
+   of page, and sticky needs a scrolling ancestor to stick inside. It outranks
+   the drawer so that it is still there once the shelf is out — open, it is the
+   close button, and on a shelf that covers the screen it is the only one. */
+.nav-dock {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 220;
+}
+
+@media (min-width: 768px) {
+  .nav-dock {
+    top: 14px;
+    right: 18px;
+  }
+}
+
+/* The arrival, hooked to the hero — this sticker is drawn as one of the hero's
+   and it should land as one, after the last of them and before the scroll cue's
+   letters run in.
+
+   Which half deals it depends on the width, the same way the rest of the hero
+   is split. Above `md` it is `HeroMotion`'s own timeline, so it lands in step
+   with the collage's stickers rather than a fixed delay away from them — hence
+   the bare `opacity: 0` here, which is the same hold `.hero-motion` takes and
+   which GSAP lifts when it deals. Below `md` the collage is `display: none` and
+   no timeline arms, so it takes the phone's `deal-in` keyframes on the beat
+   after the last sticker there.
+
+   Thrown in from up and to the right, which is off the corner it lives in — the
+   same rule every other piece of the deal follows. */
+@media (min-width: 768px) {
+  .nav-dock {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-dock {
+    --deal-x: 70px;
+    --deal-y: -56px;
+    --deal-r: 20deg;
+    --deal-s: 0.74;
+
+    animation: deal-in 0.72s cubic-bezier(0.18, 1.1, 0.3, 1) 1.75s both;
+  }
+}
+
+/* The sticker itself. Drawn off the hero's own sheet — the word curving over
+   the mark, the way "PLAY AROUND" curves over the gamepad — and thrown into the
+   corner the design gives that gamepad. So: no disc, no ring, no plate behind
+   it. What keeps it legible where it crosses the collage is the drop shadow,
+   which darkens whatever is immediately behind the strokes without drawing a
+   box. */
+.nav-button {
+  --logo-fill: #131b24;
+  --logo-ink: #fa1a1d;
+
+  display: flex;
+  width: 94px;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  cursor: pointer;
+  transform: rotate(6deg);
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.9));
+  transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+@media (min-width: 768px) {
+  .nav-button {
+    width: 118px;
+  }
+}
+
+/* `overflow: visible` because the ascenders on the arc sit above the box the
+   curve is measured in, and a clipped E is worse than a taller sticker. */
+.nav-button-arc {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.nav-button-arc text {
+  fill: #fcfcfc;
+  font-family: var(--font-rotonto);
+  font-size: 15px;
+  letter-spacing: 1.6px;
+}
+
+/* Pulled up under the word. The mark is drawn 108 x 86 with the outer half of a
+   6.6 stroke outside that box, so it carries a gap of its own at the top on top
+   of whatever the arc leaves. */
+.nav-button-mark {
+  width: 64%;
+  height: auto;
+  margin-top: -11px;
+}
+
+.nav-button:hover {
+  transform: rotate(11deg) scale(1.07);
+}
+
+/* Open, the mark is the sticker's filled state and it has swung the other way —
+   which is the tell that pressing it again puts it back. */
+.nav-button[aria-expanded="true"] {
+  --logo-fill: #fa1a1d;
+  --logo-ink: #131b24;
+
+  transform: rotate(-7deg) scale(1.04);
+}
+
+.nav-button:focus-visible {
+  border-radius: 12px;
+  outline: 3px solid #bfea88;
+  outline-offset: 4px;
+}
+
+/* The mark's eye. Rotating a circle about its own centre is a no-op, so
+   overriding the export's `transform` attribute here costs nothing and the
+   origin only has to be right for the squash. */
+.nav-eye {
+  transform-origin: 35.1266px 32.5686px;
+}
+
+.nav-button[aria-expanded="true"] .nav-eye {
+  animation: nav-blink 3.4s ease-in-out infinite;
+}
+
+@keyframes nav-blink {
+
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* ---- the drawer --------------------------------------------------------- */
+
+/* The whole screen, at both widths, pulled in from the right edge. It is opaque
+   and covers everything, so there is no scrim under it and nothing behind it to
+   click — the sticker in the corner and Escape are what close it, and the
+   sticker is drawn above the panel so it is on hand the whole time.
+
+   `100dvh` rather than `100vh`: the mobile browser chrome that `vh` ignores is
+   exactly what would put the last book past the bottom of the screen. */
+.nav-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  width: 100vw;
+  height: 100dvh;
+  flex-direction: column;
+  /* Clears the sticker, which floats over the top-right corner and is turned
+     6 degrees, so it reaches a little past its own box. */
+  padding: 118px 20px 28px;
+  /* A book is thrown in tipped 34 degrees and swings a couple of hundred pixels
+     wide of where it lands. The panel is the screen, so clipping at its edge is
+     clipping at the screen edge — and it keeps that swing off the root, which
+     is the difference between a book falling and the page growing sideways. */
+  overflow: hidden;
+  background-color: #000000;
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.3, 1),
+    visibility 0s linear 0.5s;
+}
+
+.nav-panel[data-open="true"] {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.56s cubic-bezier(0.22, 1, 0.3, 1);
+}
+
+.nav-panel:focus {
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .nav-panel {
+    padding: 132px 64px 64px;
+  }
+}
+
+.nav-eyebrow {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  color: #fa1a1d;
+  font-family: var(--font-rotonto);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+}
+
+/* The rule running off the label to the panel's edge. */
+.nav-eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #fa1a1d;
+  opacity: 0.55;
+}
+
+/* ---- the shelf ---------------------------------------------------------- */
+
+/* Phone: a scrolling column. Ten books at their smallest are still taller than
+   a short phone held sideways, and a shelf that runs off the bottom of the
+   screen is a shelf with unreachable books on it. */
+.nav-shelf {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  min-height: 0;
+  margin-top: 26px;
+  padding-bottom: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Desktop: a row standing on its bottom edge, centred in what the eyebrow
+   leaves. `align-items: flex-end` is the shelf itself — every book rests on the
+   same line whatever its height, and it is the line the tumble lands on. */
+@media (min-width: 768px) {
+  .nav-shelf {
+    flex: none;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(9px, 1.2vw, 18px);
+    margin-block: auto;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+}
+
+/* ---- one book ----------------------------------------------------------- */
+
+/* The book's own box, and the layer the tumble moves.
+
+   On the phone every book is the same bar: one column of ten, and ten bars that
+   each stopped somewhere different along the line would read as a chart with
+   values in it rather than a list of ten equal destinations. Thickness is a
+   thing you see on a shelf of books standing up, so it is kept for the width
+   that has one — `--book` below. */
+.nav-book {
+  flex: none;
+  width: 100%;
+  height: clamp(50px, 7.4vh, 66px);
+  transition: margin 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+
+/* The shelf parts around the book being pulled.
+
+   The pull tilts the board, and a tilted board is wider than the upright one it
+   was measured for — so without this it leans across whatever is next to it and
+   the two read as one damaged object. The neighbours are pushed off instead,
+   which is what a shelf does when you take a book off it.
+
+   Margin rather than anything on the transform layer, because margin is the one
+   thing that moves the *other* books. And on the phone it is margin-bottom
+   alone: the row above must not be pushed, or the hovered bar goes down with it
+   and out from under the pointer that is holding it there — the same flicker
+   the three layers above were split to avoid. The tilt is negative for exactly
+   this reason, so the end that drops is the one with room under it. */
+.nav-book:hover,
+.nav-book:focus-within {
+  margin-bottom: clamp(10px, 1.6vh, 16px);
+}
+
+/* Standing up, and each one its own thickness — `--book` is how thick the
+   design draws this one, and no two beside each other are alike. A shelf of
+   identical spines reads as a chart; the varied ones are most of what makes it
+   a shelf. */
+@media (min-width: 768px) {
+  .nav-book {
+    width: calc(var(--book, 1) * clamp(52px, 5.6vw, 84px));
+    height: clamp(300px, 58vh, 520px);
+  }
+
+  /* Standing up, the space is wanted either side, and it has to be *both*
+     sides even though the book only leans one way. The row is centred, so equal
+     margins leave the hovered book exactly where it was and part its neighbours
+     around it; a margin on one side alone would slide the book itself half that
+     distance sideways, out from under the pointer holding it open. */
+  .nav-book:hover,
+  .nav-book:focus-within {
+    margin-bottom: 0;
+    margin-inline: clamp(16px, 2.6vw, 44px);
+  }
+}
+
+/* The hit area. It fills the book's box and it never moves — see the note in
+   `SiteNav` about the shelf that used to flicker. `overflow: visible` so the
+   body inside it can be pulled clear without being clipped back, and
+   `position: relative` so that body has something to be `inset: 0` against. */
+.nav-spine {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  cursor: pointer;
+}
+
+/* The board, and everything printed on it. This is the layer that moves under
+   the pointer, and the one that clips the cap to the book's corners.
+
+   Phone: lying down, hinged on its right edge — which is both the end it
+   topples in from and the one it swings out on. */
+.nav-spine-body {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  inset: 0;
+  padding-inline: 26px 20px;
+  overflow: hidden;
+  background-color: var(--spine);
+  color: var(--ink);
+  font-family: var(--font-rotonto);
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  transform-origin: right center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    box-shadow 0.3s ease;
+}
+
+/* Desktop: standing up, hinged on the bottom edge it rests on. */
+@media (min-width: 768px) {
+  .nav-spine-body {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0 46px;
+    padding-inline: 0;
+    font-size: clamp(14px, 1.15vw, 18px);
+    transform-origin: bottom center;
+  }
+}
+
+/* The top edge of the book, seen from below — on its right while it is lying
+   down head to the right, across its top once it stands up. */
+.nav-cap {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 13px;
+  background-color: var(--cap);
+}
+
+@media (min-width: 768px) {
+  .nav-cap {
+    inset: 0 0 auto 0;
+    width: auto;
+    height: 30px;
+  }
+}
+
+.nav-spine-label {
+  position: relative;
+  white-space: nowrap;
+}
+
+/* Reading bottom to top, the way a spine on a shelf does. `vertical-rl` alone
+   reads top to bottom; the half-turn is what puts it the other way up. */
+@media (min-width: 768px) {
+  .nav-spine-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+}
+
+/* Printed on the board rather than set beside it. Positioned out of the flow so
+   that the number does not shift where the name sits — the names have to line
+   up across the shelf.
+
+   Phone: at the foot of the spine's *far* end from the label — the label reads
+   from the hinge-less left edge, so the number sits over by the hinge on the
+   right, the way a page number sits opposite a book's spine rather than under
+   its title. */
+.nav-spine-index {
+  position: absolute;
+  right: 20px;
+  color: var(--ink);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
+  opacity: 0.75;
+}
+
+@media (min-width: 768px) {
+  .nav-spine-index {
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    font-size: clamp(13px, 1.05vw, 16px);
+    text-align: center;
+  }
+}
+
+/* The pull — the tilted book in the design, on whichever one the pointer or the
+   keyboard is on. Out and tipped on the desktop, where the hinge is the bottom
+   edge; sideways on the phone, where it is the right. */
+.nav-spine:hover .nav-spine-body,
+.nav-spine:focus-visible .nav-spine-body {
+  transform: translateX(-16px) rotate(-2.2deg);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+}
+
+/* No lift. `transform-origin: bottom center` already pivots this at the shelf
+   line, so a bare rotation tips the book out without it rising off the shelf —
+   which is the point: pulled forward, not levitated, so it reads as a book
+   tipping toward the reader and falling back into place on release rather than
+   floating up and dropping back down.
+
+   The sideways nudge is half of what the tilt costs. Turned about its foot, a
+   520px spine at 6 degrees throws its head 54px to the right and nothing to the
+   left — so it is shifted back by half of that first, and what it then needs is
+   27px either side rather than 54px on one. That is a gap the shelf can open
+   symmetrically, which is the gap that leaves the book itself standing still. */
+@media (min-width: 768px) {
+
+  .nav-spine:hover .nav-spine-body,
+  .nav-spine:focus-visible .nav-spine-body {
+    transform: translateX(-22px) rotate(6deg);
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.55);
+  }
+}
+
+.nav-spine:focus-visible {
+  outline: 3px solid #fcfcfc;
+  outline-offset: 5px;
+}
+
+/* ---- the tumble --------------------------------------------------------- */
+
+/* Armed by the panel opening and staggered by `--tumble-delay`, so the books
+   land one after another rather than all at once. It moves the book's own box,
+   a layer up from the pull above, so the two never contend for one transform —
+   a book can be caught mid-fall by the pointer and still answer it.
+
+   `backwards` rather than `both`: each list ends on the resting state the box
+   already has, so once it is over the element is simply back under its own
+   rules, with nothing held over it. */
+.nav-panel[data-open="true"] .nav-book {
+  animation: nav-tumble-long 0.62s cubic-bezier(0.2, 0.8, 0.28, 1) var(--tumble-delay, 0ms) backwards;
+  transform-origin: right center;
+}
+
+@media (min-width: 768px) {
+  .nav-panel[data-open="true"] .nav-book {
+    animation-name: nav-tumble-wide;
+    animation-duration: 0.74s;
+    transform-origin: bottom center;
+  }
+}
+
+/* Phone: it topples in through the panel's right edge and rocks on its hinge. */
+@keyframes nav-tumble-long {
+  0% {
+    opacity: 0;
+    transform: translateX(115%) rotate(14deg);
+  }
+
+  52% {
+    opacity: 1;
+    transform: translateX(0) rotate(-4deg);
+  }
+
+  72% {
+    transform: rotate(2.4deg);
+  }
+
+  87% {
+    transform: rotate(-1.1deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Desktop: it drops onto the shelf tipped over, catches on its bottom edge and
+   rocks upright — three swings, each smaller than the last. */
+@keyframes nav-tumble-wide {
+  0% {
+    opacity: 0;
+    transform: translateY(-56px) rotate(34deg);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateY(0) rotate(-11deg);
+  }
+
+  64% {
+    transform: rotate(7deg);
+  }
+
+  80% {
+    transform: rotate(-4deg);
+  }
+
+  91% {
+    transform: rotate(1.6deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The drawer still opens and the books are still there; nothing travels or
+   rocks to get them on screen. The pull on hover is kept — it is a few pixels
+   answering the pointer, not motion crossing the screen — but it arrives
+   without a transition. */
+@media (prefers-reduced-motion: reduce) {
+
+  .nav-button,
+  .nav-panel,
+  .nav-book,
+  .nav-spine-body {
+    transition: none;
+  }
+
+  .nav-button[aria-expanded="true"] .nav-eye,
+  .nav-panel[data-open="true"] .nav-book {
+    animation: none;
+  }
+}
