@@ -39,14 +39,19 @@ export function isDarkCard(color: string): boolean {
 }
 
 /**
- * Ink for anything printed on a card face. Light cards take the deck's blue,
+ * Ink for anything printed on a card face. Light cards take a near-black navy,
  * the two dark ones take white, so a face reads the same whichever color the
  * cycle happens to deal it.
+ *
+ * The light-card ink used to be the deck's mid blue (#2849CB), which sits
+ * under 4:1 contrast on the grey and pink cards — borderline even at rest, and
+ * the first thing to wash out once the card's own opacity is animating. Darker
+ * ink buys back the margin the animation spends.
  */
 export function trackInk(color: string): { ink: string; rule: string } {
   return isDarkCard(color)
     ? { ink: "#FFFFFF", rule: "rgba(255,255,255,0.4)" }
-    : { ink: "#2849CB", rule: "rgba(40,73,203,0.35)" };
+    : { ink: "#0B1550", rule: "rgba(11,21,80,0.4)" };
 }
 
 /**

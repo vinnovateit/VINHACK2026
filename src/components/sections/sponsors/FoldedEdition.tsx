@@ -5,7 +5,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
-import SponsorEdition, { EditionMasthead } from "./SponsorEdition";
+import SponsorEdition from "./SponsorEdition";
+import SealedCover from "./SealedCover";
 import { SPONSOR_HEADING } from "./copy";
 import { DESKTOP } from "@/components/motion/recipes";
 import { paperUnfold } from "@/components/motion/paper";
@@ -15,11 +16,11 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 /**
  * The sponsor sheet as a cover that opens, the way a book does.
  *
- * The reader arrives at a closed edition: one cover, the nameplate across the
- * top of it, the section's headline printed underneath. Scroll on and the cover
- * lifts on a spine down its left edge and swings away from the page, and the
- * sheet under it is uncovered by the cover's own edge travelling across it. The
- * headline rides up into the band the nameplate vacates as it goes.
+ * The reader arrives at a closed edition — a sealed one, see `SealedCover`.
+ * Scroll on and the cover lifts on a spine down its left edge and swings away
+ * from the page, and the sheet under it is uncovered by the cover's own edge
+ * travelling across it, leaving THE HACKSTREET JOURNAL where it has always
+ * been printed.
  *
  * It used to be a pamphlet: the paper split down the middle and both halves
  * swung out on their outer edges at once. Two hinges going opposite ways is a
@@ -31,12 +32,20 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  * actually leaves — see `render`. Nothing is timed against anything else, which
  * is why the two never drift apart.
  *
+ * The section's own title and standfirst are set in red on the black *above*
+ * the paper, and they do not move. They used to be printed on the cover and
+ * flown up into the sheet's top band as it opened, which meant that what the
+ * reader ended up looking at was a broadsheet with OUR SPONSORS where its
+ * nameplate should be, and a hand's width of empty newsprint under it. The
+ * paper prints its own masthead; the section says what the section is, from
+ * outside the paper. See `SPONSOR_HEADING`.
+ *
  * Everything here is transform and clip only. The collage this sits in is a
  * fixed 1280 x 12818 frame where every section holds an exact `top` (see
  * `DesignCanvas`), so an animation that changed its own height would push six
  * sections down the page. The closed cover is absolutely placed so that the
  * open sheet lands exactly where `SponsorEdition` has always sat, and the
- * section measures the same 840px at every point in the movement.
+ * section measures the same at every point in the movement.
  *
  * Coordinates below are in the sheet's own 1184 x 758.4 Figma units, which is
  * also the size it is printed at — `Sponsors` gives it a column of exactly
@@ -49,17 +58,42 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 const SHEET_W = 1184;
 const SHEET_H = 758.4;
 
-/** How much of the window's height the sheet is allowed at most.
+/** The heading band above the paper: how tall it is, and the air between it
+ *  and the sheet's top edge. Both in the sheet's own units, because the two are
+ *  scaled to the window as one block — the heading has to shrink with the paper
+ *  or it would end up larger than the masthead it is standing next to. */
+const HEAD_H = 72;
+const HEAD_GAP = 26;
+/**
+ * How far the two heading blocks are held in from the sheet's edges.
+ *
+ * 29.11 is where the paper's own rules start and stop — the heavy one under
+ * the nameplate and every column rule below it — so the standfirst lines up
+ * with the left end of them and the title with the right, and the heading
+ * reads as part of the same setting rather than floating over the corners.
+ *
+ * It also buys the clearance the title needs. The nav sticker is fixed to the
+ * top-right of the *viewport*, outside the collage entirely (see `SiteNav`),
+ * so it lands on whatever this section puts in that corner; set flush to the
+ * sheet's edge, SPONSORS ran into it.
+ */
+const HEAD_INSET = 29.11;
+
+/** The whole block — the heading, the gap, and the sheet. `Sponsors` reserves
+ *  exactly this so the section's layout matches what is drawn in it. */
+export const EDITION_BLOCK_HEIGHT = HEAD_H + HEAD_GAP + SHEET_H;
+
+/** How much of the window's height the block is allowed at most.
  *
  * The section has no scroll runway reserved to hold it on screen (unlike the
  * track deck, which is drawn taller for exactly that), so the only lever
- * available is size: on a short window the sheet at its drawn size is taller
+ * available is size: on a short window the block at its drawn size is taller
  * than the viewport and the reveal is never on screen whole at once. Scaling
  * it down to fit means there is at least one point in the scroll where the
  * whole opened sheet is visible together, which a fixed size can't promise.
  * Kept close to 1 rather than a smaller safety margin — the sheet reads as
  * a broadsheet and wants to fill the window, not sit in the middle of it. */
-const VIEWPORT_FIT = 0.94;
+const VIEWPORT_FIT = 0.95;
 
 /**
  * How far the cover swings, in degrees.
@@ -76,16 +110,6 @@ const VIEWPORT_FIT = 0.94;
  */
 const SWING = 88;
 
-/** The headline's two positions: centred in the blank lower two-thirds of the
- *  closed cover, and up in the band the nameplate used to occupy once the
- *  sheet is open. */
-const HEADLINE_CLOSED_Y = 360;
-const HEADLINE_OPEN_Y = 30;
-
-/** How much bigger the headline reads on the closed cover than once it has
- *  settled into the open sheet's header band. */
-const HEADLINE_CLOSED_SCALE = 1.3;
-
 /** Zero velocity at both ends, so no stage of the movement starts with a jolt. */
 function smooth(t: number): number {
   const c = t < 0 ? 0 : t > 1 ? 1 : t;
@@ -98,17 +122,14 @@ function stage(p: number, from: number, to: number): number {
   return smooth((p - from) / (to - from));
 }
 
-function mix(from: number, to: number, t: number): number {
-  return from + (to - from) * t;
-}
-
 /**
  * The cover, hinged on its left edge.
  *
  * One panel, not two. The spine is the outer edge it is held at, so the free
  * edge is the far one and it is that edge which travels across the page — the
  * whole reason the sheet underneath can be uncovered geometrically rather than
- * faded in on a guess.
+ * faded in on a guess. It is also the edge `SealedCover` marks with its
+ * perforation, so the cue and the hinge are on the same side.
  */
 function BookCover() {
   return (
@@ -120,9 +141,7 @@ function BookCover() {
         backfaceVisibility: "hidden",
       }}
     >
-      <div className="absolute inset-0 text-left text-[18px] text-black [font-family:var(--font-rotonto),_Rotonto,_sans-serif]">
-        <EditionMasthead />
-      </div>
+      <SealedCover />
 
       {/* The spine. A book is thicker at the fold than across the page, and the
           band of shadow gathered there is most of what says so — it is on the
@@ -172,8 +191,6 @@ export default function FoldedEdition() {
       const [shade] = q("[data-cover-shade]") as HTMLElement[];
       const dressing = q("[data-cover-dressing]") as HTMLElement[];
       const [sheet] = q("[data-sheet]") as HTMLElement[];
-      const [headline] = q("[data-headline]") as HTMLElement[];
-      const [rule] = q("[data-headline-rule]") as HTMLElement[];
 
       const desktop = window.matchMedia(DESKTOP);
       const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -185,14 +202,18 @@ export default function FoldedEdition() {
       let drawn = Number.NaN;
 
       /**
-       * Scales the whole sheet down so it fits inside the window's height at
-       * `VIEWPORT_FIT`, on a short window where the sheet at its drawn size
-       * would otherwise be taller than the viewport and never on screen whole
-       * at once.
+       * Scales the whole block — heading and sheet together — so it fits inside
+       * the window's height at `VIEWPORT_FIT`, on a short window where it would
+       * otherwise be taller than the viewport and never on screen whole at once.
+       *
+       * Measured on `fit` rather than on the sheet alone: the heading is part of
+       * what has to be on screen with the paper, so it is part of what is being
+       * fitted, and scaling the two by different amounts would leave the section
+       * title floating at a size the paper's own masthead never agreed to.
        */
       const fitToViewport = () => {
         fit.style.transform = "";
-        const rendered = root.getBoundingClientRect().height;
+        const rendered = fit.getBoundingClientRect().height;
         const s =
           rendered > 0
             ? Math.min(1, (window.innerHeight * VIEWPORT_FIT) / rendered)
@@ -209,8 +230,6 @@ export default function FoldedEdition() {
         // Generous scroll distance and smooth staging so the unfold animation
         // feels paced, deliberate and rock-solid while screen locked.
         const swing = stage(p, 0.05, 0.92);
-        const travel = stage(p, 0.15, 0.94);
-
         const angle = SWING * swing;
 
         if (cover) {
@@ -226,14 +245,6 @@ export default function FoldedEdition() {
             opacity: 1 - smooth(Math.max(0, (swing - 0.1) / 0.35)),
           });
         }
-
-        if (headline) {
-          gsap.set(headline, {
-            y: mix(HEADLINE_CLOSED_Y, HEADLINE_OPEN_Y, travel),
-            scale: mix(HEADLINE_CLOSED_SCALE, 1, travel),
-          });
-        }
-        if (rule) gsap.set(rule, { opacity: travel });
 
         if (sheet) {
           const covered = Math.cos((90 * swing * Math.PI) / 180) * 100;
@@ -273,7 +284,7 @@ export default function FoldedEdition() {
         armed = true;
 
         canvasScale = rect.width / SHEET_W || 1;
-        const renderedHeight = SHEET_H * fitScale * canvasScale;
+        const renderedHeight = EDITION_BLOCK_HEIGHT * fitScale * canvasScale;
         const targetTop = Math.max(0, (window.innerHeight - renderedHeight) / 2);
         const containerTopDoc = window.scrollY + rect.top;
         parkStart = containerTopDoc - targetTop;
@@ -341,111 +352,113 @@ export default function FoldedEdition() {
   );
 
   return (
-    <div ref={parkRef} className="relative">
+    /* `overflow-anchor: none` for the same reason the track deck carries it:
+       this element is counter-translated against the scroll, and Chrome's
+       scroll anchoring will re-scroll the page to hold something inside it
+       still if it is allowed to pick an anchor in here. */
+    <div ref={parkRef} className="relative" style={{ overflowAnchor: "none" }}>
       <div
         ref={fitRef}
-        style={{ width: SHEET_W, height: SHEET_H, transformOrigin: "top center" }}
+        style={{ width: SHEET_W, transformOrigin: "top center" }}
       >
-      <div
-        ref={stageRef}
-        className="relative select-none"
-        style={{
-          width: SHEET_W,
-          height: SHEET_H,
-          perspective: 1900,
-          // Toward the spine, so the swing is read as a cover coming up off the
-          // page rather than as a panel sliding sideways.
-          perspectiveOrigin: "22% 50%",
-        }}
-      >
-        {/* The opened page. Clipped to nothing until the cover starts to lift;
-            `header` is empty because on this edition the nameplate is printed on
-            the cover, and what stands in its place is the travelling headline
-            below — kept out here, over the top, so the clip that uncovers the
-            sheet does not cut through it on the way. */}
-        {/* Clipped shut in the markup, not by the first frame of the animation:
-            the page is statically exported, so without it the whole sheet is in
-            the HTML uncovered and shows for as long as it takes the script to
-            arrive. */}
+        {/* The section's own heading, on the black above the paper: the
+            standfirst in the left corner, the title in the right. Part of the
+            parked, fitted block rather than a row above it — it has to stay
+            with the paper while the paper is held on screen, and it has to
+            shrink with it so the two are set at one size. */}
         <div
-          data-sheet
-          className="absolute inset-0"
-          style={{ clipPath: "inset(0% 0% 0% 100%)" }}
+          className="flex items-start justify-between font-rotonto text-[#fa1a1d]"
+          style={{
+            height: HEAD_H,
+            marginBottom: HEAD_GAP,
+            paddingLeft: HEAD_INSET,
+            paddingRight: HEAD_INSET,
+          }}
         >
-          <SponsorEdition header={<></>} />
+          <p className="flex items-end gap-[14px] text-[25px] font-light leading-[1.16] tracking-wide">
+            <span>
+              {SPONSOR_HEADING.taglineLines[0]}
+              <br />
+              {SPONSOR_HEADING.taglineLines[1]}
+            </span>
+            <img
+              alt=""
+              aria-hidden
+              src="/figma/star2.svg"
+              className="mb-[6px] block h-[22px] w-[20px] shrink-0"
+            />
+          </p>
+          <p className="text-right text-[40px] font-normal leading-[0.88] tracking-tight">
+            {SPONSOR_HEADING.titleLines[0]}
+            <br />
+            {SPONSOR_HEADING.titleLines[1]}
+          </p>
         </div>
 
-        {/* What the opening is timed against. Zero size, in the middle of the
-            cover, and never moved by any of this. */}
         <div
-          aria-hidden
-          data-cover-anchor
-          className="pointer-events-none absolute left-0 h-0 w-full"
-          style={{ top: SHEET_H / 2 }}
-        />
-
-        {/* The closed edition: the pages stacked under it, and the cover itself
-            with the nameplate across the top. */}
-        <div
-          data-book
-          className="absolute inset-0"
-          style={{ transformStyle: "preserve-3d" }}
+          ref={stageRef}
+          className="relative select-none"
+          style={{
+            width: SHEET_W,
+            height: SHEET_H,
+            perspective: 1900,
+            // Toward the spine, so the swing is read as a cover coming up off
+            // the page rather than as a panel sliding sideways.
+            perspectiveOrigin: "22% 50%",
+          }}
         >
+          {/* The opened page, nameplate and all — this is the edition the
+              reader was promised, so it prints its own masthead.
+
+              Clipped shut in the markup, not by the first frame of the
+              animation: the page is statically exported, so without it the
+              whole sheet is in the HTML uncovered and shows for as long as it
+              takes the script to arrive. */}
           <div
-            aria-hidden
-            data-cover-dressing
-            className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[-9px] rotate-[0.7deg] rounded-[2px] border border-black/10 bg-[#d0d0cb] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
-          />
-          <div
-            aria-hidden
-            data-cover-dressing
-            className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[9px] rotate-[-0.7deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
-          />
-
-          {/* The closed edition's own shadow, on a box of its own behind the
-              cover rather than on the cover itself.
-
-              It cannot go on the cover, which rotates: a box-shadow rotates with
-              its box, and the shadow of a lifting cover does not swing off the
-              page with it. Out here it is dressing like the stacked pages, and it
-              leaves when they do — which is also what stopped it being left
-              behind as a hard black band lying across the open sheet. */}
-          <div
-            aria-hidden
-            data-cover-dressing
-            className="pointer-events-none absolute inset-0 shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
-          />
-
-          <BookCover />
-        </div>
-
-        {/* The section's headline. Printed centred on the closed cover to begin
-            with, settling into the sheet's own top band by the end.
-            Centred rather than split left/right (the tagline where the
-            masthead's kicker line sits, "OUR SPONSORS" opposite it) because
-            `data-headline` is scaled up whole from a top-centre origin while
-            closed (see `HEADLINE_CLOSED_SCALE`): anything held off that centre
-            line is pushed further from it as the scale grows, and at 1.3x a
-            block sitting near either edge of the 1184px cover was carried
-            straight off it. Content centred on that same axis has nowhere to
-            drift to, at any scale. */}
-        <div data-headline className="absolute inset-x-0 top-0 origin-top text-center">
-          <div className="relative flex flex-col items-center gap-3 px-16 pt-2 pb-3">
-            <div className="max-w-[640px] font-rotonto text-[26px] font-light leading-[1.2] tracking-wide text-[#fa1a1d]">
-              {SPONSOR_HEADING.tagline}
-            </div>
-            <div className="font-rotonto text-[58px] font-normal leading-[0.9] tracking-tight text-[#fa1a1d]">
-              OUR SPONSORS
-            </div>
+            data-sheet
+            className="absolute inset-0"
+            style={{ clipPath: "inset(0% 0% 0% 100%)" }}
+          >
+            <SponsorEdition />
           </div>
+
+          {/* The closed edition: the pages stacked under it, and the sealed
+              cover itself. */}
           <div
-            data-headline-rule
-            aria-hidden
-            className="absolute top-[199.73px] left-[29.11px] h-[2.2px] w-[1125.4px] border-t-[2.2px] border-black opacity-0"
-          />
+            data-book
+            className="absolute inset-0"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            <div
+              aria-hidden
+              data-cover-dressing
+              className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[-9px] rotate-[0.7deg] rounded-[2px] border border-black/10 bg-[#d0d0cb] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+            />
+            <div
+              aria-hidden
+              data-cover-dressing
+              className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[9px] rotate-[-0.7deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
+            />
+
+            {/* The closed edition's own shadow, on a box of its own behind the
+                cover rather than on the cover itself.
+
+                It cannot go on the cover, which rotates: a box-shadow rotates
+                with its box, and the shadow of a lifting cover does not swing
+                off the page with it. Out here it is dressing like the stacked
+                pages, and it leaves when they do — which is also what stopped
+                it being left behind as a hard black band lying across the open
+                sheet. */}
+            <div
+              aria-hidden
+              data-cover-dressing
+              className="pointer-events-none absolute inset-0 shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+            />
+
+            <BookCover />
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 }

@@ -17,6 +17,21 @@ const EVENT_PHOTOS = [
 
 const SPROCKET_COUNT = 65;
 
+// The "core memory" snake, one set = the wordmark (as individual glyphs so
+// the wave bends through the word, not just between words) followed by an
+// accent icon, three times over. Each unit gets a bob phase from its index;
+// the wave repeats every CORE_SNAKE_WAVELENGTH units, and a set's length is
+// a multiple of that, so the two cloned sets loop seamlessly.
+const CORE_SNAKE_ICONS = ["/figma/star2.svg", "/figma/vector51.svg", "/recap/flowers.svg"];
+type CoreSnakeUnit = { kind: "char"; ch: string } | { kind: "icon"; src: string };
+const CORE_SNAKE_UNITS: CoreSnakeUnit[] = CORE_SNAKE_ICONS.flatMap((src) => [
+  ...[..."core memory"].map((ch): CoreSnakeUnit => ({ kind: "char", ch })),
+  { kind: "icon", src },
+]);
+const CORE_SNAKE_WAVELENGTH = 12; // units per full S — exactly one "core memory ✦"
+const CORE_SNAKE_PERIOD = 2.4; // seconds, = animation-duration of core-snake-bob
+const CORE_SNAKE_STEP = CORE_SNAKE_PERIOD / CORE_SNAKE_WAVELENGTH;
+
 interface RecapProps {
   inView?: boolean;
 }
@@ -49,12 +64,26 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none font-rotonto">
       {/* 1. 15+ Colleges Badge (Top-Left) with Animated Circle Draw */}
-      <div className="absolute top-[122px] left-[200px] z-20 w-[130px] h-[95px] -rotate-6 transition-transform duration-300 hover:scale-105 hover:rotate-0">
+      <div
+        className="absolute top-[122px] left-[200px] z-20 w-[130px] h-[95px] -rotate-6 transition-transform duration-300 hover:scale-105 hover:rotate-0"
+        style={{
+          transform: inView ? "translateY(0)" : "translateY(-18px)",
+          opacity: inView ? 1 : 0,
+          transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, opacity 0.6s ease 0.15s",
+        }}
+      >
         <CollegesBadge inView={inView} />
       </div>
 
       {/* 2. 300+ BUILDERS (Top-Center) - "BUILDERS" stays steady, "300+" counts up and locks into original text */}
-      <div className="absolute top-[120px] left-[570px] z-20 flex items-center">
+      <div
+        className="absolute top-[120px] left-[570px] z-20 flex items-center"
+        style={{
+          transform: inView ? "translateY(0)" : "translateY(-18px)",
+          opacity: inView ? 1 : 0,
+          transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s, opacity 0.6s ease 0.3s",
+        }}
+      >
         <BuildersCounter inView={inView} />
         <Image
           className="w-[30px] h-[30px] object-contain ml-[6px] mt-[14px] pointer-events-none transition-transform duration-500 delay-500"
@@ -182,7 +211,15 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
       </div>
 
       {/* 35mm Film Roll Canister Assembly */}
-      <FilmCanister />
+      <div
+        style={{
+          transform: inView ? "translateX(0)" : "translateX(-24px)",
+          opacity: inView ? 1 : 0,
+          transition: "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.7s ease 0.1s",
+        }}
+      >
+        <FilmCanister />
+      </div>
 
       {/* Bottom Details & Badges */}
       {/* 4. Quote text - Rotonto, pure white, exact 5-line break matching design */}
@@ -230,57 +267,50 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         />
       </div>
 
-      {/* 6. Curved "core memory" Infinite Flowing Marquee Disappearing into Corner */}
+      {/* 6. "core memory" — wordmark and accent icons slithering left-to-right
+          along a horizontal S-curve. Each item bobs on a sine with a phase
+          offset by index, so together they form a travelling snake. Hover
+          pauses in place. */}
       <div
-        className="absolute top-[460px] right-[20px] w-[340px] h-[72px] overflow-hidden z-20 pointer-events-none"
+        className="core-snake-group absolute top-[452px] right-[20px] w-[270px] h-[96px] overflow-hidden z-20"
         style={{
           maskImage:
-            "linear-gradient(to right, black 55%, transparent 95%)",
+            "linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%)",
           WebkitMaskImage:
-            "linear-gradient(to right, black 55%, transparent 95%)",
+            "linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%)",
+          transform: inView ? "translateX(0)" : "translateX(24px)",
+          opacity: inView ? 1 : 0,
+          transition:
+            "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.6s, opacity 0.7s ease 0.6s",
         }}
       >
-        <div className="core-marquee-track flex gap-[30px] items-center">
-          {/* Repeating instances flowing continuously into the corner */}
-          <div className="w-[250px] h-[66px] shrink-0">
-            <Image
-              className="w-full h-full object-contain"
-              src="/recap/core.svg"
-              width={372}
-              height={100}
-              alt="core memory"
-              unoptimized
-            />
-          </div>
-          <div className="w-[250px] h-[66px] shrink-0">
-            <Image
-              className="w-full h-full object-contain"
-              src="/recap/core.svg"
-              width={372}
-              height={100}
-              alt="core memory"
-              unoptimized
-            />
-          </div>
+        <div className="core-snake-track h-full font-rotonto text-[15px] leading-none text-[#FDBBFF]">
+          {[0, 1].map((set) =>
+            CORE_SNAKE_UNITS.map((unit, i) => {
+              const phase = (set * CORE_SNAKE_UNITS.length + i) % CORE_SNAKE_WAVELENGTH;
+              return (
+                <span
+                  key={`core-snake-${set}-${i}`}
+                  className="core-snake-item shrink-0"
+                  style={{ animationDelay: `${-phase * CORE_SNAKE_STEP}s` }}
+                >
+                  {unit.kind === "char" ? (
+                    unit.ch
+                  ) : (
+                    <Image
+                      className="w-[12px] h-[12px] object-contain mx-[8px]"
+                      src={unit.src}
+                      width={24}
+                      height={24}
+                      alt=""
+                      unoptimized
+                    />
+                  )}
+                </span>
+              );
+            }),
+          )}
         </div>
-
-        {/* Star & cyan heart accents */}
-        <Image
-          className="absolute top-[32px] left-[60px] w-[14px] h-[14px] object-contain pointer-events-none"
-          src="/figma/star2.svg"
-          width={28}
-          height={26}
-          alt=""
-          unoptimized
-        />
-        <Image
-          className="absolute -top-[4px] right-[70px] w-[13px] h-[13px] object-contain pointer-events-none"
-          src="/figma/vector51.svg"
-          width={22}
-          height={20}
-          alt=""
-          unoptimized
-        />
       </div>
     </div>
   );

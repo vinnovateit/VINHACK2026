@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Image from "next/image";
 
 import {
@@ -10,6 +9,30 @@ import {
 } from "./copy";
 
 const BARCODE_BAR = "/figma/barcode-bar.svg";
+
+/** The column measure, in the sheet's units. Every body column on the page is
+ *  set to it, and it is what a column's own furniture is aligned against. */
+const COLUMN_W = 235.2;
+
+/**
+ * The link at the foot of a column.
+ *
+ * Given the column's own measure and right-aligned in it, rather than dropped
+ * at a hand-placed `left`. The three used to be positioned independently of
+ * the copy above them and two of them landed *inside* it — the music column's
+ * sat across its third and fourth lines. Aligning to the measure means the
+ * only figure that has to be right is where the column ends.
+ */
+function ReadMore({ top, left }: { top: number; left: number }) {
+  return (
+    <div
+      className="absolute text-right text-[13.2px] font-light text-[#6e6e6e] cursor-pointer [transition:color_0.2s_ease,_transform_0.2s_ease] hover:text-[#fa1a1d] hover:translate-x-[3px]"
+      style={{ top, left, width: COLUMN_W }}
+    >
+      READ MORE →
+    </div>
+  );
+}
 const TEAM_IMG = "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp";
 const SPONSOR_LOGO = "/figma/sponsor-butterfly.svg";
 
@@ -39,15 +62,14 @@ export const STACKED_PAPER_CONFIG = {
 /**
  * The sheet itself, at its drawn size of 1184 x 758.4.
  *
- * `header` replaces the nameplate band across the top — the volume line, the
- * masthead and the strapline under it, everything above the first column rule
- * at y241. `FoldedEdition` passes the section's own title through it, because
- * on the collage that band is printed on the *cover*: by the time the sheet is
- * open the masthead has swung away with the two halves of the fold, and what
- * takes its place is the headline the reader followed in. Left out, the sheet
- * prints its own nameplate and stands alone — which is what the phone wants.
+ * The sheet always prints its own nameplate. It used to take a `header` prop
+ * so the collage could swap the band across the top — the volume line, the
+ * masthead and the strapline, everything above the first column rule at y241 —
+ * for the section's heading as the cover opened. That is gone: the paper is
+ * THE HACKSTREET JOURNAL wherever it is shown, and the section says what the
+ * section is from outside it. See `FoldedEdition` and `SPONSOR_HEADING`.
  */
-const SponsorEdition = ({ header }: { header?: ReactNode }) => {
+const SponsorEdition = () => {
   return (
     <div className="relative mx-auto w-[1184px] max-w-full select-none">
       {/* Background stacked paper sheets matching reference comp */}
@@ -67,7 +89,7 @@ const SponsorEdition = ({ header }: { header?: ReactNode }) => {
 
       {/* Sheet 3: Main Newspaper Front Page */}
       <div className="w-[1184px] max-w-full h-[758.4px] relative shadow-[0_20px_48px_rgba(0,_0,_0,_0.45),_0_4px_12px_rgba(0,_0,_0,_0.25),_0_16px_40px_rgba(0,0,0,0.35),0_4px_12px_rgba(0,0,0,0.2)] bg-[#ebebe9] overflow-hidden text-left text-[18px] text-black [font-family:var(--font-rotonto),_Rotonto,_sans-serif] mx-auto z-10">
-        {header ?? <EditionMasthead />}
+        <EditionMasthead />
         <Image className="absolute top-[248.81px] left-[30.19px] w-[246px] h-[158.4px] object-cover [filter:grayscale(100%)_contrast(125%)_brightness(95%)] [border:1.5px_solid_#000]" src={TEAM_IMG} width={246} height={158.4} sizes="100vw" alt="Ideas need people" unoptimized />
         <div className="absolute top-[415.61px] left-[32.59px] text-[31.2px] font-light whitespace-pre-wrap [text-shadow:0.6px_0_0_#000,_0_0.6px_0_#000,_-0.6px_0_0_#000,_0_-0.6px_0_#000] leading-[1.05]">{LEDE.headline}</div>
         <div className="absolute top-[503.21px] left-[33.79px] text-[15.6px] font-light inline-block w-[242.4px] leading-[1.35]">{LEDE.body}</div>
@@ -136,9 +158,9 @@ const SponsorEdition = ({ header }: { header?: ReactNode }) => {
         <div className="absolute top-[553.42px] left-[942.08px] text-[19.36px] font-light text-[#3b3b3b] inline-block w-[112.8px] h-[57.6px] leading-[1.08]">{SUPPORTERS[2].name}</div>
         <div className="absolute top-[673.41px] left-[939.99px] text-[19.36px] font-light text-[#3b3b3b] inline-block w-[112.8px] h-[57.6px] leading-[1.08]">{SUPPORTERS[3].name}</div>
         <div className="absolute top-[457.97px] left-[301.65px] font-light inline-block w-[235.2px] leading-[1.35] text-[14.4px]">{TITLE_SPONSOR.sheet}</div>
-        <div className="absolute top-[712.01px] left-[447.79px] text-[13.2px] font-light text-[#6e6e6e] cursor-pointer [transition:color_0.2s_ease,_transform_0.2s_ease] hover:text-[#fa1a1d] hover:translate-x-[3px]">READ MORE →</div>
-        <div className="absolute top-[424.01px] left-[710.59px] text-[13.2px] font-light text-[#6e6e6e] cursor-pointer [transition:color_0.2s_ease,_transform_0.2s_ease] hover:text-[#fa1a1d] hover:translate-x-[3px]">READ MORE →</div>
-        <div className="absolute top-[712.01px] left-[710.59px] text-[13.2px] font-light text-[#6e6e6e] cursor-pointer [transition:color_0.2s_ease,_transform_0.2s_ease] hover:text-[#fa1a1d] hover:translate-x-[3px]">READ MORE →</div>
+        <ReadMore top={706.4} left={301.65} />
+        <ReadMore top={437.2} left={570.19} />
+        <ReadMore top={706.4} left={568.99} />
         <div className="absolute top-[372.41px] left-[570.19px] font-light inline-block w-[235.2px] leading-[1.35] text-[14px]">{MUSIC_PARTNER.sheet}</div>
         <div className="absolute top-[577.61px] left-[568.99px] font-light inline-block w-[235.2px] leading-[1.35] text-[14px]">{TRAVEL_PARTNER.sheet}</div>
         <div className="absolute top-[372.12px] left-[816.34px] [border-top:1px_solid_#000] box-border w-[331px] h-[1px]" />
@@ -157,13 +179,13 @@ const SponsorEdition = ({ header }: { header?: ReactNode }) => {
 /**
  * The nameplate band across the top of the sheet: y0 to the rule at y199.7.
  *
- * Its own component because the collage prints it on the cover of the folded
- * paper rather than on the page — `FoldedEdition` renders this into the two
- * halves of the fold, clipped at the masthead's waist, and hands the sheet
- * underneath a different header entirely. Everything keeps the offsets Figma
- * gave it, so it drops back into the sheet unchanged when nothing replaces it.
+ * Its own component because it is one band of the drawing rather than one
+ * element of it — the volume line, the nameplate, the strapline and the two
+ * heavy rules that bracket them — and because keeping it separate is what
+ * makes the sheet's own structure legible in among 60 absolutely-placed boxes.
+ * Everything keeps the offsets Figma gave it.
  */
-export function EditionMasthead() {
+function EditionMasthead() {
   return (
     <>
       <div className="absolute top-[31.61px] left-[32.59px] font-light whitespace-pre-wrap">Vol 26  // SPECIAL SPONSOR EDITION</div>
