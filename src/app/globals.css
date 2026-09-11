@@ -59,6 +59,7 @@ body {
   overflow-x: hidden;
   overflow-x: clip;
   width: 100%;
+  overflow-anchor: none;
 }
 
 /* Hide the scrollbars themselves across browsers. */
