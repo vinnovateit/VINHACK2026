@@ -11,6 +11,7 @@ import { boxesOf, MOBILE } from "@/components/motion/recipes";
 import { reveal } from "@/components/motion/reveal";
 import { wireSpeaker } from "@/components/motion/speaker";
 import { stampIn } from "@/components/motion/stamp";
+import { wireTimelineReceipt } from "@/components/motion/receipt";
 
 gsap.registerPlugin(useGSAP);
 
@@ -210,6 +211,9 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
         for (const el of all("[data-m-drag]")) {
           cleanups.push(draggable([el], { bounds: sectionOf(el) }));
         }
+
+        // ---- the timeline receipt --------------------------------------
+        cleanups.push(wireTimelineReceipt(scope));
 
         return () => cleanups.forEach((fn) => fn());
       });

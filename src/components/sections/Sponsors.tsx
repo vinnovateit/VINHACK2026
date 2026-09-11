@@ -1,17 +1,19 @@
 "use client";
 
-import FoldedEdition from "./sponsors/FoldedEdition";
+import FoldedEdition, {
+  EDITION_BLOCK_HEIGHT,
+} from "./sponsors/FoldedEdition";
 import { SPONSOR_HEADING } from "./sponsors/copy";
 import { useInView } from "@/components/useInView";
 
 /**
  * The collage's sponsor section.
  *
- * There is no header row above the paper any more. The section's title and its
- * standfirst are printed on the folded newspaper itself and travel up into it
- * as it opens — see `FoldedEdition`, which owns the whole movement. All that is
- * left here is the frame: the section's place on the canvas, and the heading
- * given plainly for anything that is not going to watch an animation.
+ * All that is here is the frame: the section's place on the canvas, and the
+ * heading given plainly for anything that is not going to watch an animation.
+ * The heading as it is *drawn* — red on the black, standfirst left, title
+ * right — belongs to `FoldedEdition`, because it is held on screen with the
+ * paper and fitted to the window with it rather than scrolling past above it.
  *
  * The sheet is printed at the size it was drawn. It used to be fitted into a
  * 1006px column at 0.85, which took the broadsheet's 14px newsprint down to
@@ -39,7 +41,14 @@ export default function SponsorsSection() {
         {SPONSOR_HEADING.title} — {SPONSOR_HEADING.tagline}
       </h2>
 
-      <div className="w-[1184px] h-[758.4px] relative flex justify-center shrink-0">
+      {/* Exactly what `FoldedEdition` draws — the heading band, the gap, and
+          the sheet — so the section reserves the space the artwork occupies
+          rather than the sheet's height alone. The width is the sheet's own,
+          which is what the edition measures its scale against. */}
+      <div
+        className="relative flex w-[1184px] shrink-0 justify-center"
+        style={{ height: EDITION_BLOCK_HEIGHT }}
+      >
         <FoldedEdition />
       </div>
     </section>

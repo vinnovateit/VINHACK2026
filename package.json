@@ -2,11 +2,16 @@
   "name": "vinhack",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.18.0",
+    "npm": "11.6.2"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/compress-fonts.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -24,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.131.0"
   }
 }

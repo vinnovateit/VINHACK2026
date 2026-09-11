@@ -19,6 +19,21 @@ const EVENT_PHOTOS = [
   "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
 ];
 
+// The "core memory" snake — the same glyph-by-glyph sine-wave slither
+// `Recap.tsx` draws for desktop (see `core-snake-bob`/`core-snake-track` in
+// globals.css), at phone scale. It used to be a plain image marquee here,
+// which read as a different, flatter animation from the desktop section it
+// is standing in for; this reuses the exact keyframes so the two match.
+const CORE_SNAKE_ICONS = ["/figma/star2.svg", "/figma/vector51.svg", "/recap/flowers.svg"];
+type CoreSnakeUnit = { kind: "char"; ch: string } | { kind: "icon"; src: string };
+const CORE_SNAKE_UNITS: CoreSnakeUnit[] = CORE_SNAKE_ICONS.flatMap((src) => [
+  ...[..."core memory"].map((ch): CoreSnakeUnit => ({ kind: "char", ch })),
+  { kind: "icon", src },
+]);
+const CORE_SNAKE_WAVELENGTH = 12; // units per full S — exactly one "core memory ✦"
+const CORE_SNAKE_PERIOD = 2.4; // seconds, = animation-duration of core-snake-bob
+const CORE_SNAKE_STEP = CORE_SNAKE_PERIOD / CORE_SNAKE_WAVELENGTH;
+
 export default function MobileRecap() {
   const [sectionRef, inView] = useInView<HTMLElement>(0.15);
   const [stampTrigger, setStampTrigger] = useState(false);
@@ -209,35 +224,44 @@ export default function MobileRecap() {
             />
           </div>
 
-          {/* Core Memory Marquee */}
+          {/* Core Memory Marquee — the same glyph snake as desktop, not a
+              scrolling image. */}
           <div
-            className="w-[160px] h-[52px] overflow-hidden pointer-events-none relative"
+            className="core-snake-group w-[160px] h-[52px] overflow-hidden pointer-events-none relative"
             style={{
-              maskImage: "linear-gradient(to right, black 60%, transparent 95%)",
-              WebkitMaskImage: "linear-gradient(to right, black 60%, transparent 95%)",
+              maskImage:
+                "linear-gradient(to right, transparent 0%, black 10%, black 88%, transparent 100%)",
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, black 10%, black 88%, transparent 100%)",
             }}
           >
-            <div className="core-marquee-track flex gap-4 items-center">
-              <div className="w-[140px] h-[45px] shrink-0">
-                <Image
-                  className="w-full h-full object-contain"
-                  src="/recap/core.svg"
-                  width={372}
-                  height={100}
-                  alt="core memory"
-                  unoptimized
-                />
-              </div>
-              <div className="w-[140px] h-[45px] shrink-0">
-                <Image
-                  className="w-full h-full object-contain"
-                  src="/recap/core.svg"
-                  width={372}
-                  height={100}
-                  alt="core memory"
-                  unoptimized
-                />
-              </div>
+            <div className="core-snake-track h-full font-rotonto text-[10px] leading-none text-[#FDBBFF]">
+              {[0, 1].map((set) =>
+                CORE_SNAKE_UNITS.map((unit, i) => {
+                  const phase =
+                    (set * CORE_SNAKE_UNITS.length + i) % CORE_SNAKE_WAVELENGTH;
+                  return (
+                    <span
+                      key={`mob-core-snake-${set}-${i}`}
+                      className="core-snake-item shrink-0"
+                      style={{ animationDelay: `${-phase * CORE_SNAKE_STEP}s` }}
+                    >
+                      {unit.kind === "char" ? (
+                        unit.ch
+                      ) : (
+                        <Image
+                          className="w-[8px] h-[8px] object-contain mx-[5px]"
+                          src={unit.src}
+                          width={24}
+                          height={24}
+                          alt=""
+                          unoptimized
+                        />
+                      )}
+                    </span>
+                  );
+                }),
+              )}
             </div>
           </div>
         </div>

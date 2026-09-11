@@ -284,6 +284,105 @@ body {
   will-change: transform;
 }
 
+.core-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* "core memory" snake: the track scrolls horizontally while every glyph
+   (and icon) bobs on the same sine, phase-shifted per glyph (see Recap.tsx),
+   so the row reads as one S-curve slithering along its axis. The keyframes
+   sample a true sine at 16 points with linear timing, so the curve stays
+   round rather than kinking at the ease-in-out joins; tilt is its derivative. */
+@keyframes core-snake-bob {
+  0% {
+    transform: translateY(-16.00px) rotate(0.00deg);
+  }
+
+  6.25% {
+    transform: translateY(-14.78px) rotate(3.44deg);
+  }
+
+  12.5% {
+    transform: translateY(-11.31px) rotate(6.36deg);
+  }
+
+  18.75% {
+    transform: translateY(-6.12px) rotate(8.31deg);
+  }
+
+  25% {
+    transform: translateY(-0.00px) rotate(9.00deg);
+  }
+
+  31.25% {
+    transform: translateY(6.12px) rotate(8.31deg);
+  }
+
+  37.5% {
+    transform: translateY(11.31px) rotate(6.36deg);
+  }
+
+  43.75% {
+    transform: translateY(14.78px) rotate(3.44deg);
+  }
+
+  50% {
+    transform: translateY(16.00px) rotate(0.00deg);
+  }
+
+  56.25% {
+    transform: translateY(14.78px) rotate(-3.44deg);
+  }
+
+  62.5% {
+    transform: translateY(11.31px) rotate(-6.36deg);
+  }
+
+  68.75% {
+    transform: translateY(6.12px) rotate(-8.31deg);
+  }
+
+  75% {
+    transform: translateY(0.00px) rotate(-9.00deg);
+  }
+
+  81.25% {
+    transform: translateY(-6.12px) rotate(-8.31deg);
+  }
+
+  87.5% {
+    transform: translateY(-11.31px) rotate(-6.36deg);
+  }
+
+  93.75% {
+    transform: translateY(-14.78px) rotate(-3.44deg);
+  }
+
+  100% {
+    transform: translateY(-16.00px) rotate(-0.00deg);
+  }
+}
+
+.core-snake-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: core-marquee 18s linear infinite;
+  will-change: transform;
+}
+
+.core-snake-item {
+  display: inline-block;
+  white-space: pre;
+  animation: core-snake-bob 2.4s linear infinite;
+  will-change: transform;
+}
+
+.core-snake-group:hover .core-snake-track,
+.core-snake-group:hover .core-snake-item {
+  animation-play-state: paused;
+}
+
 @keyframes stamp-slam {
   0% {
     opacity: 0;

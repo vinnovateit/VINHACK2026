@@ -39,14 +39,43 @@ export function isDarkCard(color: string): boolean {
 }
 
 /**
- * Ink for anything printed on a card face. Light cards take the deck's blue,
+ * Ink for anything printed on a card face. Light cards take a near-black navy,
  * the two dark ones take white, so a face reads the same whichever color the
  * cycle happens to deal it.
+ *
+ * The light-card ink used to be the deck's mid blue (#2849CB), which sits
+ * under 4:1 contrast on the grey and pink cards — borderline even at rest, and
+ * the first thing to wash out once the card's own opacity is animating. Darker
+ * ink buys back the margin the animation spends.
  */
 export function trackInk(color: string): { ink: string; rule: string } {
   return isDarkCard(color)
     ? { ink: "#FFFFFF", rule: "rgba(255,255,255,0.4)" }
-    : { ink: "#2849CB", rule: "rgba(40,73,203,0.35)" };
+    : { ink: "#0B1550", rule: "rgba(11,21,80,0.4)" };
+}
+
+/**
+ * The section heading's asterisk (`/figma/star2.svg`), inlined so it can take
+ * a card's own ink instead of the heading's fixed red. Shared between the
+ * desktop deck and the mobile one so both cards carry the same mark.
+ */
+export function TrackAsterisk({ size }: { size: number }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 40.2117 44.5"
+      width={size}
+      height={size * (44.5 / 40.2117)}
+      fill="none"
+      className="block shrink-0"
+    >
+      <path
+        d="M20.325 19V0M23.825 21L38.825 11M23.825 24.5L38.825 33.5M20.325 26.5V44.5M17.325 24.5L1.325 33.5M17.325 21L1.325 11"
+        stroke="currentColor"
+        strokeWidth={5}
+      />
+    </svg>
+  );
 }
 
 /**

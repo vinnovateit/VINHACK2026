@@ -13,21 +13,129 @@ const PIXEL_COORDS: [number, number][] = [
   [84.79, 25.83], [80.05, 35.38], [75.34, 44.92], [70.61, 54.46], [65.89, 64.0], [61.16, 73.55], [56.44, 83.08],
 ];
 
-// Face expressions mapping pixel indices
-const FACES: number[][] = [
-  // 1. Classic smile
-  [2, 3, 43, 44, 5, 11, 32, 38, 46],
-  // 2. Wink ;)
-  [2, 3, 44, 5, 11, 32, 38, 46],
-  // 3. Open mouth :O
-  [2, 3, 43, 44, 4, 11, 31, 32, 37, 38],
-  // 4. Cool sunglasses B)
-  [1, 2, 3, 8, 9, 28, 29, 42, 43, 44, 5, 11, 32, 46],
-  // 5. Smirk / Grin
-  [2, 3, 43, 44, 11, 32, 46],
-  // 6. Cute / Wide smile
-  [2, 3, 43, 44, 4, 11, 32, 38, 45, 46],
+// Screen-space layout of the 48 LED cells (row 0 = top, col 0 = left),
+// derived by projecting PIXEL_COORDS onto the matrix's own axes. The
+// rightmost column is offset ~0.8 of a cell upward in the Figma export, so
+// its indices are shifted by one row and cell 14 floats above the grid.
+// Two corner cells simply don't exist (-1).
+const GRID: number[][] = [
+  [21, 34, 0, 27, 41, 7, 15],
+  [22, 35, 1, 28, 42, 8, 16],
+  [23, 36, 2, 29, 43, 9, 17],
+  [24, 37, 3, 30, 44, 10, 18],
+  [25, 38, 4, 31, 45, 11, 19],
+  [26, 39, 5, 32, 46, 12, 20],
+  [-1, 40, 6, 33, 47, 13, -1],
 ];
+
+// Faces are drawn as 7x7 ASCII art ("#" = lit) and converted to cell
+// indices. The first one matches the lit cells in public/recap/green.svg.
+const FACE_ART: { name: string; rows: string[] }[] = [
+  {
+    name: "smile",
+    rows: [
+      ".......",
+      ".......",
+      "..#.#..",
+      "..#.#..",
+      ".#...#.",
+      "..###..",
+      ".......",
+    ],
+  },
+  {
+    name: "wink",
+    rows: [
+      ".......",
+      ".......",
+      "....#..",
+      "..#.#..",
+      ".#...#.",
+      "..###..",
+      ".......",
+    ],
+  },
+  {
+    name: "surprised",
+    rows: [
+      ".......",
+      "..#.#..",
+      "..#.#..",
+      ".......",
+      "..###..",
+      "..#.#..",
+      "..###..",
+    ],
+  },
+  {
+    name: "sunglasses",
+    rows: [
+      ".......",
+      ".......",
+      ".##.##.",
+      ".##.##.",
+      ".......",
+      ".#...#.",
+      "..###..",
+    ],
+  },
+  {
+    name: "tongue",
+    rows: [
+      ".......",
+      ".......",
+      "..#.#..",
+      "..#.#..",
+      ".#####.",
+      "...##..",
+      "...#...",
+    ],
+  },
+  {
+    name: "laughing",
+    rows: [
+      ".......",
+      "..#.#..",
+      ".#.#.#.",
+      ".......",
+      ".#####.",
+      "..###..",
+      ".......",
+    ],
+  },
+  {
+    name: "heart",
+    rows: [
+      ".......",
+      ".##.##.",
+      "#######",
+      "#######",
+      ".#####.",
+      "..###..",
+      "...#...",
+    ],
+  },
+  {
+    name: "sparkle",
+    rows: [
+      "...#...",
+      "...#...",
+      "..###..",
+      "#######",
+      "..###..",
+      "...#...",
+      "...#...",
+    ],
+  },
+];
+
+const FACES: number[][] = FACE_ART.map(({ rows }) =>
+  rows.flatMap((row, r) =>
+    [...row]
+      .map((ch, c) => (ch === "#" ? GRID[r][c] : -1))
+      .filter((idx) => idx >= 0),
+  ),
+);
 
 export default function PixelSmiley() {
   const [currentFace, setCurrentFace] = useState<number>(0);

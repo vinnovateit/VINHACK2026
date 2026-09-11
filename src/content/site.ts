@@ -387,21 +387,25 @@ export const TRACKS = {
       title: "INNOVATE FOR IMPACT",
       blurb:
         "Step into the world where ideas ignite revolutions. Dream big, solve pressing problems, and build change that outlasts the weekend.",
+      tags: ["Ideation", "New ventures", "Social good"],
     },
     {
       title: "DESIGN FOR PEOPLE",
       blurb:
         "Interfaces that get out of the way. Make something a stranger can pick up and understand without being taught how.",
+      tags: ["UX", "Accessibility", "Product"],
     },
     {
       title: "BUILD WHAT LASTS",
       blurb:
         "Ship past the demo. Systems that hold up under real load, real users, and the Monday after the hackathon ends.",
+      tags: ["Infra", "Scale", "Reliability"],
     },
     {
       title: "MAKE IT MATTER",
       blurb:
         "Pick a problem you would still care about untimed. The best builds here answer a question somebody actually asked.",
+      tags: ["Purpose", "Community", "Real users"],
     },
   ],
 } as const;
