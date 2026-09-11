@@ -4,16 +4,14 @@
   "private": true,
   "engines": {
     "node": "24.18.0",
-    "npm": ">=11.0.0"
+    "npm": "11.6.2"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/compress-fonts.mjs",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "npm run build && wrangler deploy",
-    "check:lock": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-lockfile.ps1",
-    "fix:lock": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-lockfile.ps1 -Fix"
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
