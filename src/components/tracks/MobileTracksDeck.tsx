@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 import { TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
+import { TrackVisual } from "./TrackIcons";
 import { MOBILE } from "@/components/motion/recipes";
 import { TRACKS } from "@/content/site";
 
@@ -46,8 +47,8 @@ const CARD_COLORS = [
 
 /* -------------------------------------------------------------- the column */
 
-const CARD_WIDTH = 258;
-const CARD_HEIGHT = 182;
+const CARD_WIDTH = 292;
+const CARD_HEIGHT = 206;
 const COUNT = TRACKS.items.length;
 
 /**
@@ -58,14 +59,31 @@ const COUNT = TRACKS.items.length;
  * of each stack by a few pixels rather than floating in a gap between them —
  * that overlap is what makes the column read as one deck seen edge-on instead
  * of three separate objects.
+ *
+ * Scaled up with `CARD_WIDTH`/`CARD_HEIGHT` above, so a bigger card keeps the
+ * same relation to its stacks rather than sitting deeper inside them.
  */
 const PILE_SCALE = 0.58;
-const PILE_OFFSET = 126;
+const PILE_OFFSET = 139;
 /** One card further back in a stack: straight on up (or down) and a shade
  *  smaller. No sideways step and no lean — that is the whole point of this
  *  layout, and a stack of sheets seen square on is what is left. */
-const STEP_Y = 7;
+const STEP_Y = 8;
 const STEP_SHRINK = 0.04;
+
+/**
+ * A small continuous sway on the cards sitting in either stack, so the piles
+ * read as something the scroll is touching the whole time rather than as
+ * furniture that only moves the instant a card is dealt. Driven off the
+ * ScrollTrigger's own `progress` — not off `p`, which sits flat on an integer
+ * for the whole of a card's `HOLD` — so it keeps going even while the deck
+ * itself is parked mid-read.
+ *
+ * It fades to nothing as a card approaches the centre (`1 - t` below), so the
+ * card actually being read never sways — only the stacks either side of it.
+ */
+const STACK_DRIFT_X = 7;
+const STACK_DRIFT_CYCLES = 2.25;
 
 /** How far back either stack is drawn, and how many blanks stock each one — the
  *  far stack seeded before the deck starts, the near one padding out under the
@@ -92,12 +110,13 @@ const SLOTS: readonly number[] = [
  * The stage is sized to hold all three zones and nothing more, then centred in
  * whatever height the phone has.
  *
- * The three zones reach 193px either side of the middle at their deepest —
+ * The three zones reach further either side of the middle at their deepest —
  * `PILE_OFFSET`, plus `PILE_DEPTH` steps of `STEP_Y`, plus the half-height of a
- * card that far back. Half of this is 210, so there is about 16px of clear
- * stage past the end of each stack, which is what the tick strip sits in.
+ * card that far back — and this is scaled up along with `CARD_WIDTH`/
+ * `CARD_HEIGHT` above so there is still clear stage past the end of each
+ * stack, which is what the tick strip sits in.
  */
-const STAGE_HEIGHT = 420;
+const STAGE_HEIGHT = 460;
 const STAGE_MIN_TOP = 12;
 
 /* -------------------------------------------------------------- the timing */
@@ -159,7 +178,7 @@ export default function MobileTracksDeck() {
        * in the top stack below zero, already dealt into the bottom one above —
        * and freezing `p` freezes the whole column.
        */
-      const render = (p: number) => {
+      const render = (p: number, progress: number) => {
         for (const slot of SLOTS) {
           const el = cardRefs.current.get(slot);
           if (!el) continue;
@@ -186,8 +205,19 @@ export default function MobileTracksDeck() {
           const restY = side * (PILE_OFFSET + depth * STEP_Y);
           const restScale = PILE_SCALE * (1 - depth * STEP_SHRINK);
 
+          // The sway: each depth in a stack runs slightly out of phase with
+          // its neighbours, so the pile ripples rather than shifting as one
+          // rigid slab, and it is scaled by `1 - t` so it dies away exactly as
+          // the card reaches the centre.
+          const phase =
+            depth * 0.85 + (waiting ? 0 : Math.PI / 2) + slot * 0.35;
+          const sway =
+            Math.sin(progress * Math.PI * 2 * STACK_DRIFT_CYCLES + phase) *
+            STACK_DRIFT_X *
+            (1 - t);
+
           gsap.set(el, {
-            x: 0,
+            x: sway,
             y: mix(restY, 0, t),
             scale: mix(restScale, 1, t),
           });
@@ -243,13 +273,41 @@ export default function MobileTracksDeck() {
           // which a `bottom`-relative end is not.
           end: `+=${COUNT * TRAVEL_PER_CARD}`,
           scrub: 0.4,
-          onUpdate: (self) => render(deckPosition(self.progress)),
-          onRefresh: (self) => render(deckPosition(self.progress)),
+          onUpdate: (self) => render(deckPosition(self.progress), self.progress),
+          onRefresh: (self) => render(deckPosition(self.progress), self.progress),
         });
-        render(deckPosition(0));
+        render(deckPosition(0), 0);
+
+        // The initial deal: the column sits fully composed — both stacks
+        // and the first card square in the middle — the moment `render`
+        // above lays it out, with nothing to say the reader has just
+        // scrolled onto a deck of cards rather than a static image. So the
+        // stack is dealt into that resting layout once, the first time the
+        // deck nears the viewport, rather than simply being present. Each
+        // card keeps the x/y/scale `render` already gave it — this only
+        // punches in on top of that, from GSAP's own cached last-set
+        // values, which is why `render` has to run first.
+        const dealEls = SLOTS.map((s) => cardRefs.current.get(s)).filter(
+          (node): node is HTMLDivElement => !!node,
+        );
+        const entryTrigger = ScrollTrigger.create({
+          trigger: wrap,
+          start: "top 88%",
+          once: true,
+          onEnter: () => {
+            gsap.from(dealEls, {
+              opacity: 0,
+              scale: 0,
+              duration: 0.6,
+              ease: "back.out(1.6)",
+              stagger: 0.035,
+            });
+          },
+        });
 
         return () => {
           ScrollTrigger.removeEventListener("refreshInit", place);
+          entryTrigger.kill();
           st.kill();
         };
       });
@@ -370,17 +428,25 @@ export default function MobileTracksDeck() {
                       <span className="font-rotonto text-[8px] uppercase tracking-[0.3em]">
                         Track {pad(slot + 1)} / {pad(COUNT)}
                       </span>
-                      <div>
-                        <div
-                          className="mb-2 h-px w-full"
-                          style={{ background: rule }}
+                      <div className="flex items-start gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className="mb-2 h-px w-full"
+                            style={{ background: rule }}
+                          />
+                          <h3 className="font-rotonto text-[22px] leading-[0.96] tracking-tight">
+                            {item.title}
+                          </h3>
+                          <p className="mt-2 font-rotonto text-[11px] leading-[1.55] tracking-tight opacity-85">
+                            {item.blurb}
+                          </p>
+                        </div>
+                        <TrackVisual
+                          slot={slot}
+                          ink={ink}
+                          rule={rule}
+                          className="mt-[18px] h-[70px] w-[60px]"
                         />
-                        <h3 className="font-rotonto text-[21px] leading-[0.96] tracking-tight">
-                          {item.title}
-                        </h3>
-                        <p className="mt-1.5 font-rotonto text-[9.5px] leading-[1.45] tracking-tight opacity-80">
-                          {item.blurb}
-                        </p>
                       </div>
                     </div>
                   ) : null}

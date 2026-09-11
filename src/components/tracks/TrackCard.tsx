@@ -55,6 +55,30 @@ export function trackInk(color: string): { ink: string; rule: string } {
 }
 
 /**
+ * The section heading's asterisk (`/figma/star2.svg`), inlined so it can take
+ * a card's own ink instead of the heading's fixed red. Shared between the
+ * desktop deck and the mobile one so both cards carry the same mark.
+ */
+export function TrackAsterisk({ size }: { size: number }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 40.2117 44.5"
+      width={size}
+      height={size * (44.5 / 40.2117)}
+      fill="none"
+      className="block shrink-0"
+    >
+      <path
+        d="M20.325 19V0M23.825 21L38.825 11M23.825 24.5L38.825 33.5M20.325 26.5V44.5M17.325 24.5L1.325 33.5M17.325 21L1.325 11"
+        stroke="currentColor"
+        strokeWidth={5}
+      />
+    </svg>
+  );
+}
+
+/**
  * Reusable TrackCard component.
  * Renders an isometric styled card with smooth border radius, subtle depth,
  * and support for custom track details or pure geometric aesthetics.

@@ -139,34 +139,6 @@ export default function TracksSection() {
             </div>
           </div>
         </div>
-
-        {/* Sticker */}
-        <div
-          className="absolute contents left-[866px] top-[33px]"
-          data-node-id="594:50"
-        >
-          <div
-            className="absolute h-[211.237px] left-[866px] top-[33px] w-[270.424px]"
-            data-node-id="594:51"
-            data-name="Union"
-          >
-            <img
-              alt=""
-              className="absolute block inset-0 max-w-none size-full"
-              src="/figma/union6.svg"
-            />
-          </div>
-          <div
-            className="-translate-x-1/2 absolute flex h-[94.349px] items-center justify-center left-[1001.54px] top-[90.96px] w-[248.313px]"
-            data-node-id="594:56"
-          >
-            <div className="flex-none rotate-[-8.3deg]">
-              <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#2849cb] text-[24.84px] text-center w-[242.187px]">
-                {TRACKS.sticker}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

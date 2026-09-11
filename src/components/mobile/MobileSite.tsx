@@ -769,30 +769,6 @@ function MobileTracks() {
           `MobileTracksDeck`, which is the phone's answer to the collage's
           scroll-locked deck. */}
       <MobileTracksDeck />
-
-      <div className="mt-6 flex justify-center">
-        <Piece
-          width={270.424}
-          height={211.237}
-          max={0.85}
-          className="w-full max-w-[280px]"
-        >
-          <div className="absolute top-0 left-0 h-[211.237px] w-[270.424px]">
-            <img
-              alt=""
-              className="absolute inset-0 block size-full max-w-none"
-              src="/figma/union6.svg"
-            />
-          </div>
-          <div className="-translate-x-1/2 absolute top-[57.96px] left-[135.54px] flex h-[94.349px] w-[248.313px] items-center justify-center">
-            <div className="flex-none rotate-[-8.3deg]">
-              <p className="relative w-[242.187px] font-rotonto text-[24.84px] text-center text-[#2849cb]">
-                {TRACKS.sticker}
-              </p>
-            </div>
-          </div>
-        </Piece>
-      </div>
     </section>
   );
 }

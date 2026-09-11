@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
+import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
+import { TrackVisual } from "./TrackIcons";
 import { DESKTOP } from "@/components/motion/recipes";
 import { TRACKS } from "@/content/site";
 
@@ -347,29 +348,6 @@ function poseExtent(
 /** Two-digit card number, the way the reference deck counts its frames. */
 function pad(n: number): string {
   return String(n).padStart(2, "0");
-}
-
-/**
- * The section heading's asterisk (`/figma/star2.svg`), inlined so it can take
- * the card's own ink instead of the heading's fixed red.
- */
-function TrackAsterisk({ size }: { size: number }) {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 40.2117 44.5"
-      width={size}
-      height={size * (44.5 / 40.2117)}
-      fill="none"
-      className="block shrink-0"
-    >
-      <path
-        d="M20.325 19V0M23.825 21L38.825 11M23.825 24.5L38.825 33.5M20.325 26.5V44.5M17.325 24.5L1.325 33.5M17.325 21L1.325 11"
-        stroke="currentColor"
-        strokeWidth={5}
-      />
-    </svg>
-  );
 }
 
 /* -------------------------------------------------------------------- deck */
@@ -900,18 +878,30 @@ export function TracksCardDeck() {
 
                       {/* The card's own middle, rather than a block pushed
                           down to the bottom edge with the top two-thirds left
-                          empty — which is what the face used to be. */}
-                      <div className="-mt-[6px]">
-                        <h3 className="max-w-[92%] font-rotonto text-[30px] leading-[0.92] tracking-tight">
-                          {item.title}
-                        </h3>
-                        <div
-                          className="my-[11px] h-px w-full"
-                          style={{ background: rule }}
+                          empty — which is what the face used to be. Laid out
+                          as text beside a proper image panel now (`TrackVisual`)
+                          rather than text alone with a mark pushed into the
+                          header's corner. With the tag chips gone, the blurb
+                          has the freed-up room to run longer instead. */}
+                      <div className="-mt-[6px] flex items-start gap-[18px]">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-rotonto text-[30px] leading-[0.92] tracking-tight">
+                            {item.title}
+                          </h3>
+                          <div
+                            className="my-[11px] h-px w-full"
+                            style={{ background: rule }}
+                          />
+                          <p className="font-rotonto text-[12px] leading-[1.65] tracking-tight opacity-90">
+                            {item.blurb}
+                          </p>
+                        </div>
+                        <TrackVisual
+                          slot={slot}
+                          ink={ink}
+                          rule={rule}
+                          className="h-[108px] w-[92px]"
                         />
-                        <p className="max-w-[88%] font-rotonto text-[10.5px] leading-[1.55] tracking-tight opacity-90">
-                          {item.blurb}
-                        </p>
                       </div>
 
                       <div className="flex items-end justify-between font-rotonto text-[8px] uppercase tracking-[0.36em] opacity-55">
