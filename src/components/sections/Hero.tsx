@@ -1,11 +1,12 @@
 import QrArt from "@/components/hero/QrArt";
 import ScrollCue from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
+import WordmarkArt from "@/components/hero/WordmarkArt";
 import { HERO } from "@/content/site";
 
 export default function HeroSection() {
   return (
-    <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
+    <section aria-label="VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-visible top-0 w-[1280px]" data-node-id="343:1172" data-name="HERO FINAL">
       {/* The HOME / EXPLORE pair used to sit across the top of the plate and
           took the first ~90px of it with them. With the pair gone that strip is
           dead black above the wordmark, so the whole collage is lifted by
@@ -14,25 +15,16 @@ export default function HeroSection() {
           A wrapper rather than 40 edited `top` values: `inset-0` makes this box
           the section's own frame, so it becomes the containing block every
           child already resolved against and every Figma offset below stays
-          true to the design file. The section keeps `overflow-clip`, so the
-          lift crops against the plate rather than escaping it. */}
+          true to the design file. The section uses `overflow-visible` so
+          stickers sweep in cleanly from edges while `.canvas-frame` manages
+          viewport clipping. */}
       <div className="absolute inset-0 -translate-y-[90px]">
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
-        <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
-          <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
-            <h1 className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px]" data-hero="wordmark" data-node-id="343:1178">
-              {/* The wordmark ships as two layers rather than one flattened
-                  file: the solid lettering, and the offset outline drawn behind
-                  it. They are the two paths the Figma export had in a single
-                  SVG, and stack back to exactly it — but split, they can move
-                  independently, which is what lets HeroMotion slide the
-                  lettering onto the outline on hover while the outline stays
-                  where it is drawn. */}
-              <div className="absolute inset-[0_-0.22%_-0.48%_0]">
-                <img alt="VinHack" className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-fill" src="/figma/vinhack-fill.svg" />
-                <img alt="" aria-hidden className="absolute block inset-0 max-w-none size-full" data-hero="wordmark-outline" src="/figma/vinhack-outline.svg" />
-              </div>
-            </h1>
+        <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+60.18px)]" data-node-id="343:1175">
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute contents left-[calc(50%+36.87px)] top-[calc(50%+63.37px)]" data-node-id="343:1176">
+            <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1177">
+              <h1 aria-label="VinHack" className="absolute h-[356.181px] left-[106.44px] top-[238.42px] w-[1020.951px] pointer-events-none" data-hero="wordmark" data-node-id="343:1178">
+                <WordmarkArt />
+              </h1>
             <div className="absolute contents left-[104.87px] top-[150.38px]" data-node-id="343:1182">
               <div className="absolute contents h-[280.357px] left-[765px] top-[528px] w-[463.743px]" data-hero="lede" data-node-id="343:1187">
                 <div className="-translate-x-1/2 absolute flex h-[195.473px] items-center justify-center left-[996.87px] top-[570.44px] w-[435.054px]" data-node-id="343:1188">
@@ -78,56 +70,27 @@ export default function HeroSection() {
                   </div>
                 </div>
                 <div className="absolute flex h-[67.097px] items-center justify-center left-[60.48px] top-[68.06px] w-[290.935px]" data-node-id="343:1256">
-                  <div className="-rotate-8 flex-none">
-                    {/* The line types itself, so its width changes constantly —
-                        and this box centres its contents, which would walk the
-                        text left and right on every character. So the sticker
-                        reserves a fixed width once and lays the live line over
-                        it from a fixed left edge, growing rightwards inside the
-                        space that reservation already claimed. Nothing moves
-                        but the characters.
-
-                        The reservation is every message stacked in one grid
-                        cell, so its width is the *widest* of them. It used to
-                        be `commits[0]` alone, on the reasoning that it is the
-                        longest — but longest in characters is not widest in
-                        pixels in a proportional face, and "innit to vinnit" is
-                        all i/n/t/v while "ship it anyway" is not. Whichever
-                        message actually measures widest now sets the width, and
-                        no message can overflow the bubble.
-
-                        The last cell is the caret's own 12px, reserved with the
-                        text rather than hanging off the end of it.
-
-                        `commits[0]` is still what the markup ships in the live
-                        line, so with JavaScript off, or before the timeline
-                        arms, the sticker reads exactly as Figma drew it. */}
-                    <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative text-[#bfea88] text-[22.68px] whitespace-nowrap">
-                      <span aria-hidden className="grid invisible">
-                        {HERO.commits.map((message) => (
-                          <span className="col-start-1 row-start-1" key={message}>
-                            {message}
-                            <span className="inline-block w-[12px]" />
-                          </span>
-                        ))}
+                  <div className="-rotate-8 relative inline-flex items-center">
+                    <span
+                      aria-hidden="true"
+                      className="font-rotonto leading-none not-italic text-[21.35px] whitespace-nowrap invisible select-none pointer-events-none"
+                      data-hero="commit-ghost"
+                    >
+                      {HERO.commits[0]}
+                    </span>
+                    <div className="absolute inset-y-0 left-0 flex items-center whitespace-nowrap">
+                      <span
+                        className="font-rotonto leading-none not-italic text-[#bfea88] text-[21.35px] whitespace-nowrap"
+                        data-hero="commit-line"
+                      >
+                        {HERO.commits[0]}
                       </span>
-                      {/* `inset-0` rather than `left-0`: the overlay is exactly
-                          as wide as the reservation, which is what lets the
-                          line shrink inside it. The entrance spins random
-                          glyphs through this line and a glyph is not the width
-                          of the letter it stands in for, so a spinning line can
-                          measure wider than any real message — clipped to the
-                          reservation instead of pushed out of the bubble. It is
-                          nonsense characters for the 0.62s it lasts, so there
-                          is nothing there to read. */}
-                      <span className="absolute inset-0 flex items-center">
-                        <span className="min-w-0 overflow-hidden" data-hero="commit-line">{HERO.commits[0]}</span>
-                        {/* Drawn as a box rather than typed as a character:
-                            Rotonto is a display face and there is no promise it
-                            carries a bar or block glyph to spare. */}
-                        <span aria-hidden className="bg-[#bfea88] h-[19px] inline-block ml-[3px] shrink-0 w-[9px]" data-hero="commit-caret" />
-                      </span>
-                    </p>
+                      <span
+                        aria-hidden="true"
+                        className="bg-[#bfea88] h-[18px] inline-block ml-[3px] shrink-0 w-[9px]"
+                        data-hero="commit-caret"
+                      />
+                    </div>
                   </div>
                 </div>
                 </div>

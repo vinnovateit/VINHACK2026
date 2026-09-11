@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Anek_Bangla,
   Anek_Devanagari,
@@ -89,6 +89,12 @@ const SCRIPTS = [
   .map((face) => face.variable)
   .join(" ");
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: "VinHack 2026 — VinnovateIT",
   description:
@@ -101,7 +107,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col bg-black">
         <noscript>
           <style
-            dangerouslySetInnerHTML={{ __html: ".hero-motion{opacity:1}" }}
+            /* Both are held at zero for an entrance that GSAP runs — the
+               collage, and the navigation sticker dealt on with it. Without
+               JavaScript there is no deal, so neither may stay hidden. */
+            dangerouslySetInnerHTML={{
+              __html: ".hero-motion,.nav-dock{opacity:1}",
+            }}
           />
         </noscript>
         {children}

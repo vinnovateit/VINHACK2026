@@ -1,30 +1,43 @@
-import type { CSSProperties, ReactNode } from "react";
+"use client";
+
+import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
+import { motion } from "framer-motion";
 
 import CameraFeed from "@/components/CameraFeed";
 import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
 import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
-import MobileTimeline from "@/components/mobile/MobileTimeline";
+import MobileRecap from "@/components/mobile/MobileRecap";
+import MobileSponsors from "@/components/mobile/MobileSponsors";
+import ReceiptPrinter from "@/components/timeline/ReceiptPrinter";
+import TimelineToggle from "@/components/timeline/TimelineToggle";
+import {
+  TimelineExploreSticker,
+  TimelinePhoto234,
+  TimelinePhoto235,
+  TimelinePhoto236,
+  TimelineVector227,
+} from "@/components/timeline/TimelineStickers";
 import Piece from "@/components/mobile/Piece";
-import RegisterSvg from "@/components/RegisterSvg";
-import NowSvg from "@/components/NowSvg";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
+import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
 import { FEATURES } from "@/content/features";
 import {
-  ABOUT,
+  FAQS,
+  type FaqCategory,
   FOOTER,
   GUIDELINES,
   HERO,
   PASS,
   PROJECTS,
-  REGISTER,
   RULES,
+  SNEAK_PEEK,
   TIMELINE,
   TRACKS,
-  WHO_ARE_WE,
 } from "@/content/site";
+import MobileTracksDeck from "@/components/tracks/MobileTracksDeck";
 
 /**
  * The page below `md`.
@@ -58,20 +71,21 @@ const PAD = "px-5";
  * Full-bleed pieces — the two marquees, the footer's coloured bands — are
  * deliberately outside it: they are meant to run edge to edge.
  */
-const COL = "mx-auto max-w-[560px]";
+const COL = "mx-auto max-w-[560px] w-full";
 
 export default function MobileSite() {
   return (
-    <div className="md:hidden bg-black text-[#fcfcfc]">
+    <div className="md:hidden bg-black text-[#fcfcfc] w-full overflow-x-clip">
       <MobileHero />
-      <MobileAbout />
-      <MobileWhoAreWe />
+      <MobileRecap />
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
+      <MobileSponsors />
       <MobileTimelineSection />
       <MobileRules />
       <MobileGuidelines />
-      <MobileRegister />
+      <MobileFAQs />
+      <MobileAbout />
       <MobileFooter />
     </div>
   );
@@ -95,7 +109,7 @@ export default function MobileSite() {
  * rather than 1: past about 670px the stage would otherwise stop growing and
  * sit as an island in the middle of a large phone held sideways.
  */
-const STAGE = { width: 393, height: 682 };
+const STAGE = { width: 393, height: 540 };
 
 /**
  * A drawing from the design file, placed on the stage at a size of this
@@ -172,13 +186,13 @@ function MobileHero() {
           would start under it. */}
       <section
         aria-label="VinHack"
-        className="flex min-h-[100svh] flex-col justify-center overflow-clip px-2 py-8"
+        className="flex min-h-[92svh] w-full flex-col items-center justify-center overflow-clip px-2 pt-10 pb-6"
       >
         <Piece
           width={STAGE.width}
           height={STAGE.height}
-          max={1.7}
-          className="mobile-stage w-full"
+          max={1}
+          className="mobile-stage w-full max-w-[393px] mx-auto"
         >
           {/* The orbit the wordmark sits in the middle of, and the two sparks
               caught on it. A ring rather than an exported shape — it is a
@@ -190,17 +204,17 @@ function MobileHero() {
           <div
             aria-hidden
             className="deal-in absolute [--deal-delay:1.05s] [--deal-s:0.86]"
-            style={{ left: 18, top: 236, width: 344, height: 200 }}
+            style={{ left: 18, top: 116, width: 344, height: 200 }}
           >
             <div className="size-full rotate-[-8deg] rounded-[50%] border border-white/30" />
           </div>
-          <Spark x={240} y={244} size={20} />
-          <Spark x={116} y={424} size={16} />
+          <Spark x={240} y={124} size={20} />
+          <Spark x={116} y={304} size={16} />
 
           {/* The wordmark, as two layers — the solid lettering and the offset
               outline drawn behind it — which stack back to exactly the Figma
               export.
-
+ 
               They are also the phone's half of the hero entrance. The collage
               drives its version from GSAP in `HeroMotion`, which does not run
               at this width at all (see `DESKTOP` in motion/recipes.ts); here
@@ -211,7 +225,7 @@ function MobileHero() {
               globals.css. */}
           <h1
             className="neon-sign absolute z-10"
-            style={{ left: 32, top: 272, width: 330, height: 115.14 }}
+            style={{ left: 32, top: 152, width: 330, height: 115.14 }}
           >
             <img
               alt="VinHack"
@@ -235,7 +249,7 @@ function MobileHero() {
           {/* The git commit bubble. */}
           <Placed
             x={8}
-            y={168}
+            y={48}
             w={411.659}
             h={207.988}
             scale={0.5}
@@ -265,7 +279,7 @@ function MobileHero() {
             </div>
             <div className="absolute top-[68.06px] left-[60.48px] flex h-[67.097px] w-[290.935px] items-center justify-center">
               <div className="-rotate-8 flex-none">
-                <p className="relative font-rotonto text-[22.68px] whitespace-nowrap text-[#bfea88]">
+                <p className="relative font-rotonto text-[21.35px] whitespace-nowrap text-[#bfea88]">
                   {HERO.commits[0]}
                 </p>
               </div>
@@ -278,7 +292,7 @@ function MobileHero() {
               collage. */}
           <Placed
             x={298}
-            y={196}
+            y={76}
             w={128.981}
             h={109.634}
             scale={0.62}
@@ -292,15 +306,10 @@ function MobileHero() {
             <SpeakerArt />
           </Placed>
 
-          {/* The QR sticker. Every piece of it is positioned in the 1280 x 832
-              plate the collage draws it on — several in percentages of that
-              plate and eight in container query units — so it cannot be
-              re-based onto a box its own size. The plate comes with it instead,
-              and a hole the size of the sticker is cut over the part of it that
-              is the sticker. See `QR_STICKER` in hero/QrArt. */}
+          {/* The QR sticker. */}
           <Placed
             x={270}
-            y={404}
+            y={284}
             w={QR_STICKER.width}
             h={QR_STICKER.height}
             scale={0.37}
@@ -316,13 +325,10 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The keycap. Drawn as a key already — a wide plate at 75% opacity
-              with a smaller, brighter cap up and to the left of it, which is
-              the parallax of a cap standing above its well — so it presses
-              under a finger too. `MobileMotion` drives the cap. */}
+          {/* The keycap. */}
           <Placed
             x={14}
-            y={398}
+            y={278}
             w={102.721}
             h={105.868}
             scale={0.6}
@@ -375,14 +381,10 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The "Register Now" note. Held tight to the left edge and no wider
-              than 127: the cue's curved line starts at x 147, and a note any
-              further across sits on top of the first four letters of "scroll
-              down for more" — which is the one piece of type on this screen
-              that has a job to do. */}
+          {/* The "Register Now" note. */}
           <Placed
             x={8}
-            y={486}
+            y={366}
             w={275.16}
             h={287.765}
             scale={0.46}
@@ -432,13 +434,10 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The scroll cue, exactly the collage's — the LED disc with the
-              arrow falling through it and "scroll down for more" curving
-              underneath. Same drawing (`hero/ScrollCue`), same roles, so
-              `MobileMotion` finds and wires it the way `HeroMotion` does. */}
+          {/* The scroll cue. */}
           <Placed
             x={130}
-            y={450}
+            y={330}
             w={SCROLL_CUE.width}
             h={SCROLL_CUE.height}
             scale={0.68}
@@ -465,20 +464,38 @@ function MobileHero() {
 
 function MobileAbout() {
   return (
-    <section aria-label="About VinHack" className={`${COL} ${PAD} py-16`}>
-      <h2 className="text-[40px] leading-[1.05] text-[#fc2425]">
-        {ABOUT.heading}
-      </h2>
-
-      <div className="mt-7 space-y-5 text-[15px] leading-[1.65] tracking-[0.02em] text-[#fc2425]">
-        {ABOUT.paragraphs.map((para) => (
-          <p key={para}>{para}</p>
-        ))}
+    <section
+      aria-label="About VinHack"
+      className="relative w-full overflow-clip flex flex-col items-center justify-center py-12"
+    >
+      {/* The background layer: the same two lines, tiled and scrolling — the
+          CSS `.marquee` class the footer's own row uses below, which loops by
+          translating the row exactly half its width. Six columns, so each half
+          of that loop is already wider than the widest phone: fewer and the row
+          would run out mid-loop and the seam would show as blank ground. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-0 overflow-hidden font-rotonto font-light text-[40px] leading-[52px] text-[#0a3a48] whitespace-nowrap z-0"
+      >
+        <div
+          className="marquee flex h-full items-stretch"
+          style={{ "--marquee-duration": "20s" } as CSSProperties}
+        >
+          {Array.from({ length: 6 }, (_, col) => (
+            <div key={col} className="flex flex-col shrink-0 px-4">
+              {Array.from({ length: 12 }, (_, i) => (
+                <div key={i}>{SNEAK_PEEK.lines[i % SNEAK_PEEK.lines.length]}</div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-12 flex justify-center">
+      {/* The pass tumbles in the way the collage's pair do — same wrapper,
+          no resting tilt, because the phone carries one pass square on. */}
+      <PassTumble tilt={0} className="relative z-10 flex w-full justify-center px-4">
         <AttendeePass />
-      </div>
+      </PassTumble>
     </section>
   );
 }
@@ -494,8 +511,8 @@ function AttendeePass() {
     <Piece
       width={374.669}
       height={546.48}
-      max={0.92}
-      className="w-full max-w-[360px]"
+      max={0.71}
+      className="w-full max-w-[265px]"
     >
       <PassCard
         start={PASS_START.front}
@@ -553,9 +570,8 @@ function AttendeePass() {
               {field.label}
             </p>
             <p
-              className={`absolute font-rotonto text-[17.6px] whitespace-nowrap text-[#105266] ${
-                i === 0 ? "-translate-x-1/2 text-center" : "-translate-x-full text-right"
-              }`}
+              className={`absolute font-rotonto text-[17.6px] whitespace-nowrap text-[#105266] ${i === 0 ? "-translate-x-1/2 text-center" : "-translate-x-full text-right"
+                }`}
               style={
                 i === 0 ? { left: 67.84, top: 357.17 } : { left: 345.86, top: 357.17 }
               }
@@ -585,66 +601,132 @@ function AttendeePass() {
   );
 }
 
-/* -------------------------------------------------------- who are we */
 
-function MobileWhoAreWe() {
-  return (
-    <section aria-label="Who are we" className="py-16">
-      <div className="overflow-clip">
-        {/* Twice over, so translating the row by exactly half its width loops
-            seamlessly. The spacing between copies is each copy's own trailing
-            padding rather than a flex `gap` — a gap sits *between* the two and
-            not after the second, so half the row would no longer be one whole
-            copy and the seam would drift. */}
-        <div
-          className="marquee"
-          style={{ "--marquee-duration": "18s" } as CSSProperties}
-        >
-          <h2 className="shrink-0 pr-[40px] text-[56px] whitespace-nowrap text-[#bfea88]">
-            {WHO_ARE_WE.heading}
-          </h2>
-          <p aria-hidden className="shrink-0 pr-[40px] text-[56px] whitespace-nowrap text-[#bfea88]">
-            {WHO_ARE_WE.heading}
-          </p>
-        </div>
-      </div>
-
-      <ul className={`${COL} ${PAD} mt-10 space-y-4 text-center text-[16px] tracking-[0.06em] text-[#bfea88]`}>
-        {WHO_ARE_WE.taglines.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
-
-      <p className="mt-10 text-center text-[26px] text-[#bfea88]">
-        {WHO_ARE_WE.connect}
-      </p>
-    </section>
-  );
-}
 
 /* ----------------------------------------------------------- projects */
 
+/**
+ * The desktop cards (`sections/Projects.tsx`) only show their best face — the
+ * shape graphic, the viewfinder frame, the tagline pop-up — on `:hover`, which
+ * a phone has no equivalent of. Rather than falling back to the plain resting
+ * card, the phone renders that hovered face directly and permanently: the
+ * `hoverBg` fill, the shape SVG, the viewfinder corners and the tagline/body
+ * copy are all always on, one card per row so each gets the full width the
+ * desktop pop-up needs.
+ */
 function MobileProjects() {
   return (
-    <section aria-label="Projects" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Projects" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       <h2 className="text-[20px] text-[#fa1a1d]">{PROJECTS.heading}</h2>
       <div className="mt-3 h-px w-full bg-[#fa1a1d]" />
 
-      {/* The collage overlaps these four at four different sizes; on one column
-          they are a grid, which keeps the four-colour block the section reads
-          as. */}
-      <div className="mt-8 grid grid-cols-2 gap-3">
-        {PROJECTS.cards.map((card, i) => (
-          <div
-            key={card.name}
-            className={`flex items-center justify-center overflow-clip px-2 ${
-              i % 3 === 0 ? "h-[150px]" : "h-[190px]"
-            }`}
-            style={{ background: card.bg }}
-          >
-            <p className="text-[24px] text-black">{card.name}</p>
-          </div>
-        ))}
+      {/* One column: the desktop's hovered face needs the full row, and a
+          two-up grid would crush the shape graphic and pop-up copy. */}
+      <div className="mt-8 flex flex-col gap-5">
+        {PROJECTS.cards.map((card, idx) => {
+          // BunkBuddies' hover fill is red, and white text on it reads too
+          // hot on a phone at rest with no dark card underneath it — black
+          // matches the resting-card colour it already uses on desktop.
+          const textColor = card.name === "BUNKBUDDIES" ? "#000000" : card.hoverTextColor;
+          const isDark = textColor === "#ffffff";
+          const fromLeft = idx % 2 === 0;
+
+          return (
+            <motion.a
+              key={card.name}
+              href={card.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex flex-col justify-between overflow-clip p-5 transition-transform duration-200 active:scale-[0.98] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              style={{ background: card.hoverBg }}
+              initial={{ opacity: 0, x: fromLeft ? -60 : 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {/* Shape graphic, sat behind everything else. */}
+              <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-3.5 opacity-90">
+                <img
+                  src={card.shapeSvg}
+                  alt=""
+                  className="size-full max-h-[92%] max-w-[92%] object-contain drop-shadow-sm"
+                />
+              </div>
+
+              {/* Viewfinder frame */}
+              <div
+                className="pointer-events-none absolute inset-0 z-10"
+                style={{ color: isDark ? "#ffffff" : "#000000" }}
+              >
+                <div className="absolute inset-1 border-2 border-current opacity-90" />
+                <span className="absolute top-1 left-1 size-2.5 border-t-[3px] border-l-[3px] border-current" />
+                <span className="absolute top-1 right-1 size-2.5 border-t-[3px] border-r-[3px] border-current" />
+                <span className="absolute bottom-1 left-1 size-2.5 border-b-[3px] border-l-[3px] border-current" />
+                <span className="absolute bottom-1 right-1 size-2.5 border-b-[3px] border-r-[3px] border-current" />
+              </div>
+
+              <div className="relative z-20 flex justify-end">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider"
+                  style={{
+                    background: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
+                    color: textColor,
+                  }}
+                >
+                  VISIT ↗
+                </span>
+              </div>
+
+              <div className="relative z-20 flex flex-col items-center py-2">
+                <img
+                  src={card.icon}
+                  alt={`${card.displayName} logo`}
+                  className="size-16 object-contain"
+                  style={card.name === "LATCH" ? { color: textColor } : undefined}
+                />
+                <h3
+                  className="mt-3 font-rotonto text-[24px] tracking-tight"
+                  style={{ color: textColor }}
+                >
+                  {card.name}
+                </h3>
+              </div>
+
+              {/* The desktop's green pop-up, shown here without waiting for a
+                  hover a phone cannot give. */}
+              <div className="relative z-20 mt-2 rounded-xl border-2 border-[#bfea88] bg-[#0c0c0c]/95 p-3.5 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)]">
+                <div className="flex items-center justify-between border-b border-white/15 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex size-2">
+                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#bfea88] opacity-75" />
+                      <span className="relative inline-flex size-2 rounded-full bg-[#bfea88]" />
+                    </span>
+                    <span className="font-rotonto text-[15px] tracking-wide text-white">
+                      {card.displayName}
+                    </span>
+                  </div>
+                  <span className="rounded bg-[#bfea88]/15 px-2 py-0.5 font-rotonto text-[11px] text-[#bfea88]">
+                    EXPLORE ↗
+                  </span>
+                </div>
+
+                <p className="mt-2 font-rotonto text-[13px] leading-snug text-[#bfea88]">
+                  “{card.tagline}”
+                </p>
+
+                <p className="mt-1 text-[11.5px] leading-relaxed font-sans text-neutral-300">
+                  {card.body}
+                </p>
+
+                <div className="mt-2.5 flex items-center justify-between font-mono text-[9.5px] text-neutral-400">
+                  <span className="flex items-center gap-1 font-semibold text-[#bfea88]">
+                    OPEN APP &rarr;
+                  </span>
+                </div>
+              </div>
+            </motion.a>
+          );
+        })}
       </div>
     </section>
   );
@@ -654,7 +736,7 @@ function MobileProjects() {
 
 function MobileTracks() {
   return (
-    <section aria-label="Tracks" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       <div className="border-t border-[#fa1a1d]">
         {TRACKS.lines.map((line, i) => {
           const Tag = i === 1 ? "h2" : "p";
@@ -683,35 +765,10 @@ function MobileTracks() {
         })}
       </div>
 
-      <div className="coming-soon-wrap mt-10 flex justify-center">
-        <p className="coming-soon relative text-center text-[24px] text-[#bfea88]">
-          {TRACKS.comingSoon}
-        </p>
-      </div>
-
-      {FEATURES.tracks && <div className="mt-10 flex justify-center">
-        <Piece
-          width={270.424}
-          height={211.237}
-          max={0.85}
-          className="w-full max-w-[280px]"
-        >
-          <div className="absolute top-0 left-0 h-[211.237px] w-[270.424px]">
-            <img
-              alt=""
-              className="absolute inset-0 block size-full max-w-none"
-              src="/figma/union6.svg"
-            />
-          </div>
-          <div className="-translate-x-1/2 absolute top-[57.96px] left-[135.54px] flex h-[94.349px] w-[248.313px] items-center justify-center">
-            <div className="flex-none rotate-[-8.3deg]">
-              <p className="relative w-[242.187px] font-rotonto text-[24.84px] text-center text-[#2849cb]">
-                {TRACKS.sticker}
-              </p>
-            </div>
-          </div>
-        </Piece>
-      </div>}
+      {/* The deck deals its four tracks as the page scrolls past — see
+          `MobileTracksDeck`, which is the phone's answer to the collage's
+          scroll-locked deck. */}
+      <MobileTracksDeck />
     </section>
   );
 }
@@ -766,95 +823,51 @@ function Loose({
 
 function MobileTimelineSection() {
   return (
-    <section aria-label="Timeline" className={`${COL} ${PAD} py-16`}>
+    <section aria-label="Timeline" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       {/* The two that ride above the schedule. */}
       <div className="mb-10 flex items-end justify-center gap-4">
         <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
-          <div className="absolute inset-0 overflow-hidden">
-            <img
-              alt=""
-              className="absolute top-[-12.2%] left-0 h-[131.71%] w-full max-w-none"
-              src="/figma/image235.png"
-            />
-          </div>
+          <TimelinePhoto235 />
         </Loose>
 
         <Loose width={136.85} height={134.841} max={0.9} size={108} stamp={0.12}>
           <div className="absolute top-0 left-0 flex h-[134.841px] w-[136.85px] items-center justify-center">
-            <div className="flex-none rotate-[-13.5deg]">
-              <div className="relative h-[111.295px] w-[114.013px]">
-                <img
-                  alt=""
-                  className="absolute inset-0 size-full max-w-none object-cover"
-                  src="/figma/image234.png"
-                />
-              </div>
-            </div>
+            <TimelinePhoto234 />
           </div>
         </Loose>
       </div>
 
       <h2 className="mb-10 text-[44px] text-[#fa1a1d]">{TIMELINE.heading}</h2>
-      <MobileTimeline />
+
+      <Piece width={440.363} height={646}>
+        <ReceiptPrinter className="relative" />
+      </Piece>
+
+      {/* For mobile / android, Day 1 / Day 2 toggle placed at bottom */}
+      <div className="mt-8 relative z-20">
+        <Piece width={356.4} height={63}>
+          <TimelineToggle className="relative mx-auto" />
+        </Piece>
+      </div>
 
       {/* And the three below it. */}
       <div className="mt-12 flex flex-wrap items-start justify-center gap-4">
         <Loose width={185.111} height={166.791} max={0.95} size={150} stamp={0.24}>
-          <div className="absolute top-0 left-0 flex h-[166.791px] w-[185.111px] items-center justify-center">
-            <div className="flex-none rotate-[-14.05deg] skew-x-[-1.48deg]">
-              <div className="relative h-[130.714px] w-[161.483px]">
-                <div className="absolute inset-[-2.2%_-1.64%_-1.9%_-2.08%]">
-                  <img
-                    alt=""
-                    className="block size-full max-w-none"
-                    src="/figma/sticker.svg"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-[48.11px] left-[37.89px] flex h-[83.826px] w-[123.225px] items-center justify-center">
-            <div className="flex-none rotate-15">
-              <div className="relative h-[56.669px] w-[112.388px] font-rotonto text-[14.753px] leading-[0] tracking-[2.9506px] whitespace-pre-wrap text-[#db9eef]">
-                <p className="mb-0 leading-[16.094px]">{TIMELINE.sticker[0]}</p>
-                <p className="leading-[16.094px]">{TIMELINE.sticker[1]}</p>
-              </div>
-            </div>
-          </div>
+          <TimelineExploreSticker />
         </Loose>
 
-        {/* The collage sizes this one in container query units off its own box,
-            so the box has to be exactly the size the design gives it — 160.514
-            x 164.786 — for the `cqw` and `cqh` inside to resolve to what Figma
-            drew. `Piece` then scales the whole thing. */}
         <Loose width={160.514} height={164.786} max={0.9} size={116} stamp={0.36}>
           <div
             className="absolute top-0 left-0 flex h-[164.786px] w-[160.514px] items-center justify-center"
             style={{ containerType: "size" }}
           >
-            <div className="flex-none h-[hypot(34.0099cqw,69.1918cqh)] w-[hypot(65.9901cqw,-30.8082cqh)] rotate-[-25.61deg] skew-x-[-0.02deg]">
-              <div className="relative size-full">
-                <img
-                  alt=""
-                  className="absolute inset-0 size-full max-w-none object-cover"
-                  src="/figma/image236.png"
-                />
-              </div>
-            </div>
+            <TimelinePhoto236 />
           </div>
         </Loose>
 
         <Loose width={150.24} height={144.718} max={0.9} size={110} stamp={0.48}>
           <div className="absolute top-0 left-0 flex h-[144.718px] w-[150.24px] items-center justify-center">
-            <div className="flex-none rotate-[-7.91deg]">
-              <div className="relative h-[127.496px] w-[133.971px]">
-                <img
-                  alt=""
-                  className="absolute inset-0 block size-full max-w-none"
-                  src="/figma/image227-vectorized.svg"
-                />
-              </div>
-            </div>
+            <TimelineVector227 />
           </div>
         </Loose>
       </div>
@@ -996,9 +1009,9 @@ function MobileGuidelines() {
             is the short ends that go. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-1/2 w-auto -translate-x-1/2 -translate-y-1/2"
+          className="pointer-events-none absolute top-[48%] left-1/2 w-auto -translate-x-1/2 -translate-y-1/2"
           style={{
-            height: "calc(218.2% + 210px)",
+            height: "calc(220% + 260px)",
             aspectRatio: "1599.46 / 1590.388",
           }}
         >
@@ -1016,14 +1029,14 @@ function MobileGuidelines() {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative pt-3">
           <img
             alt=""
             aria-hidden
-            className="-top-[34px] absolute right-2 z-1 block h-[76px] w-[42px] max-w-none"
+            className="top-[2px] absolute right-4 z-1 block h-[76px] w-[42px] max-w-none"
             src="/figma/pin1.svg"
           />
-          <h2 className="text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
+          <h2 className="font-rotonto font-light text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
         </div>
 
         <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white" data-m-reveal>
@@ -1103,36 +1116,440 @@ function MobileGuidelines() {
   );
 }
 
-/* ----------------------------------------------------------- register */
+/* ---------------------------------------------------------------- faqs */
 
-function MobileRegister() {
+function MobileFAQs() {
+  const [activeCategory, setActiveCategory] = useState<FaqCategory | null>(null);
+  const [openingCardId, setOpeningCardId] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [cardIndex, setCardIndex] = useState<number>(0);
+  const [slidingOut, setSlidingOut] = useState<boolean>(false);
+
+  const handleOpen = (category: FaqCategory) => {
+    if (openingCardId) return;
+    setOpeningCardId(category.id);
+    setCardIndex(0);
+    setSlidingOut(false);
+    setIsOpen(false);
+    setActiveCategory(category);
+
+    setTimeout(() => {
+      setIsOpen(true);
+    }, 40);
+  };
+
+  const handleClose = () => {
+    if (!isOpen) return;
+    setIsOpen(false);
+    setTimeout(() => {
+      setActiveCategory(null);
+      setOpeningCardId(null);
+    }, 380);
+  };
+
+  const handleNext = () => {
+    if (!activeCategory || slidingOut) return;
+    setSlidingOut(true);
+    setTimeout(() => {
+      setCardIndex((prev) => (prev + 1) % activeCategory.questions.length);
+      setSlidingOut(false);
+    }, 260);
+  };
+
+  const handlePrev = () => {
+    if (!activeCategory || slidingOut) return;
+    setCardIndex((prev) => (prev - 1 + activeCategory.questions.length) % activeCategory.questions.length);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeCategory) return;
+      if (e.key === "Escape") {
+        handleClose();
+      } else if (e.key === "ArrowRight" || e.key === " ") {
+        handleNext();
+      } else if (e.key === "ArrowLeft") {
+        handlePrev();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeCategory, slidingOut, isOpen]);
+
   return (
-    <section aria-label="Register now" className={`${COL} ${PAD} py-16`}>
-      {/* Cursive artwork rather than type — the collage draws it on with a
-          clip-path; here it is simply present. */}
-      <Piece width={779.141} height={342.48}>
-        <h2 className="absolute top-0 left-0 h-[327.438px] w-[779.141px]">
-          <RegisterSvg className="absolute inset-0 block size-full max-w-none" />
+    <section
+      aria-label="Frequently Asked Questions"
+      className={`${COL} ${PAD} overflow-x-clip pt-14 pb-20 select-none`}
+    >
+      {/* Header */}
+      <div className="border-t-[1.2px] border-[#fa1a1d] pt-4 mb-6">
+        <h2 className="text-[24px] font-rotonto font-light text-[#fa1a1d] tracking-[0.05em] uppercase">
+          {FAQS.heading}
         </h2>
-        <div className="absolute top-[208.44px] left-[281.96px] h-[134.04px] w-[388.209px]">
-          <NowSvg className="absolute inset-0 block size-full max-w-none" />
-        </div>
-      </Piece>
+      </div>
 
-      <p className="mt-10 text-center text-[17px] leading-[1.5] text-[#bfea88]">
-        {REGISTER.tagline[0]}
-        <br aria-hidden />
-        {REGISTER.tagline[1]}
-      </p>
+      {/* 2x2 Grid of Folder Cards */}
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-4 max-w-[440px] mx-auto w-full">
+        {FAQS.categories.map((category) => {
+          const frontPaper = category.questions[0];
+
+          return (
+            <div
+              key={category.id}
+              onClick={() => handleOpen(category)}
+              role="button"
+              tabIndex={0}
+              aria-label={`${category.subtitle} FAQs`}
+              className={`group relative h-[345px] w-full cursor-pointer transition-all duration-300 ease-out active:scale-[0.96] ${
+                openingCardId === category.id ? "scale-[1.03] -translate-y-2 z-20 shadow-xl" : ""
+              }`}
+            >
+              {/* Back Plate */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-[290px] rounded-[18px] border-[0.8px] border-black transition-all duration-300 shadow-md"
+                style={{ backgroundColor: category.color }}
+              />
+
+              {/* Fanned Paper Sheets Inside Pocket */}
+              <div
+                className={`absolute bottom-[20px] left-0 right-0 h-[315px] pointer-events-none transition-transform duration-300 ease-out ${
+                  openingCardId === category.id ? "-translate-y-12" : ""
+                }`}
+              >
+                {/* Sheet 1 */}
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-5 left-[-4px] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[7deg] origin-bottom-left"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
+                  }}
+                />
+
+                {/* Sheet 2 */}
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-3 left-[3px] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom-left"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
+                  }}
+                />
+
+                {/* Sheet 3 */}
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-2.5 left-[2px] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom-right"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
+                  }}
+                />
+
+                {/* Sheet 4 (Front Main Paper) */}
+                <div className="absolute bottom-0 left-[2px] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-4deg] origin-bottom-center overflow-hidden flex flex-col justify-start">
+                  <div className="pt-2 px-2.5">
+                    <div className="font-rotonto text-[8px] tracking-wider text-neutral-500 uppercase">
+                      VINHACK 2026
+                    </div>
+                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase -mt-0.5 truncate">
+                      {category.subtitle}
+                    </div>
+                  </div>
+                  <div className="mt-1 border-t border-[#8cd6ee]" />
+                  <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">
+                    {frontPaper.q}
+                  </div>
+                  <div className="border-t border-[#8cd6ee]" />
+                  <div
+                    className="flex-1 p-2"
+                    style={{
+                      backgroundImage:
+                        "repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(140, 214, 238, 0.35) 12px, rgba(140, 214, 238, 0.35) 13px)",
+                    }}
+                  >
+                    <div className="flex items-start gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-black shrink-0 mt-0.5" />
+                      <span className="font-rotonto text-[8px] leading-tight text-neutral-800 line-clamp-4">
+                        {frontPaper.a}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pocket Front Flap */}
+              <div className="absolute bottom-0 left-0 right-0 h-[220px] pointer-events-none">
+                <svg
+                  viewBox="0 0 160 220"
+                  fill="none"
+                  className="w-full h-full block"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
+                    fill={category.color}
+                  />
+                  <path
+                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
+                    stroke="#000000"
+                    strokeWidth="0.8"
+                  />
+                  <line
+                    x1="10"
+                    y1="202"
+                    x2="150"
+                    y2="202"
+                    stroke="rgba(0,0,0,0.35)"
+                    strokeWidth="0.8"
+                  />
+                </svg>
+
+                {/* Title (Right-aligned 3-line) */}
+                <div className="absolute bottom-[46px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
+                  {category.title[0]}
+                  <br />
+                  {category.title[1]}
+                  <br />
+                  {category.title[2]}
+                </div>
+
+                {/* Subtitle */}
+                <div className="absolute bottom-[28px] right-[10px] font-rotonto font-light text-[9.5px] text-right tracking-wide lowercase text-black max-w-[90%] truncate">
+                  {category.subtitle}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Interactive Paper Stack Modal Dialog */}
+      {activeCategory && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 cursor-default ${
+            isOpen
+              ? "bg-black/85 backdrop-blur-md opacity-100 transition-all duration-350 ease-out"
+              : "bg-black/0 backdrop-blur-none opacity-0 transition-all duration-380 ease-in"
+          }`}
+          onClick={handleClose}
+        >
+          {/* Deck Container with Navigation */}
+          <div className="relative flex items-center justify-center gap-3 w-full max-w-[420px]">
+            {/* Left Arrow Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrev();
+              }}
+              aria-label="Previous question"
+              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
+                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* === The Stack of Pages (Tap to advance) === */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              className={`relative w-[280px] sm:w-[320px] h-[430px] cursor-pointer ${
+                isOpen
+                  ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  : "opacity-0 scale-[0.5] translate-y-[400px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
+              }`}
+            >
+              {/* Close Button Attached Above Paper */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClose();
+                }}
+                aria-label="Close"
+                className={`absolute -top-9 right-0 flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-mono text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 ${
+                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+                }`}
+              >
+                <span>CLOSE</span>
+                <span className="text-xs">✕</span>
+              </button>
+
+              {activeCategory.questions.map((faq, idx) => {
+                const total = activeCategory.questions.length;
+                const diff = (idx - cardIndex + total) % total;
+
+                if (diff > 3) return null;
+                const isTop = diff === 0;
+
+                let transformStyle = "";
+                let zIndex = 10;
+                let opacity = 1;
+
+                if (!isOpen) {
+                  transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
+                  opacity = isTop ? 1 : 0.85;
+                } else if (isTop) {
+                  zIndex = 30;
+                  opacity = slidingOut ? 0 : 1;
+                  transformStyle = slidingOut
+                    ? "translate(180px, -40px) rotate(20deg) scale(0.92)"
+                    : "translate(0px, 0px) rotate(0deg) scale(1)";
+                } else if (diff === 1) {
+                  zIndex = 20;
+                  opacity = 0.96;
+                  transformStyle = slidingOut
+                    ? "translate(0px, 0px) rotate(0deg) scale(1)"
+                    : "translate(10px, -10px) rotate(3deg) scale(0.97)";
+                } else if (diff === 2) {
+                  zIndex = 10;
+                  opacity = 0.88;
+                  transformStyle = slidingOut
+                    ? "translate(10px, -10px) rotate(3deg) scale(0.97)"
+                    : "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
+                } else {
+                  zIndex = 5;
+                  opacity = 0.76;
+                  transformStyle = slidingOut
+                    ? "translate(-10px, -20px) rotate(-3deg) scale(0.94)"
+                    : "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                }
+
+                return (
+                  <div
+                    key={faq.q}
+                    style={{
+                      transform: transformStyle,
+                      zIndex,
+                      opacity,
+                      transitionDelay: isOpen && !slidingOut ? `${(3 - diff) * 45}ms` : "0ms",
+                    }}
+                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
+                      isOpen
+                        ? "transition-all duration-[260ms] ease-[cubic-bezier(0.2,0.9,0.3,1.15)]"
+                        : "transition-all duration-[200ms] ease-in"
+                    } ${isTop ? "cursor-pointer" : "pointer-events-none"}`}
+                  >
+                    {/* Header */}
+                    <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
+                      <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
+                        VINHACK 2026 // FAQ
+                      </span>
+                      <span className="font-mono text-[9.5px] text-neutral-500 font-semibold uppercase">
+                        PAGE 0{idx + 1} / 0{total}
+                      </span>
+                    </div>
+
+                    {/* Category bar */}
+                    <div className="py-1.5 px-3 bg-neutral-100/60 border-b border-[#8cd6ee] flex items-center justify-between">
+                      <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
+                        {activeCategory.subtitle}
+                      </span>
+                      <span className="font-mono text-[8.5px] text-neutral-500 uppercase shrink-0">
+                        {isTop ? "[TAP FOR NEXT →]" : ""}
+                      </span>
+                    </div>
+
+                    {/* Main Question */}
+                    <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
+                      <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
+                        {faq.q}
+                      </h3>
+                    </div>
+
+                    {/* Answer Content */}
+                    <div
+                      className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)",
+                      }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
+                        <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">
+                          {faq.a}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-3 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[9.5px] font-mono text-neutral-500 bg-neutral-50">
+                      <span>OFFICIAL FAQ</span>
+                      <span className="text-black font-semibold">TAP FOR NEXT →</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right Arrow Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              aria-label="Next question"
+              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
+                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Bottom Pagination */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`mt-4 flex flex-col items-center gap-1.5 transition-all duration-300 ${
+              isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              {activeCategory.questions.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCardIndex(i);
+                  }}
+                  aria-label={`Go to question ${i + 1}`}
+                  className={`h-1.5 transition-all duration-300 cursor-pointer ${
+                    i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-[9.5px] font-mono text-white/60 tracking-wider">
+              TAP PAGE FOR NEXT • TAP OUTSIDE TO EXIT
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
+
 
 /* ------------------------------------------------------------- footer */
 
 function MobileFooter() {
   return (
-    <footer className="pt-16">
+    <footer className="pt-16 overflow-x-clip">
       {/* The five folder tabs. The collage files them into a drawer, each band
           overlapping the last with only its lip showing; stacked, the lip is
           the whole tab. */}

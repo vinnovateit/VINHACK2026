@@ -14,6 +14,11 @@
  * layouts, GITHUB the cyan tab.
  */
 
+/* Type-only, so this stays a module of words with no runtime dependency on the
+   feature switches — it is here purely so `NavItem.flag` cannot name a switch
+   that does not exist. */
+import type { FEATURES } from "@/content/features";
+
 /* --------------------------------------------------------------- hero */
 
 export const HERO = {
@@ -64,6 +69,80 @@ export const HERO = {
   sound: { label: "Page sound" },
 } as const;
 
+/* ---------------------------------------------------------------- nav */
+
+/**
+ * A book on the shelf that slides out from behind the logo button.
+ *
+ * `target` is the destination section's `aria-label`. That is deliberately the
+ * handle rather than an `id`: the page is drawn twice — the collage in
+ * `components/sections/` and the reflowed column in `components/mobile/` — and
+ * both trees are in the document at once, so an `id` would have to be spelled
+ * differently in each and the nav would then need to know which one is on
+ * screen. The two drawings share no markup, but they do already label every
+ * section with the same words, and `SiteNav` picks whichever of the pair is
+ * currently laid out.
+ *
+ * `spine` is the board, `cap` the top edge the book is seen from below, `ink`
+ * the lettering — the trio the design gives each one.
+ */
+export type NavItem = {
+  name: string;
+  target: string;
+  spine: string;
+  cap: string;
+  ink: string;
+  /**
+   * How thick the book is, as a multiple of the shelf's base width. No two
+   * next to each other are the same: a shelf of identically thick books reads
+   * as a chart, and the design draws ten different ones — a fat GUIDELINES
+   * beside a thin one is most of what makes it a shelf.
+   */
+  book: number;
+  /** Set when the destination is behind a switch in `content/features.ts`. */
+  flag?: keyof typeof FEATURES;
+};
+
+/**
+ * The shelf, in the order the page runs.
+ *
+ * The numbers printed on the spines are not written here. `PROJECTS` comes
+ * and goes with `FEATURES.projects`, and a shelf that then reads 01 02 03 05 06
+ * is a typo the reader can see — so `SiteNav` counts them off the list that
+ * actually renders.
+ *
+ * No two neighbours share a spine colour; two colours repeat further apart,
+ * which is what a shelf looks like.
+ */
+export const NAV = {
+  /** The eyebrow over the shelf. */
+  label: "// EXPLORE",
+  /** Names the drawer itself, once it is open. */
+  title: "Site navigation",
+  open: "Open the navigation shelf",
+  close: "Close the navigation shelf",
+  /**
+   * The word curving over the mark on the button, the way "PLAY AROUND" curves
+   * over the gamepad in the hero — the button is a sticker off the same sheet,
+   * thrown into the corner the design gives the gamepad.
+   *
+   * Short on purpose. It is set along a fixed arc in `SiteNav`, and a word much
+   * past seven or eight characters runs off the end of it.
+   */
+  badge: { closed: "PLAY ALONG", open: "CLOSE" },
+  items: [
+    { name: "HOME", target: "VinHack", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
+    { name: "ABOUT", target: "About VinHack", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
+    { name: "PROJECTS", target: "Projects", spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
+    { name: "TRACKS", target: "Tracks", spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
+    { name: "SPONSORS", target: "Sponsors", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
+    { name: "TIMELINE", target: "Timeline", spine: "#ee1b1e", cap: "#7d1113", ink: "#131b24", book: 1.02 },
+    { name: "RULES", target: "Rules", spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
+    { name: "GUIDELINES", target: "Guidelines", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
+    { name: "FAQS", target: "Frequently Asked Questions", spine: "#ee1b1e", cap: "#7d1113", ink: "#ffffff", book: 1.05 },
+  ] satisfies readonly NavItem[],
+} as const;
+
 /* -------------------------------------------------------------- about */
 
 export const ABOUT = {
@@ -97,8 +176,11 @@ export const PASS = {
  * The photobooth at `/memories`, reached from the shutter on the attendee pass
  * and from nowhere else — it is not in any nav.
  *
- * Two stages: the camera, then the card. The copy below is grouped the same
- * way, `booth` first and the editor's after it.
+ * Two screens: the title, the words and the loose stickers; then the studio,
+ * where the camera sits in the card's own photo window and the filters, the
+ * stickers and the line are all on the one page under it. The copy below is
+ * grouped the same way — `intro`, then `booth` for the camera's own words,
+ * `fx` for the filter row, and the editor's after them.
  *
  * The card is drawn on the hero's black ground, so the lines are set in Rotonto
  * at display size over it. Keep them short: the card fits three lines and
@@ -108,8 +190,25 @@ export const PASS = {
  */
 export const MEMORIES = {
   heading: "VinHack Memories",
+  /** What the page's cursive title says. The h1 is artwork — pen-drawn strokes
+   *  like "register now" — so this is the words it draws, read out for anything
+   *  that cannot see it. `heading` stays the name in the browser tab. */
+  mark: "memories @vinhack",
   back: "back to vinhack",
   lede: "Take the shot, throw some stickers at it, keep the picture.",
+
+  /** The first screen. Words and the pieces the page is made of, and nothing
+   *  that switches a camera on — the booth is one press further in, which is
+   *  the whole reason this screen exists. */
+  intro: {
+    lines: [
+      "Thirty-six hours, one photo booth.",
+      "Take the shot, add filters & stickers, keep your VinHack memory.",
+    ],
+    start: "OPEN THE BOOTH",
+    /** Names the loose stickers for anything that cannot see them. */
+    scatter: "Stickers from around the site",
+  },
 
   /** The camera stage. Nothing here opens the camera on its own: `enable` is
    *  the label on a panel that is off until it is pressed. */
@@ -125,14 +224,57 @@ export const MEMORIES = {
     unavailable: "CAMERA UNAVAILABLE",
     shoot: "TAKE THE SHOT",
     counting: "HOLD IT…",
-    filter: "FILTER",
-    skip: "SKIP THE CAMERA",
-    /** In the editor, back to the camera — the stickers already placed stay
-     *  where they are. */
+    /** Back to the camera from a card that already has a shot on it. The
+     *  stickers and the line stay exactly where they were put. */
     retake: "RETAKE",
     /** Said out loud, for anything not watching the count. */
     countdown: (n: number) => `${n}`,
+    /** Back to the title screen. */
+    back: "back to the title",
   },
+
+  /** Names the filter row. One at a time, so nothing here counts anything —
+   *  which chip is lit is the whole of the state. */
+  fx: { label: "FILTERS" },
+
+  /**
+   * The AR drawer: what gets hung on a face and what goes behind it.
+   *
+   * Every one of the notices is about the same fact — the face tracker and the
+   * cut-out are fetched from a CDN when the drawer is opened, and a hall full
+   * of people on one router is exactly where that fails. So there is a line for
+   * waiting and a line for having given up, and both of them say what still
+   * works, because all of it does: the camera, the filters, the stickers and
+   * the save have never needed any of this.
+   */
+  ar: {
+    /** The button on the card that opens it. */
+    open: "AR",
+    label: "PROPS & BACKDROPS",
+    close: "DONE",
+    backdrops: "BACKDROPS",
+    /** The window as the camera left it — a choice in the row, not a clear
+     *  button, the same way STRAIGHT is in the filters. */
+    plain: "NONE",
+    loading: "Finding faces — one moment.",
+    loadingScene: "Loading the cut-out — one moment.",
+    blocked:
+      "Face tracking could not load. Close and reopen to try again; the camera, filters and stickers are unaffected.",
+    sceneBlocked:
+      "The cut-out could not load, so the scenes are off. The frames need nothing and still work.",
+    /** The one case that is nobody's fault and looks like a broken feature: the
+     *  cut-out is made at the shutter, so a scene chosen after the photograph
+     *  has nothing to stand you in front of. Said plainly, with the fix. */
+    sceneLate:
+      "This photo was taken without a cut-out. Choose the scene first, then RETAKE to stand in it.",
+    /** Under the picture while something is being worn. */
+    hint: "Props are placed by the camera and freeze where they land — drag, turn and resize them after the shot.",
+  },
+
+  /** The two camera controls on the picture. Both are labels for a control
+   *  with no words on it, so they are sentence case rather than shouted. */
+  zoom: "Zoom",
+  flip: "Switch camera",
 
   messages: [
     "WE SURVIVED VINHACK",
@@ -146,37 +288,21 @@ export const MEMORIES = {
   ],
   prev: "Previous line",
   next: "Next line",
+  /** The two shapes the card is posted at. The switch sits on the picture
+   *  itself, so these are the whole of its labels. */
   aspects: { square: "SQUARE", story: "STORY" },
+  aspectLabel: "Card shape",
   tray: "STICKERS",
   save: "SAVE IMAGE",
   saving: "DRAWING…",
   /** There is no share button. A static export cannot hand a file to
    *  Instagram or LinkedIn, so the page says where to put it instead of
    *  offering a button that would not do it. */
-  tag: "TAG @VINNOVATEIT · #VINHACK2026",
+  tag: "SHARE YOUR MEMORY: @VINNOVATEIT #VINHACK26",
   hint: "Drag anything to move it — the line too. The corner handle turns and resizes, × takes a sticker off.",
   empty: "Tap a sticker to put it on the card. Drag the line anywhere you like.",
   /** Names the movable line, for a keyboard and a screen reader. */
   textLabel: "The message. Drag to move it, corner handle to turn and resize.",
-} as const;
-
-/* -------------------------------------------------------- who are we */
-
-export const WHO_ARE_WE = {
-  heading: "Who are we?",
-  /** The eight notes scattered either side of the panel on the collage, read
-   *  top-left to bottom-right; a plain list on the phone. */
-  taglines: [
-    "HOME OF MIDNIGHT CODERS",
-    "ORGANIZERS OF VINHACK",
-    "BUILDERS OF CRAZY IDEAS",
-    "FUELED BY COFFEE & CURIOSITY",
-    "WHERE CODE MEETS CREATIVITY",
-    "TURNING IDEAS INTO IMPACT",
-    "A PLAYGROUND FOR INNOVATORS",
-    "MORE THAN JUST A TECH CLUB",
-  ],
-  connect: "LET’S CONNECT",
 } as const;
 
 /* ----------------------------------------------------------- projects */
@@ -185,10 +311,62 @@ export const PROJECTS = {
   heading: "PROJECTS //",
   /** In the order the design stacks them, left to right. */
   cards: [
-    { name: "ATLAS", bg: "#fa1a1d" },
-    { name: "STUDYHUB", bg: "#ffffff" },
-    { name: "LATCH", bg: "#74d4f0" },
-    { name: "MESSIT", bg: "#2849cb" },
+    {
+      name: "BUNKBUDDIES",
+      displayName: "BunkBuddies",
+      bg: "#fee3d2",
+      hoverBg: "#fa1a1d",
+      hoverTextColor: "#ffffff",
+      shapeSvg: "/projects/shape_flower.svg",
+      textColor: "#000000",
+      logo: "/projects/bunkbuddies.svg",
+      icon: "/projects/bunkbuddies_icon.svg",
+      url: "https://bunkbuddies.vinnovateit.com",
+      tagline: "Know who you're bunking with.",
+      body: "VIT's most-used hostel counselling app. Find your roomie, before your room.",
+    },
+    {
+      name: "STUDYHUB",
+      displayName: "Studyhub",
+      bg: "#ffffff",
+      hoverBg: "#fdbbff",
+      hoverTextColor: "#000000",
+      shapeSvg: "/projects/shape_star.svg",
+      textColor: "#000000",
+      logo: "/projects/studyhub.svg",
+      icon: "/projects/studyhub.svg",
+      url: "https://studyhub.vinnovateit.com",
+      tagline: "Study what matters.",
+      body: "VIT's academic survival kit. Find notes, question papers, and study material, all in one place.",
+    },
+    {
+      name: "LATCH",
+      displayName: "Latch",
+      bg: "#0F0A0B",
+      hoverBg: "#c01221",
+      hoverTextColor: "#ffffff",
+      shapeSvg: "/projects/shape_notched.svg",
+      textColor: "#ffffff",
+      logo: "/projects/latch.svg",
+      icon: "/projects/latch.svg",
+      url: "https://latch.vinnovateit.com",
+      tagline: "Connecting VIT, one device at a time.",
+      body: "VIT's Wi-Fi connector. Connect once. Forget the rest.",
+    },
+    {
+      name: "MESSIT",
+      displayName: "MessIT",
+      bg: "#2849cb",
+      hoverBg: "#ffffff",
+      hoverTextColor: "#000000",
+      shapeSvg: "/projects/shape_blob.svg",
+      textColor: "#ffffff",
+      logo: "/projects/messit.svg",
+      icon: "/projects/messit.svg",
+      url: "https://messit.vinnovateit.com",
+      tagline: "Know what's cooking",
+      body: "VIT's go-to mess menu app, trusted by 40,000+ students.",
+    },
   ],
 } as const;
 
@@ -199,6 +377,73 @@ export const TRACKS = {
   lines: ["solve what matters", "TRACKS", "build what lasts"],
   comingSoon: "COMING SOON",
   sticker: "INNOVATE FOR IMPACT",
+  /**
+   * The cards the deck deals out, in order. Both lines are printed on the card
+   * face itself, at the card's own scale — the blurb sits under the title in
+   * small type, so keep it to roughly three lines at that size.
+   */
+  items: [
+    {
+      title: "INNOVATE FOR IMPACT",
+      blurb:
+        "Step into the world where ideas ignite revolutions. Dream big, solve pressing problems, and build change that outlasts the weekend.",
+      tags: ["Ideation", "New ventures", "Social good"],
+    },
+    {
+      title: "DESIGN FOR PEOPLE",
+      blurb:
+        "Interfaces that get out of the way. Make something a stranger can pick up and understand without being taught how.",
+      tags: ["UX", "Accessibility", "Product"],
+    },
+    {
+      title: "BUILD WHAT LASTS",
+      blurb:
+        "Ship past the demo. Systems that hold up under real load, real users, and the Monday after the hackathon ends.",
+      tags: ["Infra", "Scale", "Reliability"],
+    },
+    {
+      title: "MAKE IT MATTER",
+      blurb:
+        "Pick a problem you would still care about untimed. The best builds here answer a question somebody actually asked.",
+      tags: ["Purpose", "Community", "Real users"],
+    },
+  ],
+} as const;
+
+/* ------------------------------------------------------------ sponsors */
+
+export const SPONSORS = {
+  label: "SPONSORS //",
+  heading: "Our Sponsors",
+  /**
+   * In paint order — biggest first. The first two carry a description, the
+   * rest just a header and a name; `Sponsors` and `MobileSponsors` size the
+   * tiers down the list (title, then gold, then the row of supporters).
+   */
+  tiers: [
+    {
+      header: "TITLE SPONSOR",
+      name: "Your Company",
+      desc: "Powering VinHack 2026 as our title sponsor.",
+      bg: "#fa1a1d",
+    },
+    {
+      header: "GOLD SPONSOR",
+      name: "Your Company",
+      desc: "Backing the builders with tools, prizes, and mentorship.",
+      bg: "#74d4f0",
+    },
+    { header: "SPONSOR", name: "Your Company", bg: "#2849cb" },
+    { header: "SPONSOR", name: "Your Company", bg: "#bfea88" },
+    { header: "SPONSOR", name: "Your Company", bg: "#e2b5f0" },
+    { header: "SPONSOR", name: "Your Company", bg: "#d9d9d9" },
+    { header: "SPONSOR", name: "Your Company", bg: "#db9eef" },
+  ],
+  /** The back of the title and gold tiles, shown on click. Placeholder copy —
+   *  swap for the real sponsor write-up once one exists. */
+  blurb:
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+  flipHint: "Tap to flip back",
 } as const;
 
 /* ----------------------------------------------------------- timeline */
@@ -298,16 +543,141 @@ export const GUIDELINES = {
   sticker: ["KEEP IT SAFE ", "KEEP IT FAIR"],
 } as const;
 
-/* ----------------------------------------------------------- register */
+/* ------------------------------------------------------------- faqs */
 
-export const REGISTER = {
-  /** Drawn as cursive artwork, so the words live in `register.svg` / `now.svg`
-   *  and this is the alternative text for them. */
-  heading: "Register now",
-  tagline: [
-    "Bring your curiosity, creativity, and code.",
-    " We'll provide the challenge, community, and opportunity.",
-  ],
+export type FaqQuestion = { q: string; a: string };
+
+export type FaqCategory = {
+  id: string;
+  index: string;
+  title: [string, string, string];
+  subtitle: string;
+  color: string;
+  textColor: string;
+  border: string;
+  questions: FaqQuestion[];
+};
+
+export const FAQS = {
+  heading: "FREQUENTLY ASKED QUESTIONS //",
+  categories: [
+    {
+      id: "general",
+      index: "01",
+      title: ["FIRST", "THINGS", "FIRST"],
+      subtitle: "general information",
+      color: "#fa1a1d",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What is VinHack 2026?",
+          a: "VinHack is a premier 36-hour hackathon organized by VinnovateIT at Vellore Institute of Technology. It brings together creative thinkers, developers, and designers to build innovative prototypes for real-world challenges.",
+        },
+        {
+          q: "When and where does it take place?",
+          a: "VinHack 2026 takes place on September 18th–19th, 2026, hosted live at the VIT Vellore campus with hybrid participation options for select tracks.",
+        },
+        {
+          q: "Is there any registration fee?",
+          a: "No! Registration for VinHack 2026 is completely free of cost.",
+        },
+        {
+          q: "Who is eligible to participate?",
+          a: "Any undergraduate or postgraduate student currently enrolled in an accredited college or university is welcome to apply.",
+        },
+      ],
+    },
+    {
+      id: "logistics",
+      index: "02",
+      title: ["NEED", "TO", "KNOWS"],
+      subtitle: "logistics and requirements",
+      color: "#74d4f0",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What should I bring to the hackathon?",
+          a: "Bring your valid student ID card, government ID, laptop, chargers, extension cords, any specialized hardware you plan to use, and personal essentials for the 36-hour duration.",
+        },
+        {
+          q: "Will food and accommodation be provided?",
+          a: "Yes! Meals, snacks, midnight refreshments, and rest areas will be provided to all verified onsite attendees throughout the 36 hours.",
+        },
+        {
+          q: "What are the project submission requirements?",
+          a: "Submissions must include a working prototype demo, a pitch deck or documentation, and a public GitHub repository with code written entirely during the event.",
+        },
+        {
+          q: "Can we use existing code or pre-built projects?",
+          a: "No. All code and designs must be created during the official 36-hour hackathon window. You are free to use open-source libraries, frameworks, APIs, and AI developer tools.",
+        },
+      ],
+    },
+    {
+      id: "teams",
+      index: "03",
+      title: ["FIND", "YOUR", "CREW"],
+      subtitle: "participation + teams",
+      color: "#bfea88",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What is the allowed team size?",
+          a: "Teams must consist of 2 to 4 members. Solo participation is not permitted to encourage collaboration.",
+        },
+        {
+          q: "Can team members be from different colleges or departments?",
+          a: "Absolutely! Cross-college, cross-department, and cross-year teams are actively encouraged.",
+        },
+        {
+          q: "Can I register if I don't have a team yet?",
+          a: "Yes! You can register individually and use our official Discord server's #team-formation channel or the pre-hackathon networking mixer to find teammates.",
+        },
+        {
+          q: "Can I be part of multiple teams?",
+          a: "No, each participant can only be a registered member of one team.",
+        },
+      ],
+    },
+    {
+      id: "external",
+      index: "04",
+      title: ["FROM", "OUTSIDE", "IN"],
+      subtitle: "external participants",
+      color: "#2849cb",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "Are non-VIT students allowed to participate onsite?",
+          a: "Yes! VinHack welcomes hackers from colleges and universities across the nation. Shortlisted external teams will receive an official invitation letter for college OD/leave approval.",
+        },
+        {
+          q: "Will travel reimbursement or accommodation be offered?",
+          a: "Accommodation on campus is arranged for external participants during the event days. Specific travel subsidies or sponsorships will be communicated to shortlisted outstation teams.",
+        },
+        {
+          q: "What documentation is required for external entry at campus gates?",
+          a: "External participants must present their original college ID card, government-issued photo ID, and the official VinHack confirmation email/pass at the security gate.",
+        },
+        {
+          q: "Can international or remote participants join online?",
+          a: "Yes, select tracks and online review slots are available for remote participants who cannot travel onsite. Communication is coordinated through our Discord server.",
+        },
+      ],
+    },
+  ] as const satisfies readonly FaqCategory[],
+} as const;
+
+/* -------------------------------------------------------- sneak peek */
+
+/** The two lines tiled behind the attendee pass in the About section, now
+ *  moved to sit just above the footer. Read top to bottom, alternating. */
+export const SNEAK_PEEK = {
+  lines: ["SNEAK PEEK", "VINHACK '26"],
 } as const;
 
 /* ------------------------------------------------------------- footer */

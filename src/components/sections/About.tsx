@@ -1,15 +1,24 @@
 import CameraFeed from "@/components/CameraFeed";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
+import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
-import { ABOUT } from "@/content/site";
+import MEMORIES from "./about/MemoriesBg";
 
 export default function AboutSection() {
   return (
-    <section aria-label="About VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[832px] w-[1280px]" data-node-id="297:328" data-name="ABOUT VINHACK">
-      <div className="absolute contents h-[726.044px] left-[701.43px] top-[71.7px] w-[638.182px]" data-node-id="297:329">
-        <div className="absolute flex h-[577.055px] items-center justify-center left-[810.08px] top-[146.2px] w-[420.873px]" data-node-id="297:330">
-          <div className="flex-none rotate-5">
+    <section aria-label="About VinHack" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[9092px] w-[1280px]" data-node-id="297:328" data-name="ABOUT VINHACK">
+      {/* Background layer */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-0 overflow-hidden z-0"
+      >
+        <MEMORIES />
+      </div>
+
+      <div className="-translate-x-1/2 absolute contents h-[726.044px] left-1/2 top-[71.7px] w-[638.182px]" data-node-id="297:329">
+        <div className="-translate-x-1/2 absolute flex h-[577.055px] items-center justify-center left-1/2 top-[146.2px] w-[420.873px]" data-node-id="297:330">
+          <PassTumble tilt={5} delay={0.12} className="flex-none">
             <PassCard start={PASS_START.behind} className="h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[267.14px] not-italic opacity-14 text-[#313855] text-[112.64px] text-right top-[131.1px] whitespace-nowrap" data-node-id="297:331">
                 VH26
@@ -186,12 +195,12 @@ export default function AboutSection() {
               </div>
               <ShutterButton />
             </PassCard>
-          </div>
+          </PassTumble>
         </div>
       </div>
-      <div className="-translate-x-1/2 absolute contents h-[685.605px] left-[calc(50%+380.64px)] top-[91.92px] w-[584.861px]" data-node-id="297:385">
-        <div className="-translate-x-1/2 absolute flex h-[606.285px] items-center justify-center left-[calc(50%+380.64px)] top-[131.58px] w-[469.169px]" data-node-id="297:386">
-          <div className="flex-none rotate-[10.64deg]">
+      <div className="-translate-x-1/2 absolute contents h-[685.605px] left-1/2 top-[91.92px] w-[584.861px]" data-node-id="297:385">
+        <div className="-translate-x-1/2 absolute flex h-[606.285px] items-center justify-center left-1/2 top-[131.58px] w-[469.169px]" data-node-id="297:386">
+          <PassTumble tilt={10.64} className="flex-none">
             <PassCard start={PASS_START.front} className="h-[546.48px] overflow-clip relative rounded-[34.32px] w-[374.669px]">
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[267.14px] not-italic opacity-5 text-[#313855] text-[112.64px] text-right top-[131.1px] whitespace-nowrap" data-node-id="297:387">
                 VH26
@@ -369,25 +378,8 @@ export default function AboutSection() {
               </div>
               <ShutterButton />
             </PassCard>
-          </div>
+          </PassTumble>
         </div>
-      </div>
-      <div className="absolute content-stretch flex items-center left-[81px] top-[109px]" data-node-id="297:441">
-        <h2 className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fc2425] text-[100px] text-center whitespace-nowrap" data-node-id="297:442">
-          {ABOUT.heading}
-        </h2>
-      </div>
-      <div className="[word-break:break-word] absolute font-rotonto leading-[0] left-[87px] not-italic text-[#fc2425] text-[21px] top-[268px] tracking-[0.42px] w-[639px] whitespace-pre-wrap" data-node-id="297:443">
-        <p className="leading-[38px] mb-0">
-          {ABOUT.paragraphs[0]}
-          <br aria-hidden />
-          <br aria-hidden />
-        </p>
-        <p className="leading-[38px]">
-          {ABOUT.paragraphs[1]}
-          <br aria-hidden />
-          <br aria-hidden />
-        </p>
       </div>
     </section>
   );
