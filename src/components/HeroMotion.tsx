@@ -558,10 +558,9 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
           });
         }
 
-        // The "Register Now" note lifts under the cursor. The tagged node is a
-        // `display: contents` wrapper, which takes no pointer events itself but
-        // does see them bubble up from the boxes inside it.
-        const noteHit = scope.querySelector('[data-hero="note"]');
+        // The "Register Now" note lifts under the cursor. The hit target is the
+        // precise vector shape of the card, while the outer box carries the scale.
+        const noteHit = scope.querySelector('[data-hero="note-hit"]') ?? scope.querySelector('[data-hero="note"]');
         if (noteHit) {
           cleanups.push(hover(noteHit, boxes("note"), { scale: 1.06 }, { scale: 1 }));
         }

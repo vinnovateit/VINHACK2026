@@ -288,18 +288,26 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
 
         // ---- the "Register Now" note -----------------------------------
         const note = scope.querySelector<HTMLElement>('[data-hero="note"]');
-        if (note) {
+        const noteHit =
+          scope.querySelector<SVGElement>('[data-hero="note-hit"]') ?? note;
+        if (note && noteHit) {
           const enterNote = () => {
             gsap.to(note, { scale: 1.06, duration: 0.2, ease: "power2.out", overwrite: "auto" });
           };
           const leaveNote = () => {
             gsap.to(note, { scale: 1, duration: 0.25, ease: "power2.inOut", overwrite: "auto" });
           };
-          note.addEventListener("pointerenter", enterNote);
-          note.addEventListener("pointerleave", leaveNote);
+          noteHit.addEventListener("pointerenter", enterNote);
+          noteHit.addEventListener("pointerleave", leaveNote);
+          noteHit.addEventListener("pointerdown", enterNote);
+          window.addEventListener("pointerup", leaveNote);
+          window.addEventListener("pointercancel", leaveNote);
           cleanups.push(() => {
-            note.removeEventListener("pointerenter", enterNote);
-            note.removeEventListener("pointerleave", leaveNote);
+            noteHit.removeEventListener("pointerenter", enterNote);
+            noteHit.removeEventListener("pointerleave", leaveNote);
+            noteHit.removeEventListener("pointerdown", enterNote);
+            window.removeEventListener("pointerup", leaveNote);
+            window.removeEventListener("pointercancel", leaveNote);
           });
         }
 

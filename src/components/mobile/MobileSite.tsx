@@ -305,9 +305,7 @@ function MobileHero() {
             data-hero="key"
             style={{ touchAction: "manipulation" }}
           >
-            <div data-hero="key-press" className="size-full">
-              <KeyArt />
-            </div>
+            <KeyArt />
           </Placed>
 
           {/* The "Register Now" note. */}
@@ -317,7 +315,7 @@ function MobileHero() {
             w={275.16}
             h={287.765}
             scale={0.46}
-            className="deal-in z-30 cursor-pointer [--deal-delay:1.55s] [--deal-r:-8deg] [--deal-x:-40px]"
+            className="deal-in z-30 pointer-events-none [--deal-delay:1.55s] [--deal-r:-8deg] [--deal-x:-40px]"
             data-hero="note"
             style={{ touchAction: "manipulation" }}
           >
