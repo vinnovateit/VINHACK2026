@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ResidencyType {
+  DAYSCHOLAR
+  HOSTELLER
+}
+
+enum TeamType {
+  VIT
+  EXTERNAL
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @map("user_id") @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  isRegistered  Boolean   @default(false) @map("is_registered")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts        Account[]
+  sessions        Session[]
+  vitStudent      VITStudent?
+  externalStudent ExternalStudent?
+
+  @@map("users")
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model VITStudent {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String        @unique
+  regNo         String        @unique
+  year          Int
+  phone         String
+  gender        Gender
+  residencyType ResidencyType
+  block         String?
+  room          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  teamId String? @db.ObjectId
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  userId String? @unique @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("vit_students")
+}
+
+model ExternalStudent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  phone       String
+  year        Int?
+  collegeName String
+  email       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teamId String? @db.ObjectId
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  userId String? @unique @db.ObjectId
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("external_students")
+}
+
+model Team {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  code        String    @unique
+  capacity    Int       @default(4)
+  teamType    TeamType
+  track       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  projectTitle       String?   @map("project_title")
+  projectDescription String?   @map("project_description")
+  githubLink         String?   @map("github_link")
+  figmaLink          String?   @map("figma_link")
+  deckLink           String?   @map("deck_link")
+  otherLinks         String?   @map("other_links")
+  progressNote       String?   @map("progress_note")
+  lastSubmittedAt    DateTime? @map("last_submitted_at")
+
+  leaderId String? @map("leader_id") @db.ObjectId
+
+  vitStudents      VITStudent[]
+  externalStudents ExternalStudent[]
+
+  @@map("teams")
+}
+
+model EventSettings {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  submissionOpensAt   DateTime
+  submissionClosesAt  DateTime
+  updatedAt           DateTime @updatedAt
+
+  @@map("event_settings")
+}

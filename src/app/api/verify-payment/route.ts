@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import clientPromise from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   // 1. Check if user is authenticated
@@ -12,24 +12,49 @@ export async function GET() {
     );
   }
 
-  // 2. Look up email in the registrants collection (case-insensitive)
-  const client = await clientPromise;
-  const db = client.db(process.env.MONGODB_DB || "vinhack");
-  const email = session.user.email.trim();
-  const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const registrant = await db
-    .collection("registrants")
-    .findOne({ email: { $regex: `^${escapedEmail}$`, $options: "i" } });
+  const email = session.user.email.toLowerCase().trim();
 
-  // 3. Return result (checks explicit paid flag if present, otherwise presence in registrants collection)
-  const isPaid = registrant
-    ? registrant.paid !== undefined
-      ? Boolean(registrant.paid)
-      : true
-    : false;
+  // 2. Query user, vitStudent, and externalStudent concurrently
+  const [user, vitStudent, externalStudent] = await Promise.all([
+    prisma.user.findUnique({
+      where: { email },
+      include: { vitStudent: true, externalStudent: true },
+    }),
+    prisma.vITStudent.findUnique({
+      where: { email },
+    }),
+    prisma.externalStudent.findFirst({
+      where: { email },
+    }),
+  ]);
+
+  // 3. Determine if participant is registered / paid
+  const isRegistered = Boolean(
+    user?.isRegistered ||
+    user?.vitStudent ||
+    user?.externalStudent ||
+    vitStudent ||
+    externalStudent
+  );
+
+  const studentType =
+    user?.vitStudent || vitStudent
+      ? "vit"
+      : user?.externalStudent || externalStudent
+      ? "external"
+      : null;
 
   return NextResponse.json({
     email: session.user.email,
-    paid: isPaid,
+    paid: isRegistered,
+    type: studentType,
+    user: user
+      ? {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+          isRegistered: user.isRegistered,
+        }
+      : null,
   });
 }

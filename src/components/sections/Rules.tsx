@@ -4,7 +4,7 @@ import { RULES } from "@/content/site";
 
 export default function RulesSection() {
   return (
-    <section aria-label="Rules" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[5512px] w-[1280px]" data-node-id="343:709" data-name="RULES">
+    <section aria-label="Rules" className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[6432px] w-[1280px]" data-node-id="343:709" data-name="RULES">
       <div className="-translate-x-1/2 absolute contents left-[calc(50%-0.09px)] top-[61.87px]" data-node-id="343:710">
         <div className="absolute flex h-[735.314px] items-center justify-center left-[52px] top-[61.87px] w-[1139.407px]" data-node-id="343:711">
           <div className="-rotate-5 flex-none">

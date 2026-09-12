@@ -385,48 +385,94 @@ export function drift(
 
 /**
  * The source's marquee: `direction: ltr` with `speed: 100` at every breakpoint,
- * which is content travelling leftwards at 100px a second, seamlessly.
+ * which is content travelling leftwards at 100px a second, endlessly.
  *
- * The row is padded with clones until it is wider than its frame plus the one
- * copy that scrolls off, so the seam never lands on screen; widths shift with
- * the webfont, so that is measured rather than assumed. Off-screen the tween is
- * parked — invisible, and not worth the frames.
+ * Endless is a property of the row, not of the tween. The tween only ever
+ * travels one copy's width and repeats, so what decides whether the loop reads
+ * as seamless is whether there is still a copy covering the frame at the moment
+ * it snaps back: the row is padded with clones until it spans its frame plus
+ * the copy that has scrolled off, and one spare beyond that.
+ *
+ * Which means the measurement has to be right, and on first paint it is not.
+ * These rows are set in Rotonto, and a row measured in the fallback face comes
+ * out at the wrong width — wider, and too few clones are cut, which is exactly
+ * the gap that breaks the seam once the real face swaps in and every copy
+ * shrinks. So the row is built twice: once now, so it is never sitting still,
+ * and again on `document.fonts.ready` against the widths it will keep.
+ *
+ * Off-screen the tween is parked — invisible, and not worth the frames.
+ *
+ * Returns a teardown, because there is now a pending promise to disown as well
+ * as a tween and a trigger to kill.
  */
 export function marquee(
   row: HTMLElement,
   { speed = 100, unscale = 1 }: { speed?: number; unscale?: number } = {},
 ) {
-  const first = row.firstElementChild;
-  if (!first) return;
+  /** The copies authored in the markup, as opposed to the ones cloned below —
+   *  a rebuild has to strip its predecessor's clones and keep these. */
+  const authored = Array.from(row.children);
+  let tween: gsap.core.Tween | null = null;
+  let trigger: ScrollTrigger | null = null;
 
-  const width = (el: Element) => el.getBoundingClientRect().width * unscale;
-  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
-  const unit = width(first) + gap;
-  if (!unit) return;
+  const build = () => {
+    tween?.kill();
+    trigger?.kill();
+    tween = null;
+    trigger = null;
+    for (const child of Array.from(row.children)) {
+      if (!authored.includes(child)) child.remove();
+    }
+    gsap.set(row, { x: 0 });
 
-  const frame = row.closest("section, footer") ?? row.parentElement!;
-  const needed = Math.ceil(width(frame) / unit) + 1;
-  while (row.children.length < needed) {
-    const copy = first.cloneNode(true) as HTMLElement;
-    copy.setAttribute("aria-hidden", "true");
-    copy.removeAttribute("data-node-id");
-    row.appendChild(copy);
-  }
+    const first = row.firstElementChild;
+    if (!first) return;
 
-  const tween = gsap.to(row, {
-    x: `-=${unit}`,
-    duration: unit / speed,
-    ease: "none",
-    repeat: -1,
+    const width = (el: Element) => el.getBoundingClientRect().width * unscale;
+    const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+    const unit = width(first) + gap;
+    if (!unit) return;
+
+    const frame = row.closest("section, footer") ?? row.parentElement!;
+    const needed = Math.ceil(width(frame) / unit) + 2;
+    while (row.children.length < needed) {
+      const copy = first.cloneNode(true) as HTMLElement;
+      copy.setAttribute("aria-hidden", "true");
+      copy.removeAttribute("data-node-id");
+      for (const el of Array.from(copy.querySelectorAll("[data-node-id]"))) {
+        el.removeAttribute("data-node-id");
+      }
+      row.appendChild(copy);
+    }
+
+    tween = gsap.to(row, {
+      x: `-=${unit}`,
+      duration: unit / speed,
+      ease: "none",
+      repeat: -1,
+    });
+
+    const running = tween;
+    trigger = ScrollTrigger.create({
+      trigger: frame,
+      start: "top bottom",
+      end: "bottom top",
+      onToggle: (self) => (self.isActive ? running.play() : running.pause()),
+    });
+  };
+
+  build();
+
+  let live = true;
+  document.fonts?.ready.then(() => {
+    if (live) build();
   });
 
-  ScrollTrigger.create({
-    trigger: frame,
-    start: "top bottom",
-    end: "bottom top",
-    onToggle: (self) => (self.isActive ? tween.play() : tween.pause()),
-  });
-  return tween;
+  return () => {
+    live = false;
+    tween?.kill();
+    trigger?.kill();
+  };
 }
 
 /* -------------------------------------------------------------- this page's */

@@ -12,10 +12,11 @@ type Status =
 /**
  * The attendee pass's "LIVE CAMERA FEED" panel, wired to the real webcam.
  *
- * The camera is never opened on load — `getUserMedia` only runs from an
- * explicit click, and the panel doubles as the off switch so the camera can be
- * released without leaving the page. Tracks are stopped on unmount, including
- * when the permission prompt resolves after the component has already gone.
+ * The camera opens as soon as the panel mounts — `getUserMedia` fires on the
+ * first render rather than waiting for a click — and the panel doubles as the
+ * off switch so the camera can be released without leaving the page. Tracks
+ * are stopped on unmount, including when the permission prompt resolves after
+ * the component has already gone.
  *
  * The <video> is mounted only once there is a stream to put in it. Besides
  * keeping a dead media element out of the initial HTML, this avoids a
@@ -97,6 +98,13 @@ export default function CameraFeed() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setStatus({ kind: "idle" });
+  }, []);
+
+  useEffect(() => {
+    start();
+    // Runs once on mount only — `start` is stable (empty deps) and re-running
+    // it on every render would re-request permission after the user hits stop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const live = status.kind === "live";
