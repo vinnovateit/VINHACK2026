@@ -101,6 +101,7 @@ export default function CameraFeed() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     start();
     // Runs once on mount only — `start` is stable (empty deps) and re-running
     // it on every render would re-request permission after the user hits stop.

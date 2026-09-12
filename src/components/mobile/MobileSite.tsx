@@ -8,6 +8,7 @@ import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
 import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
 import MobileRecap from "@/components/mobile/MobileRecap";
+import MobileWhoAreWe from "@/components/mobile/MobileWhoAreWe";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
 import ReceiptPrinter from "@/components/timeline/ReceiptPrinter";
 import TimelineToggle from "@/components/timeline/TimelineToggle";
@@ -78,6 +79,7 @@ export default function MobileSite() {
     <div className="md:hidden bg-black text-[#fcfcfc] w-full overflow-x-clip">
       <MobileHero />
       <MobileRecap />
+      {FEATURES.whoAreWe && <MobileWhoAreWe />}
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
       <MobileSponsors />

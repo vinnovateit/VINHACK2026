@@ -28,6 +28,7 @@
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
   --canvas-height: 12434px;
+  --canvas-height: 14834px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -76,14 +77,30 @@ body {
 }
 
 .projects-disabled {
-  --canvas-height: 11022px;
+  --canvas-height: 13422px;
 }
 
 .tracks-disabled {
-  --canvas-height: 9014px;
+  --canvas-height: 11414px;
 }
 
 .projects-disabled.tracks-disabled {
+  --canvas-height: 10582px;
+}
+
+.who-are-we-disabled {
+  --canvas-height: 12434px;
+}
+
+.who-are-we-disabled.projects-disabled {
+  --canvas-height: 11022px;
+}
+
+.who-are-we-disabled.tracks-disabled {
+  --canvas-height: 9014px;
+}
+
+.who-are-we-disabled.projects-disabled.tracks-disabled {
   --canvas-height: 8182px;
 }
 
@@ -123,6 +140,10 @@ body {
 }
 
 .recap-extended-sections {
+  transform: translateY(1296px);
+}
+
+.who-are-we-disabled .recap-extended-sections {
   transform: translateY(-1104px);
 }
 
