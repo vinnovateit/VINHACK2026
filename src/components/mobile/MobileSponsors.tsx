@@ -7,12 +7,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 import {
-  LEDE,
-  MUSIC_PARTNER,
   SPONSOR_HEADING,
   SUPPORTERS,
   TITLE_SPONSOR,
-  TRAVEL_PARTNER,
 } from "@/components/sections/sponsors/copy";
 import { MOBILE } from "@/components/motion/recipes";
 import { paperTurn } from "@/components/motion/paper";
@@ -181,70 +178,93 @@ const CARDS: { label: string; body: ReactNode }[] = [
         </div>
         <Rule heavy />
         <div className="text-[11px] font-light tracking-[0.04em]">
-          Vol 26 // SPECIAL SPONSOR EDITION
+          VOL. 26 // SPECIAL EDITION
         </div>
-      </div>
-    ),
-  },
-  {
-    label: "Ideas need people",
-    body: (
-      <div className="flex h-full flex-col gap-3.5">
-        <Image
-          src={TEAM_IMG}
-          alt=""
-          width={276}
-          height={172}
-          className="w-full object-cover [filter:grayscale(100%)_contrast(125%)_brightness(95%)]"
-          style={{ height: 172, border: "1.5px solid #000" }}
-          unoptimized
-        />
-        <div className="text-[27px] font-light leading-[1.05] whitespace-pre-wrap [text-shadow:0.6px_0_0_#000,_0_0.6px_0_#000,_-0.6px_0_0_#000,_0_-0.6px_0_#000]">
-          {LEDE.headline}
-        </div>
-        <Rule />
-        <Body size={12.5}>{LEDE.body}</Body>
       </div>
     ),
   },
   {
     label: "Title sponsor",
     body: (
-      <div className="flex h-full flex-col gap-3.5">
-        <Kicker>{TITLE_SPONSOR.header}</Kicker>
-        <Mark name={TITLE_SPONSOR.name} big />
-        <Rule />
-        <Body size={12.5}>{TITLE_SPONSOR.sheet}</Body>
-      </div>
-    ),
-  },
-  {
-    label: "Music streaming and travel booking partners",
-    body: (
-      <div className="flex h-full flex-col gap-2.5">
-        <Kicker>{MUSIC_PARTNER.header}</Kicker>
-        <Mark name={MUSIC_PARTNER.name} />
-        <Body size={11.5}>{MUSIC_PARTNER.card}</Body>
-        <Rule />
-        <Kicker>{TRAVEL_PARTNER.header}</Kicker>
-        <Mark name={TRAVEL_PARTNER.name} />
-        <Body size={11.5}>{TRAVEL_PARTNER.card}</Body>
-      </div>
-    ),
-  },
-  {
-    label: "Supporting partners",
-    body: (
-      <div className="flex h-full flex-col gap-2.5">
-        <Kicker>{"// Supporting Partners"}</Kicker>
+      <div className="flex h-full flex-col justify-center items-center gap-6 text-center">
         <Rule heavy />
-        {SUPPORTERS.map((partner, i) => (
-          <div key={i} className="flex flex-col gap-1.5">
-            <Kicker>{partner.header}</Kicker>
-            <Mark name={partner.name} />
-            {i < SUPPORTERS.length - 1 ? <Rule /> : null}
+        <Kicker>{TITLE_SPONSOR.header}</Kicker>
+        <a
+          href={TITLE_SPONSOR.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center gap-3 active:opacity-75 transition-opacity cursor-pointer"
+        >
+          <Image
+            src="/sponsors/fateh.webp"
+            alt="Fateh Education"
+            width={240}
+            height={80}
+            className="h-[64px] w-auto object-contain"
+          />
+          <div className="mt-1 text-[12px] font-light text-[#666] tracking-[0.02em] max-w-[240px]">
+            Backing the builders behind the next big idea.
           </div>
-        ))}
+        </a>
+        <Rule heavy />
+      </div>
+    ),
+  },
+  {
+    label: "Partner sponsors",
+    body: (
+      <div className="flex h-full flex-col justify-center gap-3">
+        <div className="text-center">
+          <Kicker>{"// THE VINHACK PARTNERS"}</Kicker>
+        </div>
+        <Rule heavy />
+        <div className="grid grid-cols-2 gap-3 py-1">
+          {SUPPORTERS.slice(0, 4).map((partner, i) => (
+            <a
+              key={i}
+              href={partner.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center justify-between gap-1.5 text-center p-1 active:opacity-75 transition-opacity cursor-pointer"
+            >
+              <span className="text-[10px] font-normal text-[#fa1a1d] uppercase leading-tight max-w-[130px]">
+                {partner.header.includes("MUSIC STREAMING") ? (
+                  <>
+                    // OFFICIAL MUSIC
+                    <br />
+                    STREAMING PARTNER
+                  </>
+                ) : (
+                  partner.header
+                )}
+              </span>
+              <div className="flex items-center justify-center h-[42px] my-auto">
+                {partner.logo ? (
+                  <Image
+                    src={partner.logo}
+                    alt={partner.name}
+                    width={110}
+                    height={38}
+                    className="max-h-[36px] w-auto object-contain"
+                  />
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-[22px] h-[22px] rounded-full bg-[#00b4d8] flex items-center justify-center text-white shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
+                      </svg>
+                    </div>
+                    <span className="text-[15px] font-bold text-[#0f172a]">JioSaavn</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-[9.5px] font-light text-[#666] leading-tight">
+                {partner.tagline}
+              </div>
+            </a>
+          ))}
+        </div>
+        <Rule heavy />
       </div>
     ),
   },

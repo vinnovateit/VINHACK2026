@@ -14,7 +14,24 @@ type IconProps = { size: number; className?: string };
 
 const VB = 48;
 
-function IdeaIcon({ size, className }: IconProps) {
+function IndustryIcon({ size, className }: IconProps) {
+  return (
+    <svg
+      aria-hidden
+      viewBox={`0 0 ${VB} ${VB}`}
+      width={size}
+      height={size}
+      fill="none"
+      className={`block shrink-0 ${className ?? ""}`}
+    >
+      <rect x="14" y="14" width="20" height="20" rx="3" stroke="currentColor" strokeWidth={3} />
+      <circle cx="24" cy="24" r="3.5" fill="currentColor" />
+      <path d="M20 14V6M28 14V6M20 34V42M28 34V42M14 20H6M14 28H6M34 20H42M34 28H42" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SecurityIcon({ size, className }: IconProps) {
   return (
     <svg
       aria-hidden
@@ -25,18 +42,42 @@ function IdeaIcon({ size, className }: IconProps) {
       className={`block shrink-0 ${className ?? ""}`}
     >
       <path
-        d="M24 6C16.8 6 11 11.8 11 19c0 4.6 2.4 8.6 6 11v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5c3.6-2.4 6-6.4 6-11 0-7.2-5.8-13-13-13Z"
+        d="M24 5L39 10.5V22C39 31.5 24 41 24 43C24 41 9 31.5 9 22V10.5L24 5Z"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x="19" y="22" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth={2.5} />
+      <path d="M21 22V18C21 16.34 22.34 15 24 15C25.66 15 27 16.34 27 18V22" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ClimateIcon({ size, className }: IconProps) {
+  return (
+    <svg
+      aria-hidden
+      viewBox={`0 0 ${VB} ${VB}`}
+      width={size}
+      height={size}
+      fill="none"
+      className={`block shrink-0 ${className ?? ""}`}
+    >
+      <path
+        d="M39 9C25 9 13 18 13 32C17 32 21 31 25 28C31 22 39 9 39 9Z"
         stroke="currentColor"
         strokeWidth={3}
         strokeLinejoin="round"
       />
-      <path d="M20 42h8" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
-      <path d="M24 6V2M8 19H4M44 19h-4M11 8 8 5M37 8l3-3" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+      <path d="M13 32C21 26 29 18 39 9" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+      <path d="M23 25C25 21.5 29 20 29 20M18 29C20 26.5 23 25.5 23 25.5" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+      <path d="M13 32C11 36.5 7 40 4 41" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
     </svg>
   );
 }
 
-function PeopleIcon({ size, className }: IconProps) {
+function EntertainmentIcon({ size, className }: IconProps) {
   return (
     <svg
       aria-hidden
@@ -46,15 +87,20 @@ function PeopleIcon({ size, className }: IconProps) {
       fill="none"
       className={`block shrink-0 ${className ?? ""}`}
     >
-      <circle cx="17" cy="14" r="6" stroke="currentColor" strokeWidth={3} />
-      <path d="M6 40c0-7.2 4.9-13 11-13s11 5.8 11 13" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
-      <circle cx="33" cy="12" r="4.5" stroke="currentColor" strokeWidth={3} />
-      <path d="M28 26c1.5-1 3.2-1.5 5-1.5 5 0 9 4.6 9 10.5" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+      <path
+        d="M13 16C18 14 30 14 35 16C40 18 43 28 39 35C36 40 32 36 30 32C26 31 22 31 18 32C16 36 12 40 9 35C5 28 8 18 13 16Z"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinejoin="round"
+      />
+      <path d="M14 24H20M17 21V27" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+      <circle cx="31" cy="22.5" r="1.5" fill="currentColor" />
+      <circle cx="34.5" cy="25.5" r="1.5" fill="currentColor" />
     </svg>
   );
 }
 
-function BuildIcon({ size, className }: IconProps) {
+function WildcardIcon({ size, className }: IconProps) {
   return (
     <svg
       aria-hidden
@@ -64,37 +110,24 @@ function BuildIcon({ size, className }: IconProps) {
       fill="none"
       className={`block shrink-0 ${className ?? ""}`}
     >
-      <rect x="7" y="27" width="13" height="15" rx="1.5" stroke="currentColor" strokeWidth={3} />
-      <rect x="22" y="18" width="13" height="24" rx="1.5" stroke="currentColor" strokeWidth={3} />
-      <rect x="37" y="9" width="4" height="33" rx="1.5" stroke="currentColor" strokeWidth={3} />
-      <path d="M4 42h40" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function TargetIcon({ size, className }: IconProps) {
-  return (
-    <svg
-      aria-hidden
-      viewBox={`0 0 ${VB} ${VB}`}
-      width={size}
-      height={size}
-      fill="none"
-      className={`block shrink-0 ${className ?? ""}`}
-    >
-      <circle cx="21" cy="27" r="15" stroke="currentColor" strokeWidth={3} />
-      <circle cx="21" cy="27" r="8.5" stroke="currentColor" strokeWidth={3} />
-      <circle cx="21" cy="27" r="2.5" fill="currentColor" />
-      <path d="M31 17 44 4M44 4h-9M44 4v9" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M24 4C24 14.5 17 21.5 6.5 21.5C17 21.5 24 28.5 24 39C24 28.5 31 21.5 41.5 21.5C31 21.5 24 14.5 24 4Z"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinejoin="round"
+      />
+      <circle cx="37" cy="11" r="2.5" fill="currentColor" />
+      <circle cx="11" cy="33" r="2" fill="currentColor" />
     </svg>
   );
 }
 
 export const TRACK_ICONS: ReadonlyArray<(props: IconProps) => ReactElement> = [
-  IdeaIcon,
-  PeopleIcon,
-  BuildIcon,
-  TargetIcon,
+  IndustryIcon,
+  SecurityIcon,
+  ClimateIcon,
+  EntertainmentIcon,
+  WildcardIcon,
 ];
 
 /**
@@ -113,30 +146,47 @@ export function TrackVisual({
   ink,
   rule,
   className = "",
+  size = 40,
+  is2x = false,
 }: {
   slot: number;
   ink: string;
   rule: string;
   className?: string;
+  size?: number;
+  is2x?: boolean;
 }) {
   const Icon = TRACK_ICONS[((slot % TRACK_ICONS.length) + TRACK_ICONS.length) % TRACK_ICONS.length];
   return (
     <div
       aria-hidden
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[10px] ${className}`}
-      style={{ border: `1px solid ${rule}`, background: `color-mix(in srgb, ${ink} 8%, transparent)` }}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden ${
+        is2x ? "rounded-[20px]" : "rounded-[10px]"
+      } ${className}`}
+      style={{
+        border: is2x ? `2px solid ${rule}` : `1px solid ${rule}`,
+        background: `color-mix(in srgb, ${ink} 8%, transparent)`,
+      }}
     >
       {/* Photo-corner ticks, so the panel reads as a frame waiting on an
           image rather than as a decorated icon. */}
       <span
-        className="absolute left-1.5 top-1.5 h-2 w-2 border-l border-t"
+        className={`absolute ${
+          is2x
+            ? "left-3 top-3 h-4 w-4 border-l-2 border-t-2"
+            : "left-1.5 top-1.5 h-2 w-2 border-l border-t"
+        }`}
         style={{ borderColor: rule }}
       />
       <span
-        className="absolute bottom-1.5 right-1.5 h-2 w-2 border-b border-r"
+        className={`absolute ${
+          is2x
+            ? "bottom-3 right-3 h-4 w-4 border-b-2 border-r-2"
+            : "bottom-1.5 right-1.5 h-2 w-2 border-b border-r"
+        }`}
         style={{ borderColor: rule }}
       />
-      <Icon size={40} className="opacity-90" />
+      <Icon size={size} className="opacity-90" />
     </div>
   );
 }
