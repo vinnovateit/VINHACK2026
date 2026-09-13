@@ -133,6 +133,7 @@ function Placed({
   scale,
   className,
   children,
+  style,
   ...rest
 }: {
   /** Top-left on the stage, in stage px. */
@@ -148,7 +149,7 @@ function Placed({
   return (
     <div
       className={`absolute ${className ?? ""}`}
-      style={{ left: x, top: y, width: w * scale, height: h * scale }}
+      style={{ left: x, top: y, width: w * scale, height: h * scale, ...style }}
       {...rest}
     >
       <div
@@ -297,21 +298,26 @@ function MobileHero() {
           {/* The keycap. */}
           <Placed
             x={14}
-            y={278}
+            y={312}
             w={102.721}
             h={105.868}
             scale={0.6}
             className="deal-in z-20 cursor-pointer [--deal-delay:1.45s] [--deal-r:-16deg] [--deal-x:-36px]"
             data-hero="key"
+            role="button"
+            tabIndex={0}
+            aria-label="Keycap"
             style={{ touchAction: "manipulation" }}
           >
-            <KeyArt />
+            <div data-hero="key-press" className="size-full">
+              <KeyArt />
+            </div>
           </Placed>
 
           {/* The "Register Now" note. */}
           <Placed
-            x={8}
-            y={366}
+            x={96}
+            y={278}
             w={275.16}
             h={287.765}
             scale={0.46}
@@ -324,8 +330,8 @@ function MobileHero() {
 
           {/* The scroll cue. */}
           <Placed
-            x={130}
-            y={330}
+            x={122}
+            y={424}
             w={SCROLL_CUE.width}
             h={SCROLL_CUE.height}
             scale={0.68}

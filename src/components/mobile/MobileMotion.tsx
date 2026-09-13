@@ -195,12 +195,31 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
             }, delay);
           };
 
+          const onClick = () => {
+            if (Date.now() - pressTime > 250) {
+              press();
+              release();
+            }
+          };
+
+          const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              press();
+              release();
+            }
+          };
+
           key.addEventListener("pointerdown", press);
+          key.addEventListener("click", onClick);
+          key.addEventListener("keydown", onKey);
           window.addEventListener("pointerup", release);
           window.addEventListener("pointercancel", release);
           cleanups.push(() => {
             if (releaseTimer) clearTimeout(releaseTimer);
             key.removeEventListener("pointerdown", press);
+            key.removeEventListener("click", onClick);
+            key.removeEventListener("keydown", onKey);
             window.removeEventListener("pointerup", release);
             window.removeEventListener("pointercancel", release);
           });
