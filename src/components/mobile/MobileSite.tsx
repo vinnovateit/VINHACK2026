@@ -27,11 +27,11 @@ import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
 import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
+import SiteFooter from "@/components/sections/SiteFooter";
 import { FEATURES } from "@/content/features";
 import {
   FAQS,
   type FaqCategory,
-  FOOTER,
   GUIDELINES,
   HERO,
   PASS,
@@ -90,7 +90,7 @@ export default function MobileSite() {
       <MobileGuidelines />
       <MobileFAQs />
       <MobileAbout />
-      <MobileFooter />
+      <SiteFooter />
     </div>
   );
 }
@@ -1435,91 +1435,5 @@ function MobileFAQs() {
         </div>
       )}
     </section>
-  );
-}
-
-
-/* ------------------------------------------------------------- footer */
-
-function MobileFooter() {
-  return (
-    <footer className="pt-16 overflow-x-clip">
-      {/* The five folder tabs. The collage files them into a drawer, each band
-          overlapping the last with only its lip showing; stacked, the lip is
-          the whole tab. */}
-      <div>
-        {FOOTER.tabs.map((tab) => {
-          const isExternal = tab.href.startsWith("http");
-          return (
-            <a
-              key={tab.name}
-              href={tab.href}
-              target={isExternal ? "_blank" : undefined}
-              rel={isExternal ? "noopener noreferrer" : undefined}
-              className="group -mb-[10px] flex items-center justify-between rounded-t-[18px] px-6 pt-7 pb-6 text-[24px] last:mb-0 no-underline cursor-pointer transition-transform duration-200 active:scale-[0.99]"
-              style={{ background: tab.band, color: tab.color }}
-            >
-              <span className="relative font-rotonto inline-flex items-center">
-                <span>{tab.name}</span>
-                <span
-                  aria-hidden="true"
-                  className="absolute left-0 -bottom-1 h-[2px] w-0 bg-current transition-all duration-200 group-hover:w-full group-focus-visible:w-full"
-                />
-              </span>
-              <svg
-                aria-hidden="true"
-                className="size-6 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 17L17 7M17 7H7M17 7V17" />
-              </svg>
-            </a>
-          );
-        })}
-      </div>
-
-      <div className="pt-8 pb-10" style={{ background: FOOTER.base }}>
-        <div className="overflow-clip">
-          <div
-            className="marquee"
-            style={{ "--marquee-duration": "30s" } as CSSProperties}
-          >
-            <p dir="auto" className="scripts shrink-0 text-[44px] whitespace-nowrap text-black">
-              {FOOTER.marquee}
-            </p>
-            <p aria-hidden dir="auto" className="scripts shrink-0 text-[44px] whitespace-nowrap text-black">
-              {FOOTER.marquee}
-            </p>
-          </div>
-        </div>
-
-        <div className={`${COL} ${PAD} mt-10 flex items-center justify-center gap-[8px] text-[20px] text-black`}>
-          <span>{FOOTER.madeWith[0]}</span>
-          <span>{FOOTER.madeWith[1]}</span>
-          <img
-            alt="love"
-            className="block h-[22px] w-[25px] max-w-none"
-            src="/figma/vector.svg"
-          />
-          <span>{FOOTER.madeWith[2]}</span>
-          <span>{FOOTER.madeWith[3]}</span>
-        </div>
-
-        <div className={`${COL} ${PAD} mt-8 flex items-center gap-[6px] text-[13px] text-black`}>
-          <img
-            alt=""
-            aria-hidden
-            className="block size-[12px] max-w-none shrink-0"
-            src="/figma/vector1.svg"
-          />
-          <p>{FOOTER.copyright}</p>
-        </div>
-      </div>
-    </footer>
   );
 }
