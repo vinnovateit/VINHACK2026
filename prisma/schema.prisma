@@ -59,7 +59,7 @@ model User {
   email         String    @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
-  isRegistered  Boolean   @default(false) @map("is_registered")
+  hasLoggedIn   Boolean   @default(false) @map("has_logged_in")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -67,6 +67,7 @@ model User {
   sessions        Session[]
   vitStudent      VITStudent?
   externalStudent ExternalStudent?
+  ledTeams        Team[]          @relation("TeamLeader")
 
   @@map("users")
 }
@@ -94,6 +95,7 @@ model VITStudent {
   room          String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  joinedAt      DateTime?
 
   teamId String? @db.ObjectId
   team   Team?   @relation(fields: [teamId], references: [id])
@@ -110,9 +112,10 @@ model ExternalStudent {
   phone       String
   year        Int?
   collegeName String
-  email       String
+  email       String   @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  joinedAt    DateTime?
 
   teamId String? @db.ObjectId
   team   Team?   @relation(fields: [teamId], references: [id])
@@ -127,27 +130,38 @@ model Team {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   code        String    @unique
-  capacity    Int       @default(4)
+  capacity    Int       @default(5)
   teamType    TeamType
   track       String?
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  projectTitle       String?   @map("project_title")
-  projectDescription String?   @map("project_description")
-  githubLink         String?   @map("github_link")
-  figmaLink          String?   @map("figma_link")
-  deckLink           String?   @map("deck_link")
-  otherLinks         String?   @map("other_links")
-  progressNote       String?   @map("progress_note")
-  lastSubmittedAt    DateTime? @map("last_submitted_at")
-
   leaderId String? @map("leader_id") @db.ObjectId
+  leader   User?   @relation("TeamLeader", fields: [leaderId], references: [id])
 
   vitStudents      VITStudent[]
   externalStudents ExternalStudent[]
+  submission       Submission?
 
   @@map("teams")
+}
+
+model Submission {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  teamId       String    @unique @db.ObjectId
+  title        String?
+  description  String?
+  githubLink   String?
+  figmaLink    String?
+  deckLink     String?
+  otherLinks   String?
+  progressNote String?
+  submittedAt  DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
 }
 
 model EventSettings {

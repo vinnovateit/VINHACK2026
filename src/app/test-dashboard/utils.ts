@@ -15,7 +15,7 @@ export function generateRandomCode(length: number = 6): string {
 export async function generateUniqueTeamCode(): Promise<string> {
   const maxAttempts = 15;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const candidate = generateRandomCode(6);
+    const candidate = `VH26-${generateRandomCode(4)}`;
     const existing = await prisma.team.findUnique({
       where: { code: candidate },
       select: { id: true },
@@ -25,5 +25,5 @@ export async function generateUniqueTeamCode(): Promise<string> {
     }
   }
   // Fallback with timestamp suffix if collisions persist
-  return generateRandomCode(4) + Date.now().toString(36).slice(-2).toUpperCase();
+  return `VH26-${generateRandomCode(2)}${Date.now().toString(36).slice(-2).toUpperCase()}`;
 }

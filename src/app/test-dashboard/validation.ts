@@ -1,6 +1,6 @@
 import { TRACK_OPTIONS } from "./constants";
 
-const TEAM_CODE_PATTERN = /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/;
+const TEAM_CODE_PATTERN = /^VH26-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/;
 
 export function isValidTrack(value: string): boolean {
   return TRACK_OPTIONS.includes(value);

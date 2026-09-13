@@ -16,17 +16,30 @@ async function createTeam(formData: FormData) {
   const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
 
   const code = await generateUniqueTeamCode();
+  const now = new Date();
 
-  await prisma.team.create({
-    data: {
-      name,
-      code,
-      teamType,
-      leaderId: participant.id,
-      ...(participant.type === "vit"
-        ? { vitStudents: { connect: { id: participant.id } } }
-        : { externalStudents: { connect: { id: participant.id } } }),
-    },
+  await prisma.$transaction(async (tx) => {
+    const team = await tx.team.create({
+      data: {
+        name,
+        code,
+        teamType,
+        leaderId: participant.userId,
+      },
+      select: { id: true },
+    });
+
+    if (participant.type === "vit") {
+      await tx.vITStudent.update({
+        where: { id: participant.id },
+        data: { teamId: team.id, joinedAt: now },
+      });
+    } else {
+      await tx.externalStudent.update({
+        where: { id: participant.id },
+        data: { teamId: team.id, joinedAt: now },
+      });
+    }
   });
 
   redirect("/test-dashboard/dashboard");

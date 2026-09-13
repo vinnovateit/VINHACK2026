@@ -1,47 +1,31 @@
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { requireTeamlessParticipant } from "../access";
+import { requireParticipant } from "../access";
+import { joinTeamByCode, TeamMembershipError } from "../team-membership";
 import { isValidTeamCode } from "../validation";
 
 async function joinTeam(formData: FormData) {
   "use server";
 
   const teamCode = String(formData.get("teamCode") ?? "").trim().toUpperCase();
-  const participant = await requireTeamlessParticipant();
+  const participant = await requireParticipant();
 
   if (!isValidTeamCode(teamCode)) {
-    redirect("/test-dashboard/join-team?error=Please enter a valid six-character team code");
+    redirect("/test-dashboard/join-team?error=Please enter a team code in the format VH26-XXXX");
   }
 
-  const team = await prisma.team.findUnique({
-    where: { code: teamCode },
-    include: { vitStudents: true, externalStudents: true },
-  });
-
-  if (!team) {
-    redirect("/test-dashboard/join-team?error=Team not found");
+  let result: Awaited<ReturnType<typeof joinTeamByCode>>;
+  try {
+    result = await joinTeamByCode({ ...participant, currentTeamId: participant.teamId }, teamCode);
+  } catch (error) {
+    const message = error instanceof TeamMembershipError ? error.message : "Unable to join team.";
+    redirect(`/test-dashboard/join-team?error=${encodeURIComponent(message)}&code=${encodeURIComponent(teamCode)}`);
   }
 
-  const memberCount = team.vitStudents.length + team.externalStudents.length;
-  if (memberCount >= team.capacity) {
-    redirect(`/test-dashboard/join-team?error=Team is at capacity (${team.capacity})`);
+  if (result.status === "already-member") {
+    redirect("/test-dashboard/dashboard?message=You are already in this team.");
   }
-
-  const selectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-  if (selectedType !== team.teamType) {
-    redirect(`/test-dashboard/join-team?error=Type mismatch: ${selectedType} participants cannot join a ${team.teamType} team`);
-  }
-
-  if (participant.type === "vit") {
-    await prisma.vITStudent.update({
-      where: { id: participant.id },
-      data: { teamId: team.id },
-    });
-  } else {
-    await prisma.externalStudent.update({
-      where: { id: participant.id },
-      data: { teamId: team.id },
-    });
+  if (result.status === "switched") {
+    redirect("/test-dashboard/dashboard?success=You switched teams successfully.");
   }
 
   redirect("/test-dashboard/dashboard");
@@ -52,7 +36,7 @@ export default async function JoinTeamPage({
 }: {
   searchParams?: Promise<{ success?: string; error?: string; message?: string; code?: string }>;
 }) {
-  const participant = await requireTeamlessParticipant();
+  const participant = await requireParticipant();
   const params = await searchParams;
   const initialCode = params?.code ?? "";
 
@@ -96,7 +80,7 @@ export default async function JoinTeamPage({
               name="teamCode"
               defaultValue={initialCode}
               required
-              placeholder="e.g. 7K9XP2"
+              placeholder="e.g. VH26-2522"
               className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 uppercase tracking-widest outline-none focus:border-cyan-500"
             />
           </div>

@@ -8,6 +8,12 @@ async function saveSubmission(formData: FormData) {
   "use server";
 
   const participant = await requireTeamedParticipant();
+  const settings = await prisma.eventSettings.findFirst();
+  const now = new Date();
+  if (!settings || now < settings.submissionOpensAt || now > settings.submissionClosesAt) {
+    redirect("/test-dashboard/submissions?error=Submissions are outside the open window");
+  }
+
   const teamId = participant.teamId;
   if (!teamId) redirect("/test-dashboard/create-team");
   const track = String(formData.get("track") ?? "").trim();
@@ -34,20 +40,36 @@ async function saveSubmission(formData: FormData) {
     redirect("/test-dashboard/submissions?error=All project links must be valid HTTP or HTTPS URLs");
   }
 
-  await prisma.team.update({
-    where: { id: teamId },
-    data: {
-      track,
-      projectTitle,
-      projectDescription: projectDescription || null,
-      progressNote: progressNote || null,
-      githubLink: githubLink || null,
-      figmaLink: figmaLink || null,
-      deckLink: deckLink || null,
-      otherLinks: otherLinks || null,
-      lastSubmittedAt: new Date(),
-    },
-  });
+  await prisma.$transaction([
+    prisma.team.update({
+      where: { id: teamId },
+      data: { track },
+    }),
+    prisma.submission.upsert({
+      where: { teamId },
+      update: {
+        title: projectTitle,
+        description: projectDescription || null,
+        progressNote: progressNote || null,
+        githubLink: githubLink || null,
+        figmaLink: figmaLink || null,
+        deckLink: deckLink || null,
+        otherLinks: otherLinks || null,
+        submittedAt: now,
+      },
+      create: {
+        teamId,
+        title: projectTitle,
+        description: projectDescription || null,
+        progressNote: progressNote || null,
+        githubLink: githubLink || null,
+        figmaLink: figmaLink || null,
+        deckLink: deckLink || null,
+        otherLinks: otherLinks || null,
+        submittedAt: now,
+      },
+    }),
+  ]);
 
   redirect("/test-dashboard/submissions?success=Submission updated successfully");
 }
@@ -59,8 +81,13 @@ export default async function SubmissionsPage({
 }) {
   const participant = await requireTeamedParticipant();
   const params = await searchParams;
-  const team = await prisma.team.findUnique({ where: { id: participant.teamId! } });
+  const [team, settings] = await Promise.all([
+    prisma.team.findUnique({ where: { id: participant.teamId! }, include: { submission: true } }),
+    prisma.eventSettings.findFirst(),
+  ]);
   if (!team) redirect("/test-dashboard/create-team");
+  const now = new Date();
+  const isOpen = Boolean(settings && now >= settings.submissionOpensAt && now <= settings.submissionClosesAt);
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
@@ -98,7 +125,7 @@ export default async function SubmissionsPage({
 
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Track</label>
-                <select name="track" defaultValue={team.track ?? TRACK_OPTIONS[0]} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500">
+                <select name="track" defaultValue={team.track ?? TRACK_OPTIONS[0]} disabled={!isOpen} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500 disabled:cursor-not-allowed disabled:opacity-60">
                   {TRACK_OPTIONS.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
@@ -107,19 +134,19 @@ export default async function SubmissionsPage({
 
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Project title</label>
-                <input name="projectTitle" defaultValue={team.projectTitle ?? ""} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+                <input name="projectTitle" defaultValue={team.submission?.title ?? ""} disabled={!isOpen} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500 disabled:cursor-not-allowed disabled:opacity-60" />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Progress update</label>
-                <textarea name="progressNote" defaultValue={team.progressNote ?? ""} rows={5} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+                <textarea name="progressNote" defaultValue={team.submission?.progressNote ?? ""} rows={5} disabled={!isOpen} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500 disabled:cursor-not-allowed disabled:opacity-60" />
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Description</label>
-                <textarea name="projectDescription" defaultValue={team.projectDescription ?? ""} rows={6} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500" />
+                <textarea name="projectDescription" defaultValue={team.submission?.description ?? ""} rows={6} disabled={!isOpen} className="w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-slate-100 outline-none focus:border-cyan-500 disabled:cursor-not-allowed disabled:opacity-60" />
               </div>
 
               <div>
@@ -127,26 +154,26 @@ export default async function SubmissionsPage({
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">🔗</span>
-                    <input name="githubLink" defaultValue={team.githubLink ?? ""} placeholder="GitHub" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="githubLink" defaultValue={team.submission?.githubLink ?? ""} placeholder="GitHub" disabled={!isOpen} className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-60" />
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">✦</span>
-                    <input name="figmaLink" defaultValue={team.figmaLink ?? ""} placeholder="Figma" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="figmaLink" defaultValue={team.submission?.figmaLink ?? ""} placeholder="Figma" disabled={!isOpen} className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-60" />
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">▣</span>
-                    <input name="deckLink" defaultValue={team.deckLink ?? ""} placeholder="Deck" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="deckLink" defaultValue={team.submission?.deckLink ?? ""} placeholder="Deck" disabled={!isOpen} className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-60" />
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-950 p-3">
                     <span className="text-lg">＋</span>
-                    <input name="otherLinks" defaultValue={team.otherLinks ?? ""} placeholder="Other" className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500" />
+                    <input name="otherLinks" defaultValue={team.submission?.otherLinks ?? ""} placeholder="Other" disabled={!isOpen} className="w-full bg-transparent text-slate-100 outline-none placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-60" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <button type="submit" className="mt-6 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400">
+          <button type="submit" disabled={!isOpen} className="mt-6 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50">
             Submit project
           </button>
         </form>
