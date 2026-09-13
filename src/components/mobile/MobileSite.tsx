@@ -935,7 +935,7 @@ function MobileGuidelines() {
           <h2 className="font-rotonto font-light text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
         </div>
 
-        <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white" data-m-reveal>
+        <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white">
           {GUIDELINES.paragraphs.map((para) => (
             <p key={para}>{para}</p>
           ))}
