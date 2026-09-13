@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 
 import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
@@ -398,11 +400,11 @@ export function TracksCardDeck() {
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const ghostRefs = useRef<Map<number, HTMLDivElement[]>>(new Map());
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (!mounted) return;
@@ -543,7 +545,7 @@ export function TracksCardDeck() {
       }
 
       if (typeof window !== "undefined") {
-        (window as any).__TRACKS_DEBUG__ = {
+        (window as unknown as Record<string, unknown>).__TRACKS_DEBUG__ = {
           p,
           cards: SLOTS.map((s) => {
             const el = cardRefs.current.get(s);
