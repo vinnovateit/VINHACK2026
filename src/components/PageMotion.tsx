@@ -182,7 +182,6 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     name: "Tracks",
     moves: [
       { node: "594:34", settle: { scale: 0.8 } },
-      { node: "596:376", drift: -40 },
     ],
   },
   {
