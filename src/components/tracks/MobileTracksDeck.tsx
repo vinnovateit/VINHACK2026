@@ -43,6 +43,8 @@ const CARD_COLORS = [
   TRACK_COLORS.pink,
   TRACK_COLORS.red,
   TRACK_COLORS.darkBlue,
+  TRACK_COLORS.lightBlue,
+  TRACK_COLORS.white,
 ] as const;
 
 /* -------------------------------------------------------------- the column */
@@ -431,13 +433,19 @@ export default function MobileTracksDeck() {
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
                           <div
-                            className="mb-2 h-px w-full"
+                            className="mb-1.5 h-px w-full"
                             style={{ background: rule }}
                           />
-                          <h3 className="font-rotonto text-[22px] leading-[0.96] tracking-tight">
+                          <h3
+                            className={`font-rotonto leading-[0.96] tracking-tight ${
+                              item.title.length > 20
+                                ? "text-[17px]"
+                                : "text-[21px]"
+                            }`}
+                          >
                             {item.title}
                           </h3>
-                          <p className="mt-2 font-rotonto text-[11px] leading-[1.55] tracking-tight opacity-85">
+                          <p className="mt-1.5 font-rotonto text-[10.5px] leading-[1.42] tracking-tight opacity-85 line-clamp-6">
                             {item.blurb}
                           </p>
                         </div>
