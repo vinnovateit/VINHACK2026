@@ -16,6 +16,8 @@ export interface TrackCardProps {
   height?: number | string;
   /** Whether the card is frontmost in a stack */
   isFront?: boolean;
+  /** Whether the card is rendered at 2x retina layout resolution */
+  is2x?: boolean;
   /** Click handler */
   onClick?: () => void;
   /** Custom inner content */
@@ -92,6 +94,7 @@ export function TrackCard({
   width = 365.44,
   height = 257.6,
   isFront = false,
+  is2x = false,
   onClick,
   children,
 }: TrackCardProps) {
@@ -101,22 +104,28 @@ export function TrackCard({
   return (
     <div
       onClick={onClick}
-      className={`relative select-none transition-transform duration-300 rounded-[16px] overflow-hidden ${
+      className={`relative select-none transition-transform duration-300 ${
+        is2x ? "rounded-[32px]" : "rounded-[16px]"
+      } overflow-hidden ${
         onClick ? "cursor-pointer hover:scale-[1.02]" : ""
       } ${className}`}
       style={{
         backgroundColor: color,
         width: typeof width === "number" ? `${width}px` : width,
         height: typeof height === "number" ? `${height}px` : height,
-        boxShadow: isFront
-          ? "0 18px 40px -10px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0,0,0,0.06)"
-          : "0 10px 25px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0,0,0,0.04)",
+        boxShadow: is2x
+          ? isFront
+            ? "0 36px 80px -20px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(0,0,0,0.06)"
+            : "0 20px 50px -16px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(0,0,0,0.04)"
+          : isFront
+            ? "0 18px 40px -10px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0,0,0,0.06)"
+            : "0 10px 25px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0,0,0,0.04)",
         ...style,
       }}
     >
       {/* Subtle inner top-edge highlight for tactile card feel */}
       <div
-        className="absolute inset-x-0 top-0 h-px bg-white/25 pointer-events-none"
+        className={`absolute inset-x-0 top-0 ${is2x ? "h-[2px]" : "h-px"} bg-white/25 pointer-events-none`}
         aria-hidden
       />
 

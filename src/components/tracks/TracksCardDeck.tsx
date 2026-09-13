@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
@@ -76,9 +77,14 @@ import { TRACKS } from "@/content/site";
 /* ---------------------------------------------------------------- geometry */
 
 /** The card's drawn size, in the plate's units. Everything on the face is
- *  expressed against these, so the whole card scales as one piece. */
-const CARD_WIDTH = 365.44;
-const CARD_HEIGHT = 257.6;
+ *  expressed against these, so the whole card scales as one piece.
+ *  Rendered at 2x Retina layout resolution so fonts and borders are drawn
+ *  natively crisp and never blur under transforms. */
+const CARD_BASE_WIDTH = 365.44;
+const CARD_BASE_HEIGHT = 257.6;
+const CARD_RES = 2;
+const CARD_WIDTH = CARD_BASE_WIDTH * CARD_RES;
+const CARD_HEIGHT = CARD_BASE_HEIGHT * CARD_RES;
 
 /** The plate's drawn width. Whatever the section measures against this is the
  *  factor CSS is scaling the entire collage by, and every screen-pixel figure
@@ -144,7 +150,7 @@ const EDGE_MARGIN = 24;
 const BAND_FILL = 0.86;
 const WIDTH_FILL = 0.5;
 /** A floor, so a very short window shrinks the card rather than inverting it. */
-const MIN_FOCUS_SCALE = 0.4;
+const MIN_FOCUS_SCALE = 0.4 / CARD_RES;
 
 /** How big a card in a corner pile is next to the one being read. Expressed
  *  against the focused size rather than fixed, so the two keep their relation
@@ -301,6 +307,43 @@ function smooth(t: number): number {
 }
 
 /**
+ * Critically damped spring (SmoothDamp).
+ * Provides continuous velocity and acceleration without overshoot or oscillation.
+ * Frame-rate independent via deltaTime.
+ */
+function smoothDamp(
+  current: number,
+  target: number,
+  velocityRef: { value: number },
+  smoothTime: number,
+  maxSpeed: number,
+  deltaTime: number,
+): number {
+  smoothTime = Math.max(0.0001, smoothTime);
+  const omega = 2 / smoothTime;
+
+  const x = omega * deltaTime;
+  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+  let change = current - target;
+  const originalTo = target;
+
+  const maxChange = maxSpeed * smoothTime;
+  change = clamp(-maxChange, maxChange, change);
+  target = current - change;
+
+  const temp = (velocityRef.value + omega * change) * deltaTime;
+  velocityRef.value = (velocityRef.value - omega * temp) * exp;
+  let output = target + (change + temp) * exp;
+
+  if ((originalTo - current > 0) === (output > originalTo)) {
+    output = originalTo;
+    velocityRef.value = (output - originalTo) / deltaTime;
+  }
+
+  return output;
+}
+
+/**
  * Half the width and half the height a card actually covers once it is turned,
  * sheared and scaled — in the card's own units.
  *
@@ -360,8 +403,15 @@ export function TracksCardDeck() {
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const ghostRefs = useRef<Map<number, HTMLDivElement[]>>(new Map());
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const container = containerRef.current;
     const stage = stageRef.current;
     const rail = railRef.current;
@@ -409,6 +459,7 @@ export function TracksCardDeck() {
         if (!el) continue;
 
         const raw = p - slot;
+        const absRaw = Math.abs(raw);
         const inbound = raw <= 0;
         // Where the deck is in this card's stretch of scrolling, 0 to 1 — and
         // then the card's own share of it, which is the back of the stretch if
@@ -421,15 +472,15 @@ export function TracksCardDeck() {
         // How far through its flight the card is: 0 sitting in a pile, 1 face
         // on in the middle. One number for both halves of the trip, so the
         // pose below is written once rather than once per direction.
+        // e: 0 sitting in a pile, 1 face on in the middle
         const e = reduced
           ? Math.abs(raw) < 0.5
             ? 1
             : 0
           : inbound
             ? easeOut(own)
-            : 1 - easeIn(own);
-        // Zero in both piles, 1 at the fastest point of the flight — the shape
-        // of everything that is only true of a card in the air.
+            : 1 - (own * own);
+        // Zero in both piles, 1 at the fastest point of the flight
         const air = reduced ? 0 : arc(own);
 
         // How deep in its pile the card is sitting. The same distance either
@@ -444,57 +495,73 @@ export function TracksCardDeck() {
         let x = mix(restX, 0, e);
         let y = mix(restY, 0, e);
 
-        // The bow. Perpendicular to the line from the pile to the centre, and
-        // negated on the way out so that both halves push the same way and the
-        // whole journey is one arc rather than an S.
-        if (air > 0) {
-          const dx = -restX;
-          const dy = -restY;
-          const len = Math.hypot(dx, dy) || 1;
-          const mag = BOW * len * air * (inbound ? 1 : -1);
-          x += (-dy / len) * mag;
-          y += (dx / len) * mag;
+        // Smooth natural arc without direction reversals:
+        // Inbound: gentle arc from top-right to center, y strictly <= 0
+        // Outbound: gentle arc from center to bottom-left, y strictly >= 0
+        if (air > 0 && !reduced) {
+          if (inbound) {
+            x -= 28 * air * (1 - e);
+            y = Math.min(0, y - 14 * air * (1 - e));
+          } else {
+            x -= 28 * air * e;
+            y = Math.max(0, y + 14 * air * e);
+          }
         }
 
         const scale = mix(cornerScale, focusScale, e);
-        const rotate = mix(LEAN_ROTATE, 0, e) - KICK * air;
+        const rotate = mix(LEAN_ROTATE, 0, e);
         const skew = mix(LEAN_SKEW, 0, e);
         const squash = mix(LEAN_SQUASH, 1, e);
 
         el.style.transform =
           `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) ` +
-          `rotate(${rotate.toFixed(3)}deg) skewX(${skew.toFixed(3)}deg) ` +
+          `rotate(${rotate.toFixed(2)}deg) skewX(${skew.toFixed(2)}deg) ` +
           `scale(${scale.toFixed(4)}, ${(scale * squash).toFixed(4)})`;
 
-        // The card in the air is in front of both piles; within a pile the one
-        // nearest its turn — just dealt, or about to be — is on top.
-        const layer = String(Math.round(1000 - Math.abs(raw) * 10));
+        // Discrete stable layer: active card on top, waiting pile under it, dealt pile under that
+        const layer =
+          absRaw < 0.5 ? "500" : inbound ? String(300 - slot) : String(100 + slot);
         if (el.style.zIndex !== layer) el.style.zIndex = layer;
 
-        // The smear. Both plates ride in the card's own space, so they lean
-        // and scale with it and need only their offset written here.
+        // The smear: keep subtle so it doesn't cause visual double-vision/flicker
         const ghosts = ghostRefs.current.get(slot);
         if (ghosts) {
-          const sep = SEPARATION * air;
+          const sep = 6 * air;
           for (let g = 0; g < ghosts.length; g++) {
             const dir = g === 0 ? -1 : 1;
-            ghosts[g].style.transform = `translate3d(${(sep * dir).toFixed(2)}px, ${(
+            ghosts[g].style.transform = `translate3d(${(sep * dir).toFixed(1)}px, ${(
               sep *
               SEP_TILT *
               dir
-            ).toFixed(2)}px, 0)`;
+            ).toFixed(1)}px, 0)`;
           }
         }
 
-        // The face only prints while the card is square to the reader; at an
-        // angle, and at a corner pile's size, it would be unreadable anyway.
+        // The face prints when the card is close to the reader.
         const content = contentRefs.current.get(slot);
         if (content) {
           const shown = reduced
-            ? e
-            : 1 - smooth((Math.abs(raw) - CONTENT_FLAT) / CONTENT_FADE);
+            ? (absRaw < 0.5 ? 1 : 0)
+            : clamp(0, 1, 1 - smooth((absRaw - 0.28) / 0.28));
           content.style.opacity = shown.toFixed(3);
         }
+      }
+
+      if (typeof window !== "undefined") {
+        (window as any).__TRACKS_DEBUG__ = {
+          p,
+          cards: SLOTS.map((s) => {
+            const el = cardRefs.current.get(s);
+            const content = contentRefs.current.get(s);
+            return {
+              slot: s,
+              raw: (p - s).toFixed(2),
+              transform: el?.style.transform,
+              zIndex: el?.style.zIndex,
+              contentOpacity: content?.style.opacity,
+            };
+          }),
+        };
       }
 
       // Which track the counter is pointing at. Only touched when it changes —
@@ -523,10 +590,6 @@ export function TracksCardDeck() {
      * `window.innerWidth` is only right at exactly 1280px wide.
      */
     const measure = () => {
-      // The stage may already be parked, and every figure below is a resting
-      // position, so put it back before reading one.
-      park(0);
-
       const rect = container.getBoundingClientRect();
       // Below `md` the whole collage is `display: none` and measures 0x0, and
       // `MobileTracksDeck` is the deck on screen instead.
@@ -595,25 +658,15 @@ export function TracksCardDeck() {
       doneY = plateY(bandBottom - EDGE_MARGIN - reachY);
 
       // The rail's origin is the focused card's centre, and the whole deck is
-      // written against it. In plate units from the section's own top: the
-      // lead-in the deck is held below its parked place, plus the band's
-      // centre, which is where it lands once that lead-in is spent.
-      rail.style.top = `${(leadIn + bandCenter) / canvasScale}px`;
-      counter.style.top = `${(leadIn + bandTop) / canvasScale}px`;
+      // written against it. In the fixed portal at top: 0 with scale(canvasScale),
+      // placing rail at bandCenter / canvasScale lands it at bandCenter on screen.
+      // And counter at bandTop / canvasScale lands it at bandTop on screen.
+      rail.style.top = `${(bandCenter / canvasScale).toFixed(1)}px`;
+      counter.style.top = `${(bandTop / canvasScale).toFixed(1)}px`;
     };
 
     /**
      * Scroll position to deck position: the staircase described at `HOLD`.
-     *
-     * `q` is how far through the parked stretch the page is, 0 to 1. Card `k`
-     * flies in over the first unit of its share and then holds for the rest, so
-     * the value this returns is flat — exactly `k` — for the whole hold.
-     *
-     * The flight fraction is handed on raw. Easing it here would ease both
-     * halves of the trip the same way, and the whole point of the rewrite is
-     * that a card leaving and a card arriving are not moving at the same rate;
-     * `render` applies `easeOut` or `easeIn` per card, from the sign of its own
-     * distance to `p`.
      */
     const deckPosition = (q: number) => {
       const u = q * COUNT * UNIT;
@@ -623,97 +676,133 @@ export function TracksCardDeck() {
       return k - 1 + flight;
     };
 
-    /**
-     * The park itself: one transform, written straight to the node.
-     *
-     * This runs on every rendered frame and is the one write whose timing is
-     * visible — see `tick` — so it goes through as little as possible, and
-     * `translate3d` keeps the stage on its own compositor layer rather than
-     * re-rasterising the deck each tick.
-     */
-    const park = (plateY: number) => {
-      stage.style.transform = `translate3d(0, ${plateY}px, 0)`;
-    };
-
-    // Cache scrollY from the scroll event so the rAF tick always reads the
-    // freshest value. window.scrollY inside rAF can be one composited frame
-    // behind the browser's actual scroll position, which is what causes the
-    // visible bob. The scroll event fires synchronously before paint on the
-    // same frame the position changes, so caching it here gives rAF the
-    // correct value with no lag.
-    let cachedScrollY = window.scrollY;
+    let latestScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     const onScroll = () => {
-      cachedScrollY = window.scrollY;
+      latestScrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
     };
 
     let drawn = Number.NaN;
+    let currentP = -1;
+    let smoothScrollY = latestScrollY;
+    const scrollVel = { value: 0 };
+    const pVel = { value: 0 };
+    let lastTime = typeof performance !== "undefined" ? performance.now() : 0;
+    let initialized = false;
 
-    const update = () => {
-      if (!armed) return;
+    const update = (dt: number) => {
+      if (!armed) {
+        if (desktop.matches) {
+          measure();
+        }
+        if (!armed) {
+          stage.style.display = "none";
+          return;
+        }
+      }
 
-      // The counter takes over from the heading rather than sitting under it:
-      // it is faded in across the back half of the lead-in, so it is on screen
-      // by the time the deck locks and the heading has gone, and the section is
-      // never labelled twice at once.
+      const currentScrollY = latestScrollY;
+      const isReduced = calm.matches;
+
+      if (!initialized) {
+        smoothScrollY = currentScrollY;
+        scrollVel.value = 0;
+        pVel.value = 0;
+      } else if (isReduced || Math.abs(currentScrollY - smoothScrollY) > 2000) {
+        smoothScrollY = currentScrollY;
+        scrollVel.value = 0;
+      } else {
+        // Smooth input filtering (dt-independent critically damped spring):
+        // Eliminates discrete mouse-wheel step jumps while maintaining instant responsiveness.
+        smoothScrollY = smoothDamp(smoothScrollY, currentScrollY, scrollVel, 0.08, Infinity, dt);
+      }
+
+      // Fixed Stage Y Translation:
+      // While locked in park (parkStart <= smoothScrollY <= parkStart + travelPx):
+      // stageY is EXACTLY 0. The stage is 100% stationary in the viewport, pinned
+      // natively on the GPU compositor thread with ZERO bobbing and ZERO jitter!
+      // Before parkStart: stage enters smoothly from below (parkStart - smoothScrollY).
+      // After parkEnd: stage exits smoothly upward ((parkStart + travelPx) - smoothScrollY).
+      let stageY = 0;
+      if (smoothScrollY < parkStart) {
+        stageY = parkStart - smoothScrollY;
+      } else if (smoothScrollY > parkStart + travelPx) {
+        stageY = (parkStart + travelPx) - smoothScrollY;
+      } else {
+        stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
+      }
+
+      // Culled when completely outside viewport
+      if (
+        stageY > window.innerHeight * 1.3 ||
+        stageY < -window.innerHeight * 1.3
+      ) {
+        if (stage.style.display !== "none") stage.style.display = "none";
+      } else {
+        if (stage.style.display !== "block") stage.style.display = "block";
+        const transformStr = `translate3d(-50%, ${stageY.toFixed(1)}px, 0) scale(${canvasScale.toFixed(4)})`;
+        if (stage.style.transform !== transformStr) {
+          stage.style.transform = transformStr;
+        }
+      }
+
+      // Card dealing progress:
+      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
+      const targetP = deckPosition(stuck / travelPx);
+
+      if (!initialized) {
+        currentP = targetP;
+        initialized = true;
+      } else if (isReduced) {
+        currentP = targetP;
+        pVel.value = 0;
+      } else {
+        // Critically damped spring (SmoothDamp):
+        // Eliminates the discontinuous velocity spike of simple lerp on mouse-wheel notches.
+        // Provides smooth acceleration AND deceleration (continuous velocity, zero jerk).
+        currentP = smoothDamp(currentP, targetP, pVel, 0.13, Infinity, dt);
+        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
+          currentP = targetP;
+          pVel.value = 0;
+        }
+      }
+
+      // Counter fade in/out
+      const enterProgress =
+        (smoothScrollY - parkStart + leadInPx / 2) / (leadInPx / 2);
+      const exitProgress =
+        (parkStart + travelPx + leadInPx / 2 - smoothScrollY) / (leadInPx / 2);
       const shown = calm.matches
         ? 1
-        : smooth((cachedScrollY - parkStart + leadInPx / 2) / (leadInPx / 2));
+        : clamp(0, 1, Math.min(smooth(enterProgress), smooth(exitProgress)));
+
       if (Math.abs(shown - counterLit) > 0.004) {
         counterLit = shown;
         counter.style.opacity = shown.toFixed(3);
       }
 
-      const stuck = clamp(0, travelPx, cachedScrollY - parkStart);
-      // Exactly the page's own travel, back in plate units. Any smoothing here
-      // and the parked deck would visibly drift against the scroll.
-      park(stuck / canvasScale);
-
-      const p = deckPosition(stuck / travelPx);
-      if (p !== drawn) {
-        drawn = p;
-        render(p);
+      if (Number.isNaN(drawn) || Math.abs(currentP - drawn) > 0.0004) {
+        drawn = currentP;
+        render(currentP);
       }
     };
 
-    /**
-     * Driven from a `requestAnimationFrame` loop rather than the `scroll`
-     * event.
-     *
-     * That was tried first, on the reasoning that scroll handlers run before
-     * paint so writing the transform there puts the stage and the page on
-     * screen at the same offset in the same frame. It still bobbed: under
-     * momentum/trackpad/fling scrolling the browser does not dispatch a
-     * `scroll` event for every frame the compositor actually moves the page
-     * by — it coalesces several frames' worth of movement into one event on
-     * whatever cadence it chooses. The compositor keeps painting the page at
-     * 60fps regardless, so the stage's own transform — only ever updated on
-     * the throttled event — visibly falls behind and snaps forward each time
-     * an event finally lands. rAF has no such throttle: it runs once per
-     * rendered frame no matter what is driving the scroll, so reading
-     * `scrollY` there is reading it exactly as often as the page's own
-     * position changes on screen.
-     *
-     * The loop runs for the component's whole lifetime rather than only while
-     * scrolling is in progress. There is no reliable "scroll ended" event to
-     * stop it on, and the cost of the alternative is small: `update` reads no
-     * geometry (everything it needs was measured in `measure`), bails
-     * immediately when the section isn't armed, and skips the cards entirely
-     * unless the deck has actually moved.
-     */
     let rafId = 0;
     const tick = () => {
-      update();
+      const now = performance.now();
+      const dt = Math.min(0.064, Math.max(0.001, (now - lastTime) / 1000));
+      lastTime = now;
+      update(dt);
       rafId = requestAnimationFrame(tick);
     };
 
     const onLayout = () => {
       measure();
-      // Every card's resting position has just been recomputed, so the last
-      // drawn position no longer describes what is on screen.
       drawn = Number.NaN;
+      initialized = false;
       lit = -2;
       counterLit = -1;
-      update();
+      lastTime = performance.now();
+      update(0.016);
     };
 
     onLayout();
@@ -731,196 +820,185 @@ export function TracksCardDeck() {
       desktop.removeEventListener("change", onLayout);
       calm.removeEventListener("change", onLayout);
     };
-  }, []);
+  }, [mounted]);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 overflow-hidden"
-      data-node-id="596:376"
-      data-name="TRACK_CARDS_DECK"
-    >
-      {/* The deck only ever shows one track at a time, and only part-way
-          through a scroll, so the real content is given plainly here and the
-          moving parts below are hidden from assistive tech. */}
-      <ul className="sr-only">
-        {TRACKS.items.map((item) => (
-          <li key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.blurb}</p>
-          </li>
-        ))}
-      </ul>
-
-      {/* The stage is what parks — one transform carrying the whole deck,
-          driven by the page's own scroll.
-
-          `overflow-anchor: none` is load-bearing, and the symptom it fixes is
-          worth naming because nothing about it points at this file: without
-          it, *jumping* into the parked stretch — a nav link, a scrollbar drag,
-          Page Down, a browser restoring a position — lands and then bounces,
-          sometimes by the whole length of the park. Chrome picks an anchor
-          node in the viewport and re-scrolls the page to keep it where it was;
-          the stage moves the entire deck by up to a screenful on the very next
-          frame, so whatever it picked in here is exactly the wrong thing to
-          hold still. Excluding the stage and everything under it from being
-          chosen leaves the scroll where the reader put it. */}
+    <>
       <div
-        ref={stageRef}
-        className="absolute inset-0 will-change-transform"
+        ref={containerRef}
+        className="absolute inset-0 overflow-visible pointer-events-none"
         style={{ overflowAnchor: "none" }}
+        data-node-id="596:376"
+        data-name="TRACK_CARDS_DECK"
       >
-        {/* What names the section once the heading has scrolled away. Deck
-            furniture: which card of how many, and a rule of ticks filling in
-            behind it. `top` is set once measured. */}
-        <div
-          ref={counterRef}
-          aria-hidden
-          className="absolute left-0 flex items-center gap-[9px] pl-[26px] font-rotonto text-[#fa1a1d] opacity-0"
-        >
-          <span className="text-[11px] uppercase tracking-[0.42em]">Tracks</span>
-          <span className="flex items-center gap-[5px]">
-            {TRACKS.items.map((item, i) => (
-              <span
-                key={item.title}
-                data-tick
-                className="block h-[2px] w-[18px] bg-current opacity-25"
-                style={{ opacity: i === 0 ? 1 : 0.25 }}
-              />
-            ))}
-          </span>
-          <span className="text-[11px] tracking-[0.2em] tabular-nums">
-            <span data-tick-label>01</span>
-            <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
-          </span>
-        </div>
-
-        {/* Origin at the focused card's centre; `top` is set once measured. */}
-        <div ref={railRef} className="absolute left-1/2 top-0">
-          {SLOTS.map((slot) => {
-            // Slots run negative, so the cycle is taken the long way round —
-            // `-2 % 6` is `-2` in JS, which is not an index.
-            const color =
-              COLOR_CYCLE[
-                ((slot % COLOR_CYCLE.length) + COLOR_CYCLE.length) %
-                  COLOR_CYCLE.length
-              ];
-            const { ink, rule } = trackInk(color);
-            const item = slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
-
-            return (
-              <div
-                key={slot}
-                ref={(node) => {
-                  if (node) cardRefs.current.set(slot, node);
-                  else cardRefs.current.delete(slot);
-                }}
-                className="absolute will-change-transform"
-                style={{
-                  left: 0,
-                  top: 0,
-                  width: CARD_WIDTH,
-                  height: CARD_HEIGHT,
-                  marginLeft: -CARD_WIDTH / 2,
-                  marginTop: -CARD_HEIGHT / 2,
-                  transformOrigin: "center center",
-                }}
-                aria-hidden
-              >
-                {/* The smear, under the card and the same size as it. Only the
-                    cards that actually fly carry one — the blanks padding
-                    either pile never leave their corner, so a plate on them
-                    would be four nodes that can never be seen. */}
-                {item
-                  ? SEP_INKS.map((sepInk, g) => (
-                      <div
-                        key={sepInk}
-                        ref={(node) => {
-                          const list = ghostRefs.current.get(slot) ?? [];
-                          if (node) list[g] = node;
-                          ghostRefs.current.set(slot, list);
-                        }}
-                        className="absolute inset-0 rounded-[16px]"
-                        style={{ background: sepInk }}
-                      />
-                    ))
-                  : null}
-
-                <TrackCard
-                  color={color}
-                  // Only the cards that say something take the deeper shadow;
-                  // the blanks padding either pile sit flatter behind them.
-                  isFront={item !== null}
-                  width={CARD_WIDTH}
-                  height={CARD_HEIGHT}
-                  className="absolute inset-0"
-                >
-                  {item ? (
-                    // Everything the track has to say is printed on the card
-                    // itself. Sizes are in the card's own 365x258 units, so the
-                    // whole face scales as one piece with the zoom instead of
-                    // type drifting out of proportion with the box holding it.
-                    <div
-                      ref={(node) => {
-                        if (node) contentRefs.current.set(slot, node);
-                        else contentRefs.current.delete(slot);
-                      }}
-                      className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[24px] py-[20px] opacity-0"
-                      style={{ color: ink }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="font-rotonto text-[13px] tracking-[0.2em] tabular-nums">
-                          {pad(slot + 1)}
-                          <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
-                        </span>
-                        <TrackAsterisk size={15} />
-                      </div>
-
-                      {/* The card's own middle, rather than a block pushed
-                          down to the bottom edge with the top two-thirds left
-                          empty — which is what the face used to be. Laid out
-                          as text beside a proper image panel now (`TrackVisual`)
-                          rather than text alone with a mark pushed into the
-                          header's corner. With the tag chips gone, the blurb
-                          has the freed-up room to run longer instead. */}
-                      <div className="-mt-[6px] flex items-start gap-[18px]">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-rotonto text-[30px] leading-[0.92] tracking-tight">
-                            {item.title}
-                          </h3>
-                          <div
-                            className="my-[11px] h-px w-full"
-                            style={{ background: rule }}
-                          />
-                          <p className="font-rotonto text-[12px] leading-[1.65] tracking-tight opacity-90">
-                            {item.blurb}
-                          </p>
-                        </div>
-                        <TrackVisual
-                          slot={slot}
-                          ink={ink}
-                          rule={rule}
-                          className="h-[108px] w-[92px]"
-                        />
-                      </div>
-
-                      <div className="flex items-end justify-between font-rotonto text-[8px] uppercase tracking-[0.36em] opacity-55">
-                        <span>Track</span>
-                        <span
-                          className="mx-[12px] mb-[3px] h-px flex-1"
-                          style={{ background: rule }}
-                        />
-                        <span>VinHack 26</span>
-                      </div>
-                    </div>
-                  ) : null}
-                </TrackCard>
-              </div>
-            );
-          })}
-        </div>
+        <ul className="sr-only">
+          {TRACKS.items.map((item) => (
+            <li key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.blurb}</p>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+
+      {mounted && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={stageRef}
+              className="pointer-events-none"
+              style={{
+                position: "fixed",
+                left: "50%",
+                top: 0,
+                width: PLATE_WIDTH,
+                height: "100vh",
+                transformOrigin: "top center",
+                zIndex: 35,
+                overflowAnchor: "none",
+                display: "none",
+              }}
+            >
+              <div
+                ref={counterRef}
+                aria-hidden
+                className="absolute left-0 flex items-center gap-[9px] pl-[26px] font-rotonto text-[#fa1a1d] opacity-0"
+              >
+                <span className="text-[11px] uppercase tracking-[0.42em]">Tracks</span>
+                <span className="flex items-center gap-[5px]">
+                  {TRACKS.items.map((item, i) => (
+                    <span
+                      key={item.title}
+                      data-tick
+                      className="block h-[2px] w-[18px] bg-current opacity-25"
+                      style={{ opacity: i === 0 ? 1 : 0.25 }}
+                    />
+                  ))}
+                </span>
+                <span className="text-[11px] tracking-[0.2em] tabular-nums">
+                  <span data-tick-label>01</span>
+                  <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
+                </span>
+              </div>
+
+              <div ref={railRef} className="absolute left-1/2 top-0">
+                {SLOTS.map((slot) => {
+                  const color =
+                    COLOR_CYCLE[
+                      ((slot % COLOR_CYCLE.length) + COLOR_CYCLE.length) %
+                        COLOR_CYCLE.length
+                    ];
+                  const { ink, rule } = trackInk(color);
+                  const item =
+                    slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
+
+                  return (
+                    <div
+                      key={slot}
+                      ref={(node) => {
+                        if (node) cardRefs.current.set(slot, node);
+                        else cardRefs.current.delete(slot);
+                      }}
+                      className="absolute"
+                      style={{
+                        left: 0,
+                        top: 0,
+                        width: CARD_WIDTH,
+                        height: CARD_HEIGHT,
+                        marginLeft: -CARD_WIDTH / 2,
+                        marginTop: -CARD_HEIGHT / 2,
+                        transformOrigin: "center center",
+                      }}
+                      aria-hidden
+                    >
+                      {item
+                        ? SEP_INKS.map((sepInk, g) => (
+                            <div
+                              key={sepInk}
+                              ref={(node) => {
+                                const list = ghostRefs.current.get(slot) ?? [];
+                                if (node) list[g] = node;
+                                ghostRefs.current.set(slot, list);
+                              }}
+                              className="absolute inset-0 rounded-[32px]"
+                              style={{ background: sepInk }}
+                            />
+                          ))
+                        : null}
+
+                      <TrackCard
+                        color={color}
+                        isFront={item !== null}
+                        is2x
+                        width={CARD_WIDTH}
+                        height={CARD_HEIGHT}
+                        className="absolute inset-0"
+                      >
+                        {item ? (
+                          <div
+                            ref={(node) => {
+                              if (node) contentRefs.current.set(slot, node);
+                              else contentRefs.current.delete(slot);
+                            }}
+                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[48px] py-[40px] opacity-0"
+                            style={{ color: ink }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <span className="font-rotonto text-[26px] tracking-[0.2em] tabular-nums">
+                                {pad(slot + 1)}
+                                <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
+                              </span>
+                              <TrackAsterisk size={30} />
+                            </div>
+
+                            <div className="-mt-[12px] flex items-start gap-[36px]">
+                              <div className="min-w-0 flex-1">
+                                <h3
+                                  className={`font-rotonto leading-[0.94] tracking-tight ${
+                                    item.title.length > 20
+                                      ? "text-[46px]"
+                                      : "text-[60px]"
+                                  }`}
+                                >
+                                  {item.title}
+                                </h3>
+                                <div
+                                  className="my-[18px] h-[2px] w-full"
+                                  style={{ background: rule }}
+                                />
+                                <p className="font-rotonto text-[23px] leading-[1.5] tracking-tight opacity-90">
+                                  {item.blurb}
+                                </p>
+                              </div>
+                              <TrackVisual
+                                slot={slot}
+                                ink={ink}
+                                rule={rule}
+                                size={76}
+                                is2x
+                                className="h-[216px] w-[184px]"
+                              />
+                            </div>
+
+                            <div className="flex items-end justify-between font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
+                              <span>Track</span>
+                              <span
+                                className="mx-[24px] mb-[6px] h-[2px] flex-1"
+                                style={{ background: rule }}
+                              />
+                              <span>VinHack 26</span>
+                            </div>
+                          </div>
+                        ) : null}
+                      </TrackCard>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+    </>
   );
 }
 

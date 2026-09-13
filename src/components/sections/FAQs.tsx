@@ -396,9 +396,6 @@ export default function FAQsSection() {
                       <span className="font-rotonto text-[11px] font-bold text-neutral-800 uppercase tracking-wide">
                         {activeCategory.subtitle}
                       </span>
-                      <span className="font-mono text-[9.5px] text-neutral-500 uppercase">
-                        {isTop ? "[CLICK PAGE FOR NEXT →]" : ""}
-                      </span>
                     </div>
 
                     {/* Main Question Display */}
