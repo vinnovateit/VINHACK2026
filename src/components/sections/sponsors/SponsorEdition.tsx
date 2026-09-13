@@ -90,7 +90,7 @@ const SponsorEdition = () => {
       {/* Sheet 3: Main Newspaper Front Page */}
       <div className="w-[1184px] max-w-full h-[758.4px] relative shadow-[0_20px_48px_rgba(0,_0,_0,_0.45),_0_4px_12px_rgba(0,_0,_0,_0.25),_0_16px_40px_rgba(0,0,0,0.35),0_4px_12px_rgba(0,0,0,0.2)] bg-[#ebebe9] overflow-hidden text-left text-[18px] text-black [font-family:var(--font-rotonto),_Rotonto,_sans-serif] mx-auto z-10">
         <EditionMasthead />
-        <Image className="absolute top-[248.81px] left-[30.19px] w-[246px] h-[158.4px] object-cover [filter:grayscale(100%)_contrast(125%)_brightness(95%)] [border:1.5px_solid_#000]" src={TEAM_IMG} width={246} height={158.4} sizes="100vw" alt="Ideas need people" unoptimized />
+        <Image className="absolute top-[248.81px] left-[30.19px] w-[246px] h-[158.4px] object-cover [filter:grayscale(100%)_contrast(125%)_brightness(95%)] [border:1.5px_solid_#000]" src={TEAM_IMG} width={246} height={158} sizes="100vw" alt="Ideas need people" unoptimized />
         <div className="absolute top-[415.61px] left-[32.59px] text-[31.2px] font-light whitespace-pre-wrap [text-shadow:0.6px_0_0_#000,_0_0.6px_0_#000,_-0.6px_0_0_#000,_0_-0.6px_0_#000] leading-[1.05]">{LEDE.headline}</div>
         <div className="absolute top-[503.21px] left-[33.79px] text-[15.6px] font-light inline-block w-[242.4px] leading-[1.35]">{LEDE.body}</div>
         <div className="absolute h-[10.31%] w-[19.76%] top-[86.45%] right-[77.09%] bottom-[3.24%] left-[3.16%] text-center text-[19.2px]">

@@ -195,8 +195,8 @@ const CARDS: { label: string; body: ReactNode }[] = [
           alt=""
           width={276}
           height={172}
-          className="w-full object-cover [filter:grayscale(100%)_contrast(125%)_brightness(95%)]"
-          style={{ height: 172, border: "1.5px solid #000" }}
+          className="w-full h-auto object-cover [filter:grayscale(100%)_contrast(125%)_brightness(95%)]"
+          style={{ height: "auto", border: "1.5px solid #000" }}
           unoptimized
         />
         <div className="text-[27px] font-light leading-[1.05] whitespace-pre-wrap [text-shadow:0.6px_0_0_#000,_0_0.6px_0_#000,_-0.6px_0_0_#000,_0_-0.6px_0_#000]">
