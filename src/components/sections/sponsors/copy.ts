@@ -29,40 +29,77 @@ export type SponsorColumn = {
   card: string;
 };
 
-export const TITLE_SPONSOR: SponsorColumn = {
-  header: "// Title Sponsor",
-  name: "COMPANY NAME",
-  sheet:
-    "Our title sponsor puts its name on the masthead and its weight behind the build. Thirty hours of compute, mentors on the floor at three in the morning, and a prize table worth the sleep you gave up for it. They did not come to watch a hackathon — they came to hand builders the tools and then get out of the way.",
-  card:
-    "Our title sponsor puts its name on the masthead and its weight behind the build. Thirty hours of compute, mentors on the floor at three in the morning, and a prize table worth the sleep you gave up for it. They did not come to watch a hackathon — they came to hand builders the tools and then get out of the way.",
+export const TITLE_SPONSOR: SponsorColumn & { tagline?: string; logo?: string; url?: string } = {
+  header: "// TITLE PARTNER",
+  name: "FATEH EDUCATION",
+  tagline: "Backing the builders behind the next big idea.",
+  logo: "/sponsors/fateh.webp",
+  url: "https://www.fateheducation.com/",
+  sheet: "",
+  card: "",
 };
 
-export const MUSIC_PARTNER: SponsorColumn = {
-  header: "// Music Streaming Partner",
-  name: "COMPANY NAME",
-  sheet:
-    "Thirty hours does not run on caffeine alone. Our music partner scores the night shift, start to sunrise.",
-  card:
-    "Thirty hours does not run on caffeine alone. Our music partner scores the night shift — the 3 a.m. push, the demo rehearsal at dawn, the long walk back across campus when the sun has already beaten you to it. Free premium for every registered builder, a shared VinHack playlist the whole hall can queue into, and a live set to close the weekend out.",
+export const MUSIC_PARTNER: SponsorColumn & { url?: string } = {
+  header: "// OFFICIAL MUSIC STREAMING PARTNER",
+  name: "JIO SAAVN",
+  url: "https://www.jiosaavn.com/",
+  sheet: "",
+  card: "",
 };
 
-export const TRAVEL_PARTNER: SponsorColumn = {
-  header: "// Travel Booking Partner",
-  name: "COMPANY NAME",
-  sheet:
-    "Builders arrive from every corner of the country, and distance has never been a good reason to miss a weekend like this. Our travel partner covers the getting there, for every confirmed team.",
-  card:
-    "Builders arrive from every corner of the country, and distance has never once been a good reason to miss a weekend like this. Our travel partner covers the getting there — discounted fares for every confirmed team, and a booking desk that answers on the days that actually matter.",
+export const TRAVEL_PARTNER: SponsorColumn & { url?: string } = {
+  header: "// OFFICIAL TRAVEL PARTNER",
+  name: "AbhiBus",
+  url: "https://www.abhibus.com/",
+  sheet: "",
+  card: "",
 };
 
-/** The right-hand rail: four supporters, header and name only on the sheet. */
-export const SUPPORTERS: readonly { header: string; name: string }[] = [
-  { header: "// XYZ Partner", name: "COMPANY NAME" },
-  { header: "// XYZ Partner", name: "COMPANY NAME" },
-  { header: "// XYZ Partner", name: "COMPANY NAME" },
-  { header: "// XYZ Partner", name: "COMPANY NAME" },
+/** Four partners below the title partner. */
+export const SUPPORTERS: readonly {
+  header: string;
+  name: string;
+  tagline: string;
+  logo?: string;
+  url: string;
+}[] = [
+  {
+    header: "// OFFICIAL TRAVEL PARTNER",
+    name: "AbhiBus",
+    tagline: "Getting builders where ideas meet.",
+    logo: "/sponsors/abhibus.webp",
+    url: "https://www.abhibus.com/",
+  },
+  {
+    header: "// OFFICIAL WELLNESS PARTNER",
+    name: "AHA THERAPY",
+    tagline: "Stronger minds build brighter tomorrows.",
+    logo: "/sponsors/aha.webp",
+    url: "https://www.ahatherapy.com/",
+  },
+  {
+    header: "// OFFICIAL MUSIC STREAMING PARTNER",
+    name: "JIO SAAVN",
+    tagline: "Fueling the makers through every beat.",
+    logo: "/sponsors/jiosaavn.webp",
+    url: "https://www.jiosaavn.com/",
+  },
+  {
+    header: "// OFFICIAL PORTFOLIO PARTNER",
+    name: "OLA.CV",
+    tagline: "Showcasing talent beyond the hack.",
+    logo: "/sponsors/ola_cv.webp",
+    url: "https://ola.cv/",
+  },
 ];
+
+/** Small side notes for the collage margins */
+export const SIDE_NOTES = [
+  "IDEAS NEED PEOPLE.",
+  "SAME PEOPLE. BIGGER IDEAS.",
+  "BUILD TOGETHER. BRIGHTER.",
+  "THANK YOU FOR BELIEVING IN VINHACK.",
+] as const;
 
 /** The lede in the left column, under the team photograph. */
 export const LEDE = {
@@ -115,24 +152,20 @@ export const COVER = {
   /** Struck across the cover in red, at an angle, the way a stamp lands. */
   stamp: { mark: "DO NOT OPEN", under: "BEFORE THE FIRST COMMIT" },
   /** Two lines, and the break between them is the point of it. */
-  lede: ["SEVEN NAMES.", "ONE MASTHEAD."],
+  lede: ["FIVE NAMES.", "ONE MASTHEAD."],
   standfirst:
     "None of them asked for a logo wall. They asked what the builders would need at three in the morning, and then paid for it.",
   contentsHeader: "Inside",
-  /** Four lines with leader dots, the way a contents page sets them. The text
-   *  teases what each column says rather than naming the tier, which the sheet
-   *  itself does the moment it is open. */
+  /** Contents lines */
   contents: [
     { n: "01", line: "The name on the masthead", page: "P1" },
-    { n: "02", line: "Who scores the night shift", page: "P2" },
-    { n: "03", line: "Who pays for the train", page: "P3" },
-    { n: "04", line: "And four more besides", page: "P4—7" },
+    { n: "02", line: "Four partners backing the build", page: "P2—5" },
   ],
   colophon: "Set in Vellore · Printed overnight · No advertisements accepted",
   /** The stub under the contents rail — a newspaper's late item, boxed off. */
   stopPress: {
     kicker: "Stop press",
-    body: "One of the seven is still under wraps. It goes on the masthead, and it is not being announced on a cover.",
+    body: "One of the five is still under wraps. It goes on the masthead, and it is not being announced on a cover.",
   },
   /** Set down the free edge, beside the perforation. */
   openHere: "Open here",
