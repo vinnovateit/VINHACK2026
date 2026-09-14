@@ -16,13 +16,13 @@ export type CurrentParticipant = {
 };
 
 export async function getCurrentParticipant(): Promise<CurrentParticipant | null> {
+  const session = (await cookies()).get(TEST_SESSION_COOKIE)?.value;
+  if (!session) return null;
+
+  const [type, id] = session.split(":");
+  if ((type !== "vit" && type !== "external") || !id) return null;
+
   try {
-    const session = (await cookies()).get(TEST_SESSION_COOKIE)?.value;
-    if (!session) return null;
-
-    const [type, id] = session.split(":");
-    if ((type !== "vit" && type !== "external") || !id) return null;
-
     if (type === "vit") {
       const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
       return student ? { ...student, type } : null;
@@ -38,13 +38,13 @@ export async function getCurrentParticipant(): Promise<CurrentParticipant | null
 
 export async function requireParticipant() {
   const participant = await getCurrentParticipant();
-  if (!participant) redirect("/test-dashboard/login-as");
+  if (!participant) redirect("/login");
   try {
     const userId = await getOrCreateEligibleUser(participant.type, participant.id);
     return { ...participant, userId };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Participant eligibility could not be verified.";
-    redirect(`/test-dashboard/login-as?error=${encodeURIComponent(message)}`);
+    redirect(`/login?error=${encodeURIComponent(message)}`);
   }
 }
 

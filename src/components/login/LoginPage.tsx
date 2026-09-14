@@ -80,16 +80,6 @@ export default function LoginPage() {
             >
               LOGIN WITH GOOGLE
             </KeyButton>
-
-            <div className="pt-2">
-              <Link
-                href="/test-dashboard/login-as"
-                className="font-['Rotonto',sans-serif] text-xs md:text-sm text-cyan-400/80 hover:text-cyan-300 transition flex items-center gap-1.5"
-              >
-                <span>Need a test participant account? Go to Test Login</span>
-                <span>→</span>
-              </Link>
-            </div>
           </div>
         </div>
 
