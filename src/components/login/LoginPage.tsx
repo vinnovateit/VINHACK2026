@@ -12,10 +12,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative w-full max-w-[1280px] mx-auto min-h-[832px] bg-black text-white px-6 md:px-12 py-8 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-full max-w-[1280px] mx-auto min-h-screen bg-black text-white px-6 md:px-12 pt-3 pb-8 flex flex-col gap-1 overflow-hidden">
       {/* Top Bar: Brand Logo */}
       <div className="flex items-center justify-between z-20">
-        <Link href="/" className="w-[180px] md:w-[211px] h-[60px] md:h-[74px] relative block">
+        <Link href="/" className="w-[150px] md:w-[180px] h-[44px] md:h-[54px] relative block">
           <Image
             src="/figma/logo-red.svg"
             alt="VinHack"
@@ -34,7 +34,7 @@ export default function LoginPage() {
       </div>
 
       {/* Main Grid: 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Left Column: Heading & Google Sign-In */}
         <div className="lg:col-span-6 flex flex-col justify-center space-y-6 z-10">
           <p className="font-['Rotonto',sans-serif] text-neutral-400 text-[22px] md:text-[28px] tracking-wide">
@@ -83,67 +83,16 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Column: Retro Polaroid & Memory Collage */}
+        {/* Right Column: Auth Illustration */}
         <div className="lg:col-span-6 relative min-h-[480px] md:min-h-[560px] flex items-center justify-center select-none">
-          {/* Cardboard Box Container */}
-          <div className="relative w-[340px] sm:w-[420px] md:w-[460px] h-[360px] md:h-[420px] bg-[#B88F61] border-[8px] border-[#846542] rounded-lg shadow-2xl rotate-[-4deg] p-6 flex flex-col justify-between overflow-hidden">
-            {/* Box Header Stamps */}
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-['Rotonto',sans-serif] text-[36px] md:text-[44px] font-bold text-[#624B31] leading-none">
-                  VH &apos;26
-                </p>
-                <p className="font-['Rotonto',sans-serif] text-[10px] md:text-[11px] font-bold text-[#5C452C] tracking-widest uppercase mt-1">
-                  FRAGILE : A LOT OF MEMORIES INSIDE
-                </p>
-              </div>
-
-              {/* Fragile / Badge Sticker */}
-              <div className="bg-[#D5D1BE] border border-black/30 rounded px-2.5 py-1 text-[9px] font-mono text-black font-semibold rotate-2">
-                VINHACK 2026
-              </div>
-            </div>
-
-            {/* Overlapping Hackathon Polaroids */}
-            <div className="relative w-full h-[220px] mt-2">
-              {/* Photo 1 (Tilted Left) */}
-              <div className="absolute left-2 top-3 w-[150px] md:w-[170px] h-[170px] md:h-[190px] bg-white p-2 pb-6 shadow-xl rotate-[-8deg] border border-neutral-300 transform hover:scale-105 transition duration-200 z-10">
-                <div className="relative w-full h-[130px] md:h-[150px] bg-neutral-900 overflow-hidden">
-                  <Image
-                    src="/login/imgWhatsAppImage20260826At2303401_6c1da26b.png"
-                    alt="VinHack Memories"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <p className="text-[9px] font-mono text-center text-neutral-600 mt-1">HACKATHON 2024</p>
-              </div>
-
-              {/* Photo 2 (Tilted Right) */}
-              <div className="absolute right-2 top-6 w-[150px] md:w-[170px] h-[170px] md:h-[190px] bg-white p-2 pb-6 shadow-xl rotate-[9deg] border border-neutral-300 transform hover:scale-105 transition duration-200 z-20">
-                <div className="relative w-full h-[130px] md:h-[150px] bg-neutral-900 overflow-hidden">
-                  <Image
-                    src="/login/imgWhatsAppImage20260826At2306201_929cec87.png"
-                    alt="VinHack Team"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <p className="text-[9px] font-mono text-center text-neutral-600 mt-1">TEAM ENERGY</p>
-              </div>
-
-              {/* Small sticker badge in center */}
-              <div className="absolute left-[38%] top-[30%] -translate-x-1/2 w-16 h-16 pointer-events-none z-30">
-                <Image
-                  src="/figma/group48095565.svg"
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="object-contain"
-                />
-              </div>
-            </div>
-          </div>
+          <Image
+            src="/auth.svg"
+            alt="VinHack login illustration"
+            width={560}
+            height={560}
+            className="w-full max-w-[480px] h-auto object-contain"
+            priority
+          />
         </div>
       </div>
     </div>
