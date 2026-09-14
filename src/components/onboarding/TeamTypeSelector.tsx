@@ -69,7 +69,12 @@ export default function TeamTypeSelector({
               color="red"
               size="compact"
               type="button"
-              onClick={() => onSelect(selected)}
+              disabled={!selected}
+              onClick={() => {
+                if (selected) {
+                  onSelect(selected);
+                }
+              }}
               className="w-full max-w-[360px]"
             >
               SAVE AND CONTINUE
@@ -82,14 +87,13 @@ export default function TeamTypeSelector({
           {/* CREATE A TEAM Stamp Badge */}
           <div
             onClick={() => setSelected("create")}
-            className={`cursor-pointer transition-all duration-300 absolute top-[10px] sm:top-[20px] md:top-[30px] left-[10px] sm:left-[30px] md:left-[60px] p-2 rounded-full ${
+            className={`cursor-pointer transition-all duration-300 absolute top-[10px] sm:top-[20px] md:top-[25px] left-[10px] sm:left-[25px] md:left-[45px] ${
               selected === "create"
                 ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)]"
                 : "opacity-80 hover:opacity-100 hover:scale-102"
             }`}
           >
-            <div className="relative w-[180px] h-[180px] sm:w-[200px] sm:h-[200px] md:w-[220px] md:h-[220px] -skew-x-4">
-              {/* Concentric rings artwork */}
+            <div className="relative w-[210px] h-[208px] sm:w-[230px] sm:h-[228px] md:w-[250px] md:h-[248px]">
               <Image
                 src={selected === "create" ? "/create_team_yellow.svg" : "/create_team.svg"}
                 alt="Create a Team"
@@ -97,56 +101,19 @@ export default function TeamTypeSelector({
                 className="object-contain"
                 priority
               />
-              <Image
-                src="/onboarding/imgEllipse90_939cdeac.svg"
-                alt=""
-                fill
-                className="object-contain p-2"
-              />
-              <Image
-                src="/onboarding/imgEllipse91_0f52bdea.svg"
-                alt=""
-                fill
-                className="object-contain p-4"
-              />
-              <Image
-                src="/onboarding/imgEllipse92_326fabac.svg"
-                alt=""
-                fill
-                className="object-contain p-7"
-              />
-
-              {/* Stamp Content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1 text-[#3B3B3B] group-hover:text-black transition">
-                  👥
-                </div>
-                <div className={`font-['Rotonto',sans-serif] text-[15px] sm:text-[17px] md:text-[18px] leading-tight uppercase font-medium transition ${
-                  selected === "create" ? "text-[#FC2425] font-bold" : "text-[#3B3B3B]"
-                }`}>
-                  <p>CREATE</p>
-                  <p>A TEAM</p>
-                </div>
-                {selected === "create" && (
-                  <span className="text-[10px] sm:text-[11px] font-mono tracking-widest text-[#FC2425] mt-1 uppercase font-semibold">
-                    ✓ SELECTED
-                  </span>
-                )}
-              </div>
             </div>
           </div>
 
           {/* JOIN A TEAM Stamp Badge */}
           <div
             onClick={() => setSelected("join")}
-            className={`cursor-pointer transition-all duration-300 absolute bottom-[10px] sm:bottom-[20px] md:bottom-[30px] right-[10px] sm:right-[30px] md:right-[50px] p-2 rounded-full ${
+            className={`cursor-pointer transition-all duration-300 absolute bottom-[10px] sm:bottom-[20px] md:bottom-[25px] right-[10px] sm:right-[25px] md:right-[45px] ${
               selected === "join"
                 ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)]"
                 : "opacity-80 hover:opacity-100 hover:scale-102"
             }`}
           >
-            <div className="relative w-[180px] h-[180px] sm:w-[200px] sm:h-[200px] md:w-[220px] md:h-[220px] rotate-6 skew-x-4">
-              {/* Concentric rings artwork */}
+            <div className="relative w-[220px] h-[228px] sm:w-[240px] sm:h-[248px] md:w-[260px] md:h-[268px]">
               <Image
                 src={selected === "join" ? "/join_team_yellow.svg" : "/join_team.svg"}
                 alt="Join a Team"
@@ -154,42 +121,6 @@ export default function TeamTypeSelector({
                 className="object-contain"
                 priority
               />
-              <Image
-                src="/onboarding/imgEllipse86_ace52028.svg"
-                alt=""
-                fill
-                className="object-contain p-2"
-              />
-              <Image
-                src="/onboarding/imgEllipse87_b43db7a6.svg"
-                alt=""
-                fill
-                className="object-contain p-4"
-              />
-              <Image
-                src="/onboarding/imgEllipse88_b6da655d.svg"
-                alt=""
-                fill
-                className="object-contain p-7"
-              />
-
-              {/* Stamp Content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1 text-[#3B3B3B]">
-                  🔑
-                </div>
-                <div className={`font-['Rotonto',sans-serif] text-[15px] sm:text-[17px] md:text-[18px] leading-tight uppercase font-medium transition ${
-                  selected === "join" ? "text-[#2B24FC] font-bold" : "text-[#3B3B3B]"
-                }`}>
-                  <p>JOIN</p>
-                  <p>A TEAM</p>
-                </div>
-                {selected === "join" && (
-                  <span className="text-[10px] sm:text-[11px] font-mono tracking-widest text-[#2B24FC] mt-1 uppercase font-semibold">
-                    ✓ SELECTED
-                  </span>
-                )}
-              </div>
             </div>
           </div>
         </div>
