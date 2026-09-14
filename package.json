@@ -10,10 +10,12 @@
     "build": "next build && node scripts/compress-fonts.mjs",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "npm run build && wrangler deploy"
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@opennextjs/cloudflare": "^1.20.6",
     "@prisma/client": "^5.22.0",
     "@types/qrcode": "^1.5.6",
     "framer-motion": "^13.2.0",
