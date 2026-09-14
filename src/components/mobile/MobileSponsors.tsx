@@ -230,7 +230,7 @@ const CARDS: { label: string; body: ReactNode }[] = [
               <span className="text-[10px] font-normal text-[#fa1a1d] uppercase leading-tight max-w-[130px]">
                 {partner.header.includes("MUSIC STREAMING") ? (
                   <>
-                    // OFFICIAL MUSIC
+                    {"// OFFICIAL MUSIC"}
                     <br />
                     STREAMING PARTNER
                   </>

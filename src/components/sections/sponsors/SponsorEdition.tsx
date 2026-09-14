@@ -115,7 +115,7 @@ const SponsorEdition = () => {
             <div className="h-[36px] w-full px-2 flex items-center justify-center text-[#fa1a1d] text-[14.5px] font-normal tracking-[0.03em] uppercase leading-[1.25] text-center">
               {partner.header.includes("MUSIC STREAMING") ? (
                 <span className="inline-block">
-                  // OFFICIAL MUSIC
+                  {"// OFFICIAL MUSIC"}
                   <br />
                   STREAMING PARTNER
                 </span>

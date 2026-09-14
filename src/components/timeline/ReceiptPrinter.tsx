@@ -28,7 +28,9 @@ function DaySheet({ index }: { index: number }) {
           const isRow = entry.kind === "row";
           const label = entry.label;
           const time = isRow ? entry.time : "";
-          const isReview = (entry as any).isReview || entry.kind === "review";
+          const isReview =
+            (entry.kind === "row" && Boolean(entry.isReview)) ||
+            entry.kind === "review";
 
           return (
             <div
