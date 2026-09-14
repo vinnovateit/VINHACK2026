@@ -37,10 +37,21 @@ export default async function LoginAsPage({
   searchParams?: Promise<{ error?: string }>;
 }) {
   const params = await searchParams;
-  const [vitStudents, externalStudents] = await Promise.all([
-    prisma.vITStudent.findMany({ orderBy: { name: "asc" } }),
-    prisma.externalStudent.findMany({ orderBy: { name: "asc" } }),
-  ]);
+  let vitStudents: Array<{ id: string; name: string; regNo: string }> = [];
+  let externalStudents: Array<{ id: string; name: string; collegeName: string }> = [];
+  let dbError = false;
+
+  try {
+    const results = await Promise.all([
+      prisma.vITStudent.findMany({ orderBy: { name: "asc" } }),
+      prisma.externalStudent.findMany({ orderBy: { name: "asc" } }),
+    ]);
+    vitStudents = results[0];
+    externalStudents = results[1];
+  } catch (err) {
+    console.warn("[LoginAsPage] Database query failed:", err);
+    dbError = true;
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
@@ -53,6 +64,11 @@ export default async function LoginAsPage({
             Testing only: this page is not a real login and is for testing only.
           </p>
         </div>
+        {dbError && (
+          <p className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-200">
+            Database connection unreachable. Please ensure <code>DATABASE_URL</code> is configured in your Cloudflare Workers environment secrets and MongoDB Atlas allows network connections.
+          </p>
+        )}
         {params?.error && <p className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-rose-200">{params.error}</p>}
         <form action={loginAs} className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
           <label className="mb-2 block text-sm text-slate-300" htmlFor="participant">Participant</label>

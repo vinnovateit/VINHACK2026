@@ -16,19 +16,24 @@ export type CurrentParticipant = {
 };
 
 export async function getCurrentParticipant(): Promise<CurrentParticipant | null> {
-  const session = (await cookies()).get(TEST_SESSION_COOKIE)?.value;
-  if (!session) return null;
+  try {
+    const session = (await cookies()).get(TEST_SESSION_COOKIE)?.value;
+    if (!session) return null;
 
-  const [type, id] = session.split(":");
-  if ((type !== "vit" && type !== "external") || !id) return null;
+    const [type, id] = session.split(":");
+    if ((type !== "vit" && type !== "external") || !id) return null;
 
-  if (type === "vit") {
-    const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
+    if (type === "vit") {
+      const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
+      return student ? { ...student, type } : null;
+    }
+
+    const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
     return student ? { ...student, type } : null;
+  } catch (err) {
+    console.warn("[getCurrentParticipant] Error querying DB:", err);
+    return null;
   }
-
-  const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
-  return student ? { ...student, type } : null;
 }
 
 export async function requireParticipant() {
