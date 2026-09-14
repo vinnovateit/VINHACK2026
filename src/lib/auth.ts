@@ -10,12 +10,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
   callbacks: {
-
     // Check payment / registration in database BEFORE allowing the user to sign in
     async signIn({ user }) {
       if (!user?.email) return false;
