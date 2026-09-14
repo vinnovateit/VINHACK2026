@@ -1,14 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
 export default function CardboardBoxOpeningAnimation() {
   const [animationKey, setAnimationKey] = useState(0);
+  const [isOpened, setIsOpened] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  useEffect(() => {
+    setIsOpened(false);
+    const timer = setTimeout(() => {
+      setIsOpened(true);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [animationKey]);
+
   const handleReplay = () => {
+    setIsOpened(false);
     setAnimationKey((prev) => prev + 1);
   };
 
@@ -48,11 +58,13 @@ export default function CardboardBoxOpeningAnimation() {
         {/* ============================================================ */}
         {/* 2. FULLY SEALED CLOSED BOX (Visible first, unseals & fades)  */}
         {/* ============================================================ */}
-        <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none z-10"
-          initial={{ opacity: 1, scale: 1 }}
-          animate={{ opacity: 0, scale: 0.98, y: -8 }}
-          transition={{ duration: 0.45, delay: 0.8, ease: "easeOut" }}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none z-20"
+          style={{
+            opacity: isOpened ? 0 : 1,
+            transform: isOpened ? "scale(0.98) translateY(-8px)" : "scale(1) translateY(0px)",
+            transition: "opacity 0.4s ease-out, transform 0.4s ease-out",
+          }}
         >
           <Image
             src="/login/box/box_closed.svg"
@@ -61,59 +73,95 @@ export default function CardboardBoxOpeningAnimation() {
             className="object-contain"
             priority
           />
-        </motion.div>
+        </div>
 
         {/* ============================================================ */}
-        {/* 3. 3D BOX LIDS / FLAPS (Fold open outwards along hinges)    */}
+        {/* 3. 3D BOX LIDS / 4 COVERS (Fold open outwards along hinges)   */}
         {/* ============================================================ */}
 
-        {/* TOP FLAP - Hinged at back top edge [58.8% 35.5%], swings back */}
-        <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none origin-[58.8%_35.5%]"
-          initial={{ rotateX: 85, scaleY: 0.15, y: 30, opacity: 0 }}
-          animate={{ rotateX: 0, scaleY: 1, y: 0, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.8, ease: [0.34, 1.35, 0.64, 1] }}
+        {/* COVER 1: TOP / BACK FLAP - Hinged along back rim [58.6% 36.2%] */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[58.6%_36.2%] z-[1]"
+          style={{
+            transform: isOpened
+              ? "rotate3d(0.8904, 0.4552, 0, 0deg)"
+              : "rotate3d(0.8904, 0.4552, 0, 75deg)",
+            opacity: isOpened ? 1 : 0,
+            transition:
+              "transform 0.85s cubic-bezier(0.34, 1.25, 0.64, 1) 0ms, opacity 0.35s ease 0ms",
+          }}
         >
           <Image
             src="/login/box/flap_top.svg"
-            alt="Box Top Lid"
+            alt="Box Back Cover"
             fill
             className="object-contain"
             priority
           />
-        </motion.div>
+        </div>
 
-        {/* LEFT FLAP - Hinged at left edge [24.5% 38.6%], swings out to left */}
-        <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none origin-[24.5%_38.6%]"
-          initial={{ rotateY: -85, scaleX: 0.15, x: 25, opacity: 0 }}
-          animate={{ rotateY: 0, scaleX: 1, x: 0, opacity: 1 }}
-          transition={{ duration: 0.65, delay: 0.88, ease: [0.34, 1.35, 0.64, 1] }}
+        {/* COVER 2: LEFT FLAP - Hinged along left rim [24.4% 38.7%] */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[24.4%_38.7%] z-[2]"
+          style={{
+            transform: isOpened
+              ? "rotate3d(0.5569, -0.8306, 0, 0deg)"
+              : "rotate3d(0.5569, -0.8306, 0, 75deg)",
+            opacity: isOpened ? 1 : 0,
+            transition:
+              "transform 0.85s cubic-bezier(0.34, 1.25, 0.64, 1) 40ms, opacity 0.35s ease 40ms",
+          }}
         >
           <Image
             src="/login/box/flap_left.svg"
-            alt="Box Left Lid"
+            alt="Box Left Cover"
             fill
             className="object-contain"
             priority
           />
-        </motion.div>
+        </div>
 
-        {/* RIGHT FLAP - Hinged at right edge [72.7% 60.4%], swings out to right */}
-        <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none origin-[72.7%_60.4%]"
-          initial={{ rotateY: 85, scaleX: 0.15, x: -25, opacity: 0 }}
-          animate={{ rotateY: 0, scaleX: 1, x: 0, opacity: 1 }}
-          transition={{ duration: 0.65, delay: 0.95, ease: [0.34, 1.35, 0.64, 1] }}
+        {/* COVER 3: RIGHT FLAP - Hinged along right rim [73.0% 60.7%] */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[73.0%_60.7%] z-[2]"
+          style={{
+            transform: isOpened
+              ? "rotate3d(0.5363, -0.8440, 0, 0deg)"
+              : "rotate3d(0.5363, -0.8440, 0, -75deg)",
+            opacity: isOpened ? 1 : 0,
+            transition:
+              "transform 0.85s cubic-bezier(0.34, 1.25, 0.64, 1) 80ms, opacity 0.35s ease 80ms",
+          }}
         >
           <Image
             src="/login/box/flap_right.svg"
-            alt="Box Right Lid"
+            alt="Box Right Cover"
             fill
             className="object-contain"
             priority
           />
-        </motion.div>
+        </div>
+
+        {/* COVER 4: BOTTOM / FRONT FLAP - Hinged along front rim [38.8% 63.2%] */}
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[38.8%_63.2%] z-[15]"
+          style={{
+            transform: isOpened
+              ? "rotate3d(0.8948, 0.4465, 0, 0deg)"
+              : "rotate3d(0.8948, 0.4465, 0, 75deg)",
+            opacity: isOpened ? 1 : 0,
+            transition:
+              "transform 0.85s cubic-bezier(0.34, 1.25, 0.64, 1) 120ms, opacity 0.35s ease 120ms",
+          }}
+        >
+          <Image
+            src="/login/box/flap_front.svg"
+            alt="Box Front Cover"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
 
         {/* ============================================================ */}
         {/* 4. PROPS APPEARING ONE BY ONE INSIDE THE OPEN CARDBOARD BOX  */}
