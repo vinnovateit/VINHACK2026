@@ -25,6 +25,7 @@ export default function CardboardBoxOpeningAnimation() {
       <motion.div
         key={animationKey}
         className="relative w-full max-h-[calc(100dvh-100px)] aspect-[736/824] flex items-center justify-center drop-shadow-[0_25px_45px_rgba(0,0,0,0.9)]"
+        style={{ perspective: 1200, transformStyle: "preserve-3d" }}
         animate={{
           scale: isHovered ? 1.025 : 1,
           rotate: isHovered ? 0.5 : 0,
@@ -45,15 +46,33 @@ export default function CardboardBoxOpeningAnimation() {
         </div>
 
         {/* ============================================================ */}
-        {/* 2. BOX LIDS / FLAPS (Open outwards smoothly)                */}
+        {/* 2. CLOSED LID COVER (Covers top opening at start, fades open)*/}
+        {/* ============================================================ */}
+        <motion.div
+          className="absolute inset-0 w-full h-full pointer-events-none z-10"
+          initial={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 0, scale: 0.97, y: -6 }}
+          transition={{ duration: 0.45, delay: 0.25, ease: "easeInOut" }}
+        >
+          <Image
+            src="/login/box/closed_lid.svg"
+            alt="Closed Box Lid"
+            fill
+            className="object-contain"
+            priority
+          />
+        </motion.div>
+
+        {/* ============================================================ */}
+        {/* 3. 3D BOX LIDS / FLAPS (Fold open outwards along hinges)    */}
         {/* ============================================================ */}
 
-        {/* TOP FLAP - Swings backward and opens upwards */}
+        {/* TOP FLAP - Hinged at back top edge [58.8% 35.5%], swings back */}
         <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none origin-[54%_25%]"
-          initial={{ scaleY: 0.15, opacity: 0.7 }}
-          animate={{ scaleY: 1, opacity: 1 }}
-          transition={{ duration: 0.75, delay: 0.1, ease: [0.34, 1.35, 0.64, 1] }}
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[58.8%_35.5%]"
+          initial={{ rotateX: 85, scaleY: 0.15, y: 30, opacity: 0 }}
+          animate={{ rotateX: 0, scaleY: 1, y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.34, 1.35, 0.64, 1] }}
         >
           <Image
             src="/login/box/flap_top.svg"
@@ -64,12 +83,12 @@ export default function CardboardBoxOpeningAnimation() {
           />
         </motion.div>
 
-        {/* LEFT FLAP - Swings open outward to the left */}
+        {/* LEFT FLAP - Hinged at left edge [24.5% 38.6%], swings out to left */}
         <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none origin-[32%_50%]"
-          initial={{ scaleX: 0.15, opacity: 0.7 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 0.75, delay: 0.18, ease: [0.34, 1.35, 0.64, 1] }}
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[24.5%_38.6%]"
+          initial={{ rotateY: -85, scaleX: 0.15, x: 25, opacity: 0 }}
+          animate={{ rotateY: 0, scaleX: 1, x: 0, opacity: 1 }}
+          transition={{ duration: 0.75, delay: 0.28, ease: [0.34, 1.35, 0.64, 1] }}
         >
           <Image
             src="/login/box/flap_left.svg"
@@ -80,12 +99,12 @@ export default function CardboardBoxOpeningAnimation() {
           />
         </motion.div>
 
-        {/* RIGHT FLAP - Swings open outward to the right */}
+        {/* RIGHT FLAP - Hinged at right edge [72.7% 60.4%], swings out to right */}
         <motion.div
-          className="absolute inset-0 w-full h-full pointer-events-none origin-[70%_52%]"
-          initial={{ scaleX: 0.15, opacity: 0.7 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 0.75, delay: 0.25, ease: [0.34, 1.35, 0.64, 1] }}
+          className="absolute inset-0 w-full h-full pointer-events-none origin-[72.7%_60.4%]"
+          initial={{ rotateY: 85, scaleX: 0.15, x: -25, opacity: 0 }}
+          animate={{ rotateY: 0, scaleX: 1, x: 0, opacity: 1 }}
+          transition={{ duration: 0.75, delay: 0.35, ease: [0.34, 1.35, 0.64, 1] }}
         >
           <Image
             src="/login/box/flap_right.svg"
@@ -97,17 +116,17 @@ export default function CardboardBoxOpeningAnimation() {
         </motion.div>
 
         {/* ============================================================ */}
-        {/* 3. PROPS FLYING IN FROM THE CORNERS OF THE WEBSITE           */}
+        {/* 4. PROPS FLYING IN FROM THE CORNERS OF THE WEBSITE           */}
         {/* ============================================================ */}
 
         {/* PROP 1: Schedule papers & Event tickets -> Flies from BOTTOM-LEFT */}
         <motion.div
           className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ x: -750, y: 550, rotate: 45, scale: 2.2, opacity: 0 }}
+          initial={{ x: -850, y: 650, rotate: 50, scale: 2.3, opacity: 0 }}
           animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
           transition={{
             duration: 0.85,
-            delay: 0.45,
+            delay: 0.6,
             type: "spring",
             stiffness: 95,
             damping: 14,
@@ -125,11 +144,11 @@ export default function CardboardBoxOpeningAnimation() {
         {/* PROP 2: Quote Cards ("CURIOUS BY NATURE") -> Flies from TOP-LEFT */}
         <motion.div
           className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ x: -700, y: -600, rotate: -40, scale: 2.3, opacity: 0 }}
+          initial={{ x: -800, y: -650, rotate: -45, scale: 2.3, opacity: 0 }}
           animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
           transition={{
             duration: 0.85,
-            delay: 0.7,
+            delay: 0.85,
             type: "spring",
             stiffness: 90,
             damping: 14,
@@ -147,11 +166,11 @@ export default function CardboardBoxOpeningAnimation() {
         {/* PROP 3: Polaroid 2 (Back Photo) & Blue Card -> Flies from TOP-RIGHT */}
         <motion.div
           className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ x: 650, y: -500, rotate: 45, scale: 2.2, opacity: 0 }}
+          initial={{ x: 800, y: -600, rotate: 45, scale: 2.2, opacity: 0 }}
           animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
           transition={{
             duration: 0.85,
-            delay: 0.95,
+            delay: 1.1,
             type: "spring",
             stiffness: 95,
             damping: 14,
@@ -169,11 +188,11 @@ export default function CardboardBoxOpeningAnimation() {
         {/* PROP 4: Green LED Dot Matrix & Pin Badges -> Flies from BOTTOM-RIGHT */}
         <motion.div
           className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ x: 700, y: 450, rotate: -50, scale: 2.1, opacity: 0 }}
+          initial={{ x: 850, y: 550, rotate: -55, scale: 2.2, opacity: 0 }}
           animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1 }}
           transition={{
             duration: 0.8,
-            delay: 1.15,
+            delay: 1.35,
             type: "spring",
             stiffness: 105,
             damping: 13,
@@ -191,7 +210,7 @@ export default function CardboardBoxOpeningAnimation() {
         {/* PROP 5: Front Polaroid Photo (Team Energy) -> Flies from TOP-LEFT */}
         <motion.div
           className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ x: -800, y: -400, rotate: -35, scale: 2.5, opacity: 0 }}
+          initial={{ x: -900, y: -450, rotate: -35, scale: 2.5, opacity: 0 }}
           animate={{
             x: 0,
             y: isHovered ? -8 : 0,
@@ -201,7 +220,7 @@ export default function CardboardBoxOpeningAnimation() {
           }}
           transition={{
             duration: 0.85,
-            delay: 1.35,
+            delay: 1.6,
             type: "spring",
             stiffness: 100,
             damping: 14,
@@ -219,7 +238,7 @@ export default function CardboardBoxOpeningAnimation() {
         {/* PROP 6: VinHack Hack Attendee Lanyard Badge (The Hero) -> Flies from TOP */}
         <motion.div
           className="absolute inset-0 w-full h-full pointer-events-none"
-          initial={{ x: 450, y: -750, rotate: 45, scale: 2.7, opacity: 0 }}
+          initial={{ x: 400, y: -850, rotate: 45, scale: 2.8, opacity: 0 }}
           animate={{
             x: 0,
             y: isHovered ? -12 : 0,
@@ -229,7 +248,7 @@ export default function CardboardBoxOpeningAnimation() {
           }}
           transition={{
             duration: 0.95,
-            delay: 1.55,
+            delay: 1.85,
             type: "spring",
             stiffness: 85,
             damping: 13,
