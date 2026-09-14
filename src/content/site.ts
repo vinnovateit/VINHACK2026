@@ -799,3 +799,18 @@ export const FOOTER = {
   madeWith: ["Made ", "with", "by", "VinnovateIT"],
   copyright: "2026 VinnovateIT, Vellore Institute of Technology",
 } as const;
+
+/* -------------------------------------------------------------- login */
+
+export const LOGIN = {
+  tagline: "Build. Collaborate. Ideate.",
+  headline: {
+    line1: "GOOD IDEAS",
+    line2: "START WITH",
+    line3Prefix: "THE ",
+    line3Suffix: "RIGHT",
+    line4: "PEOPLE",
+  },
+  buttonText: "LOGIN WITH GOOGLE",
+} as const;
+
