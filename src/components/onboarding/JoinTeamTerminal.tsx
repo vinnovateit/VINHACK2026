@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import gsap from "gsap";
+import { feedTick, tearRip } from "@/components/motion/machine";
+import { audio } from "@/components/motion/audio";
 import KeyButton from "./KeyButton";
 
 interface JoinTeamTerminalProps {
@@ -25,6 +28,77 @@ export default function JoinTeamTerminal({
   const [stage, setStage] = useState<"input" | "validating" | "validated" | "joined">("input");
   const [feedback, setFeedback] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const paperRef = useRef<HTMLDivElement>(null);
+  const printedRef = useRef(false);
+
+  const triggerPrint = () => {
+    const paper = paperRef.current;
+    if (!paper) return;
+
+    const ac = audio();
+    if (ac && ac.state === "suspended") void ac.resume();
+
+    const full = paper.offsetHeight || 364;
+    const ink = Array.from(paper.children) as HTMLElement[];
+
+    const feed = (p: number) => {
+      const shown = full * p;
+      gsap.set(paper, {
+        clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)`,
+      });
+      gsap.set(ink, { y: shown - full });
+    };
+
+    const roll = { p: 0 };
+    let fed = 0;
+    feed(0);
+    gsap.set(paper, { rotation: 0, transformOrigin: "50% 0%" });
+
+    const stepTo = (targetP: number, dur: number, stepCount: number) => ({
+      p: targetP,
+      duration: dur,
+      ease: `steps(${stepCount})`,
+      onUpdate: () => {
+        feed(roll.p);
+        const currentStep = Math.round(roll.p * 24);
+        if (currentStep > fed) {
+          fed = currentStep;
+          feedTick();
+        }
+      },
+    });
+
+    const tl = gsap
+      .timeline({ delay: 0.25 })
+      // Chunk 1: Header / logo emerges
+      .to(roll, stepTo(0.28, 0.42, 7))
+      .to({}, { duration: 0.16 })
+      // Chunk 2: TEAM JOIN REQUEST & participant
+      .to(roll, stepTo(0.55, 0.42, 7))
+      .to({}, { duration: 0.14 })
+      // Chunk 3: Target team code display
+      .to(roll, stepTo(0.82, 0.4, 7))
+      .to({}, { duration: 0.14 })
+      // Chunk 4: Footer lines & feed out to tear line
+      .to(roll, stepTo(1.0, 0.32, 5))
+      // The tear: rip sound + elastic swing and settle
+      .call(tearRip)
+      .to(paper, { rotation: 1.1, duration: 0.09, ease: "power3.in" })
+      .to(paper, { rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" });
+
+    return tl;
+  };
+
+  useEffect(() => {
+    if (!printedRef.current) {
+      printedRef.current = true;
+      const tl = triggerPrint();
+      return () => {
+        tl?.kill();
+      };
+    }
+  }, []);
 
   const handleInputChange = (val: string) => {
     // Format to uppercase, ensure prefix VH26- if applicable
@@ -70,10 +144,10 @@ export default function JoinTeamTerminal({
   };
 
   return (
-    <div className="relative w-full max-w-[1280px] mx-auto bg-black text-white px-6 md:px-12 pt-6 md:pt-8 pb-10 flex flex-col overflow-hidden">
+    <div className="relative w-full max-w-[1280px] mx-auto bg-black text-white px-6 md:px-12 pt-2 md:pt-3 pb-8 flex flex-col">
       {/* Top Bar: Brand Logo & Back link */}
-      <div className="flex items-center justify-between z-10 shrink-0">
-        <div className="w-[180px] md:w-[211px] h-[60px] md:h-[74px] relative">
+      <div className="flex items-center justify-between z-30 shrink-0 mb-1 relative">
+        <div className="w-[160px] md:w-[190px] h-[48px] md:h-[58px] relative">
           <Image
             src="/figma/logo-red.svg"
             alt="VinHack"
@@ -87,7 +161,7 @@ export default function JoinTeamTerminal({
           <button
             type="button"
             onClick={onBack}
-            className="text-neutral-400 hover:text-white font-['Rotonto',sans-serif] text-sm flex items-center gap-2 border border-neutral-800 rounded-full px-4 py-1.5 transition"
+            className="text-neutral-400 hover:text-white font-['Rotonto',sans-serif] text-sm flex items-center gap-2 border border-neutral-800 rounded-full px-4 py-1.5 transition z-40 relative"
           >
             ← Back to Team Up
           </button>
@@ -95,9 +169,9 @@ export default function JoinTeamTerminal({
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-2 md:mt-4 pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-0 pb-2">
         {/* Left Column: 03 JOIN A TEAM */}
-        <div className="lg:col-span-6 flex flex-col justify-center space-y-5 md:space-y-6 z-10">
+        <div className="lg:col-span-6 flex flex-col justify-start space-y-5 md:space-y-6 z-10 pt-1 md:pt-2">
           <div>
             <span className="font-['Rotonto',sans-serif] text-[48px] md:text-[64px] text-[#FC2425] leading-none block">
               03
@@ -147,147 +221,222 @@ export default function JoinTeamTerminal({
         </div>
 
         {/* Right Column: Beige Hardware Terminal ("TEAM ACCESS PANEL") */}
-        <div className="lg:col-span-6 flex items-center justify-center relative select-none">
-          <div className="relative w-[340px] sm:w-[420px] md:w-[484px] min-h-[660px] md:h-[720px] bg-[#D9CFC7] text-black rounded-[33px] p-6 md:p-8 shadow-2xl overflow-hidden border border-neutral-400 flex flex-col justify-between">
-            {/* 4 Corner Mounting Screws */}
-            <div className="absolute top-4 left-4 w-5 h-5 pointer-events-none">
+        <div className="lg:col-span-6 flex items-start justify-center relative select-none -mt-2 sm:-mt-6 lg:-mt-12 xl:-mt-16 z-20">
+          <div className="relative w-[540px] h-[725px] min-w-[540px] max-w-[540px] rounded-[33px] bg-[#d9cfc7] text-black font-['Rotonto',sans-serif] text-[14px] text-left overflow-hidden select-none shadow-2xl origin-top scale-[0.62] sm:scale-[0.72] md:scale-[0.78] lg:scale-[0.80] xl:scale-[0.84] -mb-[275px] sm:-mb-[200px] md:-mb-[160px] lg:-mb-[145px] xl:-mb-[115px]">
+            {/* Screws at the 4 corners */}
+            <div className="absolute top-[18px] left-[18px] w-5 h-5 pointer-events-none z-30">
               <Image src="/onboarding/imgGroup48095662_7a26d23a.svg" alt="" width={20} height={20} />
             </div>
-            <div className="absolute top-4 right-4 w-5 h-5 pointer-events-none">
+            <div className="absolute top-[18px] right-[18px] w-5 h-5 pointer-events-none z-30">
               <Image src="/onboarding/imgGroup48095662_7a26d23a.svg" alt="" width={20} height={20} />
             </div>
-            <div className="absolute bottom-4 left-4 w-5 h-5 pointer-events-none">
+            <div className="absolute bottom-[18px] left-[18px] w-5 h-5 pointer-events-none z-30">
               <Image src="/onboarding/imgGroup48095662_7a26d23a.svg" alt="" width={20} height={20} />
             </div>
-            <div className="absolute bottom-4 right-4 w-5 h-5 pointer-events-none">
+            <div className="absolute bottom-[18px] right-[18px] w-5 h-5 pointer-events-none z-30">
               <Image src="/onboarding/imgGroup48095662_7a26d23a.svg" alt="" width={20} height={20} />
             </div>
 
-            {/* Panel Top Header & Title */}
-            <div className="text-center pt-2 pb-3 border-b-2 border-black/80">
-              <h2 className="font-['Rotonto',sans-serif] text-[24px] md:text-[28px] font-bold tracking-widest uppercase">
-                VINHACK 26
-              </h2>
-              <p className="text-[12px] md:text-[14px] font-mono tracking-widest text-neutral-800 uppercase mt-0.5">
-                TEAM ACCESS PANEL
-              </p>
+            {/* VINHACK 26 header */}
+            <div className="absolute top-[32px] left-0 w-full text-center text-[32px] font-light leading-none">
+              VINHACK 26
             </div>
 
-            {/* Middle section: CRT Screen & Status LEDs */}
-            <div className="grid grid-cols-12 gap-4 items-center my-3">
-              {/* CRT Terminal Screen */}
-              <div className="col-span-9 bg-black rounded-2xl border-[4px] border-[#D9D9D9] p-4 shadow-inner min-h-[145px] flex flex-col justify-between">
-                <div className="text-[11px] md:text-[13px] font-mono text-[#83EE91] tracking-widest uppercase">
-                  {stage === "validated"
-                    ? "TEAM CODE VALIDATED"
-                    : stage === "validating"
-                    ? "VALIDATING CODE..."
-                    : stage === "joined"
-                    ? "ACCESS AUTHORIZED"
-                    : "ENTER TEAM CODE"}
-                </div>
+            {/* Divider line */}
+            <div className="absolute top-[87px] left-1/2 -translate-x-1/2 border-t-2 border-black box-border w-[460px] h-[2px]" />
 
-                {/* CRT Monospace input line */}
-                <div className="my-2 border border-[#83EE91]/70 rounded-lg px-3 py-1.5 flex items-center gap-2 bg-[#83EE91]/5">
-                  <span className="text-[#83EE91] font-mono text-sm md:text-base animate-pulse">&gt;_</span>
-                  <input
-                    type="text"
-                    value={code}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    placeholder="VH26-XXXX"
-                    disabled={stage === "joined"}
-                    className="w-full bg-transparent font-mono text-[#83EE91] text-base md:text-lg tracking-widest uppercase outline-none placeholder:text-[#83EE91]/40"
-                  />
-                </div>
-
-                <div className="text-[10px] font-mono text-[#93EB9E] truncate uppercase">
-                  {feedback || "AWAITING ACCESS CODE"}
-                </div>
-              </div>
-
-              {/* Status LEDs on right */}
-              <div className="col-span-3 flex flex-col justify-center space-y-3 pl-2 text-[10px] md:text-[12px] font-mono font-semibold">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981]" />
-                  <span>POWER</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    isLoading ? "bg-amber-400 animate-ping" : "bg-emerald-500 shadow-[0_0_8px_#10B981]"
-                  }`} />
-                  <span>NETWORK</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    stage === "validated" || stage === "joined"
-                      ? "bg-emerald-500 shadow-[0_0_8px_#10B981]"
-                      : "bg-neutral-400"
-                  }`} />
-                  <span>READY</span>
-                </div>
-              </div>
+            {/* TEAM ACCESS PANEL */}
+            <div className="absolute top-[99px] left-0 w-full text-center text-[20px] font-light leading-none">
+              TEAM ACCESS PANEL
             </div>
 
-            {/* Red Dispenser Housing */}
-            <div className="relative w-full bg-[#FA1A1D] h-[44px] md:h-[50px] rounded-xl flex items-center justify-center my-2 shadow-md">
-              <div className="w-[82%] h-[10px] bg-black rounded-full" />
-            </div>
+            {/* CRT Monitor (.rectangleParent) */}
+            <div className="absolute top-[142px] left-[38px] w-[360px] h-[155px] text-[16.13px] text-[#83ee91]">
+              {/* Outer monitor screen */}
+              <div className="absolute top-0 left-0 rounded-[20.16px] bg-black border-[5.4px] border-[#d9d9d9] box-border w-[360px] h-[155px]" />
 
-            {/* Printed Join Request Slip */}
-            <div className="relative bg-[#F1F0F0] text-black rounded-b-none p-4 shadow-md border-x border-neutral-300 text-center">
-              <p className="text-[9px] font-mono tracking-widest text-neutral-600 uppercase">
-                VinHack 2026 TEAM JOIN REQUEST
-              </p>
-
-              <div className="flex justify-between items-center text-[10px] font-mono border-t border-b border-black/15 py-1.5 my-2">
-                <span>Participant:</span>
-                <span className="font-bold">{participantName || "You"}</span>
+              {/* ENTER TEAM CODE */}
+              <div className="absolute top-[25px] left-1/2 -translate-x-1/2 font-light uppercase tracking-wide text-[14px]">
+                {stage === "validated"
+                  ? "CODE VALIDATED"
+                  : stage === "validating"
+                  ? "VALIDATING CODE..."
+                  : stage === "joined"
+                  ? "ACCESS AUTHORIZED"
+                  : "ENTER TEAM CODE"}
               </div>
 
-              <div className="text-[10px] font-mono text-neutral-600 uppercase">
-                Target Team Code:
-              </div>
-              <div className="font-['Rotonto',sans-serif] text-[20px] md:text-[24px] font-bold tracking-widest my-0.5">
-                {code || "VH26-____"}
-              </div>
-
-              <p className="text-[9px] text-neutral-600 leading-tight pt-1">
-                By entering this code, you will request access to an existing team.
-              </p>
-
-              {/* Serrated tear-off edge */}
-              <div className="absolute -bottom-[12px] left-0 w-full h-[14px] overflow-hidden pointer-events-none">
-                <Image
-                  src="/onboarding/imgGroup48095504_946d3f55.svg"
-                  alt=""
-                  width={310}
-                  height={14}
-                  className="w-full h-full object-cover rotate-180"
+              {/* Input Outline Box (.groupItem) */}
+              <div className="absolute top-[58.63px] left-1/2 -translate-x-1/2 rounded-[8.06px] border-[0.7px] border-[#83ee91] box-border w-[310px] h-[41px] flex items-center px-3.5 gap-2 bg-black/40">
+                <span className="text-[#83ee91] font-mono text-[14px] shrink-0 animate-pulse">&gt;_</span>
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  placeholder="VH26-XXXX"
+                  disabled={stage === "joined"}
+                  className="w-full bg-transparent font-mono text-[#83ee91] text-[15px] tracking-widest uppercase outline-none placeholder:text-[#83ee91]/40 font-light"
                 />
               </div>
 
-              {/* ACCESS GRANTED Sticker (Stamped diagonally if joined) */}
-              {stage === "joined" && (
-                <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                  <div className="relative w-[180px] h-[75px] -rotate-6 scale-110 drop-shadow-xl animate-in fade-in zoom-in-75 duration-200">
-                    <Image
-                      src="/onboarding/imgSticker_3ec30ab1.svg"
-                      alt="ACCESS GRANTED"
-                      fill
-                      className="object-contain"
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center font-['Rotonto',sans-serif] text-[13px] font-bold text-black tracking-wider uppercase">
-                      ACCESS GRANTED
-                    </span>
-                  </div>
-                </div>
-              )}
+              {/* Status prompt / feedback below input */}
+              <div className="absolute top-[112px] left-1/2 -translate-x-1/2 font-light flex items-center justify-center w-[300px] h-[23.7px] text-[12px] text-[#93eb9e] font-mono truncate">
+                {feedback ? (
+                  <span className="truncate">{feedback}</span>
+                ) : (
+                  <span>AWAITING ACCESS CODE</span>
+                )}
+              </div>
             </div>
 
-            {/* Panel Bottom Branding & Slogans */}
-            <div className="flex items-center justify-between text-[9px] md:text-[10px] font-mono text-[#676767] pt-4 border-t border-black/20">
-              <span className="uppercase">PROPERTY OF VINNOVATEIT // 26</span>
-              <span className="uppercase text-right">SAME PEOPLE // BIGGER IDEAS</span>
+            {/* Status LEDs & Labels */}
+            {/* POWER */}
+            <div className="absolute top-[180px] left-[425px] rounded-full bg-[#00d753] w-[12px] h-[12px] shadow-[0_0_8px_#00d753]" />
+            <div className="absolute top-[177px] left-[446px] font-light text-[14px] text-black leading-none">
+              POWER
+            </div>
+
+            {/* NETWORK */}
+            <div className={`absolute top-[211px] left-[425px] rounded-full bg-[#ffed25] w-[12px] h-[12px] shadow-[0_0_8px_#ffed25] ${isLoading ? "animate-ping" : ""}`} />
+            <div className="absolute top-[208px] left-[446px] font-light text-[14px] text-black leading-none">
+              NETWORK
+            </div>
+
+            {/* READY */}
+            <div className={`absolute top-[242px] left-[425px] rounded-full w-[12px] h-[12px] ${
+              stage === "validated" || stage === "joined"
+                ? "bg-[#00d753] shadow-[0_0_8px_#00d753]"
+                : "bg-[#656565]"
+            }`} />
+            <div className="absolute top-[239px] left-[446px] font-light text-[14px] text-black leading-none">
+              READY
+            </div>
+
+            {/* Red Dispenser Housing with black slot & slot lip shadow */}
+            <div className="absolute top-[316px] left-[38px] w-[360px] h-[72px] rounded-[16px] bg-[#fa1a1d] shadow-md z-10">
+              {/* Black Exit Slot */}
+              <div className="-translate-x-1/2 -translate-y-1/2 absolute bg-black h-[14px] left-1/2 top-1/2 w-[310px] rounded-full overflow-hidden" />
+
+              {/* Emerging Ticket Paper Container */}
+              <div
+                ref={paperRef}
+                style={{ clipPath: "inset(0 0 100% 0)" }}
+                className="absolute h-[364px] left-1/2 -translate-x-1/2 overflow-clip top-[36px] w-[240px] z-10"
+              >
+                {/* Perforated receipt sheet with authentic saw-tooth bottom edge */}
+                <div
+                  aria-hidden
+                  className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] shadow-md border-x border-neutral-300/60"
+                />
+
+                {/* Logo */}
+                <div className="absolute top-[20px] left-1/2 -translate-x-1/2 w-[140px] h-[48px]">
+                  <Image
+                    src="/figma/logo-red.svg"
+                    alt="VinHack"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+
+                {/* Solid divider line */}
+                <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[76px] w-[190px]" />
+
+                {/* Title: TEAM JOIN REQUEST */}
+                <div className="absolute top-[88px] left-1/2 -translate-x-1/2 text-[14px] leading-tight font-light inline-block w-[180px] text-center uppercase tracking-wide text-black">
+                  TEAM JOIN REQUEST
+                </div>
+
+                {/* VinHack 2026 */}
+                <div className="absolute top-[106px] left-1/2 -translate-x-1/2 leading-tight font-light text-[11px] text-center text-neutral-800">
+                  VinHack 2026
+                </div>
+
+                {/* Dashed line 1 */}
+                <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[128px] w-[190px]" />
+
+                {/* Participant row */}
+                <div className="absolute top-[138px] left-[20px] right-[20px] flex justify-between items-center text-[11px] leading-none font-light">
+                  <span className="text-neutral-700">Participant</span>
+                  <span className="font-semibold text-black truncate max-w-[120px] text-right">
+                    {participantName || "John Doe"}
+                  </span>
+                </div>
+
+                {/* Dashed line 2 */}
+                <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[162px] w-[190px]" />
+
+                {/* Enter Team Code label */}
+                <div className="absolute top-[174px] left-1/2 -translate-x-1/2 text-[10.5px] leading-none font-light text-center text-neutral-600 uppercase tracking-wider">
+                  Target Team Code
+                </div>
+
+                {/* Target Team Code value */}
+                <div className="absolute top-[190px] left-0 w-full text-center text-[28px] font-light tracking-wider leading-none select-all font-['Rotonto',sans-serif] text-black">
+                  {code || "VH26-_ _ _ _"}
+                </div>
+
+                {/* Note / Disclaimer */}
+                <div className="absolute top-[236px] left-1/2 -translate-x-1/2 text-[10.5px] font-light text-[#676767] text-center inline-block w-[195px] leading-snug">
+                  By entering this code, you will request access to an existing team.
+                </div>
+
+                {/* Dashed line 3 */}
+                <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[292px] w-[190px]" />
+
+                {/* URLs */}
+                <div className="absolute top-[304px] left-[18px] right-[18px] flex justify-between text-[7px] font-mono leading-none font-light text-neutral-500">
+                  <span>vinhack.vinnovateit.com</span>
+                  <span>vinnovateit@gmail.com</span>
+                </div>
+
+                {/* ACCESS GRANTED Sticker (when joined) */}
+                {stage === "joined" && (
+                  <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                    <div className="relative w-[170px] h-[70px] -rotate-6 scale-105 drop-shadow-xl animate-in fade-in zoom-in-75 duration-200">
+                      <Image
+                        src="/onboarding/imgSticker_3ec30ab1.svg"
+                        alt="ACCESS GRANTED"
+                        fill
+                        className="object-contain"
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center font-['Rotonto',sans-serif] text-[13px] font-bold text-black tracking-wider uppercase">
+                        ACCESS GRANTED
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Slot Exit Shadow Lip (identical to ReceiptPrinter.tsx) */}
+              <div
+                aria-hidden
+                className="-translate-x-1/2 pointer-events-none absolute left-1/2 top-[34px] h-[5px] w-[306px] rounded-full bg-[#161616] shadow-[0_3px_5px_rgba(0,0,0,0.55)] z-20"
+              />
+            </div>
+
+            {/* Vertical rotated text on left (.propertyOfVinnovateit) */}
+            <div className="absolute top-[645px] left-[19px] font-light text-[13px] text-[#676767] -rotate-90 origin-top-left whitespace-nowrap tracking-wider">
+              PROPERTY OF VINNOVATEIT // 26
+            </div>
+
+            {/* VinHack QR on right */}
+            <div className="absolute top-[425px] left-[422px] w-[69px] h-[139px] pointer-events-none">
+              <Image
+                src="/onboarding/onboarding_vinhackqr.svg"
+                alt="VinHack QR"
+                width={69}
+                height={139}
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Separator line on right (.frameChild8) */}
+            <div className="absolute top-[584.5px] left-[405px] border-t border-[#676767] box-border w-[100px] h-[1px]" />
+
+            {/* Slogan on right (.samePeopleBigger) */}
+            <div className="absolute top-[598px] left-[405px] font-light text-[13px] text-[#676767] leading-tight">
+              SAME PEOPLE<br />BIGGER IDEAS
             </div>
           </div>
         </div>
