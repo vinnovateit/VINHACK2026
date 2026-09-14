@@ -5,8 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import KeyButton from "../onboarding/KeyButton";
-
-import CardboardBoxAnimation from "./CardboardBoxAnimation";
+import CardboardBoxOpeningAnimation from "./CardboardBoxOpeningAnimation";
 
 export default function LoginPage() {
   const handleGoogleSignIn = () => {
@@ -95,9 +94,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Column: 3D Animated Cardboard Box with Items */}
+        {/* Right Column: 3D Animated Cardboard Box with Props Flying In */}
         <div className="lg:col-span-7 relative h-full flex items-center justify-center select-none w-full min-h-0 overflow-visible py-2">
-          <CardboardBoxAnimation />
+          <CardboardBoxOpeningAnimation />
         </div>
       </div>
     </div>
