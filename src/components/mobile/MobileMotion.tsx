@@ -322,7 +322,7 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
           window.addEventListener("pointerup", leaveNote);
           window.addEventListener("pointercancel", leaveNote);
           const onNoteClick = () => {
-            window.location.href = "/onboarding";
+            window.location.href = "/login";
           };
           noteHit.addEventListener("click", onNoteClick);
           cleanups.push(() => {

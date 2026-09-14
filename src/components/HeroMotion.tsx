@@ -564,7 +564,7 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         if (noteHit) {
           cleanups.push(hover(noteHit, boxes("note"), { scale: 1.06 }, { scale: 1 }));
           const onNoteClick = () => {
-            window.location.href = "/onboarding";
+            window.location.href = "/login";
           };
           noteHit.addEventListener("click", onNoteClick);
           cleanups.push(() => noteHit.removeEventListener("click", onNoteClick));
