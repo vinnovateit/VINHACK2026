@@ -1,10 +1,14 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import { prisma } from "@/lib/prisma";
+import { verifyParticipantRegistered } from "@/lib/check-registration";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET,
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
@@ -15,38 +19,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     // Check payment / registration in database BEFORE allowing the user to sign in
     async signIn({ user }) {
-      if (!user?.email) return false;
+      if (!user?.email) {
+        console.warn("[AUTH] Rejected sign-in: No email provided by OAuth provider.");
+        return false;
+      }
 
       const email = user.email.toLowerCase().trim();
+      console.log(`[AUTH] Verifying registration for incoming OAuth sign-in: ${email}`);
 
       try {
-        // Query User, VITStudent, and ExternalStudent records
-        const [dbUser, vitStudent, externalStudent] = await Promise.all([
-          prisma.user.findUnique({ where: { email } }),
-          prisma.vITStudent.findUnique({ where: { email } }),
-          prisma.externalStudent.findFirst({ where: { email } }),
-        ]);
+        const check = await verifyParticipantRegistered(email);
 
-        const isRegistered = Boolean(
-          dbUser?.hasLoggedIn || vitStudent || externalStudent
-        );
-
-        if (!isRegistered) {
+        if (!check.isRegistered) {
           console.warn(
-            `[AUTH_REJECTED] Access denied for ${email}: No paid or registered participant record found in database.`
+            `[AUTH_REJECTED] Access denied for ${email}: No participant record found in vit_students, external_students, or users collections.`
           );
-          // Returning false blocks the sign-in completely and redirects to AccessDenied
           return false;
         }
 
-        console.log(`[AUTH_APPROVED] Sign-in permitted for ${email}`);
+        console.log(`[AUTH_APPROVED] Sign-in permitted for ${email} (${check.participantType} via ${check.method})`);
         return true;
       } catch (err) {
         console.error(
-          "[AUTH_ERROR] Database connection failed during sign-in verification:",
+          `[AUTH_ERROR] Unexpected error verifying sign-in for ${email}:`,
           err
         );
-        // Fail closed for security if database is unreachable
         return false;
       }
     },
