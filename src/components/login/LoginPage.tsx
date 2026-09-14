@@ -6,16 +6,18 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import KeyButton from "../onboarding/KeyButton";
 
+import CardboardBoxAnimation from "./CardboardBoxAnimation";
+
 export default function LoginPage() {
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/onboarding" });
   };
 
   return (
-    <div className="relative w-full max-w-[1280px] mx-auto min-h-screen bg-black text-white px-6 md:px-12 pt-3 pb-8 flex flex-col gap-1 overflow-hidden">
-      {/* Top Bar: Brand Logo */}
+    <div className="relative w-full max-w-[1440px] mx-auto min-h-screen bg-black text-white px-6 md:px-12 py-6 flex flex-col justify-between overflow-x-hidden">
+      {/* Top Bar: Brand Logo & Home link */}
       <div className="flex items-center justify-between z-20">
-        <Link href="/" className="w-[150px] md:w-[180px] h-[44px] md:h-[54px] relative block">
+        <Link href="/" className="w-[160px] md:w-[190px] h-[48px] md:h-[58px] relative block">
           <Image
             src="/figma/logo-red.svg"
             alt="VinHack"
@@ -27,38 +29,48 @@ export default function LoginPage() {
 
         <Link
           href="/"
-          className="text-neutral-400 hover:text-white font-['Rotonto',sans-serif] text-sm flex items-center gap-2 border border-neutral-800 rounded-full px-4 py-1.5 transition"
+          className="text-neutral-400 hover:text-white font-['Rotonto',sans-serif] text-sm flex items-center gap-2 border border-neutral-800 rounded-full px-4 py-1.5 transition hover:border-neutral-700"
         >
           ← Home
         </Link>
       </div>
 
       {/* Main Grid: 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-10 items-center my-auto py-6">
         {/* Left Column: Heading & Google Sign-In */}
-        <div className="lg:col-span-6 flex flex-col justify-center space-y-6 z-10">
-          <p className="font-['Rotonto',sans-serif] text-neutral-400 text-[22px] md:text-[28px] tracking-wide">
+        <div className="lg:col-span-5 flex flex-col justify-center space-y-6 z-10">
+          <p className="font-['Rotonto',sans-serif] text-neutral-400 text-[20px] md:text-[24px] lg:text-[26px] tracking-wide">
             Build. Collaborate. Ideate.
           </p>
 
-          <div className="font-['Rotonto',sans-serif] text-[44px] sm:text-[54px] md:text-[64px] font-normal leading-[1.08] tracking-tight select-none">
+          <div className="font-['Rotonto',sans-serif] text-[42px] sm:text-[50px] md:text-[56px] lg:text-[58px] xl:text-[64px] font-normal leading-[1.06] tracking-tight select-none">
             <p className="text-[#FC2425]">GOOD IDEAS</p>
             <p className="text-[#FC2425]">START WITH</p>
             <p>
               <span className="text-[#FC2425]">THE </span>
               <span className="text-white">RIGHT</span>
             </p>
-            <p className="text-white">PEOPLE.</p>
+            <div className="flex items-center gap-3">
+              <span className="text-white">PEOPLE</span>
+              <div className="w-[42px] sm:w-[50px] md:w-[56px] h-[42px] sm:h-[50px] md:h-[56px] relative rotate-[20deg] inline-block shrink-0 -mt-1">
+                <Image
+                  src="/login/imgGroup48095565_fc3dc544.svg"
+                  alt="*"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Login Button with Google G Icon */}
-          <div className="pt-4 space-y-4">
+          <div className="pt-2">
             <KeyButton
               color="blue"
               onClick={handleGoogleSignIn}
               className="w-full max-w-[416px]"
               icon={
-                <svg className="w-6 h-6 ml-2" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 ml-2 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#74D4F0"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -83,16 +95,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Column: Auth Illustration */}
-        <div className="lg:col-span-6 relative min-h-[480px] md:min-h-[560px] flex items-center justify-center select-none">
-          <Image
-            src="/auth.svg"
-            alt="VinHack login illustration"
-            width={560}
-            height={560}
-            className="w-full max-w-[480px] h-auto object-contain"
-            priority
-          />
+        {/* Right Column: 3D Animated Cardboard Box with Items */}
+        <div className="lg:col-span-7 relative flex items-center justify-center select-none w-full overflow-visible">
+          <CardboardBoxAnimation />
         </div>
       </div>
     </div>
