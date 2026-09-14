@@ -132,7 +132,7 @@ export default function OnboardingWizard({
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col justify-center">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Wizard Step Views */}
       {step === "checkin" && (
         <CheckInChecklist

@@ -41,9 +41,9 @@ export default function CreateTeamDossier({
   };
 
   return (
-    <div className="relative w-full max-w-[1280px] mx-auto min-h-[832px] bg-black text-white px-6 md:px-12 py-8 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-full max-w-[1280px] mx-auto bg-black text-white px-6 md:px-12 pt-6 md:pt-8 pb-10 flex flex-col overflow-hidden">
       {/* Top Bar: Brand Logo & Back link */}
-      <div className="flex items-center justify-between z-10">
+      <div className="flex items-center justify-between z-10 shrink-0">
         <div className="w-[180px] md:w-[211px] h-[60px] md:h-[74px] relative">
           <Image
             src="/figma/logo-red.svg"
@@ -66,9 +66,9 @@ export default function CreateTeamDossier({
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-2 md:mt-4 pb-6">
         {/* Left Column: 03 SETUP YOUR TEAM */}
-        <div className="lg:col-span-6 flex flex-col justify-center space-y-6 z-10">
+        <div className="lg:col-span-6 flex flex-col justify-center space-y-5 md:space-y-6 z-10">
           <div>
             <span className="font-['Rotonto',sans-serif] text-[48px] md:text-[64px] text-[#FC2425] leading-none block">
               03

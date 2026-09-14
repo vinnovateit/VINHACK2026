@@ -65,9 +65,9 @@ export default function CheckInChecklist({
   };
 
   return (
-    <div className="relative w-full max-w-[1280px] mx-auto min-h-[832px] bg-black text-white px-6 md:px-12 py-8 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-full max-w-[1280px] mx-auto bg-black text-white px-6 md:px-12 pt-6 md:pt-8 pb-10 flex flex-col overflow-hidden">
       {/* Top bar: Brand logo & student type switch */}
-      <div className="flex items-center justify-between z-10">
+      <div className="flex items-center justify-between z-10 shrink-0">
         <div className="w-[180px] md:w-[211px] h-[60px] md:h-[74px] relative">
           <Image
             src="/figma/logo-red.svg"
@@ -107,9 +107,9 @@ export default function CheckInChecklist({
       </div>
 
       {/* Main 2-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-2 md:mt-4 pb-6">
         {/* Left Column: Step & Description */}
-        <div className="lg:col-span-6 flex flex-col justify-center space-y-6 z-10">
+        <div className="lg:col-span-6 flex flex-col justify-center space-y-5 md:space-y-6 z-10">
           <div>
             <span className="font-['Rotonto',sans-serif] text-[48px] md:text-[64px] text-[#FC2425] leading-none block">
               01
@@ -126,13 +126,13 @@ export default function CheckInChecklist({
             </p>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-2 md:pt-4">
             <KeyButton
               color="pink"
               type="submit"
               onClick={() => handleSubmit()}
               disabled={isLoading || !name.trim()}
-              className="w-full max-w-[380px]"
+              className="w-[340px]"
             >
               {isLoading ? "SAVING..." : "SAVE AND CONTINUE"}
             </KeyButton>
