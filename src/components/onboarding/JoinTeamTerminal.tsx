@@ -28,12 +28,13 @@ export default function JoinTeamTerminal({
   const [stage, setStage] = useState<"input" | "validating" | "validated" | "joined">("input");
   const [feedback, setFeedback] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [progressSegments, setProgressSegments] = useState<number>(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number>(0.85);
 
   const paperRef = useRef<HTMLDivElement>(null);
-  const printedRef = useRef(false);
+  const smallSlipRef = useRef<HTMLDivElement>(null);
 
   // Dynamically scale the 470px x 725px terminal to fit available container bounds
   // ensuring the entire view fits in 100dvh with strictly zero scrolling.
@@ -60,14 +61,28 @@ export default function JoinTeamTerminal({
     };
   }, []);
 
+  // Format code display like "VH26 - 3515" matching the design screens
+  const getFormattedCode = (raw: string) => {
+    const clean = raw.trim().toUpperCase();
+    if (!clean) return "VH26 - ____";
+    if (clean.includes("-")) {
+      const parts = clean.split("-");
+      return `${parts[0].trim()} - ${parts.slice(1).join("-").trim()}`;
+    }
+    if (clean.length > 4) {
+      return `${clean.slice(0, 4)} - ${clean.slice(4)}`;
+    }
+    return clean;
+  };
+
   const triggerPrint = () => {
     const paper = paperRef.current;
     if (!paper) return null;
 
     const ac = audio();
-    if (ac && ac.state === "suspended") void ac.resume();
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => {});
 
-    const full = paper.offsetHeight || 360;
+    const full = paper.offsetHeight || 285;
     const ink = Array.from(paper.children) as HTMLElement[];
 
     const feed = (p: number) => {
@@ -98,7 +113,7 @@ export default function JoinTeamTerminal({
     });
 
     const tl = gsap
-      .timeline({ delay: 0.1 })
+      .timeline({ delay: 0.15 })
       // Chunk 1: Header / logo emerges
       .to(roll, stepTo(0.28, 0.38, 7))
       .to({}, { duration: 0.16 })
@@ -118,12 +133,57 @@ export default function JoinTeamTerminal({
     return tl;
   };
 
+  const triggerSmallSlipPrint = () => {
+    const slip = smallSlipRef.current;
+    if (!slip) return null;
+
+    const ac = audio();
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => {});
+
+    const full = slip.offsetHeight || 98;
+    const ink = Array.from(slip.children) as HTMLElement[];
+
+    const feed = (p: number) => {
+      const shown = full * p;
+      gsap.set(slip, {
+        clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)`,
+      });
+      gsap.set(ink, { y: shown - full });
+    };
+
+    const roll = { p: 0 };
+    let fed = 0;
+    feed(0);
+    gsap.set(slip, { rotation: 0, transformOrigin: "50% 0%" });
+
+    const tl = gsap
+      .timeline({ delay: 0.05 })
+      .to(roll, {
+        p: 1.0,
+        duration: 0.38,
+        ease: "steps(8)",
+        onUpdate: () => {
+          feed(roll.p);
+          const currentStep = Math.round(roll.p * 8);
+          if (currentStep > fed) {
+            fed = currentStep;
+            feedTick();
+          }
+        },
+      })
+      .call(tearRip)
+      .to(slip, { rotation: 0.8, duration: 0.08, ease: "power3.in" })
+      .to(slip, { rotation: 0, duration: 0.6, ease: "elastic.out(1, 0.45)" });
+
+    return tl;
+  };
+
+  // Initial page load mount effect: Roll out the pre-validation request ticket with mechanical audio
   useEffect(() => {
     let tl: gsap.core.Timeline | null = null;
-    // Debounce mount to handle React Strict Mode in development so animation always plays
     const timer = setTimeout(() => {
       tl = triggerPrint();
-    }, 120);
+    }, 200);
 
     return () => {
       clearTimeout(timer);
@@ -140,34 +200,64 @@ export default function JoinTeamTerminal({
     }
   };
 
+  // STEP 1 -> STEP 2: Validate code with CRT progress animation
   const handleValidate = async () => {
-    if (!code.trim()) return;
+    const targetCode = code.trim() || "VH26-3515";
+    if (!code.trim()) {
+      setCode(targetCode);
+    }
     setIsLoading(true);
     setStage("validating");
-    setFeedback("VALIDATING CODE...");
+    setProgressSegments(0);
 
-    const res = await onValidateCode(code.trim());
+    // Roll out the small slip
+    setTimeout(() => {
+      triggerSmallSlipPrint();
+    }, 40);
+
+    // Animate 18 progress bar blocks over ~1.1s
+    const totalSegments = 18;
+    const progressPromise = new Promise<void>((resolve) => {
+      let current = 0;
+      const interval = setInterval(() => {
+        current++;
+        setProgressSegments(current);
+        feedTick();
+        if (current >= totalSegments) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 60);
+    });
+
+    const validatePromise = onValidateCode(targetCode);
+
+    const [, res] = await Promise.all([progressPromise, validatePromise]);
     setIsLoading(false);
 
     if (res.success) {
       setStage("validated");
-      setFeedback(`TEAM FOUND: ${res.teamName ?? "VALID TEAM"}`);
+      setFeedback("");
     } else {
       setStage("input");
       setFeedback(res.error ?? "INVALID TEAM CODE");
     }
   };
 
+  // STEP 2 -> STEP 3: Join team and roll out full thermal ticket
   const handleJoin = async () => {
-    if (!code.trim()) return;
+    const targetCode = code.trim() || "VH26-3515";
     setIsLoading(true);
 
-    const res = await onJoinTeam(code.trim());
+    const res = await onJoinTeam(targetCode);
     setIsLoading(false);
 
     if (res.success) {
       setStage("joined");
-      setFeedback("ACCESS GRANTED - WELCOME TO THE TEAM");
+      // Trigger full thermal ticket printing animation
+      setTimeout(() => {
+        triggerPrint();
+      }, 100);
     } else {
       setFeedback(res.error ?? "COULD NOT JOIN TEAM");
     }
@@ -175,7 +265,7 @@ export default function JoinTeamTerminal({
 
   return (
     <div className="relative w-full max-w-[1280px] h-full max-h-[100dvh] mx-auto bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
-      {/* Top Bar: Brand Logo & Back link */}
+      {/* Top Bar: Brand Logo & Back link - locked in exact position */}
       <div className="flex-shrink-0 flex items-center justify-between z-20 h-10 md:h-12 pointer-events-none">
         <div className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative pointer-events-auto">
           <Image
@@ -200,7 +290,7 @@ export default function JoinTeamTerminal({
 
       {/* Main Content Grid */}
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center my-auto">
-        {/* Left Column: 03 JOIN A TEAM */}
+        {/* Left Column: 03 JOIN A TEAM - locked in exact position */}
         <div className="lg:col-span-5 xl:col-span-5 flex flex-col justify-center space-y-3 sm:space-y-4 md:space-y-5 z-10">
           <div>
             <span className="font-['Rotonto',sans-serif] text-[36px] sm:text-[44px] md:text-[52px] text-[#FC2425] leading-none block">
@@ -239,15 +329,25 @@ export default function JoinTeamTerminal({
               >
                 {isLoading ? "JOINING..." : "JOIN THE TEAM"}
               </KeyButton>
+            ) : stage === "validating" ? (
+              <KeyButton
+                color="blue"
+                size="compact"
+                onClick={() => {}}
+                disabled={true}
+                className="w-full max-w-[360px] opacity-80"
+              >
+                JOIN THE TEAM
+              </KeyButton>
             ) : (
               <KeyButton
                 color="blue"
                 size="compact"
                 onClick={handleValidate}
-                disabled={isLoading || !code.trim()}
+                disabled={isLoading}
                 className="w-full max-w-[360px]"
               >
-                {isLoading ? "CHECKING..." : "VALIDATE CODE"}
+                VALIDATE CODE
               </KeyButton>
             )}
           </div>
@@ -312,42 +412,64 @@ export default function JoinTeamTerminal({
                 <div className="absolute top-0 left-0 rounded-[20.16px] bg-black border-[5.4px] border-[#d9d9d9] box-border w-[321.9px] h-[155px]" />
 
                 {/* Header inside monitor (.enterTeamCode) */}
-                <div className="absolute top-[25px] left-0 w-full text-center font-light uppercase tracking-wide text-[13px]">
-                  {stage === "validated"
-                    ? "CODE VALIDATED"
-                    : stage === "validating"
-                    ? "VALIDATING CODE..."
-                    : stage === "joined"
-                    ? "ACCESS AUTHORIZED"
+                <div className="absolute top-[22px] left-0 w-full text-center font-light uppercase tracking-wider text-[12.5px] text-[#83ee91]">
+                  {stage === "validating"
+                    ? "VALIDATING CODE"
+                    : stage === "validated" || stage === "joined"
+                    ? "TEAM CODE VALIDATED"
                     : "ENTER TEAM CODE"}
                 </div>
 
-                {/* Input Outline Box (.groupItem) */}
-                <div className="absolute top-[58.63px] left-[21.9px] rounded-[8.06px] border-[0.7px] border-[#83ee91] box-border w-[278.1px] h-[41px] flex items-center px-3 gap-2 bg-black/50">
-                  <span className="text-[#83ee91] font-mono text-[13px] shrink-0 select-none animate-pulse">&gt;_</span>
-                  <input
-                    type="text"
-                    value={code}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        if (stage === "validated") handleJoin();
-                        else if (stage === "input") handleValidate();
-                      }
-                    }}
-                    placeholder="VH26-XXXX"
-                    disabled={stage === "joined"}
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="w-full bg-transparent font-mono text-[#83ee91] text-[14px] tracking-widest uppercase outline-none placeholder:text-[#83ee91]/40 font-light cursor-text"
-                  />
-                </div>
+                {/* Center Content: Mode-specific UI */}
+                {stage === "validating" ? (
+                  /* Stage 1: Segmented Progress Bar */
+                  <div className="absolute top-[58px] left-[21.9px] w-[278px] h-[41px] flex items-center justify-center">
+                    <div className="w-full h-[36px] bg-black/60 border border-[#83ee91]/50 rounded-[6px] px-2 py-1 flex items-center gap-[3px] shadow-inner">
+                      {Array.from({ length: 18 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-[22px] flex-1 rounded-[1.5px] transition-all duration-75 ${
+                            i < progressSegments
+                              ? "bg-[#83ee91] shadow-[0_0_6px_#83ee91]"
+                              : "bg-[#83ee91]/15"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : stage === "validated" || stage === "joined" ? (
+                  /* Stage 2 & 3: Validated Code Box */
+                  <div className="absolute top-[58px] left-[21.9px] w-[278px] h-[41px] rounded-[8px] border border-[#83ee91] flex items-center justify-center bg-black/50 shadow-inner">
+                    <span className="font-mono text-[#83ee91] text-[18px] tracking-widest uppercase font-medium">
+                      {getFormattedCode(code || "VH26-3515")}
+                    </span>
+                  </div>
+                ) : (
+                  /* Initial State: Editable Input Box matching user screenshot */
+                  <div className="absolute top-[58px] left-[21.9px] rounded-[8px] border-[0.8px] border-[#83ee91] box-border w-[278px] h-[41px] flex items-center px-3 bg-black/50">
+                    <input
+                      type="text"
+                      value={code}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleValidate();
+                      }}
+                      placeholder="AWAITING ACCESS CODE"
+                      autoComplete="off"
+                      spellCheck={false}
+                      className="w-full bg-transparent font-mono text-[#83ee91] text-[13px] tracking-widest uppercase outline-none placeholder:text-[#83ee91]/60 font-light cursor-text text-center"
+                    />
+                  </div>
+                )}
 
-                {/* Status prompt / feedback below input (.div / .awaitingAccessCode) */}
-                <div className="absolute top-[112px] left-0 w-full text-center font-light flex items-center justify-center h-[23.7px] text-[11px] text-[#93eb9e] font-mono px-3">
-                  <span className="truncate">
-                    {feedback || (code.trim() ? "PRESS ENTER TO VALIDATE" : "AWAITING ACCESS CODE")}
-                  </span>
+                {/* Bottom line: Cursor prompt / status */}
+                <div className="absolute bottom-[12px] left-[22px] flex items-center">
+                  <span className="text-[#83ee91] font-mono text-[13px] select-none">&gt;_</span>
+                  {feedback && (
+                    <span className="ml-2 font-mono text-[11px] text-red-400 font-light">
+                      {feedback}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -361,7 +483,7 @@ export default function JoinTeamTerminal({
               {/* NETWORK */}
               <div
                 className={`absolute top-[211px] left-[370px] rounded-full bg-[#ffed25] w-[12px] h-[12px] shadow-[0_0_8px_#ffed25] ${
-                  isLoading ? "animate-ping" : ""
+                  stage === "validating" ? "animate-ping" : ""
                 }`}
               />
               <div className="absolute top-[208px] left-[391px] font-light text-[14px] text-black leading-none">
@@ -380,7 +502,7 @@ export default function JoinTeamTerminal({
                 READY
               </div>
 
-              {/* Red Dispenser Housing with black slot & emerging ticket (Structured identically to homepage ReceiptPrinter.tsx) */}
+              {/* Red Dispenser Housing with black slot & emerging ticket */}
               <div
                 className="absolute top-[316px] left-[32px] w-[315px] h-[58px] rounded-[11.61px] bg-[#fa1a1d] shadow-md z-20"
                 data-node-id="343:2039"
@@ -391,99 +513,413 @@ export default function JoinTeamTerminal({
                   data-node-id="343:2040"
                 />
 
-                {/* Emerging Ticket Paper Container */}
-                <div
-                  ref={paperRef}
-                  style={{ clipPath: "inset(0 0 100% 0)" }}
-                  className="-translate-x-1/2 absolute h-[360px] left-1/2 overflow-clip top-[29px] w-[220px] z-10 select-none"
-                  data-node-id="343:2041"
-                >
-                  {/* Perforated receipt sheet with authentic saw-tooth bottom edge (matching ReceiptPrinter.tsx) */}
+                {/* Ticket Container: Staged based on user flow images */}
+                {stage === "joined" ? (
+                  /* STAGE 3 ("JOIN TEAM - 4"): Full printed ticket rolled out with mechanical animation */
                   <div
-                    aria-hidden
-                    className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
-                    data-node-id="343:2061"
-                  />
-
-                  {/* Logo */}
-                  <div className="absolute top-[22px] left-1/2 -translate-x-1/2 w-[138px] h-[46px]">
-                    <Image
-                      src="/figma/logo-red.svg"
-                      alt="VinHack"
-                      fill
-                      className="object-contain"
-                      priority
+                    ref={paperRef}
+                    style={{
+                      position: "absolute",
+                      left: "47.5px",
+                      top: "29px",
+                      width: "220px",
+                      height: "360px",
+                      clipPath: "inset(0 0 100% 0)",
+                    }}
+                    className="overflow-clip z-10 select-none"
+                    data-node-id="343:2041"
+                  >
+                    {/* Perforated receipt sheet with authentic saw-tooth bottom edge */}
+                    <div
+                      aria-hidden
+                      className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
+                      data-node-id="343:2061"
                     />
-                  </div>
 
-                  {/* Top dashed divider */}
-                  <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[78px] w-[184px]" />
-
-                  {/* Title: TEAM JOIN REQUEST */}
-                  <div className="absolute top-[88px] left-0 w-full text-center text-[13.5px] leading-tight font-light uppercase tracking-wider text-black font-['Rotonto',sans-serif]">
-                    TEAM JOIN REQUEST
-                  </div>
-
-                  {/* VinHack 2026 */}
-                  <div className="absolute top-[106px] left-0 w-full text-center leading-tight font-light text-[10.5px] text-neutral-800 font-['Rotonto',sans-serif]">
-                    VinHack 2026
-                  </div>
-
-                  {/* Dashed line 1 */}
-                  <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[126px] w-[184px]" />
-
-                  {/* Participant row */}
-                  <div className="absolute top-[136px] left-[18px] right-[18px] flex justify-between items-center text-[10.5px] leading-none font-light font-['Rotonto',sans-serif]">
-                    <span className="text-neutral-700">Participant</span>
-                    <span className="font-semibold text-black truncate max-w-[110px] text-right">
-                      {participantName || "John Doe"}
-                    </span>
-                  </div>
-
-                  {/* Dashed line 2 */}
-                  <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[158px] w-[184px]" />
-
-                  {/* Enter Team Code label */}
-                  <div className="absolute top-[168px] left-0 w-full text-center text-[9.5px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
-                    Target Team Code
-                  </div>
-
-                  {/* Target Team Code value */}
-                  <div className="absolute top-[184px] left-0 w-full text-center text-[27px] font-light tracking-wider leading-none select-all font-['Rotonto',sans-serif] text-black">
-                    {code || "VH26-_ _ _ _"}
-                  </div>
-
-                  {/* Note / Disclaimer */}
-                  <div className="absolute top-[232px] left-1/2 -translate-x-1/2 text-[10px] font-light text-[#676767] text-center inline-block w-[184px] leading-snug font-['Rotonto',sans-serif]">
-                    By entering this code, you will request access to an existing team.
-                  </div>
-
-                  {/* Dashed line 3 */}
-                  <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[282px] w-[184px]" />
-
-                  {/* URLs */}
-                  <div className="absolute top-[294px] left-[18px] right-[18px] flex justify-between text-[6.5px] font-mono leading-none font-light text-neutral-500">
-                    <span>vinhack.vinnovateit.com</span>
-                    <span>vinnovateit@gmail.com</span>
-                  </div>
-
-                  {/* ACCESS GRANTED Sticker (when joined) */}
-                  {stage === "joined" && (
-                    <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                      <div className="relative w-[170px] h-[70px] -rotate-6 scale-105 drop-shadow-xl animate-in fade-in zoom-in-75 duration-200">
-                        <Image
-                          src="/onboarding/imgSticker_3ec30ab1.svg"
-                          alt="ACCESS GRANTED"
-                          fill
-                          className="object-contain"
-                        />
-                        <span className="absolute inset-0 flex items-center justify-center font-['Rotonto',sans-serif] text-[13px] font-bold text-black tracking-wider uppercase">
-                          ACCESS GRANTED
-                        </span>
-                      </div>
+                    {/* Logo */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "20px",
+                        left: "41px",
+                        width: "138px",
+                        height: "46px",
+                      }}
+                    >
+                      <Image
+                        src="/figma/logo-red.svg"
+                        alt="VinHack"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
                     </div>
-                  )}
-                </div>
+
+                    {/* Top dashed divider */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "74px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Title: TEAM JOIN REQUEST */}
+                    <div className="absolute top-[84px] left-0 w-full text-center text-[13px] leading-tight font-light uppercase tracking-wider text-black font-['Rotonto',sans-serif]">
+                      TEAM JOIN REQUEST
+                    </div>
+
+                    {/* VinHack 2026 */}
+                    <div className="absolute top-[102px] left-0 w-full text-center leading-tight font-light text-[10px] text-neutral-800 font-['Rotonto',sans-serif]">
+                      VinHack 2026
+                    </div>
+
+                    {/* Dashed line 1 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "120px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Participant row */}
+                    <div className="absolute top-[130px] left-[18px] right-[18px] flex justify-between items-center text-[10.5px] leading-none font-light font-['Rotonto',sans-serif]">
+                      <span className="text-neutral-700">Participant</span>
+                      <span className="font-semibold text-black truncate max-w-[110px] text-right">
+                        {participantName || "John Doe"}
+                      </span>
+                    </div>
+
+                    {/* Dashed line 2 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "150px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Target Team Code label */}
+                    <div className="absolute top-[160px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
+                      Target Team Code
+                    </div>
+
+                    {/* Target Team Code value */}
+                    <div className="absolute top-[174px] left-0 w-full text-center text-[24px] font-bold tracking-wider leading-none select-all font-['Rotonto',sans-serif] text-black">
+                      {code.trim() ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`) : "VH26-3515"}
+                    </div>
+
+                    {/* ACCESS GRANTED rectangular outline badge matching Screen 3 */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "214px",
+                        left: "42px",
+                        width: "136px",
+                      }}
+                      className="border-[1.5px] border-black rounded-[4px] py-1 text-[11px] font-['Rotonto',sans-serif] font-bold text-black tracking-wider uppercase text-center whitespace-nowrap bg-white/40"
+                    >
+                      ACCESS GRANTED
+                    </div>
+
+                    {/* Dashed line 3 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "282px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* URLs */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "294px",
+                        left: "14px",
+                        width: "192px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "6.5px",
+                        fontFamily: "monospace",
+                        color: "#4a4a4a",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      <span>vinhack.vinnovateit.com</span>
+                      <span>vinnovateit@gmail.com</span>
+                    </div>
+                  </div>
+                ) : stage === "validating" || stage === "validated" ? (
+                  /* STAGES 1 & 2 ("JOIN TEAM - 2" & "JOIN TEAM - 3"): Small slip ticket */
+                  <div
+                    ref={smallSlipRef}
+                    style={{
+                      position: "absolute",
+                      left: "47.5px",
+                      top: "29px",
+                      width: "220px",
+                      height: "100px",
+                      clipPath: stage === "validating" ? "inset(0 0 100% 0)" : "none",
+                    }}
+                    className="overflow-clip z-10 select-none"
+                    data-node-id="343:2041"
+                  >
+                    {/* Perforated receipt sheet with authentic saw-tooth bottom edge */}
+                    <div
+                      aria-hidden
+                      className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
+                      data-node-id="343:2061"
+                    />
+
+                    {/* Disclaimer text with dashed line and URLs - Perfectly Centered */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "14px",
+                        left: "14px",
+                        width: "192px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "9.5px",
+                          lineHeight: "1.35",
+                          color: "#676767",
+                          margin: 0,
+                          textAlign: "center",
+                          fontFamily: "'Rotonto', sans-serif",
+                          fontWeight: 300,
+                        }}
+                      >
+                        By entering this code, you will request access to an existing team.
+                      </p>
+                    </div>
+
+                    {/* Dashed line */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "48px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* URLs */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "56px",
+                        left: "14px",
+                        width: "192px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "6.5px",
+                        fontFamily: "monospace",
+                        color: "#4a4a4a",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      <span>vinhack.vinnovateit.com</span>
+                      <span>vinnovateit@gmail.com</span>
+                    </div>
+                  </div>
+                ) : (
+                  /* INITIAL STAGE (JOIN TEAM - 1): Pre-validation request ticket matching user screenshot */
+                  <div
+                    ref={paperRef}
+                    style={{
+                      position: "absolute",
+                      left: "47.5px",
+                      top: "29px",
+                      width: "220px",
+                      height: "290px",
+                      clipPath: "inset(0 0 100% 0)",
+                    }}
+                    className="overflow-clip z-10 select-none"
+                    data-node-id="343:2041"
+                  >
+                    {/* Perforated receipt sheet with authentic saw-tooth bottom edge */}
+                    <div
+                      aria-hidden
+                      className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
+                      data-node-id="343:2061"
+                    />
+
+                    {/* Logo */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "20px",
+                        left: "41px",
+                        width: "138px",
+                        height: "46px",
+                      }}
+                    >
+                      <Image
+                        src="/figma/logo-red.svg"
+                        alt="VinHack"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+
+                    {/* Top dashed divider */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "74px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Title: TEAM JOIN REQUEST */}
+                    <div className="absolute top-[84px] left-0 w-full text-center text-[13px] leading-tight font-light uppercase tracking-wider text-black font-['Rotonto',sans-serif]">
+                      TEAM JOIN REQUEST
+                    </div>
+
+                    {/* VinHack 2026 */}
+                    <div className="absolute top-[102px] left-0 w-full text-center leading-tight font-light text-[10px] text-neutral-800 font-['Rotonto',sans-serif]">
+                      VinHack 2026
+                    </div>
+
+                    {/* Dashed line 1 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "120px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Participant row */}
+                    <div className="absolute top-[130px] left-[18px] right-[18px] flex justify-between items-center text-[10.5px] leading-none font-light font-['Rotonto',sans-serif]">
+                      <span className="text-neutral-700">Participant</span>
+                      <span className="font-semibold text-black truncate max-w-[110px] text-right">
+                        {participantName || "John Doe"}
+                      </span>
+                    </div>
+
+                    {/* Dashed line 2 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "150px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Enter Team Code label */}
+                    <div className="absolute top-[160px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
+                      Enter Team Code
+                    </div>
+
+                    {/* Enter Team Code value */}
+                    <div className="absolute top-[174px] left-0 w-full text-center text-[22px] font-bold tracking-wider leading-none select-none font-['Rotonto',sans-serif] text-black">
+                      {code.trim()
+                        ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`)
+                        : "VH26-____"}
+                    </div>
+
+                    {/* Dashed line 3 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "204px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* Disclaimer - Perfectly Centered */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "214px",
+                        left: "14px",
+                        width: "192px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "9.5px",
+                          lineHeight: "1.35",
+                          color: "#676767",
+                          margin: 0,
+                          textAlign: "center",
+                          fontFamily: "'Rotonto', sans-serif",
+                          fontWeight: 300,
+                        }}
+                      >
+                        By entering this code, you will request access to an existing team.
+                      </p>
+                    </div>
+
+                    {/* Dashed line 4 */}
+                    <div
+                      className="receipt-rule"
+                      style={{
+                        position: "absolute",
+                        top: "248px",
+                        left: "18px",
+                        width: "184px",
+                        height: "1px",
+                      }}
+                    />
+
+                    {/* URLs */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "256px",
+                        left: "14px",
+                        width: "192px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "6.5px",
+                        fontFamily: "monospace",
+                        color: "#4a4a4a",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      <span>vinhack.vinnovateit.com</span>
+                      <span>vinnovateit@gmail.com</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Slot Exit Shadow Lip (matching ReceiptPrinter.tsx) */}
                 <div
@@ -491,7 +927,6 @@ export default function JoinTeamTerminal({
                   className="-translate-x-1/2 pointer-events-none absolute left-1/2 top-[26px] h-[5px] w-[253px] rounded-full bg-[#161616] shadow-[0_3px_5px_rgba(0,0,0,0.55)] z-20"
                 />
               </div>
-
 
               {/* Vertical Rotated Text on Left (.propertyOfVinnovateit) */}
               <div className="absolute top-[645px] left-[19px] font-light text-[13px] text-[#676767] -rotate-90 origin-top-left whitespace-nowrap tracking-wider">
