@@ -18,6 +18,46 @@ enum ResidencyType {
   HOSTELLER
 }
 
+enum MaleHostel {
+  A
+  B
+  B_ANNEXE
+  C
+  D
+  D_ANNEXE
+  E
+  F
+  G
+  H
+  J
+  K
+  L
+  L_ANNEXE
+  M
+  M_ANNEXE
+  T
+  R
+  N
+  Q
+  P
+}
+
+enum FemaleHostel {
+  A
+  B
+  C
+  D
+  D_ANNEXE
+  E
+  E_ANNEXE
+  F
+  G
+  G_ANNEXE
+  H
+  J
+  S
+}
+
 enum TeamType {
   VIT
   EXTERNAL
@@ -91,6 +131,8 @@ model VITStudent {
   phone         String
   gender        Gender
   residencyType ResidencyType
+  maleHostel    MaleHostel?
+  femaleHostel  FemaleHostel?
   block         String?
   room          String?
   createdAt     DateTime      @default(now())

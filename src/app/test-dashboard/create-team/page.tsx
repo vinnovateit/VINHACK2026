@@ -59,6 +59,7 @@ export default async function CreateTeamPage({
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-cyan-400">VinHack test dashboard</p>
           <h1 className="mt-2 text-3xl font-bold">Create Team</h1>
+          <a href="/test-dashboard/profile" className="mt-2 inline-block text-sm text-cyan-300 hover:text-cyan-200">Update hostel details</a>
         </div>
         {params?.error && (
           <p className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-rose-200">

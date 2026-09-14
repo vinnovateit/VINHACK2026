@@ -166,6 +166,7 @@ export default async function DashboardPage({
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-cyan-400">VinHack test dashboard</p>
             <h1 className="mt-2 text-3xl font-bold">Team Dashboard</h1>
+            <a href="/test-dashboard/profile" className="mt-2 inline-block text-sm text-cyan-300 hover:text-cyan-200">Update hostel details</a>
           </div>
           <form action={leaveTeam}>
             <button type="submit" className="rounded-xl border border-rose-500/60 px-4 py-2 text-sm text-rose-200 transition hover:bg-rose-500/10">
