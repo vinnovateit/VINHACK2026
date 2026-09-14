@@ -1,17 +1,6 @@
-"use client";
-
-import { useRouter } from "next/navigation";
 import { HERO } from "@/content/site";
 
 export default function NoteArt() {
-  const router = useRouter();
-
-  const handleNavigate = (e: React.MouseEvent | React.KeyboardEvent) => {
-    if ("metaKey" in e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
-    e.preventDefault();
-    router.push("/login");
-  };
-
   return (
     <>
       {/* Visual Tab */}
@@ -65,21 +54,10 @@ export default function NoteArt() {
         aria-hidden="true"
         className="absolute inset-0 block size-full max-w-none pointer-events-none"
       >
-        <a
-          href="/login"
+        <g
           data-hero="note-hit"
-          role="link"
-          tabIndex={0}
-          aria-label="Register Now - Go to Login"
-          title="Register Now"
-          className="pointer-events-auto cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#ff4337]"
-          style={{ pointerEvents: "auto", touchAction: "manipulation" }}
-          onClick={handleNavigate}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              handleNavigate(e);
-            }
-          }}
+          className="pointer-events-auto cursor-pointer"
+          style={{ pointerEvents: "auto" }}
         >
           {/* Card path with exact rotated placement */}
           <g transform="translate(137.66, 143.86) rotate(-20.16) translate(-104.273, -114.959)">
@@ -99,9 +77,8 @@ export default function NoteArt() {
               style={{ pointerEvents: "all" }}
             />
           </g>
-        </a>
+        </g>
       </svg>
     </>
   );
 }
-
