@@ -9,6 +9,12 @@ import { generateUniqueTeamCode } from "../test-dashboard/utils";
 import { joinTeamByCode, TeamMembershipError } from "../test-dashboard/team-membership";
 import { getOrCreateEligibleUser } from "../test-dashboard/participant-eligibility";
 import type { CheckInData, StudentType } from "@/components/onboarding/CheckInChecklist";
+import {
+  getParticipantByEmail,
+  getParticipantById,
+  saveParticipantCheckInInDb,
+  formatNameFromEmail,
+} from "@/lib/mongo";
 
 export type CurrentOnboardingParticipant = {
   id: string;
@@ -95,68 +101,62 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
       }
     }
 
-    // Fallback: Check NextAuth session
+    // 1. Primary: Check NextAuth session (Production Google OAuth authenticated users)
     try {
       const session = await auth();
       if (session?.user?.email) {
         const email = session.user.email.toLowerCase().trim();
-        const isVitEmail = email.endsWith("@vitstudent.ac.in");
+        console.log(`[Onboarding] Resolving participant for authenticated session: ${email}`);
 
+        // Fast native Mongo lookup (works on Cloudflare Workers & Node.js)
+        const mongoParticipant = await getParticipantByEmail(email, session.user.name);
+        if (mongoParticipant) {
+          console.log(
+            `[Onboarding] Successfully resolved participant via MongoDB: ${mongoParticipant.name}, RegNo: ${mongoParticipant.regNo}`
+          );
+          return mongoParticipant;
+        }
+
+        // Prisma fallback (if running in full Node.js environment)
+        const isVitEmail = email.endsWith("@vitstudent.ac.in");
         if (isVitEmail) {
-          const vit = await prisma.vITStudent.findUnique({
-            where: { email },
+          const vit = await prisma.vITStudent.findFirst({
+            where: { email: { equals: email, mode: "insensitive" } },
             include: { team: true },
           });
           if (vit) {
             const userId = vit.userId || (await getOrCreateEligibleUser("vit", vit.id).catch(() => null));
             return {
               id: vit.id,
-              name: vit.name,
+              name: vit.name || session.user.name || formatNameFromEmail(email),
               type: "vit",
-              regNo: vit.regNo,
+              regNo: vit.regNo || "",
               isHosteller: vit.residencyType === "HOSTELLER",
               blockType: vit.block?.startsWith("L") ? "LH" : "MH",
               hostelBlock: vit.block || "",
               roomNo: vit.room || "",
               address: vit.address || "",
+              collegeName: "Vellore Institute of Technology",
+              takingAccommodation: true,
               teamId: vit.teamId,
               userId,
               email: vit.email,
               team: vit.team,
             };
           }
-
-          // Fallback if VIT email is in users or not yet in vit_students
-          const user = await prisma.user.findUnique({ where: { email } });
-          return {
-            id: user?.id || "vit-" + Date.now(),
-            name: user?.name || session.user.name || "",
-            type: "vit",
-            regNo: "",
-            isHosteller: true,
-            blockType: "MH",
-            hostelBlock: "",
-            roomNo: "",
-            address: "",
-            teamId: null,
-            userId: user?.id || null,
-            email,
-            team: null,
-          };
         } else {
-          // External participant (non-vitstudent.ac.in)
           const ext = await prisma.externalStudent.findFirst({
-            where: { email },
+            where: { email: { equals: email, mode: "insensitive" } },
             include: { team: true },
           });
           if (ext) {
             const userId = ext.userId || (await getOrCreateEligibleUser("external", ext.id).catch(() => null));
             return {
               id: ext.id,
-              name: ext.name,
+              name: ext.name || session.user.name || formatNameFromEmail(email),
               type: "external",
               regNo: ext.regNo || "",
-              collegeName: ext.collegeName || "",
+              collegeName: ext.collegeName || "External Institute",
               address: ext.address || "",
               takingAccommodation: true,
               teamId: ext.teamId,
@@ -165,26 +165,23 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               team: ext.team,
             };
           }
-
-          // Fallback if External email not in externalStudent yet
-          const user = await prisma.user.findUnique({ where: { email } });
-          return {
-            id: user?.id || "ext-" + Date.now(),
-            name: user?.name || session.user.name || "",
-            type: "external",
-            regNo: "",
-            collegeName: "",
-            address: "",
-            takingAccommodation: true,
-            teamId: null,
-            userId: user?.id || null,
-            email,
-            team: null,
-          };
         }
       }
-    } catch (err) {
-      console.warn("[Onboarding] NextAuth check bypassed:", err);
+    } catch (authErr) {
+      console.warn("[Onboarding] Session lookup threw error, checking fallbacks:", authErr);
+    }
+
+    // 2. Secondary: Check preview / test session cookie
+    if (testSession) {
+      const [type, id] = testSession.split(":");
+      if ((type === "vit" || type === "external") && id) {
+        try {
+          const mongoParticipant = await getParticipantById(type, id);
+          if (mongoParticipant) return mongoParticipant;
+        } catch {
+          // Ignore
+        }
+      }
     }
 
     // Demo / Dev fallback: Retrieve test participant only if DB is accessible
@@ -231,7 +228,27 @@ export async function saveCheckInAction(data: CheckInData) {
     const regNo = (data.regNo || "").trim();
     const address = (data.address || "").trim();
 
-    // Determine type strictly based on participant type (which is driven by email domain)
+    // 1. Native MongoDB update (works on Cloudflare Workers & Node.js)
+    try {
+      const saved = await saveParticipantCheckInInDb(participant as any, {
+        name,
+        regNo,
+        isHosteller: data.isHosteller,
+        blockType: data.blockType,
+        hostelBlock: data.hostelBlock,
+        roomNo: data.roomNo,
+        address,
+        collegeName: data.collegeName,
+      });
+      if (saved) {
+        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo})`);
+        return { success: true };
+      }
+    } catch (mongoSaveErr) {
+      console.warn("[saveCheckInAction] Native mongo update failed, trying Prisma fallback:", mongoSaveErr);
+    }
+
+    // 2. Prisma fallback
     const isVit = participant.type === "vit";
 
     if (isVit) {

@@ -35,6 +35,19 @@ export default function CheckInChecklist({
   const [name, setName] = useState(initialData?.name ?? "");
   const [regNo, setRegNo] = useState(initialData?.regNo ?? "");
 
+  // Ensure fields sync if initialData arrives after initial mount
+  React.useEffect(() => {
+    if (initialData?.name && !name) {
+      setName(initialData.name);
+    }
+  }, [initialData?.name]);
+
+  React.useEffect(() => {
+    if (initialData?.regNo && !regNo) {
+      setRegNo(initialData.regNo);
+    }
+  }, [initialData?.regNo]);
+
   // VIT specific
   const [isHosteller, setIsHosteller] = useState<boolean>(initialData?.isHosteller ?? true);
   const [blockType, setBlockType] = useState<"MH" | "LH">(initialData?.blockType ?? "MH");
