@@ -305,6 +305,82 @@ export const MEMORIES = {
   textLabel: "The message. Drag to move it, corner handle to turn and resize.",
 } as const;
 
+/* -------------------------------------------------------- who are we */
+
+export const WHO_ARE_WE = {
+  title: "WHO ARE WE ?",
+  reveal: {
+    eyebrow: "WE ARE",
+    brand: "VINNOVATEIT",
+    tagline: "WHERE IDEAS FIND THEIR PEOPLE.",
+  },
+  quotes: [
+    {
+      id: "quote-green",
+      headline: "BUILDING\nPROJECTS\nFOR A CAUSE",
+      subline: "FOR THE STUDENTS BY THE STUDENTS",
+      color: "#b4ea74",
+      textColor: "#000000",
+    },
+    {
+      id: "quote-pink",
+      headline: 'WE ASK\n"WHY NOT?"',
+      color: "#ffb8e7",
+      textColor: "#000000",
+    },
+    {
+      id: "quote-blue",
+      headline: "CURIOUS BY\nNATURE.\nCREATIVE BY\nCHOICE.",
+      subline: "ALWAYS LOOKING FOR WHAT'S NEXT.",
+      color: "#48c5f8",
+      textColor: "#000000",
+    },
+    {
+      id: "quote-red",
+      headline: "DIFFERENT\nMINDS.\nSAME CHAOS.",
+      subline: "SOMEHOW, WE MAKE IT WORK.",
+      color: "#ff1a1d",
+      textColor: "#000000",
+    },
+  ],
+  polaroids: [
+    {
+      id: "photo-1",
+      src: "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
+      alt: "VinnovateIT classroom team",
+      number: "01",
+    },
+    {
+      id: "photo-2",
+      src: "/about_us/67637ab629928adcbde8469183aac1877a08026b.webp",
+      alt: "VinnovateIT outdoor group",
+      number: "02",
+    },
+    {
+      id: "photo-3",
+      src: "/about_us/924203fb63dc0f4fd3cb3bfe64c9230caf80a54e.webp",
+      alt: "VinnovateIT group selfie",
+      number: "03",
+    },
+    {
+      id: "photo-4",
+      src: "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
+      alt: "VinnovateIT banner team",
+      number: "04",
+    },
+  ],
+  videos: [
+    {
+      id: "video-1",
+      label: "VIDEO 1",
+    },
+    {
+      id: "video-2",
+      label: "VIDEO 2",
+    },
+  ],
+} as const;
+
 /* ----------------------------------------------------------- projects */
 
 export const PROJECTS = {
