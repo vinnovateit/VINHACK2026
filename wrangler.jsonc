@@ -16,5 +16,8 @@
       "binding": "WORKER_SELF_REFERENCE",
       "service": "vinhack2026"
     }
-  ]
+  ],
+  "vars": {
+    "AUTH_TRUST_HOST": "true"
+  }
 }
