@@ -40,9 +40,7 @@ export default function OnboardingWizard({
       : "checkin"
   );
 
-  const [studentType, setStudentType] = useState<StudentType>(
-    initialParticipant?.type ?? "vit"
-  );
+  const studentType: StudentType = initialParticipant?.type ?? "vit";
 
   const [participantName, setParticipantName] = useState<string>(
     initialParticipant?.name ?? ""
@@ -137,12 +135,16 @@ export default function OnboardingWizard({
       {step === "checkin" && (
         <CheckInChecklist
           studentType={studentType}
-          onStudentTypeChange={(type) => setStudentType(type)}
           initialData={{
-            name: participantName,
-            isHosteller: true,
-            blockType: "MH",
-            takingAccommodation: true,
+            name: participantName || initialParticipant?.name || "",
+            regNo: initialParticipant?.regNo ?? "",
+            isHosteller: initialParticipant?.isHosteller ?? true,
+            blockType: initialParticipant?.blockType ?? "MH",
+            hostelBlock: initialParticipant?.hostelBlock ?? "",
+            roomNo: initialParticipant?.roomNo ?? "",
+            address: initialParticipant?.address ?? "",
+            collegeName: initialParticipant?.collegeName ?? "",
+            takingAccommodation: initialParticipant?.takingAccommodation ?? true,
           }}
           onSubmit={handleCheckInSubmit}
           isLoading={isLoading}

@@ -9,10 +9,12 @@ export type StudentType = "vit" | "external";
 export interface CheckInData {
   studentType: StudentType;
   name: string;
+  regNo: string;
   isHosteller: boolean;
   blockType?: "MH" | "LH";
   hostelBlock?: string;
   roomNo?: string;
+  address?: string;
   collegeName?: string;
   takingAccommodation?: boolean;
 }
@@ -20,7 +22,6 @@ export interface CheckInData {
 interface CheckInChecklistProps {
   initialData?: Partial<CheckInData>;
   studentType: StudentType;
-  onStudentTypeChange?: (type: StudentType) => void;
   onSubmit: (data: CheckInData) => Promise<void> | void;
   isLoading?: boolean;
 }
@@ -28,16 +29,17 @@ interface CheckInChecklistProps {
 export default function CheckInChecklist({
   initialData,
   studentType,
-  onStudentTypeChange,
   onSubmit,
   isLoading = false,
 }: CheckInChecklistProps) {
   const [name, setName] = useState(initialData?.name ?? "");
-  
+  const [regNo, setRegNo] = useState(initialData?.regNo ?? "");
+
   // VIT specific
   const [isHosteller, setIsHosteller] = useState<boolean>(initialData?.isHosteller ?? true);
   const [blockType, setBlockType] = useState<"MH" | "LH">(initialData?.blockType ?? "MH");
-  
+  const [address, setAddress] = useState(initialData?.address ?? "");
+
   // External specific
   const [collegeName, setCollegeName] = useState(initialData?.collegeName ?? "");
   const [takingAccommodation, setTakingAccommodation] = useState<boolean>(
@@ -55,8 +57,10 @@ export default function CheckInChecklist({
     onSubmit({
       studentType,
       name: name.trim(),
+      regNo: regNo.trim(),
       isHosteller,
       blockType,
+      address: address.trim(),
       collegeName: collegeName.trim(),
       takingAccommodation,
       hostelBlock: hostelBlock.trim(),
@@ -66,7 +70,7 @@ export default function CheckInChecklist({
 
   return (
     <div className="relative w-full max-w-[1280px] h-full max-h-[100dvh] mx-auto bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
-      {/* Top bar: Brand logo & student type switch */}
+      {/* Top bar: Brand logo & locked participant type badge */}
       <div className="flex-shrink-0 flex items-center justify-between z-10 h-10 md:h-12">
         <div className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative">
           <Image
@@ -78,32 +82,17 @@ export default function CheckInChecklist({
           />
         </div>
 
-        {onStudentTypeChange && (
-          <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-full p-1 text-xs font-['Rotonto',sans-serif]">
-            <button
-              type="button"
-              onClick={() => onStudentTypeChange("vit")}
-              className={`px-3 py-1 rounded-full transition ${
-                studentType === "vit"
-                  ? "bg-[#FA1A1D] text-white"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              VIT Student
-            </button>
-            <button
-              type="button"
-              onClick={() => onStudentTypeChange("external")}
-              className={`px-3 py-1 rounded-full transition ${
-                studentType === "external"
-                  ? "bg-[#FA1A1D] text-white"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              External Participant
-            </button>
-          </div>
-        )}
+        {/* Locked participant status pill (cannot be switched) */}
+        <div className="flex items-center gap-2 bg-neutral-900/90 border border-neutral-800 rounded-full px-3.5 py-1.5 text-xs font-['Rotonto',sans-serif] text-neutral-300 select-none shadow-sm">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              studentType === "vit" ? "bg-[#FC2425]" : "bg-sky-400"
+            }`}
+          />
+          <span className="tracking-wide uppercase">
+            {studentType === "vit" ? "INTERNAL (VIT STUDENT)" : "EXTERNAL PARTICIPANT"}
+          </span>
+        </div>
       </div>
 
       {/* Main 2-column layout */}
@@ -167,7 +156,7 @@ export default function CheckInChecklist({
           {/* Front Checklist Sheet (Tilted ~0.6deg) */}
           <form
             onSubmit={handleSubmit}
-            className="relative w-[320px] sm:w-[380px] md:w-[430px] max-h-[calc(100dvh-110px)] bg-[#F4F4EF] border border-black rounded-sm p-4 sm:p-5 md:p-6 shadow-2xl rotate-[0.6deg] text-black z-20 flex flex-col justify-between"
+            className="relative w-[320px] sm:w-[380px] md:w-[430px] max-h-[calc(100dvh-100px)] bg-[#F4F4EF] border border-black rounded-sm p-3.5 sm:p-4 md:p-5 shadow-2xl rotate-[0.6deg] text-black z-20 flex flex-col justify-between"
           >
             {/* Realistic Pin at top right */}
             <div className="absolute -top-[20px] right-[20px] w-[42px] h-[64px] pointer-events-none z-30 drop-shadow-md">
@@ -181,41 +170,68 @@ export default function CheckInChecklist({
             </div>
 
             {/* Checklist Header */}
-            <div className="text-[10px] font-mono tracking-widest text-[#676767] uppercase flex justify-between border-b border-black/20 pb-1.5">
+            <div className="text-[10px] font-mono tracking-widest text-[#676767] uppercase flex justify-between border-b border-black/20 pb-1">
               <span>VINHACK 2026</span>
               <span>{studentType === "vit" ? "REGISTRATION" : "ATTENDEE"} INFO</span>
             </div>
 
-            <div className="mt-2 mb-3">
-              <h2 className="font-['Rotonto',sans-serif] text-[17px] md:text-[20px] font-normal tracking-wide text-black uppercase">
+            <div className="mt-1 mb-2">
+              <h2 className="font-['Rotonto',sans-serif] text-[16px] md:text-[18px] font-normal tracking-wide text-black uppercase">
                 {studentType === "vit" ? "REGISTRATION CHECKLIST" : "PARTICIPANT CHECKLIST"}
               </h2>
             </div>
 
             {/* Table layout with Ques and Questions */}
-            <div className="space-y-3 sm:space-y-4 text-[13px] md:text-[14px] font-['Rotonto',sans-serif]">
+            <div className="space-y-2 sm:space-y-2.5 text-[12px] md:text-[13px] font-['Rotonto',sans-serif]">
               {/* Question 1: Name */}
-              <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2.5">
-                <span className="col-span-2 text-[#676767] font-mono text-xs md:text-sm">Q1</span>
-                <div className="col-span-10 space-y-1">
-                  <label className="block text-black text-xs md:text-sm">What do we call you ?</label>
+              <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                <span className="col-span-2 text-[#676767] font-mono text-xs">Q1</span>
+                <div className="col-span-10 space-y-0.5">
+                  <label className="block text-black text-xs">What do we call you ?</label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[14px] md:text-[16px] transition"
+                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition"
                   />
                 </div>
               </div>
 
-              {/* Question 2: VIT Hosteller or External College */}
+              {/* Question 2: Registration Number */}
+              <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                <span className="col-span-2 text-[#676767] font-mono text-xs">Q2</span>
+                <div className="col-span-10 space-y-0.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-black text-xs">Registration number</label>
+                    {studentType === "vit" && regNo && (
+                      <span className="text-[10px] font-mono text-neutral-500 uppercase">
+                        FETCHED FROM VIT RECORD
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={regNo}
+                    onChange={(e) => setRegNo(e.target.value)}
+                    placeholder={
+                      studentType === "vit"
+                        ? "Enter registration number (e.g. 23BCE2023)"
+                        : "Enter your college registration / roll number"
+                    }
+                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition"
+                  />
+                </div>
+              </div>
+
+              {/* Question 3: Hosteller (VIT) OR College Name (External) */}
               {studentType === "vit" ? (
-                <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2.5">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs md:text-sm">Q2</span>
-                  <div className="col-span-10 space-y-1">
-                    <label className="block text-black text-xs md:text-sm">Are you a hosteller ?</label>
+                <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q3</span>
+                  <div className="col-span-10 space-y-0.5">
+                    <label className="block text-black text-xs">Are you a hosteller ?</label>
                     <div className="flex items-center gap-5 pt-0.5">
                       <label className="inline-flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -223,9 +239,9 @@ export default function CheckInChecklist({
                           name="isHosteller"
                           checked={isHosteller}
                           onChange={() => setIsHosteller(true)}
-                          className="size-4 accent-[#FC2425] cursor-pointer"
+                          className="size-3.5 accent-[#FC2425] cursor-pointer"
                         />
-                        <span className="text-black text-xs md:text-sm">Yes</span>
+                        <span className="text-black text-xs">Yes</span>
                       </label>
                       <label className="inline-flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -233,39 +249,41 @@ export default function CheckInChecklist({
                           name="isHosteller"
                           checked={!isHosteller}
                           onChange={() => setIsHosteller(false)}
-                          className="size-4 accent-[#FC2425] cursor-pointer"
+                          className="size-3.5 accent-[#FC2425] cursor-pointer"
                         />
-                        <span className="text-black text-xs md:text-sm">No</span>
+                        <span className="text-black text-xs">No (Dayscholar)</span>
                       </label>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2.5">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs md:text-sm">Q2</span>
-                  <div className="col-span-10 space-y-1">
-                    <label className="block text-black text-xs md:text-sm">College name</label>
+                <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q3</span>
+                  <div className="col-span-10 space-y-0.5">
+                    <label className="block text-black text-xs">College name</label>
                     <input
                       type="text"
                       required
                       value={collegeName}
                       onChange={(e) => setCollegeName(e.target.value)}
                       placeholder="e.g. IIT Madras, BITS Pilani..."
-                      className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[14px] md:text-[15px] transition"
+                      className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[14px] transition"
                     />
                   </div>
                 </div>
               )}
 
-              {/* Question 3: Where do you live / Accommodation */}
+              {/* Question 4: Where do you live (VIT) OR Accommodation (External) */}
               {studentType === "vit" ? (
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs md:text-sm pt-0.5">Q3</span>
-                  <div className="col-span-10 space-y-2">
-                    <label className="block text-black text-xs md:text-sm">Where do you live ?</label>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q4</span>
+                  <div className="col-span-10 space-y-1.5">
+                    <label className="block text-black text-xs">
+                      {isHosteller ? "Where do you live ?" : "Residential Address (Dayscholar)"}
+                    </label>
 
-                    {isHosteller && (
-                      <div className="space-y-2 pt-0.5">
+                    {isHosteller ? (
+                      <div className="space-y-1.5 pt-0.5">
                         <div className="flex items-center gap-5">
                           <label className="inline-flex items-center gap-1.5 cursor-pointer">
                             <input
@@ -273,9 +291,9 @@ export default function CheckInChecklist({
                               name="blockType"
                               checked={blockType === "MH"}
                               onChange={() => setBlockType("MH")}
-                              className="size-3.5 accent-[#FC2425] cursor-pointer"
+                              className="size-3 accent-[#FC2425] cursor-pointer"
                             />
-                            <span className="text-xs md:text-sm font-medium">MH (Men&apos;s)</span>
+                            <span className="text-xs font-medium">MH (Men&apos;s)</span>
                           </label>
                           <label className="inline-flex items-center gap-1.5 cursor-pointer">
                             <input
@@ -283,43 +301,56 @@ export default function CheckInChecklist({
                               name="blockType"
                               checked={blockType === "LH"}
                               onChange={() => setBlockType("LH")}
-                              className="size-3.5 accent-[#FC2425] cursor-pointer"
+                              className="size-3 accent-[#FC2425] cursor-pointer"
                             />
-                            <span className="text-xs md:text-sm font-medium">LH (Ladies&apos;)</span>
+                            <span className="text-xs font-medium">LH (Ladies&apos;)</span>
                           </label>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
                           <div>
-                            <label className="block text-[11px] text-neutral-600 mb-0.5">Hostel Block</label>
+                            <label className="block text-[10px] text-neutral-600 mb-0.5">Hostel Block</label>
                             <input
                               type="text"
                               value={hostelBlock}
                               onChange={(e) => setHostelBlock(e.target.value)}
                               placeholder="e.g. Q Block"
-                              className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-sm"
+                              className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
                             />
                           </div>
                           <div>
-                            <label className="block text-[11px] text-neutral-600 mb-0.5">Room No</label>
+                            <label className="block text-[10px] text-neutral-600 mb-0.5">Room No</label>
                             <input
                               type="text"
                               value={roomNo}
                               onChange={(e) => setRoomNo(e.target.value)}
                               placeholder="e.g. 412"
-                              className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-sm"
+                              className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
                             />
                           </div>
                         </div>
+                      </div>
+                    ) : (
+                      /* Dayscholar Residential Address */
+                      <div className="pt-0.5">
+                        <input
+                          type="text"
+                          required
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="e.g. Katpadi, Vellore / Local address"
+                          className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition"
+                        />
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
+                /* External Accommodation */
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs md:text-sm pt-0.5">Q3</span>
-                  <div className="col-span-10 space-y-2">
-                    <label className="block text-black text-xs md:text-sm">Are you taking accommodation ?</label>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q4</span>
+                  <div className="col-span-10 space-y-1.5">
+                    <label className="block text-black text-xs">Are you taking accommodation ?</label>
                     <div className="flex items-center gap-5">
                       <label className="inline-flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -327,9 +358,9 @@ export default function CheckInChecklist({
                           name="takingAccommodation"
                           checked={takingAccommodation}
                           onChange={() => setTakingAccommodation(true)}
-                          className="size-4 accent-[#FC2425] cursor-pointer"
+                          className="size-3.5 accent-[#FC2425] cursor-pointer"
                         />
-                        <span className="text-black text-xs md:text-sm">YES</span>
+                        <span className="text-black text-xs">YES</span>
                       </label>
                       <label className="inline-flex items-center gap-1.5 cursor-pointer">
                         <input
@@ -337,34 +368,46 @@ export default function CheckInChecklist({
                           name="takingAccommodation"
                           checked={!takingAccommodation}
                           onChange={() => setTakingAccommodation(false)}
-                          className="size-4 accent-[#FC2425] cursor-pointer"
+                          className="size-3.5 accent-[#FC2425] cursor-pointer"
                         />
-                        <span className="text-black text-xs md:text-sm">NO</span>
+                        <span className="text-black text-xs">NO</span>
                       </label>
                     </div>
 
-                    {takingAccommodation && (
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                    {takingAccommodation ? (
+                      <div className="grid grid-cols-2 gap-2 pt-0.5">
                         <div>
-                          <label className="block text-[11px] text-neutral-600 mb-0.5">Hostel Block</label>
+                          <label className="block text-[10px] text-neutral-600 mb-0.5">Hostel Block</label>
                           <input
                             type="text"
                             value={hostelBlock}
                             onChange={(e) => setHostelBlock(e.target.value)}
                             placeholder="Optional / Assigned"
-                            className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-sm"
+                            className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] text-neutral-600 mb-0.5">Room No</label>
+                          <label className="block text-[10px] text-neutral-600 mb-0.5">Room No</label>
                           <input
                             type="text"
                             value={roomNo}
                             onChange={(e) => setRoomNo(e.target.value)}
                             placeholder="Optional / Assigned"
-                            className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-sm"
+                            className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
                           />
                         </div>
+                      </div>
+                    ) : (
+                      <div className="pt-0.5">
+                        <label className="block text-[10px] text-neutral-600 mb-0.5">Current Address / City</label>
+                        <input
+                          type="text"
+                          required
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="e.g. Chennai / Hotel / City address"
+                          className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition"
+                        />
                       </div>
                     )}
                   </div>
