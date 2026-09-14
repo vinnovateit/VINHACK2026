@@ -15,9 +15,9 @@ interface TeamTypeSelectorProps {
 export default function TeamTypeSelector({
   onSelect,
   onBack,
-  initialChoice = "create",
+  initialChoice,
 }: TeamTypeSelectorProps) {
-  const [selected, setSelected] = useState<TeamChoice>(initialChoice);
+  const [selected, setSelected] = useState<TeamChoice | null>(initialChoice ?? null);
 
   return (
     <div className="relative w-full max-w-[1280px] mx-auto bg-black text-white px-6 md:px-12 pt-6 md:pt-8 pb-10 flex flex-col overflow-hidden">
@@ -68,7 +68,12 @@ export default function TeamTypeSelector({
             <KeyButton
               color="red"
               type="button"
-              onClick={() => onSelect(selected)}
+              disabled={!selected}
+              onClick={() => {
+                if (selected) {
+                  onSelect(selected);
+                }
+              }}
               className="w-[340px]"
             >
               SAVE AND CONTINUE
@@ -83,23 +88,18 @@ export default function TeamTypeSelector({
             onClick={() => setSelected("create")}
             className={`cursor-pointer transition-all duration-300 absolute top-[10px] md:top-[20px] left-[10px] sm:left-[25px] md:left-[45px] ${
               selected === "create"
-                ? "scale-105 drop-shadow-[0_0_30px_rgba(252,36,37,0.65)]"
+                ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)]"
                 : "opacity-80 hover:opacity-100 hover:scale-102"
             }`}
           >
             <div className="relative w-[230px] h-[228px] sm:w-[260px] sm:h-[258px]">
               <Image
-                src="/create_team.svg"
+                src={selected === "create" ? "/create_team_yellow.svg" : "/create_team.svg"}
                 alt="Create a Team"
                 fill
                 className="object-contain"
                 priority
               />
-              {selected === "create" && (
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#FC2425] text-white text-[10px] font-mono tracking-widest px-3 py-0.5 rounded-full uppercase font-bold shadow-lg z-20 whitespace-nowrap">
-                  ✓ SELECTED
-                </div>
-              )}
             </div>
           </div>
 
@@ -108,23 +108,18 @@ export default function TeamTypeSelector({
             onClick={() => setSelected("join")}
             className={`cursor-pointer transition-all duration-300 absolute bottom-[10px] md:bottom-[20px] right-[10px] sm:right-[25px] md:right-[45px] ${
               selected === "join"
-                ? "scale-105 drop-shadow-[0_0_30px_rgba(43,36,252,0.7)]"
+                ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)]"
                 : "opacity-80 hover:opacity-100 hover:scale-102"
             }`}
           >
             <div className="relative w-[240px] h-[248px] sm:w-[270px] sm:h-[279px]">
               <Image
-                src="/join_team.svg"
+                src={selected === "join" ? "/join_team_yellow.svg" : "/join_team.svg"}
                 alt="Join a Team"
                 fill
                 className="object-contain"
                 priority
               />
-              {selected === "join" && (
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#2B24FC] text-white text-[10px] font-mono tracking-widest px-3 py-0.5 rounded-full uppercase font-bold shadow-lg z-20 whitespace-nowrap">
-                  ✓ SELECTED
-                </div>
-              )}
             </div>
           </div>
         </div>
