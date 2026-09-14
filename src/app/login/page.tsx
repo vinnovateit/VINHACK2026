@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-black">
       <LoginPage />
     </main>
   );

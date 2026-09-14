@@ -13,7 +13,7 @@ export default function CardboardBoxAnimation() {
 
   return (
     <div
-      className="relative w-full flex flex-col items-center select-none group cursor-pointer"
+      className="relative w-full h-full flex flex-col items-center justify-center select-none group cursor-pointer"
       onClick={handleReplay}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -21,7 +21,7 @@ export default function CardboardBoxAnimation() {
     >
       <motion.div
         key={key}
-        className="w-full max-w-[580px] sm:max-w-[640px] md:max-w-[700px] lg:max-w-[760px] xl:max-w-[820px] 2xl:max-w-[890px] h-auto drop-shadow-[0_25px_45px_rgba(0,0,0,0.9)]"
+        className="w-auto h-auto max-h-[calc(100dvh-120px)] max-w-full aspect-[736/824] flex items-center justify-center drop-shadow-[0_25px_45px_rgba(0,0,0,0.9)]"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: isHovered ? 1.02 : 1, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -31,7 +31,7 @@ export default function CardboardBoxAnimation() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           xmlnsXlink="http://www.w3.org/1999/xlink"
-          className="w-full h-auto overflow-visible"
+          className="w-auto h-full max-h-[calc(100dvh-120px)] max-w-full object-contain overflow-visible"
         >
           <defs  >
 <filter id="filter0_d_1164_32" x="1.04904e-05" y="0" width="740.145" height="842.64" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">

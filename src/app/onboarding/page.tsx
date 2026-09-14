@@ -29,8 +29,8 @@ export default async function OnboardingPage({
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-neutral-500 font-mono">LOADING ONBOARDING...</div>}>
+    <main className="h-[100dvh] max-h-[100dvh] bg-black text-white overflow-hidden">
+      <Suspense fallback={<div className="h-[100dvh] bg-black flex items-center justify-center text-neutral-500 font-mono">LOADING ONBOARDING...</div>}>
         <OnboardingWizard
           initialParticipant={participant}
           initialStep={params.step}
