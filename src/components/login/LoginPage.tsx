@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import KeyButton from "../onboarding/KeyButton";
-import { motion } from "framer-motion";
+import CardboardBoxOpeningAnimation from "./CardboardBoxOpeningAnimation";
 
 export default function LoginPage() {
   const handleGoogleSignIn = () => {
@@ -94,24 +94,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Column: Cardboard Box with Memories */}
+        {/* Right Column: 3D Animated Cardboard Box with Props Flying In */}
         <div className="lg:col-span-7 relative h-full flex items-center justify-center select-none w-full min-h-0 overflow-visible py-2">
-          <motion.div
-            className="relative w-full h-full max-h-[calc(100dvh-100px)] flex items-center justify-center drop-shadow-[0_25px_45px_rgba(0,0,0,0.9)]"
-            initial={{ opacity: 0, scale: 0.92, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            whileHover={{ scale: 1.025, rotate: 0.5, transition: { duration: 0.3 } }}
-          >
-            <Image
-              src="/auth.svg"
-              alt="VinHack Memories Cardboard Box"
-              width={800}
-              height={895}
-              className="w-auto h-full max-h-[calc(100dvh-100px)] max-w-full object-contain select-none pointer-events-none"
-              priority
-            />
-          </motion.div>
+          <CardboardBoxOpeningAnimation />
         </div>
       </div>
     </div>
