@@ -7,11 +7,12 @@ import { useGSAP } from "@gsap/react";
 import { keyDown, keyUp } from "@/components/motion/click";
 import { draggable } from "@/components/motion/drag";
 import { slideIn, slideOut } from "@/components/motion/pinboard";
-import { boxesOf, MOBILE } from "@/components/motion/recipes";
+import { MOBILE, typewriter } from "@/components/motion/recipes";
 import { reveal } from "@/components/motion/reveal";
 import { wireSpeaker } from "@/components/motion/speaker";
 import { stampIn } from "@/components/motion/stamp";
 import { wireTimelineReceipt } from "@/components/motion/receipt";
+import { HERO } from "@/content/site";
 
 gsap.registerPlugin(useGSAP);
 
@@ -46,10 +47,6 @@ gsap.registerPlugin(useGSAP);
  * a request to stop the page moving by itself, not to take the controls away.
  */
 
-/** How far the cap sinks when pressed, in the key's own drawing — the same
- *  figure `HeroMotion` uses, and for the same reason: the artwork draws the cap
- *  5.05 left and 2.59 up from its plate, and a press closes most of that. */
-const KEY_TRAVEL = { x: -4.05, y: 2.1 };
 
 /** How far a sheet travels across the phone. The collage's 620 is drawn for a
  *  1280px plate; a column is half that, and a sheet that overshoots simply
@@ -160,46 +157,181 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
         // — the keyboard half of the collage's version has nothing to listen
         // for here.
         const key = scope.querySelector<HTMLElement>('[data-hero="key"]');
-        // `boxesOf` rather than the nodes themselves: the cap's two glyphs are
-        // tagged through a `display: contents` wrapper, which generates no box,
-        // and a transform on it would move nothing.
-        const cap = key
-          ? Array.from(
-              key.querySelectorAll<HTMLElement>('[data-hero="key-cap"]'),
-            ).flatMap((node) => boxesOf(node))
-          : [];
-        if (key && cap.length) {
+        const keyTarget =
+          scope.querySelector<HTMLElement>('[data-hero="key-press"]') ?? key;
+        if (key && keyTarget) {
+          let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+          let pressTime = 0;
+
           const press = () => {
+            if (releaseTimer) {
+              clearTimeout(releaseTimer);
+              releaseTimer = null;
+            }
+            pressTime = Date.now();
             keyDown();
-            gsap.to(cap, {
-              ...KEY_TRAVEL,
+            gsap.to(keyTarget, {
+              y: 6,
+              scale: 0.93,
               duration: 0.09,
               ease: "power2.out",
               overwrite: "auto",
             });
           };
-          // `back.out` on the way up only: a switch is damped going down and
-          // sprung coming back, and matching that is most of why it reads as a
-          // key rather than a rectangle sliding.
+
           const release = () => {
-            keyUp();
-            gsap.to(cap, {
-              x: 0,
-              y: 0,
-              duration: 0.24,
-              ease: "back.out(2.6)",
-              overwrite: "auto",
-            });
+            const elapsed = Date.now() - pressTime;
+            const delay = Math.max(0, 140 - elapsed);
+            if (releaseTimer) clearTimeout(releaseTimer);
+            releaseTimer = setTimeout(() => {
+              keyUp();
+              gsap.to(keyTarget, {
+                y: 0,
+                scale: 1,
+                duration: 0.24,
+                ease: "back.out(2.6)",
+                overwrite: "auto",
+              });
+            }, delay);
           };
-          // Released on the window rather than on the cap: dragging off a held
-          // key and letting go elsewhere must not leave it stuck down.
+
+          const onClick = () => {
+            if (Date.now() - pressTime > 250) {
+              press();
+              release();
+            }
+          };
+
+          const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              press();
+              release();
+            }
+          };
+
           key.addEventListener("pointerdown", press);
+          key.addEventListener("click", onClick);
+          key.addEventListener("keydown", onKey);
           window.addEventListener("pointerup", release);
           window.addEventListener("pointercancel", release);
           cleanups.push(() => {
+            if (releaseTimer) clearTimeout(releaseTimer);
             key.removeEventListener("pointerdown", press);
+            key.removeEventListener("click", onClick);
+            key.removeEventListener("keydown", onKey);
             window.removeEventListener("pointerup", release);
             window.removeEventListener("pointercancel", release);
+          });
+        }
+
+        // ---- the wordmark ----------------------------------------------
+        //
+        // Fits into its outline on hover / touch, matching the desktop
+        // gesture proportionally scaled to the mobile viewport.
+        const wordmarkHit = scope.querySelector<SVGElement>('[data-hero="wordmark-hit"]');
+        const fill = scope.querySelectorAll<HTMLElement>('[data-hero="wordmark-fill"]');
+        const sign = scope.querySelector<HTMLElement>('[data-hero="wordmark"]');
+        if (wordmarkHit && fill.length && sign) {
+          let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+          let pressTime = 0;
+
+          const enter = () => {
+            if (leaveTimer) {
+              clearTimeout(leaveTimer);
+              leaveTimer = null;
+            }
+            pressTime = Date.now();
+            const scale = sign.offsetWidth / 1020.951;
+            gsap.to(fill, {
+              x: 14.3 * scale,
+              y: 11.4 * scale,
+              duration: 0.28,
+              ease: "expo.out",
+              overwrite: "auto",
+            });
+          };
+
+          const leave = () => {
+            const elapsed = Date.now() - pressTime;
+            const delay = Math.max(0, 300 - elapsed);
+            if (leaveTimer) clearTimeout(leaveTimer);
+            leaveTimer = setTimeout(() => {
+              gsap.to(fill, {
+                x: 0,
+                y: 0,
+                duration: 0.35,
+                ease: "power2.inOut",
+                overwrite: "auto",
+              });
+            }, delay);
+          };
+
+          wordmarkHit.addEventListener("pointerenter", enter);
+          wordmarkHit.addEventListener("pointerleave", leave);
+          wordmarkHit.addEventListener("pointerdown", enter);
+          window.addEventListener("pointerup", leave);
+          window.addEventListener("pointercancel", leave);
+
+          cleanups.push(() => {
+            if (leaveTimer) clearTimeout(leaveTimer);
+            wordmarkHit.removeEventListener("pointerenter", enter);
+            wordmarkHit.removeEventListener("pointerleave", leave);
+            wordmarkHit.removeEventListener("pointerdown", enter);
+            window.removeEventListener("pointerup", leave);
+            window.removeEventListener("pointercancel", leave);
+          });
+        }
+
+        // ---- the commit line typewriter --------------------------------
+        const commitLine = scope.querySelector<HTMLElement>('[data-hero="commit-line"]');
+        const commitGhost = scope.querySelector<HTMLElement>('[data-hero="commit-ghost"]');
+        const commitCaret = scope.querySelector<HTMLElement>('[data-hero="commit-caret"]');
+        if (commitLine) {
+          const tw = typewriter(commitLine, HERO.commits, {
+            trigger: commitLine,
+            ghost: commitGhost,
+          });
+          if (tw) cleanups.push(() => tw.kill());
+        }
+        if (commitCaret) {
+          const caretTween = gsap.to(commitCaret, {
+            opacity: 0,
+            duration: 0.5,
+            ease: "steps(1)",
+            repeat: -1,
+            yoyo: true,
+          });
+          cleanups.push(() => caretTween.kill());
+        }
+
+        // ---- the "Register Now" note -----------------------------------
+        const note = scope.querySelector<HTMLElement>('[data-hero="note"]');
+        const noteHit =
+          scope.querySelector<SVGElement>('[data-hero="note-hit"]') ?? note;
+        if (note && noteHit) {
+          const enterNote = () => {
+            gsap.to(note, { scale: 1.06, duration: 0.2, ease: "power2.out", overwrite: "auto" });
+          };
+          const leaveNote = () => {
+            gsap.to(note, { scale: 1, duration: 0.25, ease: "power2.inOut", overwrite: "auto" });
+          };
+          noteHit.addEventListener("pointerenter", enterNote);
+          noteHit.addEventListener("pointerleave", leaveNote);
+          noteHit.addEventListener("pointerdown", enterNote);
+          window.addEventListener("pointerup", leaveNote);
+          window.addEventListener("pointercancel", leaveNote);
+          const onNoteClick = () => {
+            window.location.href = "/onboarding";
+          };
+          noteHit.addEventListener("click", onNoteClick);
+          cleanups.push(() => {
+            noteHit.removeEventListener("pointerenter", enterNote);
+            noteHit.removeEventListener("pointerleave", leaveNote);
+            noteHit.removeEventListener("pointerdown", enterNote);
+            noteHit.removeEventListener("click", onNoteClick);
+            window.removeEventListener("pointerup", leaveNote);
+            window.removeEventListener("pointercancel", leaveNote);
           });
         }
 

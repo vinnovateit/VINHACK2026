@@ -7,6 +7,7 @@ import PageMotion from "@/components/PageMotion";
 import HeroSection from "@/components/sections/Hero";
 import AboutSection from "@/components/sections/About";
 import RecapSection from "@/components/sections/Recap";
+import WhoAreWeSection from "@/components/sections/WhoAreWe";
 import ProjectsSection from "@/components/sections/Projects";
 import TracksSection from "@/components/sections/Tracks";
 import SponsorsSection from "@/components/sections/Sponsors";
@@ -51,6 +52,7 @@ export default function Home() {
         <DesignCanvas
           compact={!FEATURES.projects}
           tracksCompact={!FEATURES.tracks}
+          whoAreWeCompact={!FEATURES.whoAreWe}
           hero={
             <HeroMotion>
               <HeroSection />
@@ -59,6 +61,7 @@ export default function Home() {
         >
           <PageMotion>
             <RecapSection />
+            {FEATURES.whoAreWe && <WhoAreWeSection />}
             <div className="recap-extended-sections">
               {FEATURES.projects && <ProjectsSection />}
               <div className={!FEATURES.projects ? "projects-disabled-sections" : ""}>

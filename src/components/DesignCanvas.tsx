@@ -28,16 +28,18 @@ export default function DesignCanvas({
   hero,
   compact = false,
   tracksCompact = false,
+  whoAreWeCompact = false,
   children,
 }: {
   hero: ReactNode;
   compact?: boolean;
   tracksCompact?: boolean;
+  whoAreWeCompact?: boolean;
   children: ReactNode;
 }) {
   return (
     <div
-      className={`canvas-container bg-black ${compact ? "projects-disabled" : ""} ${tracksCompact ? "tracks-disabled" : ""}`}
+      className={`canvas-container bg-black ${compact ? "projects-disabled" : ""} ${tracksCompact ? "tracks-disabled" : ""} ${whoAreWeCompact ? "who-are-we-disabled" : ""}`}
     >
       <div className="canvas-frame hero-frame">
         <div className="canvas-plate bg-black">{hero}</div>

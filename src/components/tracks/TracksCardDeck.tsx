@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 
 import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
@@ -77,9 +79,14 @@ import { TRACKS } from "@/content/site";
 /* ---------------------------------------------------------------- geometry */
 
 /** The card's drawn size, in the plate's units. Everything on the face is
- *  expressed against these, so the whole card scales as one piece. */
-const CARD_WIDTH = 365.44;
-const CARD_HEIGHT = 257.6;
+ *  expressed against these, so the whole card scales as one piece.
+ *  Rendered at 2x Retina layout resolution so fonts and borders are drawn
+ *  natively crisp and never blur under transforms. */
+const CARD_BASE_WIDTH = 365.44;
+const CARD_BASE_HEIGHT = 257.6;
+const CARD_RES = 2;
+const CARD_WIDTH = CARD_BASE_WIDTH * CARD_RES;
+const CARD_HEIGHT = CARD_BASE_HEIGHT * CARD_RES;
 
 /** The plate's drawn width. Whatever the section measures against this is the
  *  factor CSS is scaling the entire collage by, and every screen-pixel figure
@@ -145,7 +152,7 @@ const EDGE_MARGIN = 24;
 const BAND_FILL = 0.86;
 const WIDTH_FILL = 0.5;
 /** A floor, so a very short window shrinks the card rather than inverting it. */
-const MIN_FOCUS_SCALE = 0.4;
+const MIN_FOCUS_SCALE = 0.4 / CARD_RES;
 
 /** How big a card in a corner pile is next to the one being read. Expressed
  *  against the focused size rather than fixed, so the two keep their relation
@@ -398,11 +405,11 @@ export function TracksCardDeck() {
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const ghostRefs = useRef<Map<number, HTMLDivElement[]>>(new Map());
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     if (!mounted) return;
@@ -521,7 +528,7 @@ export function TracksCardDeck() {
         // The smear: keep subtle so it doesn't cause visual double-vision/flicker
         const ghosts = ghostRefs.current.get(slot);
         if (ghosts) {
-          const sep = 3 * air;
+          const sep = 6 * air;
           for (let g = 0; g < ghosts.length; g++) {
             const dir = g === 0 ? -1 : 1;
             ghosts[g].style.transform = `translate3d(${(sep * dir).toFixed(1)}px, ${(
@@ -543,7 +550,7 @@ export function TracksCardDeck() {
       }
 
       if (typeof window !== "undefined") {
-        (window as any).__TRACKS_DEBUG__ = {
+        (window as unknown as Record<string, unknown>).__TRACKS_DEBUG__ = {
           p,
           cards: SLOTS.map((s) => {
             const el = cardRefs.current.get(s);
@@ -840,7 +847,7 @@ export function TracksCardDeck() {
         ? createPortal(
             <div
               ref={stageRef}
-              className="will-change-transform pointer-events-none"
+              className="pointer-events-none"
               style={{
                 position: "fixed",
                 left: "50%",
@@ -893,7 +900,7 @@ export function TracksCardDeck() {
                         if (node) cardRefs.current.set(slot, node);
                         else cardRefs.current.delete(slot);
                       }}
-                      className="absolute will-change-transform"
+                      className="absolute"
                       style={{
                         left: 0,
                         top: 0,
@@ -914,7 +921,7 @@ export function TracksCardDeck() {
                                 if (node) list[g] = node;
                                 ghostRefs.current.set(slot, list);
                               }}
-                              className="absolute inset-0 rounded-[16px]"
+                              className="absolute inset-0 rounded-[32px]"
                               style={{ background: sepInk }}
                             />
                           ))
@@ -923,6 +930,7 @@ export function TracksCardDeck() {
                       <TrackCard
                         color={color}
                         isFront={item !== null}
+                        is2x
                         width={CARD_WIDTH}
                         height={CARD_HEIGHT}
                         className="absolute inset-0"
@@ -933,27 +941,33 @@ export function TracksCardDeck() {
                               if (node) contentRefs.current.set(slot, node);
                               else contentRefs.current.delete(slot);
                             }}
-                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[24px] py-[20px] opacity-0"
+                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[48px] py-[40px] opacity-0"
                             style={{ color: ink }}
                           >
                             <div className="flex items-start justify-between">
-                              <span className="font-rotonto text-[13px] tracking-[0.2em] tabular-nums">
+                              <span className="font-rotonto text-[26px] tracking-[0.2em] tabular-nums">
                                 {pad(slot + 1)}
                                 <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
                               </span>
-                              <TrackAsterisk size={15} />
+                              <TrackAsterisk size={30} />
                             </div>
 
-                            <div className="-mt-[6px] flex items-start gap-[18px]">
+                            <div className="-mt-[12px] flex items-start gap-[36px]">
                               <div className="min-w-0 flex-1">
-                                <h3 className="font-rotonto text-[30px] leading-[0.92] tracking-tight">
+                                <h3
+                                  className={`font-rotonto leading-[0.94] tracking-tight ${
+                                    item.title.length > 20
+                                      ? "text-[46px]"
+                                      : "text-[60px]"
+                                  }`}
+                                >
                                   {item.title}
                                 </h3>
                                 <div
-                                  className="my-[11px] h-px w-full"
+                                  className="my-[18px] h-[2px] w-full"
                                   style={{ background: rule }}
                                 />
-                                <p className="font-rotonto text-[12px] leading-[1.65] tracking-tight opacity-90">
+                                <p className="font-rotonto text-[23px] leading-[1.5] tracking-tight opacity-90">
                                   {item.blurb}
                                 </p>
                               </div>
@@ -961,14 +975,16 @@ export function TracksCardDeck() {
                                 slot={slot}
                                 ink={ink}
                                 rule={rule}
-                                className="h-[108px] w-[92px]"
+                                size={76}
+                                is2x
+                                className="h-[216px] w-[184px]"
                               />
                             </div>
 
-                            <div className="flex items-end justify-between font-rotonto text-[8px] uppercase tracking-[0.36em] opacity-55">
+                            <div className="flex items-end justify-between font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
                               <span>Track</span>
                               <span
-                                className="mx-[12px] mb-[3px] h-px flex-1"
+                                className="mx-[24px] mb-[6px] h-[2px] flex-1"
                                 style={{ background: rule }}
                               />
                               <span>VinHack 26</span>

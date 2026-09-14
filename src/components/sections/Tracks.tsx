@@ -50,26 +50,26 @@ export default function TracksSection() {
             <div
               className="h-[45px] relative shrink-0 w-[46px]"
               data-node-id="594:38"
+              aria-hidden
             >
-              <img
-                alt=""
-                className="absolute block inset-0 max-w-none size-full"
-                src="/figma/vector32.svg"
-              />
+              <svg
+                viewBox="0 0 46 45"
+                fill="none"
+                className="absolute inset-0 size-full block"
+              >
+                <path
+                  d="M0 22.5H46M23 0V45M2.5 14L44 31.5M44 14L2.5 31.5M7.5 6.5L39 39M14.5 1.5L32 43M32 1.5L14.5 43M39 6.5L7.5 39"
+                  stroke="#FA1A1D"
+                  strokeWidth="2"
+                />
+              </svg>
             </div>
           </div>
           <div
-            className="absolute h-0 left-0 right-0 top-[86px]"
+            className="absolute h-px left-0 w-[819.022px] top-[86px] bg-[#fa1a1d]"
             data-node-id="594:39"
-          >
-            <div className="absolute inset-[-1px_0_0_0]">
-              <img
-                alt=""
-                className="block max-w-none size-full"
-                src="/figma/line1.svg"
-              />
-            </div>
-          </div>
+            aria-hidden
+          />
           <div
             className="absolute content-stretch flex gap-[20px] items-center left-[500px] top-[106px]"
             data-node-id="594:40"
@@ -83,26 +83,27 @@ export default function TracksSection() {
             <div
               className="relative shrink-0 size-[60px]"
               data-node-id="594:42"
+              aria-hidden
             >
-              <img
-                alt=""
-                className="absolute block inset-0 max-w-none size-full"
-                src="/figma/group48095496.svg"
-              />
+              <svg
+                viewBox="0 0 60 60"
+                fill="none"
+                className="absolute inset-0 size-full block"
+              >
+                <circle cx="30" cy="30" r="28.5" stroke="#FA1A1D" strokeWidth="3" />
+                <path
+                  d="M13.5 26L22 31M20 14.5L28.5 20M18 47.5C18 47.5 29.212 42.2348 35.5 37.5C41.5674 32.9313 50 23 50 23"
+                  stroke="#FA1A1D"
+                  strokeWidth="5"
+                />
+              </svg>
             </div>
           </div>
           <div
-            className="absolute h-0 left-0 right-0 top-[192px]"
+            className="absolute h-px left-0 w-[819.022px] top-[192px] bg-[#fa1a1d]"
             data-node-id="594:45"
-          >
-            <div className="absolute inset-[-1px_0_0_0]">
-              <img
-                alt=""
-                className="block max-w-none size-full"
-                src="/figma/line1.svg"
-              />
-            </div>
-          </div>
+            aria-hidden
+          />
           <div
             className="absolute content-stretch flex gap-[20px] items-center left-[250px] top-[212px]"
             data-node-id="594:46"
@@ -114,31 +115,29 @@ export default function TracksSection() {
               {TRACKS.lines[2]}
             </p>
             <div
-              className="h-[44.5px] relative shrink-0 w-[37.5px]"
+              className="h-[44.5px] relative shrink-0 w-[40.21px]"
               data-node-id="594:48"
               data-name="star 2"
+              aria-hidden
             >
-              <div className="absolute inset-[0_-3.7%_0_-3.53%]">
-                <img
-                  alt=""
-                  className="block max-w-none size-full"
-                  src="/figma/star2.svg"
+              <svg
+                viewBox="0 0 40.2117 44.5"
+                fill="none"
+                className="block size-full"
+              >
+                <path
+                  d="M20.325 19V0M23.825 21L38.825 11M23.825 24.5L38.825 33.5M20.325 26.5V44.5M17.325 24.5L1.325 33.5M17.325 21L1.325 11"
+                  stroke="#FA1A1D"
+                  strokeWidth="5"
                 />
-              </div>
+              </svg>
             </div>
           </div>
           <div
-            className="absolute h-0 left-0 right-0 top-[298px]"
+            className="absolute h-px left-0 w-[819.022px] top-[298px] bg-[#fa1a1d]"
             data-node-id="594:49"
-          >
-            <div className="absolute inset-[-1px_0_0_0]">
-              <img
-                alt=""
-                className="block max-w-none size-full"
-                src="/figma/line1.svg"
-              />
-            </div>
-          </div>
+            aria-hidden
+          />
         </div>
       </div>
     </section>

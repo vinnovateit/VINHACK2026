@@ -1,2 +1,10 @@
 {
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/out/**": true
+  },
+  "git.autofetch": false
 }
