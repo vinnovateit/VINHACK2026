@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import QRCode from "qrcode";
 
 import { auth } from "@/lib/auth";
-import { joinTeamByCode, TeamMembershipError } from "../test-dashboard/team-membership";
+import { joinTeamByCode, TeamMembershipError } from "@/lib/team-membership";
 
 import type { CheckInData, StudentType } from "@/components/onboarding/CheckInChecklist";
 import {

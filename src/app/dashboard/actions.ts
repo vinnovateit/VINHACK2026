@@ -10,7 +10,7 @@ import {
   removeTeamMember,
   transferLeadership,
   TeamMembershipError,
-} from "@/app/test-dashboard/team-membership";
+} from "@/lib/team-membership";
 
 export interface SubmissionPayload {
   teamId: string;
