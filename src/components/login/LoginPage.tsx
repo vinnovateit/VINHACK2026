@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { motion } from "framer-motion";
 import KeyButton from "../onboarding/KeyButton";
 import CardboardBoxOpeningAnimation from "./CardboardBoxOpeningAnimation";
 
@@ -18,7 +19,7 @@ export default function LoginPage() {
 
   return (
     <div className="relative w-full max-w-[1440px] mx-auto h-[100dvh] max-h-[100dvh] bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
-      {/* Top Bar: Brand Logo & Home link */}
+      {/* Top Bar: Brand Logo */}
       <div className="flex-shrink-0 flex items-center justify-between z-20 h-11 md:h-13">
         <Link href="/" className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative block">
           <Image
@@ -28,13 +29,6 @@ export default function LoginPage() {
             className="object-contain object-left"
             priority
           />
-        </Link>
-
-        <Link
-          href="/"
-          className="text-neutral-400 hover:text-white font-['Rotonto',sans-serif] text-xs md:text-sm flex items-center gap-2 border border-neutral-800 rounded-full px-3 md:px-4 py-1.5 transition hover:border-neutral-700"
-        >
-          ← Home
         </Link>
       </div>
 
@@ -55,14 +49,44 @@ export default function LoginPage() {
             </p>
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-white">PEOPLE</span>
-              <div className="w-[36px] sm:w-[44px] md:w-[50px] lg:w-[54px] h-[36px] sm:h-[44px] md:h-[50px] lg:h-[54px] relative rotate-[20deg] inline-block shrink-0 -mt-1">
+              <motion.div
+                className="w-[36px] sm:w-[44px] md:w-[50px] lg:w-[54px] h-[36px] sm:h-[44px] md:h-[50px] lg:h-[54px] relative inline-block shrink-0 -mt-1 cursor-pointer select-none origin-center"
+                animate={{
+                  rotate: [20, 380],
+                }}
+                transition={{
+                  rotate: {
+                    repeat: Infinity,
+                    duration: 8,
+                    ease: "linear",
+                  },
+                }}
+                whileHover={{
+                  scale: 1.28,
+                  rotate: 720,
+                  transition: {
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 12,
+                  },
+                }}
+                whileTap={{
+                  scale: 0.8,
+                  rotate: -180,
+                  transition: {
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 10,
+                  },
+                }}
+              >
                 <Image
                   src="/login/imgGroup48095565_fc3dc544.svg"
                   alt="*"
                   fill
-                  className="object-contain"
+                  className="object-contain pointer-events-none"
                 />
-              </div>
+              </motion.div>
             </div>
           </div>
 

@@ -22,26 +22,31 @@ export default function NoteArt() {
       </div>
 
       {/* Visual Text */}
-      <div className="absolute top-[89.89px] left-[68.55px] flex h-[94.214px] w-[125.248px] items-center justify-center pointer-events-none" data-node-id="343:1555">
+      <div className="absolute top-[76px] left-[75px] flex h-[70px] w-[125px] items-center justify-center pointer-events-none" data-node-id="343:1555">
         <div className="flex-none rotate-[13.5deg] pointer-events-none">
           <div className="relative font-rotonto text-[28.8px] leading-[0] whitespace-nowrap text-black pointer-events-none">
             <p className="mb-0 leading-[normal]">{HERO.note[0]}</p>
-            <p className="leading-[normal]">{HERO.note[1]}</p>
+            {HERO.note[1] ? <p className="leading-[normal]">{HERO.note[1]}</p> : null}
           </div>
         </div>
       </div>
 
-      {/* Visual Button Circle */}
-      <div className="absolute top-[146.14px] left-[142.82px] flex size-[34.438px] items-center justify-center pointer-events-none" data-node-id="343:1556">
-        <div className="flex-none rotate-[-4.55deg] pointer-events-none">
-          <div className="relative size-[32px] rounded-[27.2px] bg-[#ff4337] pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Visual Arrow */}
-      <div className="absolute top-[148.7px] left-[149.9px] flex h-[26.333px] w-[21.899px] items-center justify-center pointer-events-none" data-node-id="343:1557">
+      {/* Visual Button Circle with Arrow */}
+      <div className="absolute top-[156px] left-[120px] flex size-[35px] items-center justify-center pointer-events-none" data-node-id="343:1556">
         <div className="flex-none rotate-[13.5deg] pointer-events-none">
-          <p className="relative font-rotonto text-[19.2px] whitespace-nowrap text-black pointer-events-none">→</p>
+          <div className="relative size-[32px] rounded-[27.2px] bg-[#ff4337] flex items-center justify-center pointer-events-none">
+            <svg
+              className="size-[18px] text-black stroke-[2.5] -translate-x-[0.5px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </div>
         </div>
       </div>
 

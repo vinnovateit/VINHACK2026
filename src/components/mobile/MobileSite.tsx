@@ -172,7 +172,7 @@ function Spark({ x, y, size }: { x: number; y: number; size: number }) {
   return (
     <svg
       aria-hidden
-      className="deal-in pointer-events-none absolute [--deal-delay:1.5s]"
+      className="deal-in pointer-events-none absolute z-40 [--deal-delay:1.5s]"
       style={{ left: x, top: y, width: size, height: size }}
       viewBox="0 0 24 24"
       fill="#fcfcfc"
@@ -216,8 +216,8 @@ function MobileHero() {
           >
             <div className="size-full pointer-events-none rotate-[-8deg] rounded-[50%] border border-white/30" />
           </div>
-          <Spark x={240} y={124} size={20} />
-          <Spark x={116} y={304} size={16} />
+          <Spark x={240} y={106} size={20} />
+          <Spark x={211} y={305} size={16} />
 
           {/* The wordmark, as two layers — the solid lettering and the offset
               outline drawn behind it — which stack back to exactly the Figma

@@ -46,7 +46,7 @@ export const HERO = {
     'git commit -m "ship it anyway"',
     'git commit -m "revert revert"',
   ],
-  note: ["Register", "Now "],
+  note: ["Login", ""],
   qr: { lead: "this QR", follow: "changes lives" },
   /**
    * The scroll cue's words. They are drawn letter by letter along a curve in
