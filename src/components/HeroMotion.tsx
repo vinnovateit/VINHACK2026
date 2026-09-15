@@ -563,11 +563,6 @@ export default function HeroMotion({ children }: { children: ReactNode }) {
         const noteHit = scope.querySelector('[data-hero="note-hit"]') ?? scope.querySelector('[data-hero="note"]');
         if (noteHit) {
           cleanups.push(hover(noteHit, boxes("note"), { scale: 1.06 }, { scale: 1 }));
-          const onNoteClick = () => {
-            window.location.href = "/login";
-          };
-          noteHit.addEventListener("click", onNoteClick);
-          cleanups.push(() => noteHit.removeEventListener("click", onNoteClick));
         }
 
         return () => cleanups.forEach((fn) => fn());
