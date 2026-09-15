@@ -169,7 +169,7 @@ export async function fetchFullTeam(teamId: string) {
             id: m.id,
             name: m.name,
             email: m.email,
-            regNo: m.regNo || "",
+            regNo: (m as any).regNo || "",
             type: "external" as const,
             userId: m.userId,
             isLeader: Boolean(team.leaderId && m.userId === team.leaderId),
