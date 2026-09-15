@@ -275,7 +275,7 @@ export default function CheckInChecklist({
 
             {/* Table layout with Ques and Questions */}
             <div className="space-y-2 sm:space-y-2.5 text-[12px] md:text-[13px] font-['Rotonto',sans-serif]">
-              {/* Question 1: Name (Read-only) */}
+              {/* Question 1: Name */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
                 <span className="col-span-2 text-[#676767] font-mono text-xs">Q1</span>
                 <div className="col-span-10 space-y-0.5">
@@ -284,14 +284,17 @@ export default function CheckInChecklist({
                     id="checkin-name"
                     type="text"
                     required
-                    readOnly
+                    readOnly={studentType === "vit"}
                     value={name}
-                    placeholder="Participant name"
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={studentType === "vit" ? "Participant name" : "Enter your full name"}
                     className={`w-full bg-transparent border-b-2 ${
                       attemptedSubmit && !name.trim()
                         ? "border-red-500 bg-red-500/10"
-                        : "border-black/40"
-                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] cursor-default select-none font-medium transition`}
+                        : studentType === "vit"
+                        ? "border-black/40 cursor-default select-none font-medium"
+                        : "border-black/60 focus:border-black transition"
+                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px]`}
                   />
                   {attemptedSubmit && !name.trim() && (
                     <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Name is required</span>
@@ -315,10 +318,10 @@ export default function CheckInChecklist({
                     className={`w-full bg-transparent border-b-2 ${
                       attemptedSubmit && !regNo.trim()
                         ? "border-red-500 bg-red-500/10"
-                        : "border-black/40"
-                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] ${
-                      studentType === "vit" ? "cursor-default select-none font-medium" : "focus:border-black transition"
-                    }`}
+                        : studentType === "vit"
+                        ? "border-black/40 cursor-default select-none font-medium"
+                        : "border-black/60 focus:border-black transition"
+                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px]`}
                   />
                   {attemptedSubmit && !regNo.trim() && (
                     <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Registration number is required</span>
