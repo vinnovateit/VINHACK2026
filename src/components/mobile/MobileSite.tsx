@@ -42,6 +42,7 @@ import {
   TIMELINE,
   TRACKS,
 } from "@/content/site";
+import { useInView } from "@/components/useInView";
 import MobileTracksDeck from "@/components/tracks/MobileTracksDeck";
 
 /**
@@ -631,15 +632,29 @@ function MobileProjects() {
 /* ------------------------------------------------------------- tracks */
 
 function MobileTracks() {
+  const [sectionRef, inView] = useInView<HTMLElement>(0.15);
+  const iosEase = "cubic-bezier(0.32, 0.72, 0, 1)";
+
   return (
-    <section aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
+    <section ref={sectionRef} aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       <div className="border-t border-[#fa1a1d]">
         {TRACKS.lines.map((line, i) => {
           const Tag = i === 1 ? "h2" : "p";
+          const isRight = i === 1;
+          const delay = `${i * 0.1}s`;
           return (
             <div
               key={line}
-              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4"
+              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4 will-change-transform"
+              style={{
+                transform: inView
+                  ? "translateX(0)"
+                  : isRight
+                    ? "translateX(100px)"
+                    : "translateX(-100px)",
+                opacity: inView ? 1 : 0,
+                transition: `transform 0.5s ${iosEase} ${delay}, opacity 0.5s ${iosEase} ${delay}`,
+              }}
             >
               <Tag className="text-[30px] leading-[1.1] text-[#fa1a1d]">
                 {line}
