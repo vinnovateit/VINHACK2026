@@ -102,11 +102,20 @@ export async function getParticipantByEmail(
         let team = null;
         if (vit.teamId) {
           try {
-            team = await db.collection("teams").findOne({ _id: toObjectId(String(vit.teamId)) });
+            team = await db.collection("teams").findOne({
+              $or: [{ _id: toObjectId(String(vit.teamId)) }, { id: String(vit.teamId) }],
+            });
+            if (!team) {
+              await db.collection("vit_students").updateOne(
+                { _id: vit._id },
+                { $set: { teamId: null, joinedAt: null } }
+              );
+            }
           } catch {
             team = null;
           }
         }
+
 
         // Check if fallbackName (from Google OAuth profile) has a registration number e.g. "Varun B 23MID0026"
         const regMatch = (fallbackName || vit.name || "").match(/\b(\d{2}[A-Za-z]{3}\d{4})\b/);
@@ -148,7 +157,7 @@ export async function getParticipantByEmail(
           address: vit.address || "",
           collegeName: "Vellore Institute of Technology",
           takingAccommodation: true,
-          teamId: vit.teamId ? String(vit.teamId) : null,
+          teamId: team ? String(vit.teamId) : null,
           userId: vit.userId ? String(vit.userId) : null,
           team: team
             ? {
@@ -197,7 +206,15 @@ export async function getParticipantByEmail(
         let team = null;
         if (ext.teamId) {
           try {
-            team = await db.collection("teams").findOne({ _id: toObjectId(String(ext.teamId)) });
+            team = await db.collection("teams").findOne({
+              $or: [{ _id: toObjectId(String(ext.teamId)) }, { id: String(ext.teamId) }],
+            });
+            if (!team) {
+              await db.collection("external_students").updateOne(
+                { _id: ext._id },
+                { $set: { teamId: null, joinedAt: null } }
+              );
+            }
           } catch {
             team = null;
           }
@@ -220,9 +237,10 @@ export async function getParticipantByEmail(
           address: ext.address || "",
           collegeName: ext.collegeName || "",
           takingAccommodation: true,
-          teamId: ext.teamId ? String(ext.teamId) : null,
+          teamId: team ? String(ext.teamId) : null,
           userId: ext.userId ? String(ext.userId) : null,
           team: team
+
             ? {
                 id: team._id.toString(),
                 name: team.name,

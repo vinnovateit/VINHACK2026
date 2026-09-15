@@ -23,8 +23,11 @@ import {
   X,
   CheckCircle2,
 } from "lucide-react";
-import { saveSubmissionAction } from "@/app/dashboard/actions";
-import { transferLeadershipAction, deleteTeamAction } from "@/app/onboarding/actions";
+import {
+  saveSubmissionAction,
+  transferLeadershipAction,
+  deleteTeamAction,
+} from "@/app/dashboard/actions";
 
 
 export interface DashboardShellProps {
@@ -215,8 +218,8 @@ export default function DashboardShell({
 
 
 
-  const firstName = participant.name.split(" ")[0] || "Hacker";
-  const userInitial = (participant.name.charAt(0) || "P").toUpperCase();
+  const firstName = (participant.name || "Hacker").split(" ")[0] || "Hacker";
+  const userInitial = ((participant.name || "P").charAt(0) || "P").toUpperCase();
 
   const colorClasses = ["blue", "pink", "red", "yellow"];
 

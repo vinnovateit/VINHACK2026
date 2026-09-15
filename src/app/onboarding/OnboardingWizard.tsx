@@ -9,11 +9,11 @@ import JoinTeamTerminal from "@/components/onboarding/JoinTeamTerminal";
 import {
   saveCheckInAction,
   createTeamAction,
-  renameTeamAction,
   validateTeamCodeAction,
   joinTeamAction,
   type CurrentOnboardingParticipant,
 } from "./actions";
+import { renameTeamAction } from "@/app/dashboard/actions";
 
 
 interface OnboardingWizardProps {
