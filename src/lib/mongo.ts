@@ -106,7 +106,28 @@ export async function getParticipantByEmail(
           }
         }
 
-        const resolvedName = (vit.name || fallbackName || formatNameFromEmail(email)).trim();
+        // Check if fallbackName (from Google OAuth profile) has a registration number e.g. "Varun B 23MID0026"
+        const regMatch = (fallbackName || vit.name || "").match(/\b(\d{2}[A-Za-z]{3}\d{4})\b/);
+        const detectedRegNo = regMatch ? regMatch[1].toUpperCase() : null;
+
+        let resolvedName = (vit.name || fallbackName || formatNameFromEmail(email)).trim();
+        if (regMatch) {
+          resolvedName = resolvedName.replace(new RegExp(regMatch[0], "i"), "").trim();
+        }
+
+        const finalRegNo = (detectedRegNo || vit.regNo || "").toUpperCase();
+
+        if (detectedRegNo && (!vit.regNo || vit.regNo.toUpperCase() !== detectedRegNo)) {
+          try {
+            await db.collection("vit_students").updateOne(
+              { _id: vit._id },
+              { $set: { regNo: detectedRegNo, name: resolvedName, updatedAt: new Date() } }
+            );
+          } catch (updateErr) {
+            console.warn("[MongoDB] Auto-syncing regNo from Google name failed:", updateErr);
+          }
+        }
+
         const block = vit.block || "";
         const blockType: "MH" | "LH" = block.toUpperCase().startsWith("L") ? "LH" : "MH";
 
@@ -115,7 +136,7 @@ export async function getParticipantByEmail(
           name: resolvedName,
           type: "vit",
           email: vit.email || email,
-          regNo: vit.regNo || "",
+          regNo: finalRegNo,
           isHosteller: vit.residencyType !== "DAYSCHOLAR",
           blockType,
           hostelBlock: block,
@@ -140,12 +161,19 @@ export async function getParticipantByEmail(
 
       // 2. Fallback: User in users collection
       const user = await db.collection("users").findOne({ email: emailRegex });
+      const regMatchUser = (fallbackName || user?.name || "").match(/\b(\d{2}[A-Za-z]{3}\d{4})\b/);
+      const userRegNo = regMatchUser ? regMatchUser[1].toUpperCase() : "";
+      let cleanUserName = (user?.name || fallbackName || formatNameFromEmail(email)).trim();
+      if (regMatchUser) {
+        cleanUserName = cleanUserName.replace(new RegExp(regMatchUser[0], "i"), "").trim();
+      }
+
       return {
         id: user ? user._id.toString() : "vit-" + Date.now(),
-        name: user?.name || fallbackName || formatNameFromEmail(email),
+        name: cleanUserName,
         type: "vit",
         email,
-        regNo: "",
+        regNo: userRegNo,
         isHosteller: true,
         blockType: "MH",
         hostelBlock: "",

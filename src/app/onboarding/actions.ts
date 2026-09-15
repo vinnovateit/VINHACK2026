@@ -126,11 +126,19 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
           });
           if (vit) {
             const userId = vit.userId || (await getOrCreateEligibleUser("vit", vit.id).catch(() => null));
+            const regMatch = (session.user.name || vit.name || "").match(/\b(\d{2}[A-Za-z]{3}\d{4})\b/);
+            const detectedRegNo = regMatch ? regMatch[1].toUpperCase() : null;
+            let cleanName = (vit.name || session.user.name || formatNameFromEmail(email)).trim();
+            if (regMatch) {
+              cleanName = cleanName.replace(new RegExp(regMatch[0], "i"), "").trim();
+            }
+            const finalRegNo = (detectedRegNo || vit.regNo || "").toUpperCase();
+
             return {
               id: vit.id,
-              name: vit.name || session.user.name || formatNameFromEmail(email),
+              name: cleanName,
               type: "vit",
-              regNo: vit.regNo || "",
+              regNo: finalRegNo,
               isHosteller: vit.residencyType === "HOSTELLER",
               blockType: vit.block?.startsWith("L") ? "LH" : "MH",
               hostelBlock: vit.block || "",

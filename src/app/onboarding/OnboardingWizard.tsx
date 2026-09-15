@@ -97,10 +97,10 @@ export default function OnboardingWizard({
       if (teamName) {
         await createTeamAction(teamName);
       }
-      router.push("/test-dashboard/dashboard");
+      router.push("/dashboard");
     } catch (err) {
       console.error("Failed to finalize team:", err);
-      router.push("/test-dashboard/dashboard");
+      router.push("/dashboard");
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +126,7 @@ export default function OnboardingWizard({
   };
 
   const handleContinueToDashboard = () => {
-    router.push("/test-dashboard/dashboard");
+    router.push("/dashboard");
   };
 
   return (

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { Lock } from "lucide-react";
 import KeyButton from "./KeyButton";
 
 export type StudentType = "vit" | "external";
@@ -37,13 +38,13 @@ export default function CheckInChecklist({
 
   // Ensure fields sync if initialData arrives after initial mount
   React.useEffect(() => {
-    if (initialData?.name && !name) {
+    if (initialData?.name) {
       setName(initialData.name);
     }
   }, [initialData?.name]);
 
   React.useEffect(() => {
-    if (initialData?.regNo && !regNo) {
+    if (initialData?.regNo) {
       setRegNo(initialData.regNo);
     }
   }, [initialData?.regNo]);
@@ -196,45 +197,44 @@ export default function CheckInChecklist({
 
             {/* Table layout with Ques and Questions */}
             <div className="space-y-2 sm:space-y-2.5 text-[12px] md:text-[13px] font-['Rotonto',sans-serif]">
-              {/* Question 1: Name */}
+              {/* Question 1: Name (Locked) */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
                 <span className="col-span-2 text-[#676767] font-mono text-xs">Q1</span>
                 <div className="col-span-10 space-y-0.5">
-                  <label className="block text-black text-xs">What do we call you ?</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition"
-                  />
-                </div>
-              </div>
-
-              {/* Question 2: Registration Number */}
-              <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                <span className="col-span-2 text-[#676767] font-mono text-xs">Q2</span>
-                <div className="col-span-10 space-y-0.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-black text-xs">Registration number</label>
-                    {studentType === "vit" && regNo && (
-                      <span className="text-[10px] font-mono text-neutral-500 uppercase">
-                        FETCHED FROM VIT RECORD
-                      </span>
-                    )}
+                    <label className="block text-black text-xs font-semibold">What do we call you ?</label>
+                    <span className="text-[10px] font-mono text-neutral-600 uppercase flex items-center gap-1 bg-black/5 px-2 py-0.5 rounded">
+                      <Lock size={10} /> LOCKED
+                    </span>
                   </div>
                   <input
                     type="text"
                     required
+                    readOnly
+                    value={name}
+                    placeholder="Participant name"
+                    className="w-full bg-black/[0.04] cursor-not-allowed border-b-2 border-black/30 outline-none px-2 py-1 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] select-none font-medium transition"
+                  />
+                </div>
+              </div>
+
+              {/* Question 2: Registration Number (Locked) */}
+              <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                <span className="col-span-2 text-[#676767] font-mono text-xs">Q2</span>
+                <div className="col-span-10 space-y-0.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-black text-xs font-semibold">Registration number</label>
+                    <span className="text-[10px] font-mono text-neutral-600 uppercase flex items-center gap-1 bg-black/5 px-2 py-0.5 rounded">
+                      <Lock size={10} /> {studentType === "vit" ? "FETCHED FROM VIT RECORD" : "LOCKED"}
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    readOnly
                     value={regNo}
-                    onChange={(e) => setRegNo(e.target.value)}
-                    placeholder={
-                      studentType === "vit"
-                        ? "Enter registration number (e.g. 23BCE2023)"
-                        : "Enter your college registration / roll number"
-                    }
-                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition"
+                    placeholder="Registration number"
+                    className="w-full bg-black/[0.04] cursor-not-allowed border-b-2 border-black/30 outline-none px-2 py-1 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] select-none font-medium transition"
                   />
                 </div>
               </div>
