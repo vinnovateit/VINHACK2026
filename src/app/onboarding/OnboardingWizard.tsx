@@ -13,6 +13,8 @@ import {
   joinTeamAction,
   type CurrentOnboardingParticipant,
 } from "./actions";
+import { renameTeamAction } from "@/app/dashboard/actions";
+
 
 interface OnboardingWizardProps {
   initialParticipant: CurrentOnboardingParticipant | null;
@@ -40,9 +42,7 @@ export default function OnboardingWizard({
       : "checkin"
   );
 
-  const [studentType, setStudentType] = useState<StudentType>(
-    initialParticipant?.type ?? "vit"
-  );
+  const studentType: StudentType = initialParticipant?.type ?? "vit";
 
   const [participantName, setParticipantName] = useState<string>(
     initialParticipant?.name ?? ""
@@ -51,8 +51,12 @@ export default function OnboardingWizard({
   const [createdTeamCode, setCreatedTeamCode] = useState<string>(
     initialParticipant?.team?.code ?? "VH26-242"
   );
+  const [createdTeamId, setCreatedTeamId] = useState<string | null>(
+    initialParticipant?.teamId ?? null
+  );
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
 
   // STEP 1: Save Check-In data
   const handleCheckInSubmit = async (data: CheckInData) => {
@@ -73,12 +77,13 @@ export default function OnboardingWizard({
   // STEP 2: Handle Team Choice
   const handleTeamTypeSelect = async (choice: TeamChoice) => {
     if (choice === "create") {
-      // Auto-generate team code on select
+      // Pre-create team immediately so the user has a real code/QR to share
       setIsLoading(true);
       try {
         const res = await createTeamAction(participantName ? `${participantName}'s Squad` : "");
         if (res.success) {
           setCreatedTeamCode(res.teamCode);
+          setCreatedTeamId(res.teamId);
           if (res.qrDataUrl) setQrDataUrl(res.qrDataUrl);
         }
       } catch (err) {
@@ -93,20 +98,28 @@ export default function OnboardingWizard({
   };
 
   // STEP 3A: Create Team Save and Continue
+  // If a real team was already pre-created (teamId is not a "preview-*" id),
+  // we only rename it — we do NOT call createTeamAction again to avoid duplicates.
   const handleCreateTeamContinue = async (teamName: string) => {
     setIsLoading(true);
     try {
-      if (teamName) {
+      const isRealTeam = createdTeamId && !createdTeamId.startsWith("preview-");
+      if (teamName && isRealTeam) {
+        // Team already exists — just rename it
+        await renameTeamAction(createdTeamId, teamName);
+      } else if (teamName && !isRealTeam) {
+        // No real team yet (DB was unavailable during pre-create) — create fresh
         await createTeamAction(teamName);
       }
-      router.push("/test-dashboard/dashboard");
+      router.push("/dashboard");
     } catch (err) {
       console.error("Failed to finalize team:", err);
-      router.push("/test-dashboard/dashboard");
+      router.push("/dashboard");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   // STEP 3B: Join Team handlers
   const handleValidateCode = async (code: string) => {
@@ -128,7 +141,7 @@ export default function OnboardingWizard({
   };
 
   const handleContinueToDashboard = () => {
-    router.push("/test-dashboard/dashboard");
+    router.push("/dashboard");
   };
 
   return (
@@ -137,12 +150,18 @@ export default function OnboardingWizard({
       {step === "checkin" && (
         <CheckInChecklist
           studentType={studentType}
-          onStudentTypeChange={(type) => setStudentType(type)}
           initialData={{
-            name: participantName,
-            isHosteller: true,
-            blockType: "MH",
-            takingAccommodation: true,
+            name: participantName || initialParticipant?.name || "",
+            regNo: initialParticipant?.regNo ?? "",
+            phone: initialParticipant?.phone ?? "",
+            year: initialParticipant?.year,
+            isHosteller: initialParticipant?.isHosteller ?? true,
+            blockType: initialParticipant?.blockType ?? "MH",
+            hostelBlock: initialParticipant?.hostelBlock ?? "",
+            roomNo: initialParticipant?.roomNo ?? "",
+            address: initialParticipant?.address ?? "",
+            collegeName: initialParticipant?.collegeName ?? "",
+            takingAccommodation: initialParticipant?.takingAccommodation ?? true,
           }}
           onSubmit={handleCheckInSubmit}
           isLoading={isLoading}

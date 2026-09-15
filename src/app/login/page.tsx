@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LoginPage from "@/components/login/LoginPage";
 
 export const metadata = {
@@ -8,7 +9,10 @@ export const metadata = {
 export default function Page() {
   return (
     <main className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-black">
-      <LoginPage />
+      <Suspense fallback={<div className="h-full w-full bg-black" />}>
+        <LoginPage />
+      </Suspense>
     </main>
   );
 }
+

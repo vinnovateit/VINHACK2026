@@ -3,11 +3,15 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import KeyButton from "../onboarding/KeyButton";
 import CardboardBoxOpeningAnimation from "./CardboardBoxOpeningAnimation";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/onboarding" });
   };
@@ -91,6 +95,23 @@ export default function LoginPage() {
             >
               LOGIN WITH GOOGLE
             </KeyButton>
+
+            {error === "AccessDenied" && (
+              <div className="mt-3 p-3 bg-red-950/80 border border-red-500/60 rounded-xl text-red-200 text-xs sm:text-sm font-['Rotonto',sans-serif] leading-relaxed max-w-[390px] shadow-lg shadow-red-950/30">
+                <div className="font-semibold text-red-400 flex items-center gap-1.5 mb-1">
+                  <span>⚠</span> ACCESS DENIED
+                </div>
+                Your Google account is not on the registered participant list. Please sign in with the email address registered for VinHack 2026.
+              </div>
+            )}
+            {error && error !== "AccessDenied" && (
+              <div className="mt-3 p-3 bg-amber-950/80 border border-amber-500/60 rounded-xl text-amber-200 text-xs sm:text-sm font-['Rotonto',sans-serif] leading-relaxed max-w-[390px]">
+                <div className="font-semibold text-amber-400 flex items-center gap-1.5 mb-1">
+                  <span>⚠</span> AUTHENTICATION ERROR
+                </div>
+                Authentication failed ({error}). Please try again.
+              </div>
+            )}
           </div>
         </div>
 

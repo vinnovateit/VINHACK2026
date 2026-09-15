@@ -118,27 +118,32 @@ export async function removeTeamMember({
   });
 }
 
+/**
+ * Fully atomic join: leaves old team and joins new team in a single transaction.
+ * No in-between state where participant is teamless.
+ */
 export async function joinTeamByCode(participant: Participant & { currentTeamId: string | null }, code: string) {
   let switchedTeams = false;
   const existingTeamId = participant.currentTeamId;
 
-  const target = await prisma.team.findUnique({
+  // Peek target team id before entering the transaction (read-only, safe to do outside)
+  const targetPreview = await prisma.team.findUnique({
     where: { code },
     select: { id: true },
   });
-  if (!target) throw new TeamMembershipError("Team not found.");
+  if (!targetPreview) throw new TeamMembershipError("Team not found.");
 
-  if (existingTeamId === target.id) {
+  if (existingTeamId === targetPreview.id) {
     return { status: "already-member" as const };
   }
 
   if (existingTeamId) {
-    await leaveCurrentTeam(participant, existingTeamId);
     switchedTeams = true;
   }
 
   try {
     await prisma.$transaction(async (tx) => {
+      // Re-fetch target inside tx for consistency
       const team = await tx.team.findUnique({
         where: { code },
         select: { id: true, capacity: true, teamType: true },
@@ -159,6 +164,12 @@ export async function joinTeamByCode(participant: Participant & { currentTeamId:
         throw new TeamMembershipError("Team is full.");
       }
 
+      // Leave old team atomically within same transaction
+      if (existingTeamId) {
+        await removeParticipantFromTeamInTransaction(tx, participant, existingTeamId);
+      }
+
+      // Join new team
       const now = new Date();
       await tx.team.update({ where: { id: team.id }, data: { updatedAt: now } });
 
@@ -176,8 +187,89 @@ export async function joinTeamByCode(participant: Participant & { currentTeamId:
     });
   } catch (error) {
     if (error instanceof TeamMembershipError) throw error;
-    throw new TeamMembershipError("Team is full.");
+    throw new TeamMembershipError("Failed to join team. Please try again.");
   }
 
   return { status: switchedTeams ? ("switched" as const) : ("joined" as const) };
+}
+
+/**
+ * Transfer leadership to another member of the team.
+ */
+export async function transferLeadership({
+  requesterUserId,
+  newLeaderParticipantId,
+  newLeaderType,
+  teamId,
+}: {
+  requesterUserId: string | null;
+  newLeaderParticipantId: string;
+  newLeaderType: ParticipantType;
+  teamId: string;
+}) {
+  if (!requesterUserId) {
+    throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const team = await tx.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
+    if (!team) throw new TeamMembershipError("Team not found.");
+    if (team.leaderId !== requesterUserId) {
+      throw new TeamMembershipError("Only the current leader can transfer leadership.");
+    }
+
+    const newLeader =
+      newLeaderType === "vit"
+        ? await tx.vITStudent.findUnique({ where: { id: newLeaderParticipantId }, select: { id: true, teamId: true, userId: true } })
+        : await tx.externalStudent.findUnique({ where: { id: newLeaderParticipantId }, select: { id: true, teamId: true, userId: true } });
+
+    if (!newLeader || newLeader.teamId !== teamId) {
+      throw new TeamMembershipError("The selected participant is not in your team.");
+    }
+    if (!newLeader.userId) {
+      throw new TeamMembershipError("That participant doesn't have a user account linked yet.");
+    }
+    if (newLeader.userId === requesterUserId) {
+      throw new TeamMembershipError("You are already the leader.");
+    }
+
+    await tx.team.update({
+      where: { id: teamId },
+      data: { leaderId: newLeader.userId },
+    });
+  });
+}
+
+/**
+ * Delete the team entirely. Only the leader can do this.
+ * Cascades: clears all member teamIds, deletes submission, deletes team.
+ */
+export async function deleteTeam({
+  requesterUserId,
+  teamId,
+}: {
+  requesterUserId: string | null;
+  teamId: string;
+}) {
+  if (!requesterUserId) {
+    throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const team = await tx.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
+    if (!team) throw new TeamMembershipError("Team not found.");
+    if (team.leaderId !== requesterUserId) {
+      throw new TeamMembershipError("Only the team leader can delete the team.");
+    }
+
+    // Clear all members' teamId
+    await tx.vITStudent.updateMany({ where: { teamId }, data: { teamId: null, joinedAt: null } });
+    await tx.externalStudent.updateMany({ where: { teamId }, data: { teamId: null, joinedAt: null } });
+
+    // Delete submission if any
+    await tx.submission.deleteMany({ where: { teamId } });
+
+    // Delete team
+    await tx.team.delete({ where: { id: teamId } });
+  });
 }

@@ -82,45 +82,47 @@ export default function TeamTypeSelector({
           </div>
         </div>
 
-        {/* Right Column: Circular Stamps */}
-        <div className="lg:col-span-7 xl:col-span-7 relative h-full min-h-[360px] md:min-h-[440px] max-h-[calc(100dvh-120px)] flex items-center justify-center select-none py-2">
-          {/* CREATE A TEAM Stamp Badge */}
-          <div
-            onClick={() => setSelected("create")}
-            className={`cursor-pointer transition-all duration-300 absolute top-[10px] sm:top-[20px] md:top-[25px] left-[10px] sm:left-[25px] md:left-[45px] ${
-              selected === "create"
-                ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)]"
-                : "opacity-80 hover:opacity-100 hover:scale-102"
-            }`}
-          >
-            <div className="relative w-[210px] h-[208px] sm:w-[230px] sm:h-[228px] md:w-[250px] md:h-[248px]">
-              <Image
-                src={selected === "create" ? "/create_team_yellow.svg" : "/create_team.svg"}
-                alt="Create a Team"
-                fill
-                className="object-contain"
-                priority
-              />
+        {/* Right Column: Circular Stamps (Tight Centered Cluster) */}
+        <div className="lg:col-span-7 xl:col-span-7 flex items-center justify-center select-none py-2 h-full min-h-[340px]">
+          <div className="relative w-[320px] sm:w-[390px] md:w-[440px] h-[280px] sm:h-[320px] md:h-[340px] flex items-center justify-center">
+            {/* CREATE A TEAM Stamp Badge */}
+            <div
+              onClick={() => setSelected("create")}
+              className={`cursor-pointer transition-all duration-300 absolute top-1 sm:top-2 left-1 sm:left-4 md:left-6 ${
+                selected === "create"
+                  ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)] z-20"
+                  : "opacity-85 hover:opacity-100 hover:scale-102 z-10"
+              }`}
+            >
+              <div className="relative w-[180px] h-[178px] sm:w-[210px] sm:h-[208px] md:w-[230px] md:h-[228px]">
+                <Image
+                  src={selected === "create" ? "/create_team_yellow.svg" : "/create_team.svg"}
+                  alt="Create a Team"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
-          </div>
 
-          {/* JOIN A TEAM Stamp Badge */}
-          <div
-            onClick={() => setSelected("join")}
-            className={`cursor-pointer transition-all duration-300 absolute bottom-[10px] sm:bottom-[20px] md:bottom-[25px] right-[10px] sm:right-[25px] md:right-[45px] ${
-              selected === "join"
-                ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)]"
-                : "opacity-80 hover:opacity-100 hover:scale-102"
-            }`}
-          >
-            <div className="relative w-[220px] h-[228px] sm:w-[240px] sm:h-[248px] md:w-[260px] md:h-[268px]">
-              <Image
-                src={selected === "join" ? "/join_team_yellow.svg" : "/join_team.svg"}
-                alt="Join a Team"
-                fill
-                className="object-contain"
-                priority
-              />
+            {/* JOIN A TEAM Stamp Badge */}
+            <div
+              onClick={() => setSelected("join")}
+              className={`cursor-pointer transition-all duration-300 absolute bottom-1 sm:bottom-2 right-1 sm:right-4 md:right-6 ${
+                selected === "join"
+                  ? "scale-105 drop-shadow-[0_0_30px_rgba(212,194,36,0.65)] z-20"
+                  : "opacity-85 hover:opacity-100 hover:scale-102 z-10"
+              }`}
+            >
+              <div className="relative w-[190px] h-[198px] sm:w-[220px] sm:h-[228px] md:w-[240px] md:h-[248px]">
+                <Image
+                  src={selected === "join" ? "/join_team_yellow.svg" : "/join_team.svg"}
+                  alt="Join a Team"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>

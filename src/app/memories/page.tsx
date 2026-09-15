@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import MemoriesStudio from "@/components/memories/MemoriesStudio";
 import { MEMORIES } from "@/content/site";
 
@@ -7,6 +9,8 @@ export const metadata: Metadata = {
   description:
     "Make a VinHack 2026 memory card: take a photo, pick a line, add stickers from the site, and save the picture.",
 };
+
+export const dynamic = "force-dynamic";
 
 /**
  * Reached from the shutter on the attendee pass and from nowhere else — it is
@@ -22,6 +26,11 @@ export const metadata: Metadata = {
  * no fixed 1280 canvas and no second mobile tree, because the card is the only
  * thing on it that has a fixed size and it carries its own scaling.
  */
-export default function MemoriesPage() {
+export default async function MemoriesPage() {
+  const participant = await resolveCurrentParticipant();
+  if (!participant) {
+    redirect("/login");
+  }
+
   return <MemoriesStudio />;
 }

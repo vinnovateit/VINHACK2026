@@ -13,27 +13,47 @@ export type CurrentParticipant = {
   type: ParticipantType;
   teamId: string | null;
   userId: string | null;
+  year?: number | null;
 };
 
 export async function getCurrentParticipant(): Promise<CurrentParticipant | null> {
   const session = (await cookies()).get(TEST_SESSION_COOKIE)?.value;
-  if (!session) return null;
-
-  const [type, id] = session.split(":");
-  if ((type !== "vit" && type !== "external") || !id) return null;
-
-  try {
-    if (type === "vit") {
-      const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
-      return student ? { ...student, type } : null;
+  if (session) {
+    const [type, id] = session.split(":");
+    if ((type === "vit" || type === "external") && id) {
+      try {
+        if (type === "vit") {
+          const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true, year: true } });
+          if (student) return { ...student, type };
+        } else {
+          const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true, year: true } });
+          if (student) return { ...student, type };
+        }
+      } catch (err) {
+        console.warn("[getCurrentParticipant] Error querying DB:", err);
+      }
     }
-
-    const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
-    return student ? { ...student, type } : null;
-  } catch (err) {
-    console.warn("[getCurrentParticipant] Error querying DB:", err);
-    return null;
   }
+
+  // Also check NextAuth authenticated session
+  try {
+    const { resolveCurrentParticipant } = await import("@/app/onboarding/actions");
+    const participant = await resolveCurrentParticipant();
+    if (participant) {
+      return {
+        id: participant.id,
+        name: participant.name,
+        type: participant.type,
+        teamId: participant.teamId || null,
+        userId: participant.userId || null,
+        year: participant.year || null,
+      };
+    }
+  } catch (err) {
+    console.warn("[getCurrentParticipant] Error querying NextAuth participant:", err);
+  }
+
+  return null;
 }
 
 export async function requireParticipant() {
