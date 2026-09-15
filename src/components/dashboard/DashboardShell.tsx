@@ -18,6 +18,7 @@ import {
   Send,
   Shield,
   Trash2,
+  UserMinus,
   UserRound,
   Users,
   X,
@@ -27,6 +28,8 @@ import {
   saveSubmissionAction,
   transferLeadershipAction,
   deleteTeamAction,
+  leaveTeamAction,
+  removeTeamMemberAction,
 } from "@/app/dashboard/actions";
 
 
@@ -102,6 +105,12 @@ export default function DashboardShell({
   const [selectedNewLeader, setSelectedNewLeader] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLeaderActionPending, startLeaderTransition] = useTransition();
+
+  // Leave / kick state
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showKickMembers, setShowKickMembers] = useState(false);
+  const [kickPendingId, setKickPendingId] = useState<string | null>(null);
+  const [isLeavePending, startLeaveTransition] = useTransition();
 
 
   // Real countdown state (target: Sept 18, 2026, 2:00 PM IST)
@@ -213,6 +222,33 @@ export default function DashboardShell({
       }
       setShowDeleteConfirm(false);
       setShowLeaderActions(false);
+    });
+  };
+
+  const handleLeaveTeam = () => {
+    startLeaveTransition(async () => {
+      const res = await leaveTeamAction();
+      if (res.success) {
+        showNotice("You left the team. Redirecting...");
+        setTimeout(() => router.push("/onboarding?step=team-type"), 1200);
+      } else {
+        showNotice(res.error || "Failed to leave team.");
+        setShowLeaveConfirm(false);
+      }
+    });
+  };
+
+  const handleKickMember = (memberId: string, memberType: "vit" | "external") => {
+    setKickPendingId(memberId);
+    startLeaderTransition(async () => {
+      const res = await removeTeamMemberAction(memberId, memberType);
+      if (res.success) {
+        showNotice("Member removed.");
+        setTimeout(() => router.refresh(), 800);
+      } else {
+        showNotice(res.error || "Failed to remove member.");
+      }
+      setKickPendingId(null);
     });
   };
 
@@ -424,6 +460,42 @@ export default function DashboardShell({
                       </>
                     )}
 
+                    {/* Kick members */}
+                    {!showDeleteConfirm && !showTransferPicker && (
+                      <>
+                        <button
+                          className="leader-action-btn kick"
+                          onClick={() => setShowKickMembers((v) => !v)}
+                        >
+                          <UserMinus size={13} /> Remove Member
+                        </button>
+
+                        {showKickMembers && (
+                          <div className="leader-kick-list">
+                            {team.members.filter((m) => !m.isLeader).length === 0 ? (
+                              <p className="kick-empty">No other members to remove.</p>
+                            ) : (
+                              team.members
+                                .filter((m) => !m.isLeader)
+                                .map((m) => (
+                                  <div key={m.id} className="kick-member-row">
+                                    <span className="kick-member-name">{m.name}</span>
+                                    <button
+                                      className="kick-btn"
+                                      disabled={kickPendingId === m.id || isLeaderActionPending}
+                                      onClick={() => handleKickMember(m.id, m.type)}
+                                      aria-label={`Remove ${m.name} from team`}
+                                    >
+                                      {kickPendingId === m.id ? "Removing..." : "Remove"}
+                                    </button>
+                                  </div>
+                                ))
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     {/* Delete team */}
                     {!showTransferPicker && (
                       <>
@@ -456,6 +528,49 @@ export default function DashboardShell({
                         )}
                       </>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Leave Team — visible to all non-leader members, same Manage Team pattern */}
+            {!participant.isLeader && (
+              <div className="leader-actions">
+                <button
+                  className="leader-manage-btn"
+                  aria-expanded={showLeaveConfirm}
+                  onClick={() => setShowLeaveConfirm((v) => !v)}
+                >
+                  <X size={14} /> Manage Team
+                </button>
+
+                {showLeaveConfirm && (
+                  <div className="leader-panel">
+                    <button
+                      className="leader-action-btn delete"
+                      onClick={() => setShowLeaveConfirm(false)}
+                    >
+                      <X size={13} /> Leave Team
+                    </button>
+
+                    <div className="leader-delete-confirm">
+                      <p>You will be removed from this team. You can join another team afterwards.</p>
+                      <div className="leader-confirm-row">
+                        <button
+                          className="leader-confirm-btn danger"
+                          onClick={handleLeaveTeam}
+                          disabled={isLeavePending}
+                        >
+                          {isLeavePending ? "Leaving..." : "Yes, Leave"}
+                        </button>
+                        <button
+                          className="leader-cancel-btn"
+                          onClick={() => setShowLeaveConfirm(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
