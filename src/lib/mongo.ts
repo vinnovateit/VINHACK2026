@@ -27,11 +27,13 @@ export async function getMongoClient(): Promise<MongoClient | null> {
   try {
     if (!cachedClient) {
       cachedClient = new MongoClient(uri, {
-        maxPoolSize: 2,
-        serverSelectionTimeoutMS: 5000,
-        connectTimeoutMS: 5000,
-        socketTimeoutMS: 5000,
-        maxIdleTimeMS: 5000,
+        maxPoolSize: 20,
+        minPoolSize: 2,
+        serverSelectionTimeoutMS: 8000,
+        connectTimeoutMS: 8000,
+        socketTimeoutMS: 30000,
+        maxIdleTimeMS: 60000,
+        waitQueueTimeoutMS: 10000,
       });
     }
     return cachedClient;
@@ -538,69 +540,44 @@ export async function validateTeamNameInDb(
       return { valid: true };
     }
 
-    // 1. Exact case-insensitive check
-    const query: any = {
-      name: new RegExp(`^${escapeRegex(trimmed)}$`, "i"),
-    };
-    if (excludeTeamId) {
-      query._id = { $ne: toObjectId(excludeTeamId) };
-    }
+    // 1. Fast exact case-insensitive check via index
+    const exactQuery: any = { name: new RegExp(`^${escapeRegex(trimmed)}$`, "i") };
+    if (excludeTeamId) exactQuery._id = { $ne: toObjectId(excludeTeamId) };
 
-    const exactMatch = await db.collection("teams").findOne(query, { projection: { name: 1 } });
+    const exactMatch = await db.collection("teams").findOne(exactQuery, { projection: { name: 1 } });
     if (exactMatch) {
       return {
         valid: false,
         conflictName: exactMatch.name,
-        error: `This team name is already taken or too similar to an existing team.`,
+        error: "This team name is already taken or too similar to an existing team.",
       };
     }
 
-    // 2. Fetch all team names to check normalized & fuzzy similarity
-    const teams = await db
-      .collection("teams")
-      .find(
-        excludeTeamId ? { _id: { $ne: toObjectId(excludeTeamId) } } : {},
-        { projection: { name: 1 } }
-      )
-      .toArray();
+    // 2. Normalized equality check via MongoDB aggregation (no JS memory scan)
+    const pipeline: any[] = [
+      ...(excludeTeamId ? [{ $match: { _id: { $ne: toObjectId(excludeTeamId) } } }] : []),
+      {
+        $addFields: {
+          normalizedName: {
+            $replaceAll: {
+              input: { $replaceAll: { input: { $toLower: "$name" }, find: " ", replacement: "" } },
+              find: "-", replacement: ""
+            }
+          }
+        }
+      },
+      { $match: { normalizedName: candidateNorm } },
+      { $limit: 1 },
+      { $project: { name: 1 } },
+    ];
 
-    for (const team of teams) {
-      if (!team.name || typeof team.name !== "string") continue;
-      const existingTrimmed = team.name.trim();
-      const existingNorm = normalizeTeamName(existingTrimmed);
-      if (!existingNorm) continue;
-
-      // Exact normalized equality (catches spacing, punctuation, hyphens, lowercase/uppercase)
-      // e.g. "Cyber Knights" vs "CyberKnights" vs "cyber-knights"
-      if (candidateNorm === existingNorm) {
-        return {
-          valid: false,
-          conflictName: existingTrimmed,
-          error: `This team name is already taken or too similar to an existing team.`,
-        };
-      }
-
-      // Fuzzy / Levenshtein similarity check
-      const maxLen = Math.max(candidateNorm.length, existingNorm.length);
-      const dist = levenshteinDistance(candidateNorm, existingNorm);
-      const similarity = 1 - dist / maxLen;
-
-      let isTooSimilar = false;
-      if (maxLen <= 4 && dist <= 1) {
-        isTooSimilar = true;
-      } else if (maxLen <= 8 && (dist <= 2 || similarity >= 0.75)) {
-        isTooSimilar = true;
-      } else if (maxLen > 8 && (dist <= 2 || similarity >= 0.82)) {
-        isTooSimilar = true;
-      }
-
-      if (isTooSimilar) {
-        return {
-          valid: false,
-          conflictName: existingTrimmed,
-          error: `This team name is already taken or too similar to an existing team.`,
-        };
-      }
+    const normResults = await db.collection("teams").aggregate(pipeline).toArray();
+    if (normResults.length > 0) {
+      return {
+        valid: false,
+        conflictName: normResults[0].name,
+        error: "This team name is already taken or too similar to an existing team.",
+      };
     }
 
     return { valid: true };

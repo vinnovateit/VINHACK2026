@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { getMongoDb } from "@/lib/mongo";
+import { ObjectId } from "mongodb";
 
 type ParticipantType = "vit" | "external";
 
@@ -9,74 +9,83 @@ type Participant = {
   userId: string | null;
 };
 
-type TransactionClient = Prisma.TransactionClient;
-
 export class TeamMembershipError extends Error {}
 
-async function getRemainingLeaderUserId(tx: TransactionClient, teamId: string): Promise<string | null> {
-  const [vitMember, externalMember] = await Promise.all([
-    tx.vITStudent.findFirst({
-      where: { teamId, userId: { not: null } },
-      orderBy: { joinedAt: "asc" },
-      select: { userId: true, joinedAt: true },
-    }),
-    tx.externalStudent.findFirst({
-      where: { teamId, userId: { not: null } },
-      orderBy: { joinedAt: "asc" },
-      select: { userId: true, joinedAt: true },
-    }),
-  ]);
-
-  const candidates = [vitMember, externalMember]
-    .filter((member): member is { userId: string; joinedAt: Date | null } => Boolean(member?.userId))
-    .sort((a, b) => {
-      const aTime = a.joinedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      const bTime = b.joinedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      return aTime - bTime;
-    });
-
-  return candidates[0]?.userId ?? null;
+function toOid(id: string): any {
+  try { return new ObjectId(id); } catch { return id; }
 }
 
-async function removeParticipantFromTeamInTransaction(tx: TransactionClient, participant: Participant, teamId: string) {
-  const team = await tx.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
-  if (!team) return;
-
-  if (participant.type === "vit") {
-    await tx.vITStudent.update({
-      where: { id: participant.id },
-      data: { teamId: null, joinedAt: null },
-    });
-  } else {
-    await tx.externalStudent.update({
-      where: { id: participant.id },
-      data: { teamId: null, joinedAt: null },
-    });
-  }
-
-  const [vitCount, externalCount] = await Promise.all([
-    tx.vITStudent.count({ where: { teamId } }),
-    tx.externalStudent.count({ where: { teamId } }),
+async function getRemainingLeaderId(
+  db: Awaited<ReturnType<typeof getMongoDb>>,
+  teamId: string
+): Promise<ObjectId | null> {
+  const oid = toOid(teamId);
+  const [vit, ext] = await Promise.all([
+    db!.collection("vit_students").findOne(
+      { teamId: oid, userId: { $ne: null } },
+      { projection: { userId: 1, joinedAt: 1 }, sort: { joinedAt: 1 } }
+    ),
+    db!.collection("external_students").findOne(
+      { teamId: oid, userId: { $ne: null } },
+      { projection: { userId: 1, joinedAt: 1 }, sort: { joinedAt: 1 } }
+    ),
   ]);
 
-  if (vitCount + externalCount === 0) {
-    await tx.submission.deleteMany({ where: { teamId } });
-    await tx.team.delete({ where: { id: teamId } });
+  const candidates = [vit, ext]
+    .filter(Boolean)
+    .sort((a: any, b: any) => {
+      const at = a?.joinedAt ? new Date(a.joinedAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const bt = b?.joinedAt ? new Date(b.joinedAt).getTime() : Number.MAX_SAFE_INTEGER;
+      return at - bt;
+    });
+
+  const winner = candidates[0] as any;
+  return winner?.userId ? toOid(String(winner.userId)) : null;
+}
+
+async function removeParticipantFromTeam(
+  db: Awaited<ReturnType<typeof getMongoDb>>,
+  participant: Participant,
+  teamId: string
+) {
+  const teamOid = toOid(teamId);
+  const team = await db!.collection("teams").findOne(
+    { _id: teamOid },
+    { projection: { leaderId: 1 } }
+  );
+  if (!team) return;
+
+  const col = participant.type === "vit" ? "vit_students" : "external_students";
+  await db!.collection(col).updateOne(
+    { _id: toOid(participant.id) },
+    { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
+  );
+
+  const [vitCount, extCount] = await Promise.all([
+    db!.collection("vit_students").countDocuments({ teamId: teamOid }),
+    db!.collection("external_students").countDocuments({ teamId: teamOid }),
+  ]);
+
+  if (vitCount + extCount === 0) {
+    await db!.collection("submissions").deleteMany({ teamId: teamOid });
+    await db!.collection("teams").deleteOne({ _id: teamOid });
     return;
   }
 
-  if (team.leaderId && participant.userId === team.leaderId) {
-    await tx.team.update({
-      where: { id: teamId },
-      data: { leaderId: await getRemainingLeaderUserId(tx, teamId) },
-    });
+  // Transfer leadership if the leaver was the leader
+  if (team.leaderId && participant.userId && String(team.leaderId) === participant.userId) {
+    const newLeaderId = await getRemainingLeaderId(db, teamId);
+    await db!.collection("teams").updateOne(
+      { _id: teamOid },
+      { $set: { leaderId: newLeaderId, updatedAt: new Date() } }
+    );
   }
 }
 
 export async function leaveCurrentTeam(participant: Participant, teamId: string) {
-  await prisma.$transaction(async (tx) => {
-    await removeParticipantFromTeamInTransaction(tx, participant, teamId);
-  });
+  const db = await getMongoDb();
+  if (!db) throw new TeamMembershipError("Database unavailable.");
+  await removeParticipantFromTeam(db, participant, teamId);
 }
 
 export async function removeTeamMember({
@@ -90,131 +99,109 @@ export async function removeTeamMember({
   targetType: ParticipantType;
   teamId: string;
 }) {
-  if (!requesterUserId) {
-    throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+  if (!requesterUserId) throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+
+  const db = await getMongoDb();
+  if (!db) throw new TeamMembershipError("Database unavailable.");
+
+  const teamOid = toOid(teamId);
+  const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+  if (!team) throw new TeamMembershipError("Team not found.");
+  if (String(team.leaderId) !== requesterUserId) {
+    throw new TeamMembershipError("Only the current team leader can remove members.");
   }
 
-  await prisma.$transaction(async (tx) => {
-    const team = await tx.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
-    if (!team) throw new TeamMembershipError("Team not found.");
-    if (team.leaderId !== requesterUserId) {
-      throw new TeamMembershipError("Only the current team leader can remove members.");
-    }
+  const col = targetType === "vit" ? "vit_students" : "external_students";
+  const target = await db.collection(col).findOne(
+    { _id: toOid(targetParticipantId) },
+    { projection: { teamId: 1, userId: 1 } }
+  );
+  if (!target || String(target.teamId) !== teamId) {
+    throw new TeamMembershipError("That participant is not in your team.");
+  }
+  if (target.userId && String(target.userId) === requesterUserId) {
+    throw new TeamMembershipError("Use Leave Team to remove yourself and transfer leadership.");
+  }
 
-    const target =
-      targetType === "vit"
-        ? await tx.vITStudent.findUnique({ where: { id: targetParticipantId }, select: { id: true, teamId: true, userId: true } })
-        : await tx.externalStudent.findUnique({ where: { id: targetParticipantId }, select: { id: true, teamId: true, userId: true } });
-
-    if (!target || target.teamId !== teamId) {
-      throw new TeamMembershipError("That participant is not in your team.");
-    }
-
-    if (target.userId === requesterUserId) {
-      throw new TeamMembershipError("Use Leave Team to remove yourself and transfer leadership.");
-    }
-
-    await removeParticipantFromTeamInTransaction(tx, { id: target.id, type: targetType, userId: target.userId }, teamId);
-  });
+  await removeParticipantFromTeam(
+    db,
+    { id: targetParticipantId, type: targetType, userId: target.userId ? String(target.userId) : null },
+    teamId
+  );
 }
 
-/**
- * Fully atomic join: leaves old team and joins new team in a single transaction.
- * No in-between state where participant is teamless.
- */
-export async function joinTeamByCode(participant: Participant & { currentTeamId: string | null }, code: string) {
-  let switchedTeams = false;
-  const existingTeamId = participant.currentTeamId;
+export async function joinTeamByCode(
+  participant: Participant & { currentTeamId: string | null },
+  code: string
+) {
+  const db = await getMongoDb();
+  if (!db) throw new TeamMembershipError("Database unavailable.");
 
-  // Peek target team id before entering the transaction (read-only, safe to do outside)
-  const targetPreview = await prisma.team.findUnique({
-    where: { code },
-    select: { id: true },
-  });
-  if (!targetPreview) throw new TeamMembershipError("Team not found.");
+  const targetTeam = await db.collection("teams").findOne(
+    { code: new RegExp(`^${code}$`, "i") },
+    { projection: { _id: 1, capacity: 1, teamType: 1 } }
+  );
+  if (!targetTeam) throw new TeamMembershipError("Team not found.");
 
-  if (existingTeamId === targetPreview.id) {
+  const targetTeamId = targetTeam._id.toString();
+
+  if (participant.currentTeamId === targetTeamId) {
     return { status: "already-member" as const };
   }
 
-  // Check if the existing team actually still exists — it may have been deleted
-  // leaving a stale teamId on the participant record.
-  let resolvedExistingTeamId: string | null = existingTeamId;
-  if (existingTeamId) {
-    const existingTeam = await prisma.team.findUnique({ where: { id: existingTeamId }, select: { id: true } });
+  const selectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
+  if (selectedType !== targetTeam.teamType) {
+    throw new TeamMembershipError(
+      `Type mismatch: ${selectedType} participants cannot join a ${targetTeam.teamType} team.`
+    );
+  }
+
+  // Clear stale team reference if old team no longer exists
+  let resolvedExistingTeamId = participant.currentTeamId;
+  if (resolvedExistingTeamId) {
+    const existingTeam = await db.collection("teams").findOne(
+      { _id: toOid(resolvedExistingTeamId) },
+      { projection: { _id: 1 } }
+    );
     if (!existingTeam) {
-      // Stale reference — clear it directly before joining
-      if (participant.type === "vit") {
-        await prisma.vITStudent.update({ where: { id: participant.id }, data: { teamId: null, joinedAt: null } });
-      } else {
-        await prisma.externalStudent.update({ where: { id: participant.id }, data: { teamId: null, joinedAt: null } });
-      }
+      const col = participant.type === "vit" ? "vit_students" : "external_students";
+      await db.collection(col).updateOne(
+        { _id: toOid(participant.id) },
+        { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
+      );
       resolvedExistingTeamId = null;
     }
   }
 
+  const switchedTeams = Boolean(resolvedExistingTeamId);
+
+  // Check team capacity
+  const memberCol = targetTeam.teamType === "VIT" ? "vit_students" : "external_students";
+  const memberCount = await db.collection(memberCol).countDocuments({ teamId: targetTeam._id });
+  if (memberCount >= targetTeam.capacity) {
+    throw new TeamMembershipError("Team is full.");
+  }
+
+  // Leave old team if present
   if (resolvedExistingTeamId) {
-    switchedTeams = true;
+    await removeParticipantFromTeam(db, participant, resolvedExistingTeamId);
   }
 
-  try {
-    await prisma.$transaction(async (tx) => {
-      // Re-fetch target inside tx for consistency
-      const team = await tx.team.findUnique({
-        where: { code },
-        select: { id: true, capacity: true, teamType: true },
-      });
-      if (!team) throw new TeamMembershipError("Team not found.");
-
-      const selectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-      if (selectedType !== team.teamType) {
-        throw new TeamMembershipError(`Type mismatch: ${selectedType} participants cannot join a ${team.teamType} team.`);
-      }
-
-      const memberCount =
-        team.teamType === "VIT"
-          ? await tx.vITStudent.count({ where: { teamId: team.id } })
-          : await tx.externalStudent.count({ where: { teamId: team.id } });
-
-      if (memberCount >= team.capacity) {
-        throw new TeamMembershipError("Team is full.");
-      }
-
-      // Leave old team atomically within same transaction
-      if (resolvedExistingTeamId) {
-        await removeParticipantFromTeamInTransaction(tx, participant, resolvedExistingTeamId);
-      }
-
-      // Join new team
-      const now = new Date();
-      await tx.team.update({ where: { id: team.id }, data: { updatedAt: now } });
-
-      if (participant.type === "vit") {
-        await tx.vITStudent.update({
-          where: { id: participant.id },
-          data: { teamId: team.id, joinedAt: now },
-        });
-      } else {
-        await tx.externalStudent.update({
-          where: { id: participant.id },
-          data: { teamId: team.id, joinedAt: now },
-        });
-      }
-    });
-  } catch (error) {
-    if (error instanceof TeamMembershipError) throw error;
-    // Surface the actual Prisma/DB error message so it's visible in logs and UI
-    const detail = error instanceof Error ? error.message : String(error);
-    console.error("[joinTeamByCode] Unexpected error:", detail);
-    throw new TeamMembershipError(`Failed to join team: ${detail}`);
-  }
+  // Join new team
+  const now = new Date();
+  const col = participant.type === "vit" ? "vit_students" : "external_students";
+  await db.collection(col).updateOne(
+    { _id: toOid(participant.id) },
+    { $set: { teamId: targetTeam._id, joinedAt: now, updatedAt: now } }
+  );
+  await db.collection("teams").updateOne(
+    { _id: targetTeam._id },
+    { $set: { updatedAt: now } }
+  );
 
   return { status: switchedTeams ? ("switched" as const) : ("joined" as const) };
 }
 
-/**
- * Transfer leadership to another member of the team.
- */
 export async function transferLeadership({
   requesterUserId,
   newLeaderParticipantId,
@@ -226,43 +213,39 @@ export async function transferLeadership({
   newLeaderType: ParticipantType;
   teamId: string;
 }) {
-  if (!requesterUserId) {
-    throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+  if (!requesterUserId) throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+
+  const db = await getMongoDb();
+  if (!db) throw new TeamMembershipError("Database unavailable.");
+
+  const teamOid = toOid(teamId);
+  const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+  if (!team) throw new TeamMembershipError("Team not found.");
+  if (String(team.leaderId) !== requesterUserId) {
+    throw new TeamMembershipError("Only the current leader can transfer leadership.");
   }
 
-  await prisma.$transaction(async (tx) => {
-    const team = await tx.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
-    if (!team) throw new TeamMembershipError("Team not found.");
-    if (team.leaderId !== requesterUserId) {
-      throw new TeamMembershipError("Only the current leader can transfer leadership.");
-    }
+  const col = newLeaderType === "vit" ? "vit_students" : "external_students";
+  const newLeader = await db.collection(col).findOne(
+    { _id: toOid(newLeaderParticipantId) },
+    { projection: { teamId: 1, userId: 1 } }
+  );
+  if (!newLeader || String(newLeader.teamId) !== teamId) {
+    throw new TeamMembershipError("The selected participant is not in your team.");
+  }
+  if (!newLeader.userId) {
+    throw new TeamMembershipError("That participant doesn't have a user account linked yet.");
+  }
+  if (String(newLeader.userId) === requesterUserId) {
+    throw new TeamMembershipError("You are already the leader.");
+  }
 
-    const newLeader =
-      newLeaderType === "vit"
-        ? await tx.vITStudent.findUnique({ where: { id: newLeaderParticipantId }, select: { id: true, teamId: true, userId: true } })
-        : await tx.externalStudent.findUnique({ where: { id: newLeaderParticipantId }, select: { id: true, teamId: true, userId: true } });
-
-    if (!newLeader || newLeader.teamId !== teamId) {
-      throw new TeamMembershipError("The selected participant is not in your team.");
-    }
-    if (!newLeader.userId) {
-      throw new TeamMembershipError("That participant doesn't have a user account linked yet.");
-    }
-    if (newLeader.userId === requesterUserId) {
-      throw new TeamMembershipError("You are already the leader.");
-    }
-
-    await tx.team.update({
-      where: { id: teamId },
-      data: { leaderId: newLeader.userId },
-    });
-  });
+  await db.collection("teams").updateOne(
+    { _id: teamOid },
+    { $set: { leaderId: toOid(String(newLeader.userId)), updatedAt: new Date() } }
+  );
 }
 
-/**
- * Delete the team entirely. Only the leader can do this.
- * Cascades: clears all member teamIds, deletes submission, deletes team.
- */
 export async function deleteTeam({
   requesterUserId,
   teamId,
@@ -270,25 +253,23 @@ export async function deleteTeam({
   requesterUserId: string | null;
   teamId: string;
 }) {
-  if (!requesterUserId) {
-    throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+  if (!requesterUserId) throw new TeamMembershipError("Your participant record is not linked to a user yet.");
+
+  const db = await getMongoDb();
+  if (!db) throw new TeamMembershipError("Database unavailable.");
+
+  const teamOid = toOid(teamId);
+  const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+  if (!team) throw new TeamMembershipError("Team not found.");
+  if (String(team.leaderId) !== requesterUserId) {
+    throw new TeamMembershipError("Only the team leader can delete the team.");
   }
 
-  await prisma.$transaction(async (tx) => {
-    const team = await tx.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
-    if (!team) throw new TeamMembershipError("Team not found.");
-    if (team.leaderId !== requesterUserId) {
-      throw new TeamMembershipError("Only the team leader can delete the team.");
-    }
-
-    // Clear all members' teamId
-    await tx.vITStudent.updateMany({ where: { teamId }, data: { teamId: null, joinedAt: null } });
-    await tx.externalStudent.updateMany({ where: { teamId }, data: { teamId: null, joinedAt: null } });
-
-    // Delete submission if any
-    await tx.submission.deleteMany({ where: { teamId } });
-
-    // Delete team
-    await tx.team.delete({ where: { id: teamId } });
-  });
+  const teamFilter = { teamId: teamOid };
+  await Promise.all([
+    db.collection("vit_students").updateMany(teamFilter, { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }),
+    db.collection("external_students").updateMany(teamFilter, { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }),
+    db.collection("submissions").deleteMany(teamFilter),
+  ]);
+  await db.collection("teams").deleteOne({ _id: teamOid });
 }

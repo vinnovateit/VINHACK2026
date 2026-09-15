@@ -2,14 +2,15 @@
 
 import { cookies, headers } from "next/headers";
 import QRCode from "qrcode";
-import { prisma } from "@/lib/prisma";
+
 import { auth } from "@/lib/auth";
 import { TEST_SESSION_COOKIE } from "../test-dashboard/access";
 import { generateUniqueTeamCode } from "../test-dashboard/utils";
 import { joinTeamByCode, TeamMembershipError } from "../test-dashboard/team-membership";
-import { getOrCreateEligibleUser } from "../test-dashboard/participant-eligibility";
+
 import type { CheckInData, StudentType } from "@/components/onboarding/CheckInChecklist";
 import {
+  getMongoDb,
   getParticipantByEmail,
   getParticipantById,
   saveParticipantCheckInInDb,
@@ -18,6 +19,11 @@ import {
   createTeamInDb,
   validateTeamNameInDb,
 } from "@/lib/mongo";
+import { ObjectId } from "mongodb";
+
+function toObjectId(id: string): any {
+  try { return new ObjectId(id); } catch { return id; }
+}
 
 export type CurrentOnboardingParticipant = {
   id: string;
@@ -55,56 +61,8 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
       const [type, id] = testSession.split(":");
       if ((type === "vit" || type === "external") && id) {
         try {
-          if (type === "vit") {
-            const student = await prisma.vITStudent.findUnique({
-              where: { id },
-              include: { team: true },
-            });
-            if (student) {
-              const userId = student.userId || (await getOrCreateEligibleUser("vit", student.id).catch(() => null));
-              return {
-                id: student.id,
-                name: student.name,
-                type: "vit",
-                regNo: student.regNo,
-                phone: student.phone || "",
-                year: student.year ?? undefined,
-                isHosteller: student.residencyType === "HOSTELLER",
-                blockType: student.block?.startsWith("L") ? "LH" : "MH",
-                hostelBlock: student.block || "",
-                roomNo: student.room || "",
-                address: (student as any).address || "",
-                collegeName: "Vellore Institute of Technology",
-                teamId: student.teamId,
-                userId,
-                email: student.email,
-                team: student.team,
-              };
-            }
-          } else {
-            const student = await prisma.externalStudent.findUnique({
-              where: { id },
-              include: { team: true },
-            });
-            if (student) {
-              const userId = student.userId || (await getOrCreateEligibleUser("external", student.id).catch(() => null));
-              return {
-                id: student.id,
-                name: student.name,
-                type: "external",
-                regNo: (student as any).regNo || "",
-                phone: student.phone || "",
-                year: student.year ?? undefined,
-                collegeName: student.collegeName || "External Institute",
-                address: (student as any).address || "",
-                takingAccommodation: true,
-                teamId: student.teamId,
-                userId,
-                email: student.email,
-                team: student.team,
-              };
-            }
-          }
+          const mongoParticipant = await getParticipantById(type as "vit" | "external", id);
+          if (mongoParticipant) return mongoParticipant;
         } catch (sessionDbErr) {
           console.warn("[Onboarding] Error querying test session student:", sessionDbErr);
         }
@@ -126,72 +84,11 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
           );
           return mongoParticipant;
         }
-
-        // Prisma fallback (if running in full Node.js environment)
-        const isVitEmail = email.endsWith("@vitstudent.ac.in");
-        if (isVitEmail) {
-          const vit = await prisma.vITStudent.findFirst({
-            where: { email: { equals: email, mode: "insensitive" } },
-            include: { team: true },
-          });
-          if (vit) {
-            const userId = vit.userId || (await getOrCreateEligibleUser("vit", vit.id).catch(() => null));
-            const regMatch = (session.user.name || vit.name || "").match(/\b(\d{2}[A-Za-z]{3}\d{4})\b/);
-            const detectedRegNo = regMatch ? regMatch[1].toUpperCase() : null;
-            let cleanName = (vit.name || session.user.name || formatNameFromEmail(email)).trim();
-            if (regMatch) {
-              cleanName = cleanName.replace(new RegExp(regMatch[0], "i"), "").trim();
-            }
-            const finalRegNo = (detectedRegNo || vit.regNo || "").toUpperCase();
-
-            return {
-              id: vit.id,
-              name: cleanName,
-              type: "vit",
-              regNo: finalRegNo,
-              phone: vit.phone || "",
-              year: vit.year ?? undefined,
-              isHosteller: vit.residencyType === "HOSTELLER",
-              blockType: vit.block?.startsWith("L") ? "LH" : "MH",
-              hostelBlock: vit.block || "",
-              roomNo: vit.room || "",
-              address: (vit as any).address || "",
-              collegeName: "Vellore Institute of Technology",
-              takingAccommodation: true,
-              teamId: vit.teamId,
-              userId,
-              email: vit.email,
-              team: vit.team,
-            };
-          }
-        } else {
-          const ext = await prisma.externalStudent.findFirst({
-            where: { email: { equals: email, mode: "insensitive" } },
-            include: { team: true },
-          });
-          if (ext) {
-            const userId = ext.userId || (await getOrCreateEligibleUser("external", ext.id).catch(() => null));
-            return {
-              id: ext.id,
-              name: ext.name || session.user.name || formatNameFromEmail(email),
-              type: "external",
-              regNo: (ext as any).regNo || "",
-              phone: ext.phone || "",
-              year: ext.year ?? undefined,
-              collegeName: ext.collegeName || "External Institute",
-              address: (ext as any).address || "",
-              takingAccommodation: true,
-              teamId: ext.teamId,
-              userId,
-              email: ext.email,
-              team: ext.team,
-            };
-          }
-        }
       }
     } catch (authErr) {
       console.warn("[Onboarding] Session lookup threw error, checking fallbacks:", authErr);
     }
+
 
     // 2. Secondary: Check preview / test session cookie
     if (testSession) {
@@ -227,8 +124,7 @@ export async function saveCheckInAction(data: CheckInData) {
     const phone = (data.phone || "").trim();
     const address = (data.address || "").trim();
 
-    // 1. Native MongoDB update (works on Cloudflare Workers & Node.js)
-    try {
+    if (participant.id && !participant.id.startsWith("vit-") && !participant.id.startsWith("ext-")) {
       const saved = await saveParticipantCheckInInDb(participant as any, {
         name,
         regNo,
@@ -242,107 +138,8 @@ export async function saveCheckInAction(data: CheckInData) {
         collegeName: data.collegeName,
       });
       if (saved) {
-        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo}, ${phone}, Year: ${data.year || "N/A"})`);
-        return { success: true };
+        console.log(`[saveCheckInAction] Persisted check-in via MongoDB: ${name}`);
       }
-    } catch (mongoSaveErr) {
-      console.warn("[saveCheckInAction] Native mongo update failed, trying Prisma fallback:", mongoSaveErr);
-    }
-
-    // 2. Prisma fallback
-    const isVit = participant.type === "vit";
-
-    if (isVit) {
-      const residencyType = data.isHosteller ? "HOSTELLER" : "DAYSCHOLAR";
-      const updateData: {
-        name: string;
-        residencyType: "HOSTELLER" | "DAYSCHOLAR";
-        block: string | null;
-        room: string | null;
-        address: string | null;
-        regNo?: string;
-        phone?: string;
-        year?: number;
-      } = {
-        name,
-        residencyType,
-        block: data.isHosteller ? (data.hostelBlock || data.blockType || null) : null,
-        room: data.isHosteller ? (data.roomNo || null) : null,
-        address: !data.isHosteller ? (address || null) : null,
-      };
-
-      if (regNo) {
-        updateData.regNo = regNo;
-      }
-      if (phone) {
-        updateData.phone = phone;
-      }
-      if (data.year !== undefined && data.year !== null) {
-        updateData.year = Number(data.year);
-      }
-
-      if (participant.id && !participant.id.startsWith("vit-")) {
-        await prisma.vITStudent.update({
-          where: { id: participant.id },
-          data: updateData,
-        });
-      } else if (participant.email) {
-        await prisma.vITStudent.update({
-          where: { email: participant.email },
-          data: updateData,
-        });
-      }
-    } else {
-      // External participant
-      const updateData: {
-        name: string;
-        collegeName: string;
-        address: string | null;
-        joinedAt: Date;
-        regNo?: string;
-        phone?: string;
-        year?: number;
-      } = {
-        name,
-        collegeName: data.collegeName || "External Institute",
-        address: address || null,
-        joinedAt: new Date(),
-      };
-
-      if (regNo) {
-        updateData.regNo = regNo;
-      }
-      if (phone) {
-        updateData.phone = phone;
-      }
-      if (data.year !== undefined && data.year !== null) {
-        updateData.year = Number(data.year);
-      }
-
-      if (participant.id && !participant.id.startsWith("ext-")) {
-        await prisma.externalStudent.update({
-          where: { id: participant.id },
-          data: updateData,
-        });
-      } else if (participant.email) {
-        await prisma.externalStudent.upsert({
-          where: { email: participant.email },
-          update: updateData,
-          create: {
-            email: participant.email,
-            phone: phone || "",
-            year: data.year ? Number(data.year) : 1,
-            ...updateData,
-          },
-        });
-      }
-    }
-
-    if (participant.userId) {
-      await prisma.user.update({
-        where: { id: participant.userId },
-        data: { name },
-      });
     }
 
     return { success: true };
@@ -351,6 +148,7 @@ export async function saveCheckInAction(data: CheckInData) {
     return { success: true, warning: "Saved in preview mode." };
   }
 }
+
 
 export async function prepareTeamCodeAction() {
   try {
@@ -424,78 +222,23 @@ export async function createTeamAction(teamName: string, customCode?: string) {
     // Use passed code or generate a fresh unique code from MongoDB
     const code = (customCode?.trim() || (await generateUniqueTeamCodeFromDb())).toUpperCase();
 
-    // 1. Native MongoDB team creation (works on Cloudflare Workers & Node.js)
-    try {
-      const res = await createTeamInDb({
-        name: trimmedName,
-        code,
-        participant: participant as any,
-      });
+    const res = await createTeamInDb({
+      name: trimmedName,
+      code,
+      participant: participant as any,
+    });
 
-      if (res.success && res.teamId) {
-        console.log(`[createTeamAction] Team successfully saved to MongoDB: ${trimmedName} (${code})`);
-        return {
-          success: true,
-          teamId: res.teamId,
-          teamCode: code,
-          teamName: trimmedName,
-        };
-      } else if (res.error) {
-        console.warn("[createTeamAction] MongoDB error:", res.error);
-        return { success: false, error: res.error };
-      }
-    } catch (mongoErr) {
-      console.warn("[createTeamAction] Native MongoDB creation failed, trying Prisma fallback:", mongoErr);
+    if (res.success && res.teamId) {
+      console.log(`[createTeamAction] Team successfully saved to MongoDB: ${trimmedName} (${code})`);
+      return {
+        success: true,
+        teamId: res.teamId,
+        teamCode: code,
+        teamName: trimmedName,
+      };
     }
 
-    // 2. Prisma fallback
-    if (participant.userId) {
-      try {
-        const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-        const now = new Date();
-
-        const team = await prisma.$transaction(async (tx) => {
-          const newTeam = await tx.team.create({
-            data: {
-              name: trimmedName,
-              code,
-              teamType,
-              leaderId: participant.userId,
-            },
-          });
-
-          if (participant.type === "vit") {
-            await tx.vITStudent.update({
-              where: { id: participant.id },
-              data: { teamId: newTeam.id, joinedAt: now },
-            });
-          } else {
-            await tx.externalStudent.update({
-              where: { id: participant.id },
-              data: { teamId: newTeam.id, joinedAt: now },
-            });
-          }
-
-          return newTeam;
-        });
-
-        return {
-          success: true,
-          teamId: team.id,
-          teamCode: code,
-          teamName: trimmedName,
-        };
-      } catch (prismaErr) {
-        console.error("[createTeamAction] Prisma transaction failed:", prismaErr);
-      }
-    }
-
-    return {
-      success: true,
-      teamId: "team-" + Date.now(),
-      teamCode: code,
-      teamName: trimmedName,
-    };
+    return { success: false, error: res.error || "Failed to create team." };
   } catch (err) {
     console.error("[createTeamAction] Unhandled error:", err);
     return {
@@ -512,18 +255,36 @@ export async function validateTeamCodeAction(code: string) {
   }
 
   try {
-    const participant = await resolveCurrentParticipant();
-    const team = await prisma.team.findUnique({
-      where: { code: normalized },
-      include: { vitStudents: true, externalStudents: true },
-    });
+    const db = await getMongoDb();
+    if (!db) {
+      if (/^VH26-[A-Z0-9]{3,}$/i.test(normalized)) {
+        return { success: true, teamName: "Alpha Squad (Preview)", memberCount: 2, capacity: 5 };
+      }
+      return { success: false, error: "Could not connect to database to verify team code." };
+    }
+
+    const [participant, team] = await Promise.all([
+      resolveCurrentParticipant(),
+      db.collection("teams").findOne(
+        { code: new RegExp(`^${normalized}$`, "i") },
+        { projection: { name: 1, teamType: 1, capacity: 1 } }
+      ),
+    ]);
 
     if (!team) {
       return { success: false, error: "Team not found. Verify the code." };
     }
 
-    const members = team.teamType === "VIT" ? team.vitStudents : team.externalStudents;
-    const memberCount = members.length;
+    const capacity = team.capacity || 5;
+    const memberCol = team.teamType === "VIT" ? "vit_students" : "external_students";
+    const teamOid = team._id;
+
+    const [memberCount, alreadyMember] = await Promise.all([
+      db.collection(memberCol).countDocuments({ teamId: teamOid }),
+      participant
+        ? db.collection(memberCol).findOne({ teamId: teamOid, _id: toObjectId(participant.id) }, { projection: { _id: 1 } })
+        : Promise.resolve(null),
+    ]);
 
     if (participant) {
       const expectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
@@ -533,39 +294,25 @@ export async function validateTeamCodeAction(code: string) {
           error: `Type mismatch: ${expectedType} participants cannot join a ${team.teamType} team.`,
         };
       }
-
-      // Check if participant is already on this team — their slot is already counted,
-      // so don't block them with the full-team check
-      const alreadyMember = members.some((m: { id: string }) => m.id === participant.id);
-      if (!alreadyMember && memberCount >= team.capacity) {
+      if (!alreadyMember && memberCount >= capacity) {
         return { success: false, error: "This team is already full (5/5 members)." };
       }
     } else {
-      if (memberCount >= team.capacity) {
+      if (memberCount >= capacity) {
         return { success: false, error: "This team is already full (5/5 members)." };
       }
     }
 
-    return {
-      success: true,
-      teamName: team.name,
-      memberCount,
-      capacity: team.capacity,
-    };
+    return { success: true, teamName: team.name, memberCount, capacity };
   } catch (err) {
     console.error("[validateTeamCodeAction] Error:", err);
-    // In preview mode if DB is disconnected, treat codes like VH26-XXX as mock valid
     if (/^VH26-[A-Z0-9]{3,}$/i.test(normalized)) {
-      return {
-        success: true,
-        teamName: "Alpha Squad (Preview)",
-        memberCount: 2,
-        capacity: 5,
-      };
+      return { success: true, teamName: "Alpha Squad (Preview)", memberCount: 2, capacity: 5 };
     }
     return { success: false, error: "Could not connect to database to verify team code." };
   }
 }
+
 
 export async function joinTeamAction(code: string) {
   const normalized = code.trim().toUpperCase();

@@ -136,8 +136,8 @@ model Team {
   capacity    Int       @default(5)
   teamType    TeamType
   track       String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime? @default(now()) @map("created_at")
+  updatedAt   DateTime? @updatedAt @map("updated_at")
 
   leaderId String? @map("leader_id") @db.ObjectId
   leader   User?   @relation("TeamLeader", fields: [leaderId], references: [id])
