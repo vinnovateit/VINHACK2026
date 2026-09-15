@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import KeyButton from "./KeyButton";
+import { validateTeamNameAction } from "@/app/onboarding/actions";
 
 interface CreateTeamDossierProps {
   initialTeamName?: string;
@@ -25,13 +26,64 @@ export default function CreateTeamDossier({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Real-time duplicate check state
+  const [checking, setChecking] = useState(false);
+  const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastCheckedRef = useRef<string>("");
+
+  // Debounced validation — fires 500ms after user stops typing
+  useEffect(() => {
+    const trimmed = teamName.trim();
+
+    // Reset if empty or too short
+    if (trimmed.length < 2) {
+      setChecking(false);
+      setNameAvailable(null);
+      setError(trimmed.length > 0 ? "Team name must be at least 2 characters." : null);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      return;
+    }
+
+    // Don't re-check if the trimmed value hasn't changed
+    if (trimmed === lastCheckedRef.current) return;
+
+    setChecking(true);
+    setNameAvailable(null);
+    setError(null);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      lastCheckedRef.current = trimmed;
+      try {
+        const result = await validateTeamNameAction(trimmed);
+        if (result.valid) {
+          setNameAvailable(true);
+          setError(null);
+        } else {
+          setNameAvailable(false);
+          setError(result.error || "This team name is already taken.");
+        }
+      } catch {
+        // Network error — don't block submission
+        setNameAvailable(null);
+        setError(null);
+      } finally {
+        setChecking(false);
+      }
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [teamName]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(teamCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }
@@ -48,6 +100,16 @@ export default function CreateTeamDossier({
       setError(res.error);
     }
   };
+
+  // Block submit if name is taken or check is in-flight
+  const isSubmitDisabled = isLoading || !teamName.trim() || checking || nameAvailable === false;
+
+  // Input border colour
+  const inputBorderClass = error
+    ? "border-red-500 bg-red-500/10"
+    : nameAvailable === true
+    ? "border-green-500 bg-green-500/5"
+    : "border-neutral-800 focus:border-[#FC2425]";
 
   return (
     <div className="relative w-full max-w-[1280px] h-full max-h-[100dvh] mx-auto bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
@@ -91,17 +153,45 @@ export default function CreateTeamDossier({
             <label className="block font-['Rotonto',sans-serif] text-neutral-300 text-xs sm:text-sm uppercase tracking-wider">
               Name your team
             </label>
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => {
-                setTeamName(e.target.value);
-                if (error && e.target.value.trim()) setError(null);
-              }}
-              className={`w-full bg-neutral-950 border ${error ? "border-red-500 bg-red-500/10" : "border-neutral-800 focus:border-[#FC2425]"
-                } rounded-xl px-4 py-2.5 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
-            />
-            {error && (
+            <div className="relative">
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => {
+                  setTeamName(e.target.value);
+                }}
+                maxLength={50}
+                placeholder="e.g. Cyber Knights"
+                className={`w-full bg-neutral-950 border ${inputBorderClass} rounded-xl px-4 py-2.5 pr-10 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
+              />
+              {/* Status icon */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                {checking && (
+                  <svg className="w-4 h-4 animate-spin text-neutral-400" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                )}
+                {!checking && nameAvailable === true && (
+                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {!checking && nameAvailable === false && (
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            {/* Status text */}
+            {checking && (
+              <p className="text-neutral-400 text-xs font-mono">Checking availability...</p>
+            )}
+            {!checking && nameAvailable === true && (
+              <p className="text-green-400 text-xs font-mono">✓ Team name is available</p>
+            )}
+            {!checking && error && (
               <p className="text-red-400 text-xs font-mono">{error}</p>
             )}
           </div>
@@ -126,10 +216,10 @@ export default function CreateTeamDossier({
               color="blue"
               size="compact"
               onClick={handleContinue}
-              disabled={isLoading || !teamName.trim()}
+              disabled={isSubmitDisabled}
               className="flex-1"
             >
-              {isLoading ? "SAVING..." : "SAVE AND CONTINUE"}
+              {isLoading ? "SAVING..." : checking ? "CHECKING..." : "SAVE AND CONTINUE"}
             </KeyButton>
           </div>
         </div>
