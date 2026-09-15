@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Lock } from "lucide-react";
 import KeyButton from "./KeyButton";
 
 export type StudentType = "vit" | "external";
@@ -206,44 +205,34 @@ export default function CheckInChecklist({
 
             {/* Table layout with Ques and Questions */}
             <div className="space-y-2 sm:space-y-2.5 text-[12px] md:text-[13px] font-['Rotonto',sans-serif]">
-              {/* Question 1: Name (Locked) */}
+              {/* Question 1: Name (Read-only) */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
                 <span className="col-span-2 text-[#676767] font-mono text-xs">Q1</span>
                 <div className="col-span-10 space-y-0.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-black text-xs font-semibold">What do we call you ?</label>
-                    <span className="text-[10px] font-mono text-neutral-600 uppercase flex items-center gap-1 bg-black/5 px-2 py-0.5 rounded">
-                      <Lock size={10} /> LOCKED
-                    </span>
-                  </div>
+                  <label className="block text-black text-xs font-semibold">What do we call you ?</label>
                   <input
                     type="text"
                     required
                     readOnly
                     value={name}
                     placeholder="Participant name"
-                    className="w-full bg-black/[0.04] cursor-not-allowed border-b-2 border-black/30 outline-none px-2 py-1 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] select-none font-medium transition"
+                    className="w-full bg-transparent border-b-2 border-black/40 outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] cursor-default select-none font-medium"
                   />
                 </div>
               </div>
 
-              {/* Question 2: Registration Number (Locked) */}
+              {/* Question 2: Registration Number (Read-only) */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
                 <span className="col-span-2 text-[#676767] font-mono text-xs">Q2</span>
                 <div className="col-span-10 space-y-0.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-black text-xs font-semibold">Registration number</label>
-                    <span className="text-[10px] font-mono text-neutral-600 uppercase flex items-center gap-1 bg-black/5 px-2 py-0.5 rounded">
-                      <Lock size={10} /> {studentType === "vit" ? "FETCHED FROM VIT RECORD" : "LOCKED"}
-                    </span>
-                  </div>
+                  <label className="block text-black text-xs font-semibold">Registration number</label>
                   <input
                     type="text"
                     required
                     readOnly
                     value={regNo}
                     placeholder="Registration number"
-                    className="w-full bg-black/[0.04] cursor-not-allowed border-b-2 border-black/30 outline-none px-2 py-1 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] select-none font-medium transition"
+                    className="w-full bg-transparent border-b-2 border-black/40 outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] cursor-default select-none font-medium"
                   />
                 </div>
               </div>
