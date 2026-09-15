@@ -32,7 +32,7 @@ async function removeMember(formData: FormData) {
 
   try {
     await removeTeamMember({
-      requesterUserId: participant.userId,
+      requester: { id: participant.id, type: participant.type, userId: participant.userId },
       targetParticipantId,
       targetType,
       teamId,

@@ -1,5 +1,5 @@
-import { getMongoDb } from "@/lib/mongo";
-import { ObjectId } from "mongodb";
+import { getMongoDb, isTeamLeader, normalizeTeamCode, TEAM_MAX_SIZE } from "@/lib/mongo";
+import { ObjectId, type Db } from "mongodb";
 
 type ParticipantType = "vit" | "external";
 
@@ -15,71 +15,68 @@ function toOid(id: string): any {
   try { return new ObjectId(id); } catch { return id; }
 }
 
-async function getRemainingLeaderId(
-  db: Awaited<ReturnType<typeof getMongoDb>>,
-  teamId: string
-): Promise<ObjectId | null> {
-  const oid = toOid(teamId);
+function memberCollection(type: ParticipantType) {
+  return type === "vit" ? "vit_students" : "external_students";
+}
+
+async function countMembers(db: Db, teamOid: any): Promise<number> {
+  const [vitCount, extCount] = await Promise.all([
+    db.collection("vit_students").countDocuments({ teamId: teamOid }),
+    db.collection("external_students").countDocuments({ teamId: teamOid }),
+  ]);
+  return vitCount + extCount;
+}
+
+// Leaders are stored as the member's participant _id; the earliest joiner inherits leadership.
+async function getRemainingLeaderId(db: Db, teamOid: any): Promise<ObjectId | null> {
   const [vit, ext] = await Promise.all([
-    db!.collection("vit_students").findOne(
-      { teamId: oid, userId: { $ne: null } },
-      { projection: { userId: 1, joinedAt: 1 }, sort: { joinedAt: 1 } }
+    db.collection("vit_students").findOne(
+      { teamId: teamOid },
+      { projection: { joinedAt: 1 }, sort: { joinedAt: 1 } }
     ),
-    db!.collection("external_students").findOne(
-      { teamId: oid, userId: { $ne: null } },
-      { projection: { userId: 1, joinedAt: 1 }, sort: { joinedAt: 1 } }
+    db.collection("external_students").findOne(
+      { teamId: teamOid },
+      { projection: { joinedAt: 1 }, sort: { joinedAt: 1 } }
     ),
   ]);
 
-  const candidates = [vit, ext]
+  const winner = [vit, ext]
     .filter(Boolean)
     .sort((a: any, b: any) => {
       const at = a?.joinedAt ? new Date(a.joinedAt).getTime() : Number.MAX_SAFE_INTEGER;
       const bt = b?.joinedAt ? new Date(b.joinedAt).getTime() : Number.MAX_SAFE_INTEGER;
       return at - bt;
-    });
-
-  const winner = candidates[0] as any;
-  return winner?.userId ? toOid(String(winner.userId)) : null;
+    })[0] as any;
+  return winner?._id ?? null;
 }
 
-async function removeParticipantFromTeam(
-  db: Awaited<ReturnType<typeof getMongoDb>>,
-  participant: Participant,
-  teamId: string
-) {
+// Clean up a team after `participant` has left it: delete it if empty, hand off leadership otherwise.
+async function settleTeamAfterDeparture(db: Db, participant: Participant, teamId: string) {
   const teamOid = toOid(teamId);
-  const team = await db!.collection("teams").findOne(
-    { _id: teamOid },
-    { projection: { leaderId: 1 } }
-  );
+  const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
   if (!team) return;
 
-  const col = participant.type === "vit" ? "vit_students" : "external_students";
-  await db!.collection(col).updateOne(
-    { _id: toOid(participant.id) },
-    { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
-  );
-
-  const [vitCount, extCount] = await Promise.all([
-    db!.collection("vit_students").countDocuments({ teamId: teamOid }),
-    db!.collection("external_students").countDocuments({ teamId: teamOid }),
-  ]);
-
-  if (vitCount + extCount === 0) {
-    await db!.collection("submissions").deleteMany({ teamId: teamOid });
-    await db!.collection("teams").deleteOne({ _id: teamOid });
+  if ((await countMembers(db, teamOid)) === 0) {
+    await db.collection("submissions").deleteMany({ teamId: teamOid });
+    await db.collection("teams").deleteOne({ _id: teamOid });
     return;
   }
 
-  // Transfer leadership if the leaver was the leader
-  if (team.leaderId && participant.userId && String(team.leaderId) === participant.userId) {
-    const newLeaderId = await getRemainingLeaderId(db, teamId);
-    await db!.collection("teams").updateOne(
+  if (isTeamLeader(team.leaderId, participant)) {
+    const newLeaderId = await getRemainingLeaderId(db, teamOid);
+    await db.collection("teams").updateOne(
       { _id: teamOid },
       { $set: { leaderId: newLeaderId, updatedAt: new Date() } }
     );
   }
+}
+
+async function removeParticipantFromTeam(db: Db, participant: Participant, teamId: string) {
+  await db.collection(memberCollection(participant.type)).updateOne(
+    { _id: toOid(participant.id), teamId: { $in: [toOid(teamId), teamId] } },
+    { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
+  );
+  await settleTeamAfterDeparture(db, participant, teamId);
 }
 
 export async function leaveCurrentTeam(participant: Participant, teamId: string) {
@@ -89,37 +86,34 @@ export async function leaveCurrentTeam(participant: Participant, teamId: string)
 }
 
 export async function removeTeamMember({
-  requesterUserId,
+  requester,
   targetParticipantId,
   targetType,
   teamId,
 }: {
-  requesterUserId: string | null;
+  requester: Participant;
   targetParticipantId: string;
   targetType: ParticipantType;
   teamId: string;
 }) {
-  if (!requesterUserId) throw new TeamMembershipError("Your participant record is not linked to a user yet.");
-
   const db = await getMongoDb();
   if (!db) throw new TeamMembershipError("Database unavailable.");
 
   const teamOid = toOid(teamId);
   const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
   if (!team) throw new TeamMembershipError("Team not found.");
-  if (String(team.leaderId) !== requesterUserId) {
+  if (!isTeamLeader(team.leaderId, requester)) {
     throw new TeamMembershipError("Only the current team leader can remove members.");
   }
 
-  const col = targetType === "vit" ? "vit_students" : "external_students";
-  const target = await db.collection(col).findOne(
+  const target = await db.collection(memberCollection(targetType)).findOne(
     { _id: toOid(targetParticipantId) },
     { projection: { teamId: 1, userId: 1 } }
   );
   if (!target || String(target.teamId) !== teamId) {
     throw new TeamMembershipError("That participant is not in your team.");
   }
-  if (target.userId && String(target.userId) === requesterUserId) {
+  if (targetParticipantId === requester.id) {
     throw new TeamMembershipError("Use Leave Team to remove yourself and transfer leadership.");
   }
 
@@ -137,14 +131,16 @@ export async function joinTeamByCode(
   const db = await getMongoDb();
   if (!db) throw new TeamMembershipError("Database unavailable.");
 
+  const normalizedCode = normalizeTeamCode(code);
+  if (!normalizedCode) throw new TeamMembershipError("Team not found.");
+
   const targetTeam = await db.collection("teams").findOne(
-    { code: new RegExp(`^${code}$`, "i") },
+    { code: normalizedCode },
     { projection: { _id: 1, capacity: 1, teamType: 1 } }
   );
   if (!targetTeam) throw new TeamMembershipError("Team not found.");
 
   const targetTeamId = targetTeam._id.toString();
-
   if (participant.currentTeamId === targetTeamId) {
     return { status: "already-member" as const };
   }
@@ -156,112 +152,96 @@ export async function joinTeamByCode(
     );
   }
 
-  // Clear stale team reference if old team no longer exists
-  let resolvedExistingTeamId = participant.currentTeamId;
-  if (resolvedExistingTeamId) {
-    const existingTeam = await db.collection("teams").findOne(
-      { _id: toOid(resolvedExistingTeamId) },
-      { projection: { _id: 1 } }
-    );
-    if (!existingTeam) {
-      const col = participant.type === "vit" ? "vit_students" : "external_students";
-      await db.collection(col).updateOne(
-        { _id: toOid(participant.id) },
-        { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
-      );
-      resolvedExistingTeamId = null;
-    }
-  }
-
-  const switchedTeams = Boolean(resolvedExistingTeamId);
-
-  // Check team capacity
-  const memberCol = targetTeam.teamType === "VIT" ? "vit_students" : "external_students";
-  const memberCount = await db.collection(memberCol).countDocuments({ teamId: targetTeam._id });
-  if (memberCount >= targetTeam.capacity) {
+  const capacity = Math.min(targetTeam.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE);
+  if ((await countMembers(db, targetTeam._id)) >= capacity) {
     throw new TeamMembershipError("Team is full.");
   }
 
-  // Leave old team if present
-  if (resolvedExistingTeamId) {
-    await removeParticipantFromTeam(db, participant, resolvedExistingTeamId);
-  }
-
-  // Join new team
+  // Move the participant only if their team hasn't changed since we resolved them.
+  const col = db.collection(memberCollection(participant.type));
+  const participantOid = toOid(participant.id);
+  const previousTeamFilter = participant.currentTeamId
+    ? { teamId: { $in: [toOid(participant.currentTeamId), participant.currentTeamId] } }
+    : { $or: [{ teamId: null }, { teamId: { $exists: false } }] };
   const now = new Date();
-  const col = participant.type === "vit" ? "vit_students" : "external_students";
-  await db.collection(col).updateOne(
-    { _id: toOid(participant.id) },
+  const moved = await col.updateOne(
+    { _id: participantOid, ...previousTeamFilter },
     { $set: { teamId: targetTeam._id, joinedAt: now, updatedAt: now } }
   );
-  await db.collection("teams").updateOne(
-    { _id: targetTeam._id },
-    { $set: { updatedAt: now } }
-  );
+  if (moved.matchedCount === 0) {
+    throw new TeamMembershipError("Your team changed in the meantime. Refresh and try again.");
+  }
 
-  return { status: switchedTeams ? ("switched" as const) : ("joined" as const) };
+  // Concurrent joins can both pass the capacity check; recount and back out if we overfilled.
+  if ((await countMembers(db, targetTeam._id)) > capacity) {
+    await col.updateOne(
+      { _id: participantOid, teamId: targetTeam._id },
+      {
+        $set: {
+          teamId: participant.currentTeamId ? toOid(participant.currentTeamId) : null,
+          joinedAt: participant.currentTeamId ? now : null,
+          updatedAt: new Date(),
+        },
+      }
+    );
+    throw new TeamMembershipError("Team is full.");
+  }
+
+  await db.collection("teams").updateOne({ _id: targetTeam._id }, { $set: { updatedAt: now } });
+
+  if (participant.currentTeamId) {
+    await settleTeamAfterDeparture(db, participant, participant.currentTeamId);
+    return { status: "switched" as const };
+  }
+  return { status: "joined" as const };
 }
 
 export async function transferLeadership({
-  requesterUserId,
+  requester,
   newLeaderParticipantId,
   newLeaderType,
   teamId,
 }: {
-  requesterUserId: string | null;
+  requester: Participant;
   newLeaderParticipantId: string;
   newLeaderType: ParticipantType;
   teamId: string;
 }) {
-  if (!requesterUserId) throw new TeamMembershipError("Your participant record is not linked to a user yet.");
-
   const db = await getMongoDb();
   if (!db) throw new TeamMembershipError("Database unavailable.");
 
   const teamOid = toOid(teamId);
   const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
   if (!team) throw new TeamMembershipError("Team not found.");
-  if (String(team.leaderId) !== requesterUserId) {
+  if (!isTeamLeader(team.leaderId, requester)) {
     throw new TeamMembershipError("Only the current leader can transfer leadership.");
   }
 
-  const col = newLeaderType === "vit" ? "vit_students" : "external_students";
-  const newLeader = await db.collection(col).findOne(
+  const newLeader = await db.collection(memberCollection(newLeaderType)).findOne(
     { _id: toOid(newLeaderParticipantId) },
-    { projection: { teamId: 1, userId: 1 } }
+    { projection: { teamId: 1 } }
   );
   if (!newLeader || String(newLeader.teamId) !== teamId) {
     throw new TeamMembershipError("The selected participant is not in your team.");
   }
-  if (!newLeader.userId) {
-    throw new TeamMembershipError("That participant doesn't have a user account linked yet.");
-  }
-  if (String(newLeader.userId) === requesterUserId) {
+  if (newLeaderParticipantId === requester.id) {
     throw new TeamMembershipError("You are already the leader.");
   }
 
   await db.collection("teams").updateOne(
     { _id: teamOid },
-    { $set: { leaderId: toOid(String(newLeader.userId)), updatedAt: new Date() } }
+    { $set: { leaderId: newLeader._id, updatedAt: new Date() } }
   );
 }
 
-export async function deleteTeam({
-  requesterUserId,
-  teamId,
-}: {
-  requesterUserId: string | null;
-  teamId: string;
-}) {
-  if (!requesterUserId) throw new TeamMembershipError("Your participant record is not linked to a user yet.");
-
+export async function deleteTeam({ requester, teamId }: { requester: Participant; teamId: string }) {
   const db = await getMongoDb();
   if (!db) throw new TeamMembershipError("Database unavailable.");
 
   const teamOid = toOid(teamId);
   const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
   if (!team) throw new TeamMembershipError("Team not found.");
-  if (String(team.leaderId) !== requesterUserId) {
+  if (!isTeamLeader(team.leaderId, requester)) {
     throw new TeamMembershipError("Only the team leader can delete the team.");
   }
 

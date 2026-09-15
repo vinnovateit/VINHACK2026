@@ -654,7 +654,7 @@ export const FAQS = {
       questions: [
         {
           q: "What is the maximum team size?",
-          a: "Each team can have 3 to 5 members. Cross-domain and cross-expertise teams are highly encouraged.",
+          a: "Each team can have 2 to 5 members. Cross-domain and cross-expertise teams are highly encouraged.",
         },
         {
           q: "What is the theme of the hackathon?",

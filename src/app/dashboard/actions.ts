@@ -1,10 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getMongoDb } from "@/lib/mongo";
+import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
 import { ObjectId } from "mongodb";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
-import { leaveCurrentTeam, removeTeamMember, TeamMembershipError } from "@/app/test-dashboard/team-membership";
+import {
+  deleteTeam,
+  leaveCurrentTeam,
+  removeTeamMember,
+  transferLeadership,
+  TeamMembershipError,
+} from "@/app/test-dashboard/team-membership";
 
 export interface SubmissionPayload {
   teamId: string;
@@ -55,6 +61,17 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
 
     const teamOid = toObjectId(teamId);
 
+    const [vitCount, extCount] = await Promise.all([
+      db.collection("vit_students").countDocuments({ teamId: teamOid }),
+      db.collection("external_students").countDocuments({ teamId: teamOid }),
+    ]);
+    if (vitCount + extCount < TEAM_MIN_SIZE) {
+      return {
+        success: false,
+        message: `Teams need at least ${TEAM_MIN_SIZE} members before submitting. Share your team code to invite teammates.`,
+      };
+    }
+
     await db.collection("submissions").updateOne(
       { teamId: teamOid },
       {
@@ -102,7 +119,7 @@ export async function fetchFullTeam(teamId: string) {
 
     if (!teamDoc) return null;
 
-    const [vitList, extList, subDoc, leaderDoc] = await Promise.all([
+    const [vitList, extList, subDoc] = await Promise.all([
       db.collection("vit_students").find({
         $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
       }).toArray(),
@@ -112,9 +129,6 @@ export async function fetchFullTeam(teamId: string) {
       db.collection("submissions").findOne({
         $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
       }),
-      teamDoc.leaderId
-        ? db.collection("users").findOne({ _id: toObjectId(String(teamDoc.leaderId)) })
-        : null,
     ]);
 
     const members = [
@@ -125,7 +139,7 @@ export async function fetchFullTeam(teamId: string) {
         regNo: m.regNo || "",
         type: "vit" as const,
         userId: m.userId ? String(m.userId) : null,
-        isLeader: Boolean(teamDoc.leaderId && String(m.userId) === String(teamDoc.leaderId)),
+        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
       })),
       ...extList.map((m: any) => ({
         id: m._id.toString(),
@@ -134,19 +148,36 @@ export async function fetchFullTeam(teamId: string) {
         regNo: m.regNo || "",
         type: "external" as const,
         userId: m.userId ? String(m.userId) : null,
-        isLeader: Boolean(teamDoc.leaderId && String(m.userId) === String(teamDoc.leaderId)),
+        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
       })),
     ];
+
+    let leaderId = teamDoc.leaderId ? String(teamDoc.leaderId) : null;
+    if (members.length > 0 && !members.some((m) => m.isLeader)) {
+      // Legacy teams can point at a users._id no member is linked to (or at nobody); promote the earliest joiner.
+      const earliest = [...vitList, ...extList].sort(
+        (a: any, b: any) =>
+          (a.joinedAt ? new Date(a.joinedAt).getTime() : Number.MAX_SAFE_INTEGER) -
+          (b.joinedAt ? new Date(b.joinedAt).getTime() : Number.MAX_SAFE_INTEGER)
+      )[0];
+      await db.collection("teams").updateOne(
+        { _id: teamDoc._id, leaderId: teamDoc.leaderId ?? null },
+        { $set: { leaderId: earliest._id, updatedAt: new Date() } }
+      );
+      leaderId = earliest._id.toString();
+      for (const m of members) m.isLeader = m.id === leaderId;
+    }
 
     return {
       id: teamDoc._id.toString(),
       name: teamDoc.name || "My Team",
       code: teamDoc.code || "VH26-000",
-      capacity: teamDoc.capacity || 5,
+      capacity: Math.min(teamDoc.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE),
+      minSize: TEAM_MIN_SIZE,
       teamType: teamDoc.teamType || "VIT",
       track: teamDoc.track || null,
-      leaderId: teamDoc.leaderId ? String(teamDoc.leaderId) : null,
-      leaderName: leaderDoc?.name || null,
+      leaderId,
+      leaderName: members.find((m) => m.isLeader)?.name || null,
       members,
       submission: subDoc
         ? {
@@ -167,38 +198,29 @@ export async function fetchFullTeam(teamId: string) {
   }
 }
 
+function toRequester(participant: { id: string; type: "vit" | "external"; userId: string | null }) {
+  return { id: participant.id, type: participant.type, userId: participant.userId };
+}
+
+function membershipErrorMessage(err: unknown, fallback: string) {
+  return err instanceof TeamMembershipError ? err.message : fallback;
+}
+
 export async function deleteTeamAction() {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId || !participant.teamId) {
+    if (!participant || !participant.teamId) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const teamId = participant.teamId;
-    const db = await getMongoDb();
-    if (!db) return { success: false, error: "Database unavailable." };
-
-    const teamOid = toObjectId(teamId);
-    const team = await db.collection("teams").findOne({ _id: teamOid });
-    if (!team) return { success: false, error: "Team not found." };
-    if (String(team.leaderId) !== String(participant.userId)) {
-      return { success: false, error: "Only the team leader can delete the team." };
-    }
-
-    const teamFilter = { $or: [{ teamId: teamOid }, { teamId: team._id }] };
-    await Promise.all([
-      db.collection("vit_students").updateMany(teamFilter, { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }),
-      db.collection("external_students").updateMany(teamFilter, { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }),
-      db.collection("submissions").deleteMany(teamFilter),
-      db.collection("teams").deleteOne({ _id: team._id }),
-    ]);
+    await deleteTeam({ requester: toRequester(participant), teamId: participant.teamId });
 
     revalidatePath("/dashboard");
     revalidatePath("/onboarding");
     return { success: true };
   } catch (err) {
-    console.error("[deleteTeamAction] Uncaught error:", err);
-    return { success: false, error: "An unexpected error occurred." };
+    console.error("[deleteTeamAction] Error:", err);
+    return { success: false, error: membershipErrorMessage(err, "An unexpected error occurred.") };
   }
 }
 
@@ -209,18 +231,14 @@ export async function leaveTeamAction() {
       return { success: false, error: "No active team session found." };
     }
 
-    await leaveCurrentTeam(
-      { id: participant.id, type: participant.type, userId: participant.userId },
-      participant.teamId
-    );
+    await leaveCurrentTeam(toRequester(participant), participant.teamId);
 
     revalidatePath("/dashboard");
     revalidatePath("/onboarding");
     return { success: true };
   } catch (err) {
-    const message = err instanceof TeamMembershipError ? err.message : "Failed to leave team.";
     console.error("[leaveTeamAction] Error:", err);
-    return { success: false, error: message };
+    return { success: false, error: membershipErrorMessage(err, "Failed to leave team.") };
   }
 }
 
@@ -230,12 +248,12 @@ export async function removeTeamMemberAction(
 ) {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId || !participant.teamId) {
+    if (!participant || !participant.teamId) {
       return { success: false, error: "Unauthorized." };
     }
 
     await removeTeamMember({
-      requesterUserId: participant.userId,
+      requester: toRequester(participant),
       targetParticipantId,
       targetType,
       teamId: participant.teamId,
@@ -244,75 +262,51 @@ export async function removeTeamMemberAction(
     revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
-    const message = err instanceof TeamMembershipError ? err.message : "Failed to remove member.";
     console.error("[removeTeamMemberAction] Error:", err);
-    return { success: false, error: message };
+    return { success: false, error: membershipErrorMessage(err, "Failed to remove member.") };
   }
 }
 
 export async function transferLeadershipAction(newLeaderParticipantId: string, newLeaderType: "vit" | "external") {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId || !participant.teamId) {
+    if (!participant || !participant.teamId) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const teamId = participant.teamId;
-    const db = await getMongoDb();
-    if (!db) return { success: false, error: "Database unavailable." };
-
-    const teamOid = toObjectId(teamId);
-    const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
-    if (!team) return { success: false, error: "Team not found." };
-    if (String(team.leaderId) !== String(participant.userId)) {
-      return { success: false, error: "Only the team leader can transfer leadership." };
-    }
-
-    const targetCol = newLeaderType === "vit" ? "vit_students" : "external_students";
-    const newLeaderDoc = await db.collection(targetCol).findOne(
-      { _id: toObjectId(newLeaderParticipantId) },
-      { projection: { userId: 1 } }
-    );
-    if (!newLeaderDoc) return { success: false, error: "Selected member not found." };
-    if (!newLeaderDoc.userId) return { success: false, error: "Selected member has no linked user account yet." };
-
-    await db.collection("teams").updateOne(
-      { _id: teamOid },
-      { $set: { leaderId: toObjectId(String(newLeaderDoc.userId)), updatedAt: new Date() } }
-    );
+    await transferLeadership({
+      requester: toRequester(participant),
+      newLeaderParticipantId,
+      newLeaderType,
+      teamId: participant.teamId,
+    });
 
     revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
-    console.error("[transferLeadershipAction] Uncaught error:", err);
-    return { success: false, error: "An unexpected error occurred." };
+    console.error("[transferLeadershipAction] Error:", err);
+    return { success: false, error: membershipErrorMessage(err, "An unexpected error occurred.") };
   }
 }
 
 export async function renameTeamAction(teamId: string, teamName: string) {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId) {
+    if (!participant || participant.teamId !== teamId) {
       return { success: false, error: "Unauthorized." };
     }
-
-    const trimmed = teamName.trim().slice(0, 100);
-    if (!trimmed) return { success: false, error: "Team name cannot be empty." };
 
     const db = await getMongoDb();
     if (!db) return { success: false, error: "Database unavailable." };
 
-    const teamOid = toObjectId(teamId);
-    const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+    const team = await db.collection("teams").findOne({ _id: toObjectId(teamId) }, { projection: { leaderId: 1 } });
     if (!team) return { success: false, error: "Team not found." };
-    if (String(team.leaderId) !== String(participant.userId)) {
+    if (!isTeamLeader(team.leaderId, participant)) {
       return { success: false, error: "Only the leader can rename the team." };
     }
 
-    await db.collection("teams").updateOne(
-      { _id: teamOid },
-      { $set: { name: trimmed, updatedAt: new Date() } }
-    );
+    const res = await renameTeamInDb(teamId, teamName);
+    if (!res.success) return res;
 
     revalidatePath("/dashboard");
     return { success: true };

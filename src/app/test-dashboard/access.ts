@@ -1,9 +1,5 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { getOrCreateEligibleUser } from "./participant-eligibility";
-
-export const TEST_SESSION_COOKIE = "test_session";
 
 type ParticipantType = "vit" | "external";
 
@@ -16,25 +12,9 @@ export type CurrentParticipant = {
   year?: number | null;
 };
 
+// Identity comes only from the signed NextAuth session; the old unsigned test_session cookie let
+// anyone impersonate a participant by setting "vit:<id>".
 export async function getCurrentParticipant(): Promise<CurrentParticipant | null> {
-  const session = (await cookies()).get(TEST_SESSION_COOKIE)?.value;
-  if (session) {
-    const [type, id] = session.split(":");
-    if ((type === "vit" || type === "external") && id) {
-      try {
-        if (type === "vit") {
-          const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true, year: true } });
-          if (student) return { ...student, type };
-        } else {
-          const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true, year: true } });
-          if (student) return { ...student, type };
-        }
-      } catch (err) {
-        console.warn("[getCurrentParticipant] Error querying DB:", err);
-      }
-    }
-  }
-
   // Also check NextAuth authenticated session
   try {
     const { resolveCurrentParticipant } = await import("@/app/onboarding/actions");

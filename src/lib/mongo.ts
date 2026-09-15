@@ -43,6 +43,28 @@ function formatError(err: unknown): string {
   return String(err);
 }
 
+export const TEAM_MIN_SIZE = 2;
+export const TEAM_MAX_SIZE = 5;
+
+const TEAM_CODE_PATTERN = /^[A-Z0-9-]{4,20}$/;
+
+// Team codes are stored uppercase with a unique index; returns null for anything that isn't a code.
+export function normalizeTeamCode(raw: string): string | null {
+  const code = (raw || "").trim().toUpperCase();
+  return TEAM_CODE_PATTERN.test(code) ? code : null;
+}
+
+// Most participants have no linked `users` record, so leaders are stored as the participant _id.
+// Older teams may still hold a users._id, so accept either.
+export function isTeamLeader(
+  leaderId: unknown,
+  participant: { id: string; userId?: string | null }
+): boolean {
+  if (!leaderId) return false;
+  const leader = String(leaderId);
+  return leader === participant.id || (!!participant.userId && leader === participant.userId);
+}
+
 export async function getMongoClient(): Promise<MongoClient | null> {
   const uri = process.env.DATABASE_URL;
   if (!uri) {
@@ -507,7 +529,7 @@ export async function generateUniqueTeamCodeFromDb(): Promise<string> {
         const candidate = `VH26-${randomPart}`;
 
         const existing = await db.collection("teams").findOne(
-          { code: new RegExp(`^${candidate}$`, "i") },
+          { code: candidate },
           { projection: { _id: 1 } }
         );
 
@@ -549,22 +571,36 @@ export function normalizeTeamName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-export async function validateTeamNameInDb(
-  candidateName: string,
-  excludeTeamId?: string
-): Promise<{ valid: boolean; error?: string; conflictName?: string }> {
-  const trimmed = candidateName.trim();
+// One team per 2-5 participants keeps this list small, so compare in memory with the exact same
+// normalization used for the candidate rather than approximating it in an aggregation.
+async function findTeamsWithNormalizedName(db: Db, normalized: string) {
+  const teams = await db.collection("teams").find({}, { projection: { name: 1 } }).toArray();
+  return teams.filter((t) => normalizeTeamName(String(t.name || "")) === normalized);
+}
+
+function validateTeamNameShape(trimmed: string): { valid: false; error: string } | null {
   if (!trimmed || trimmed.length < 2) {
     return { valid: false, error: "Team name must be at least 2 characters long." };
   }
   if (trimmed.length > 50) {
     return { valid: false, error: "Team name cannot exceed 50 characters." };
   }
-
-  const candidateNorm = normalizeTeamName(trimmed);
-  if (!candidateNorm || candidateNorm.length < 2) {
+  const normalized = normalizeTeamName(trimmed);
+  if (!normalized || normalized.length < 2) {
     return { valid: false, error: "Team name must contain at least 2 letters or numbers." };
   }
+  return null;
+}
+
+const TEAM_NAME_TAKEN = "This team name is already taken or too similar to an existing team.";
+
+export async function validateTeamNameInDb(
+  candidateName: string,
+  excludeTeamId?: string
+): Promise<{ valid: boolean; error?: string; conflictName?: string }> {
+  const trimmed = candidateName.trim();
+  const shapeError = validateTeamNameShape(trimmed);
+  if (shapeError) return shapeError;
 
   try {
     const db = await getMongoDb();
@@ -572,51 +608,25 @@ export async function validateTeamNameInDb(
       return { valid: true };
     }
 
-    // 1. Fast exact case-insensitive check via index
-    const exactQuery: any = { name: new RegExp(`^${escapeRegex(trimmed)}$`, "i") };
-    if (excludeTeamId) exactQuery._id = { $ne: toObjectId(excludeTeamId) };
-
-    const exactMatch = await db.collection("teams").findOne(exactQuery, { projection: { name: 1 } });
-    if (exactMatch) {
-      return {
-        valid: false,
-        conflictName: exactMatch.name,
-        error: "This team name is already taken or too similar to an existing team.",
-      };
-    }
-
-    // 2. Normalized equality check via MongoDB aggregation (no JS memory scan)
-    const pipeline: any[] = [
-      ...(excludeTeamId ? [{ $match: { _id: { $ne: toObjectId(excludeTeamId) } } }] : []),
-      {
-        $addFields: {
-          normalizedName: {
-            $replaceAll: {
-              input: { $replaceAll: { input: { $toLower: "$name" }, find: " ", replacement: "" } },
-              find: "-", replacement: ""
-            }
-          }
-        }
-      },
-      { $match: { normalizedName: candidateNorm } },
-      { $limit: 1 },
-      { $project: { name: 1 } },
-    ];
-
-    const normResults = await db.collection("teams").aggregate(pipeline).toArray();
-    if (normResults.length > 0) {
-      return {
-        valid: false,
-        conflictName: normResults[0].name,
-        error: "This team name is already taken or too similar to an existing team.",
-      };
+    const conflict = (await findTeamsWithNormalizedName(db, normalizeTeamName(trimmed))).find(
+      (t) => t._id.toString() !== excludeTeamId
+    );
+    if (conflict) {
+      return { valid: false, conflictName: conflict.name, error: TEAM_NAME_TAKEN };
     }
 
     return { valid: true };
   } catch (err) {
-    console.warn("[validateTeamNameInDb] Validation error:", err);
+    console.warn("[validateTeamNameInDb] Validation error:", formatError(err));
     return { valid: true };
   }
+}
+
+// Two requests can both pass the name check before either writes. The older team (lower
+// ObjectId) keeps the name; the newer one detects the clash after writing and backs out.
+async function lostTeamNameRace(db: Db, teamOid: ObjectId, normalized: string): Promise<boolean> {
+  const matches = await findTeamsWithNormalizedName(db, normalized);
+  return matches.some((t) => !t._id.equals(teamOid) && t._id.toString() < teamOid.toString());
 }
 
 export async function createTeamInDb(data: {
@@ -630,66 +640,123 @@ export async function createTeamInDb(data: {
       return { success: false, error: "Database connection unavailable." };
     }
 
-    const { name, code, participant } = data;
-    const trimmedName = name.trim().slice(0, 100);
-    const normalizedCode = code.trim().toUpperCase();
+    const { participant } = data;
+    const trimmedName = data.name.trim();
+    const shapeError = validateTeamNameShape(trimmedName);
+    if (shapeError) return { success: false, error: shapeError.error };
 
-    // Verify team name uniqueness and similarity in MongoDB
+    const normalizedCode = normalizeTeamCode(data.code);
+    if (!normalizedCode) {
+      return { success: false, error: "Invalid team code. Please refresh and try again." };
+    }
+
+    const collectionName = participant.type === "vit" ? "vit_students" : "external_students";
+    const members = db.collection(collectionName);
+    if (!ObjectId.isValid(participant.id)) {
+      return { success: false, error: "Your participant record was not found. Please contact the organisers." };
+    }
+    const participantOid = new ObjectId(participant.id);
+
+    const student = await members.findOne({ _id: participantOid }, { projection: { teamId: 1 } });
+    if (!student) {
+      return { success: false, error: "Your participant record was not found. Please contact the organisers." };
+    }
+    if (student.teamId) {
+      const currentTeam = await db.collection("teams").findOne(
+        { _id: toObjectId(String(student.teamId)) },
+        { projection: { _id: 1 } }
+      );
+      if (currentTeam) {
+        return { success: false, error: "You are already in a team. Leave it before creating a new one." };
+      }
+    }
+
     const nameValidation = await validateTeamNameInDb(trimmedName);
     if (!nameValidation.valid) {
       return { success: false, error: nameValidation.error || "This team name is not available." };
     }
 
-    // Verify code uniqueness in MongoDB
-    const existing = await db.collection("teams").findOne({
-      code: new RegExp(`^${normalizedCode}$`, "i"),
-    });
-    if (existing) {
-      return { success: false, error: "This team code is already in use. Please try another." };
-    }
-
     const now = new Date();
-    const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-
-    let leaderUserId: any = null;
-    if (participant.userId) {
-      leaderUserId = toObjectId(participant.userId);
-    } else if (participant.id && !participant.id.startsWith("vit-") && !participant.id.startsWith("ext-")) {
-      leaderUserId = toObjectId(participant.id);
+    const normalizedName = normalizeTeamName(trimmedName);
+    let teamOid: ObjectId;
+    try {
+      const insertRes = await db.collection("teams").insertOne({
+        name: trimmedName,
+        code: normalizedCode,
+        capacity: TEAM_MAX_SIZE,
+        teamType: participant.type === "vit" ? "VIT" : "EXTERNAL",
+        track: null,
+        leaderId: participantOid,
+        createdAt: now,
+        updatedAt: now,
+      });
+      teamOid = insertRes.insertedId;
+    } catch (insertErr: any) {
+      if (insertErr?.code === 11000) {
+        return { success: false, error: "This team code is already in use. Please refresh and try again." };
+      }
+      throw insertErr;
     }
 
-    const newTeamDoc = {
-      name: trimmedName,
-      code: normalizedCode,
-      capacity: 5,
-      teamType,
-      track: null,
-      leaderId: leaderUserId,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    const insertRes = await db.collection("teams").insertOne(newTeamDoc);
-    const teamId = insertRes.insertedId.toString();
-
-    // Associate participant with team
-    const collectionName = participant.type === "vit" ? "vit_students" : "external_students";
-    if (participant.id && !participant.id.startsWith("vit-") && !participant.id.startsWith("ext-")) {
-      await db.collection(collectionName).updateOne(
-        { _id: toObjectId(participant.id) },
-        { $set: { teamId: insertRes.insertedId, joinedAt: now, updatedAt: now } }
-      );
-    } else if (participant.email) {
-      await db.collection(collectionName).updateOne(
-        { email: new RegExp(`^${escapeRegex(participant.email)}$`, "i") },
-        { $set: { teamId: insertRes.insertedId, joinedAt: now, updatedAt: now } }
-      );
+    // Claim the participant only if they are still teamless (guards double-submits and parallel tabs).
+    const claimed = await members.updateOne(
+      { _id: participantOid, teamId: student.teamId ?? null },
+      { $set: { teamId: teamOid, joinedAt: now, updatedAt: now } }
+    );
+    if (claimed.matchedCount === 0) {
+      await db.collection("teams").deleteOne({ _id: teamOid });
+      return { success: false, error: "You are already in a team. Leave it before creating a new one." };
     }
 
-    return { success: true, teamId };
+    if (await lostTeamNameRace(db, teamOid, normalizedName)) {
+      await members.updateOne(
+        { _id: participantOid, teamId: teamOid },
+        { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
+      );
+      await db.collection("teams").deleteOne({ _id: teamOid });
+      return { success: false, error: TEAM_NAME_TAKEN };
+    }
+
+    return { success: true, teamId: teamOid.toString() };
   } catch (err) {
     console.error("[MongoDB] createTeamInDb error:", formatError(err));
     return { success: false, error: "Failed to create team in database." };
   }
 }
 
+export async function renameTeamInDb(
+  teamId: string,
+  newName: string
+): Promise<{ success: boolean; error?: string }> {
+  const trimmed = newName.trim();
+  const shapeError = validateTeamNameShape(trimmed);
+  if (shapeError) return { success: false, error: shapeError.error };
+
+  const db = await getMongoDb();
+  if (!db) return { success: false, error: "Database unavailable." };
+
+  const validation = await validateTeamNameInDb(trimmed, teamId);
+  if (!validation.valid) return { success: false, error: validation.error };
+
+  const teamOid = toObjectId(teamId);
+  const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { name: 1 } });
+  if (!team) return { success: false, error: "Team not found." };
+
+  await db.collection("teams").updateOne(
+    { _id: teamOid },
+    { $set: { name: trimmed, updatedAt: new Date() } }
+  );
+
+  const clash = (await findTeamsWithNormalizedName(db, normalizeTeamName(trimmed))).some(
+    (t) => !t._id.equals(team._id)
+  );
+  if (clash) {
+    await db.collection("teams").updateOne(
+      { _id: teamOid, name: trimmed },
+      { $set: { name: team.name, updatedAt: new Date() } }
+    );
+    return { success: false, error: TEAM_NAME_TAKEN };
+  }
+
+  return { success: true };
+}

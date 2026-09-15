@@ -48,6 +48,7 @@ export interface DashboardShellProps {
     name: string;
     code: string;
     capacity: number;
+    minSize: number;
     teamType: string;
     track: string | null;
     leaderId: string | null;
@@ -253,6 +254,8 @@ export default function DashboardShell({
   };
 
 
+
+  const needsMoreMembers = team.members.length < team.minSize;
 
   const firstName = (participant.name || "Hacker").split(" ")[0] || "Hacker";
   const userInitial = ((participant.name || "P").charAt(0) || "P").toUpperCase();
@@ -775,10 +778,15 @@ export default function DashboardShell({
                 </button>
               </div>
 
+              {needsMoreMembers && (
+                <p className="step-helper">
+                  Teams need {team.minSize} to {team.capacity} members to submit. Share code {team.code} to invite teammates.
+                </p>
+              )}
               <button
                 className="save-submission-btn"
                 onClick={handleSaveSubmission}
-                disabled={isPending}
+                disabled={isPending || needsMoreMembers}
               >
                 {isPending ? "Saving..." : "Save Submission"}
               </button>

@@ -246,10 +246,10 @@ export default function CheckInChecklist({
                 FAQS
               </span>
               <h3 className="font-['Rotonto',sans-serif] text-[18px] md:text-[20px] text-black leading-snug">
-                What is the maximum team size?
+                What is the team size?
               </h3>
               <p className="font-['Rotonto',sans-serif] text-[14px] text-neutral-800 leading-relaxed pt-1">
-                Each team can have up to 5 members.
+                Each team must have 2 to 5 members.
               </p>
               <p className="font-['Rotonto',sans-serif] text-[13px] text-neutral-700 leading-relaxed">
                 Cross-domain and cross-expertise teams are highly encouraged.

@@ -1,23 +1,21 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import QRCode from "qrcode";
 
 import { auth } from "@/lib/auth";
-import { TEST_SESSION_COOKIE } from "../test-dashboard/access";
-import { generateUniqueTeamCode } from "../test-dashboard/utils";
 import { joinTeamByCode, TeamMembershipError } from "../test-dashboard/team-membership";
 
 import type { CheckInData, StudentType } from "@/components/onboarding/CheckInChecklist";
 import {
   getMongoDb,
   getParticipantByEmail,
-  getParticipantById,
   saveParticipantCheckInInDb,
-  formatNameFromEmail,
   generateUniqueTeamCodeFromDb,
   createTeamInDb,
   validateTeamNameInDb,
+  normalizeTeamCode,
+  TEAM_MAX_SIZE,
 } from "@/lib/mongo";
 import { ObjectId } from "mongodb";
 
@@ -52,64 +50,18 @@ export type CurrentOnboardingParticipant = {
   } | null;
 };
 
+// Only the signed NextAuth session identifies a participant. Never trust unsigned cookies here.
 export async function resolveCurrentParticipant(): Promise<CurrentOnboardingParticipant | null> {
   try {
-    const cookieStore = await cookies();
-    const testSession = cookieStore.get(TEST_SESSION_COOKIE)?.value;
+    const session = await auth();
+    if (!session?.user?.email) return null;
 
-    if (testSession) {
-      const [type, id] = testSession.split(":");
-      if ((type === "vit" || type === "external") && id) {
-        try {
-          const mongoParticipant = await getParticipantById(type as "vit" | "external", id);
-          if (mongoParticipant) return mongoParticipant;
-        } catch (sessionDbErr) {
-          console.warn("[Onboarding] Error querying test session student:", sessionDbErr);
-        }
-      }
-    }
-
-    // 1. Primary: Check NextAuth session (Production Google OAuth authenticated users)
-    try {
-      const session = await auth();
-      if (session?.user?.email) {
-        const email = session.user.email.toLowerCase().trim();
-        console.log(`[Onboarding] Resolving participant for authenticated session: ${email}`);
-
-        // Fast native Mongo lookup (works on Cloudflare Workers & Node.js)
-        const mongoParticipant = await getParticipantByEmail(email, session.user.name);
-        if (mongoParticipant) {
-          console.log(
-            `[Onboarding] Successfully resolved participant via MongoDB: ${mongoParticipant.name}, RegNo: ${mongoParticipant.regNo}`
-          );
-          return mongoParticipant;
-        }
-      }
-    } catch (authErr) {
-      console.warn("[Onboarding] Session lookup threw error, checking fallbacks:", authErr);
-    }
-
-
-    // 2. Secondary: Check preview / test session cookie
-    if (testSession) {
-      const [type, id] = testSession.split(":");
-      if ((type === "vit" || type === "external") && id) {
-        try {
-          const mongoParticipant = await getParticipantById(type, id);
-          if (mongoParticipant) return mongoParticipant;
-        } catch {
-          // Ignore
-        }
-      }
-    }
-
-    // No authenticated session found
+    const email = session.user.email.toLowerCase().trim();
+    return await getParticipantByEmail(email, session.user.name);
+  } catch (err) {
+    console.error("[Onboarding] Failed to resolve participant from session:", err);
     return null;
-  } catch (topLevelErr) {
-    console.error("[Onboarding] Top-level error in resolveCurrentParticipant:", topLevelErr);
   }
-
-  return null;
 }
 
 export async function saveCheckInAction(data: CheckInData) {
@@ -208,19 +160,16 @@ export async function createTeamAction(teamName: string, customCode?: string) {
       return { success: false, error: "Please enter a team name before continuing." };
     }
 
-    // Upfront check for unique and distinct team name
-    const validation = await validateTeamNameInDb(trimmedName);
-    if (!validation.valid) {
-      return { success: false, error: validation.error || "This team name is already taken or too similar to an existing team." };
-    }
-
     const participant = await resolveCurrentParticipant();
     if (!participant) {
       return { success: false, error: "Participant session not found. Please log in again." };
     }
+    if (participant.teamId) {
+      return { success: false, error: "You are already in a team. Leave it before creating a new one." };
+    }
 
-    // Use passed code or generate a fresh unique code from MongoDB
-    const code = (customCode?.trim() || (await generateUniqueTeamCodeFromDb())).toUpperCase();
+    // Use the code shown to the user if it's well-formed, otherwise generate a fresh one
+    const code = normalizeTeamCode(customCode || "") || (await generateUniqueTeamCodeFromDb());
 
     const res = await createTeamInDb({
       name: trimmedName,
@@ -249,24 +198,24 @@ export async function createTeamAction(teamName: string, customCode?: string) {
 }
 
 export async function validateTeamCodeAction(code: string) {
-  const normalized = code.trim().toUpperCase();
-  if (!normalized) {
+  if (!code.trim()) {
     return { success: false, error: "Please enter a team code." };
+  }
+  const normalized = normalizeTeamCode(code);
+  if (!normalized) {
+    return { success: false, error: "Team not found. Verify the code." };
   }
 
   try {
     const db = await getMongoDb();
     if (!db) {
-      if (/^VH26-[A-Z0-9]{3,}$/i.test(normalized)) {
-        return { success: true, teamName: "Alpha Squad (Preview)", memberCount: 2, capacity: 5 };
-      }
       return { success: false, error: "Could not connect to database to verify team code." };
     }
 
     const [participant, team] = await Promise.all([
       resolveCurrentParticipant(),
       db.collection("teams").findOne(
-        { code: new RegExp(`^${normalized}$`, "i") },
+        { code: normalized },
         { projection: { name: 1, teamType: 1, capacity: 1 } }
       ),
     ]);
@@ -275,7 +224,7 @@ export async function validateTeamCodeAction(code: string) {
       return { success: false, error: "Team not found. Verify the code." };
     }
 
-    const capacity = team.capacity || 5;
+    const capacity = Math.min(team.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE);
     const memberCol = team.teamType === "VIT" ? "vit_students" : "external_students";
     const teamOid = team._id;
 
@@ -295,20 +244,17 @@ export async function validateTeamCodeAction(code: string) {
         };
       }
       if (!alreadyMember && memberCount >= capacity) {
-        return { success: false, error: "This team is already full (5/5 members)." };
+        return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
       }
     } else {
       if (memberCount >= capacity) {
-        return { success: false, error: "This team is already full (5/5 members)." };
+        return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
       }
     }
 
     return { success: true, teamName: team.name, memberCount, capacity };
   } catch (err) {
     console.error("[validateTeamCodeAction] Error:", err);
-    if (/^VH26-[A-Z0-9]{3,}$/i.test(normalized)) {
-      return { success: true, teamName: "Alpha Squad (Preview)", memberCount: 2, capacity: 5 };
-    }
     return { success: false, error: "Could not connect to database to verify team code." };
   }
 }
