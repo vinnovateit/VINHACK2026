@@ -24,7 +24,13 @@ export default function JoinTeamTerminal({
   onBack,
   initialCode = "",
 }: JoinTeamTerminalProps) {
-  const [code, setCode] = useState(initialCode);
+  const extractSuffix = (val: string) => {
+    if (!val) return "";
+    return val.replace(/^VH26[-_]?/i, "").trim().toUpperCase();
+  };
+
+  const [suffix, setSuffix] = useState(() => extractSuffix(initialCode));
+  const code = suffix.trim() ? `VH26-${suffix.trim().toUpperCase()}` : "";
   const [stage, setStage] = useState<"input" | "validating" | "validated" | "joined">("input");
   const [feedback, setFeedback] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -35,6 +41,7 @@ export default function JoinTeamTerminal({
 
   const paperRef = useRef<HTMLDivElement>(null);
   const smallSlipRef = useRef<HTMLDivElement>(null);
+  const printerInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamically scale the 470px x 725px terminal to fit available container bounds
   // ensuring the entire view fits in 100dvh with strictly zero scrolling.
@@ -80,7 +87,7 @@ export default function JoinTeamTerminal({
     if (!paper) return null;
 
     const ac = audio();
-    if (ac && ac.state === "suspended") void ac.resume().catch(() => {});
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
 
     const full = paper.offsetHeight || 285;
     const ink = Array.from(paper.children) as HTMLElement[];
@@ -138,7 +145,7 @@ export default function JoinTeamTerminal({
     if (!slip) return null;
 
     const ac = audio();
-    if (ac && ac.state === "suspended") void ac.resume().catch(() => {});
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
 
     const full = slip.offsetHeight || 98;
     const ink = Array.from(slip.children) as HTMLElement[];
@@ -183,6 +190,9 @@ export default function JoinTeamTerminal({
     let tl: gsap.core.Timeline | null = null;
     const timer = setTimeout(() => {
       tl = triggerPrint();
+      setTimeout(() => {
+        printerInputRef.current?.focus();
+      }, 1100);
     }, 200);
 
     return () => {
@@ -191,9 +201,13 @@ export default function JoinTeamTerminal({
     };
   }, []);
 
-  const handleInputChange = (val: string) => {
-    const formatted = val.toUpperCase();
-    setCode(formatted);
+  const handleSuffixChange = (val: string) => {
+    const cleaned = val
+      .replace(/^VH26[-_]?/i, "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 8);
+    setSuffix(cleaned);
     if (stage !== "input") {
       setStage("input");
       setFeedback("");
@@ -202,11 +216,11 @@ export default function JoinTeamTerminal({
 
   // STEP 1 -> STEP 2: Validate code with CRT progress animation
   const handleValidate = async () => {
-    if (!code.trim()) {
+    if (!suffix.trim()) {
       setFeedback("PLEASE ENTER A TEAM CODE");
       return;
     }
-    const targetCode = code.trim();
+    const targetCode = `VH26-${suffix.trim().toUpperCase()}`;
     setIsLoading(true);
     setStage("validating");
     setProgressSegments(0);
@@ -247,11 +261,11 @@ export default function JoinTeamTerminal({
 
   // STEP 2 -> STEP 3: Join team and roll out full thermal ticket
   const handleJoin = async () => {
-    if (!code.trim()) {
+    if (!suffix.trim()) {
       setFeedback("PLEASE ENTER A TEAM CODE");
       return;
     }
-    const targetCode = code.trim();
+    const targetCode = `VH26-${suffix.trim().toUpperCase()}`;
     setIsLoading(true);
 
     const res = await onJoinTeam(targetCode);
@@ -338,7 +352,7 @@ export default function JoinTeamTerminal({
               <KeyButton
                 color="blue"
                 size="compact"
-                onClick={() => {}}
+                onClick={() => { }}
                 disabled={true}
                 className="w-full max-w-[360px] opacity-80"
               >
@@ -421,8 +435,8 @@ export default function JoinTeamTerminal({
                   {stage === "validating"
                     ? "VALIDATING CODE"
                     : stage === "validated" || stage === "joined"
-                    ? "TEAM CODE VALIDATED"
-                    : "ENTER TEAM CODE"}
+                      ? "TEAM CODE VALIDATED"
+                      : "ENTER TEAM CODE"}
                 </div>
 
                 {/* Center Content: Mode-specific UI */}
@@ -433,11 +447,10 @@ export default function JoinTeamTerminal({
                       {Array.from({ length: 18 }).map((_, i) => (
                         <div
                           key={i}
-                          className={`h-[22px] flex-1 rounded-[1.5px] transition-all duration-75 ${
-                            i < progressSegments
-                              ? "bg-[#83ee91] shadow-[0_0_6px_#83ee91]"
-                              : "bg-[#83ee91]/15"
-                          }`}
+                          className={`h-[22px] flex-1 rounded-[1.5px] transition-all duration-75 ${i < progressSegments
+                            ? "bg-[#83ee91] shadow-[0_0_6px_#83ee91]"
+                            : "bg-[#83ee91]/15"
+                            }`}
                         />
                       ))}
                     </div>
@@ -450,20 +463,14 @@ export default function JoinTeamTerminal({
                     </span>
                   </div>
                 ) : (
-                  /* Initial State: Editable Input Box matching user screenshot */
-                  <div className="absolute top-[58px] left-[21.9px] rounded-[8px] border-[0.8px] border-[#83ee91] box-border w-[278px] h-[41px] flex items-center px-3 bg-black/50">
-                    <input
-                      type="text"
-                      value={code}
-                      onChange={(e) => handleInputChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleValidate();
-                      }}
-                      placeholder="AWAITING ACCESS CODE"
-                      autoComplete="off"
-                      spellCheck={false}
-                      className="w-full bg-transparent font-mono text-[#83ee91] text-[13px] tracking-widest uppercase outline-none placeholder:text-[#83ee91]/60 font-light cursor-text text-center"
-                    />
+                  /* Initial State: Clean Terminal Readout (User types directly on the printer ticket below) */
+                  <div
+                    onClick={() => printerInputRef.current?.focus()}
+                    className="absolute top-[58px] left-[21.9px] rounded-[8px] border-[0.8px] border-[#83ee91]/70 box-border w-[278px] h-[41px] flex items-center justify-center px-3 bg-black/50 cursor-pointer hover:border-[#83ee91] transition"
+                  >
+                    <span className="font-mono text-[#83ee91] text-[13px] tracking-widest uppercase font-light select-none">
+                      {code.trim() ? `CODE: ${code.trim()}` : "AWAITING ACCESS CODE"}
+                    </span>
                   </div>
                 )}
 
@@ -487,9 +494,8 @@ export default function JoinTeamTerminal({
 
               {/* NETWORK */}
               <div
-                className={`absolute top-[211px] left-[370px] rounded-full bg-[#ffed25] w-[12px] h-[12px] shadow-[0_0_8px_#ffed25] ${
-                  stage === "validating" ? "animate-ping" : ""
-                }`}
+                className={`absolute top-[211px] left-[370px] rounded-full bg-[#ffed25] w-[12px] h-[12px] shadow-[0_0_8px_#ffed25] ${stage === "validating" ? "animate-ping" : ""
+                  }`}
               />
               <div className="absolute top-[208px] left-[391px] font-light text-[14px] text-black leading-none">
                 NETWORK
@@ -497,11 +503,10 @@ export default function JoinTeamTerminal({
 
               {/* READY */}
               <div
-                className={`absolute top-[242px] left-[370px] rounded-full w-[12px] h-[12px] transition-colors duration-200 ${
-                  stage === "validated" || stage === "joined"
-                    ? "bg-[#00d753] shadow-[0_0_8px_#00d753]"
-                    : "bg-[#656565]"
-                }`}
+                className={`absolute top-[242px] left-[370px] rounded-full w-[12px] h-[12px] transition-colors duration-200 ${stage === "validated" || stage === "joined"
+                  ? "bg-[#00d753] shadow-[0_0_8px_#00d753]"
+                  : "bg-[#656565]"
+                  }`}
               />
               <div className="absolute top-[239px] left-[391px] font-light text-[14px] text-black leading-none">
                 READY
@@ -844,15 +849,36 @@ export default function JoinTeamTerminal({
                     />
 
                     {/* Enter Team Code label */}
-                    <div className="absolute top-[160px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
+                    <div className="absolute top-[156px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
                       Enter Team Code
                     </div>
 
-                    {/* Enter Team Code value */}
-                    <div className="absolute top-[174px] left-0 w-full text-center text-[22px] font-bold tracking-wider leading-none select-none font-['Rotonto',sans-serif] text-black">
-                      {code.trim()
-                        ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`)
-                        : "VH26-____"}
+                    {/* Enter Team Code interactive input directly on the printer ticket with fixed VH26- */}
+                    <div className="absolute top-[168px] left-0 w-full flex items-center justify-center z-20 pointer-events-auto">
+                      <div
+                        onClick={() => printerInputRef.current?.focus()}
+                        className="inline-flex items-center justify-center font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider border-b border-dashed border-black/30 focus-within:border-black py-0.5 px-1 cursor-text"
+                      >
+                        <span className="select-none text-black leading-none">VH26-</span>
+                        <input
+                          ref={printerInputRef}
+                          type="text"
+                          value={suffix}
+                          onChange={(e) => handleSuffixChange(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleValidate();
+                          }}
+                          placeholder="____"
+                          maxLength={6}
+                          autoFocus
+                          autoComplete="off"
+                          spellCheck={false}
+                          style={{
+                            width: `${Math.max(4, suffix.length || 4)}ch`,
+                          }}
+                          className="bg-transparent text-left font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider outline-none placeholder:text-neutral-400 uppercase cursor-text leading-none p-0 m-0"
+                        />
+                      </div>
                     </div>
 
                     {/* Dashed line 3 */}

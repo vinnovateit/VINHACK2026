@@ -14,6 +14,9 @@ import {
   getParticipantById,
   saveParticipantCheckInInDb,
   formatNameFromEmail,
+  generateUniqueTeamCodeFromDb,
+  createTeamInDb,
+  validateTeamNameInDb,
 } from "@/lib/mongo";
 
 export type CurrentOnboardingParticipant = {
@@ -70,7 +73,7 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
                 blockType: student.block?.startsWith("L") ? "LH" : "MH",
                 hostelBlock: student.block || "",
                 roomNo: student.room || "",
-                address: student.address || "",
+                address: (student as any).address || "",
                 collegeName: "Vellore Institute of Technology",
                 teamId: student.teamId,
                 userId,
@@ -89,11 +92,11 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
                 id: student.id,
                 name: student.name,
                 type: "external",
-                regNo: student.regNo || "",
+                regNo: (student as any).regNo || "",
                 phone: student.phone || "",
                 year: student.year ?? undefined,
                 collegeName: student.collegeName || "External Institute",
-                address: student.address || "",
+                address: (student as any).address || "",
                 takingAccommodation: true,
                 teamId: student.teamId,
                 userId,
@@ -152,7 +155,7 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               blockType: vit.block?.startsWith("L") ? "LH" : "MH",
               hostelBlock: vit.block || "",
               roomNo: vit.room || "",
-              address: vit.address || "",
+              address: (vit as any).address || "",
               collegeName: "Vellore Institute of Technology",
               takingAccommodation: true,
               teamId: vit.teamId,
@@ -172,11 +175,11 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               id: ext.id,
               name: ext.name || session.user.name || formatNameFromEmail(email),
               type: "external",
-              regNo: ext.regNo || "",
+              regNo: (ext as any).regNo || "",
               phone: ext.phone || "",
               year: ext.year ?? undefined,
               collegeName: ext.collegeName || "External Institute",
-              address: ext.address || "",
+              address: (ext as any).address || "",
               takingAccommodation: true,
               teamId: ext.teamId,
               userId,
@@ -349,51 +352,11 @@ export async function saveCheckInAction(data: CheckInData) {
   }
 }
 
-export async function createTeamAction(teamName: string) {
+export async function prepareTeamCodeAction() {
   try {
-    const participant = await resolveCurrentParticipant();
-    const fallbackCode = "VH26-" + Math.floor(100 + Math.random() * 900);
-    const code = participant ? await generateUniqueTeamCode().catch(() => fallbackCode) : fallbackCode;
-    const name = (teamName.trim() || (participant?.name ? `${participant.name}'s Squad` : "My Squad")).slice(0, 100);
+    const code = await generateUniqueTeamCodeFromDb();
 
-    let teamId = "preview-" + Date.now();
-
-    if (participant && participant.userId) {
-      try {
-        const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-        const now = new Date();
-
-        const team = await prisma.$transaction(async (tx) => {
-          const newTeam = await tx.team.create({
-            data: {
-              name,
-              code,
-              teamType,
-              leaderId: participant.userId,
-            },
-          });
-
-          if (participant.type === "vit") {
-            await tx.vITStudent.update({
-              where: { id: participant.id },
-              data: { teamId: newTeam.id, joinedAt: now },
-            });
-          } else {
-            await tx.externalStudent.update({
-              where: { id: participant.id },
-              data: { teamId: newTeam.id, joinedAt: now },
-            });
-          }
-
-          return newTeam;
-        });
-        teamId = team.id;
-      } catch (txErr) {
-        console.warn("[createTeamAction] DB transaction failed, falling back to preview team:", txErr);
-      }
-    }
-
-    // Generate QR code for instant joining
+    // Generate QR code for this candidate code without saving to database yet
     let qrDataUrl = "";
     try {
       const reqHeaders = await headers();
@@ -417,20 +380,127 @@ export async function createTeamAction(teamName: string) {
 
     return {
       success: true,
-      teamId,
       teamCode: code,
-      teamName: name,
       qrDataUrl,
     };
   } catch (err) {
-    console.error("[createTeamAction] Unhandled error:", err);
-    const code = "VH26-" + Math.floor(100 + Math.random() * 900);
+    console.error("[prepareTeamCodeAction] Error:", err);
+    const fallback = `VH26-${Date.now().toString(36).slice(-4).toUpperCase()}`;
     return {
       success: true,
-      teamId: "preview-fallback",
-      teamCode: code,
-      teamName: teamName || "My Squad",
+      teamCode: fallback,
       qrDataUrl: "",
+    };
+  }
+}
+
+export async function validateTeamNameAction(teamName: string) {
+  try {
+    return await validateTeamNameInDb(teamName);
+  } catch (err) {
+    console.error("[validateTeamNameAction] Error:", err);
+    return { valid: true };
+  }
+}
+
+export async function createTeamAction(teamName: string, customCode?: string) {
+  try {
+    const trimmedName = teamName.trim();
+    if (!trimmedName) {
+      return { success: false, error: "Please enter a team name before continuing." };
+    }
+
+    // Upfront check for unique and distinct team name
+    const validation = await validateTeamNameInDb(trimmedName);
+    if (!validation.valid) {
+      return { success: false, error: validation.error || "This team name is already taken or too similar to an existing team." };
+    }
+
+    const participant = await resolveCurrentParticipant();
+    if (!participant) {
+      return { success: false, error: "Participant session not found. Please log in again." };
+    }
+
+    // Use passed code or generate a fresh unique code from MongoDB
+    const code = (customCode?.trim() || (await generateUniqueTeamCodeFromDb())).toUpperCase();
+
+    // 1. Native MongoDB team creation (works on Cloudflare Workers & Node.js)
+    try {
+      const res = await createTeamInDb({
+        name: trimmedName,
+        code,
+        participant: participant as any,
+      });
+
+      if (res.success && res.teamId) {
+        console.log(`[createTeamAction] Team successfully saved to MongoDB: ${trimmedName} (${code})`);
+        return {
+          success: true,
+          teamId: res.teamId,
+          teamCode: code,
+          teamName: trimmedName,
+        };
+      } else if (res.error) {
+        console.warn("[createTeamAction] MongoDB error:", res.error);
+        return { success: false, error: res.error };
+      }
+    } catch (mongoErr) {
+      console.warn("[createTeamAction] Native MongoDB creation failed, trying Prisma fallback:", mongoErr);
+    }
+
+    // 2. Prisma fallback
+    if (participant.userId) {
+      try {
+        const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
+        const now = new Date();
+
+        const team = await prisma.$transaction(async (tx) => {
+          const newTeam = await tx.team.create({
+            data: {
+              name: trimmedName,
+              code,
+              teamType,
+              leaderId: participant.userId,
+            },
+          });
+
+          if (participant.type === "vit") {
+            await tx.vITStudent.update({
+              where: { id: participant.id },
+              data: { teamId: newTeam.id, joinedAt: now },
+            });
+          } else {
+            await tx.externalStudent.update({
+              where: { id: participant.id },
+              data: { teamId: newTeam.id, joinedAt: now },
+            });
+          }
+
+          return newTeam;
+        });
+
+        return {
+          success: true,
+          teamId: team.id,
+          teamCode: code,
+          teamName: trimmedName,
+        };
+      } catch (prismaErr) {
+        console.error("[createTeamAction] Prisma transaction failed:", prismaErr);
+      }
+    }
+
+    return {
+      success: true,
+      teamId: "team-" + Date.now(),
+      teamCode: code,
+      teamName: trimmedName,
+    };
+  } catch (err) {
+    console.error("[createTeamAction] Unhandled error:", err);
+    return {
+      success: false,
+      error: "An unexpected error occurred while saving your team.",
     };
   }
 }
