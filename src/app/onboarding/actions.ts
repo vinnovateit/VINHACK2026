@@ -24,6 +24,7 @@ export type CurrentOnboardingParticipant = {
   userId: string | null;
   email?: string;
   regNo?: string;
+  phone?: string;
   isHosteller?: boolean;
   blockType?: "MH" | "LH";
   hostelBlock?: string;
@@ -139,6 +140,7 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               name: cleanName,
               type: "vit",
               regNo: finalRegNo,
+              phone: vit.phone || "",
               isHosteller: vit.residencyType === "HOSTELLER",
               blockType: vit.block?.startsWith("L") ? "LH" : "MH",
               hostelBlock: vit.block || "",
@@ -164,6 +166,7 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               name: ext.name || session.user.name || formatNameFromEmail(email),
               type: "external",
               regNo: ext.regNo || "",
+              phone: ext.phone || "",
               collegeName: ext.collegeName || "External Institute",
               address: ext.address || "",
               takingAccommodation: true,
@@ -234,6 +237,7 @@ export async function saveCheckInAction(data: CheckInData) {
 
     const name = data.name.trim();
     const regNo = (data.regNo || "").trim();
+    const phone = (data.phone || "").trim();
     const address = (data.address || "").trim();
 
     // 1. Native MongoDB update (works on Cloudflare Workers & Node.js)
@@ -241,6 +245,7 @@ export async function saveCheckInAction(data: CheckInData) {
       const saved = await saveParticipantCheckInInDb(participant as any, {
         name,
         regNo,
+        phone,
         isHosteller: data.isHosteller,
         blockType: data.blockType,
         hostelBlock: data.hostelBlock,
@@ -249,7 +254,7 @@ export async function saveCheckInAction(data: CheckInData) {
         collegeName: data.collegeName,
       });
       if (saved) {
-        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo})`);
+        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo}, ${phone})`);
         return { success: true };
       }
     } catch (mongoSaveErr) {
@@ -268,6 +273,7 @@ export async function saveCheckInAction(data: CheckInData) {
         room: string | null;
         address: string | null;
         regNo?: string;
+        phone?: string;
       } = {
         name,
         residencyType,
@@ -278,6 +284,9 @@ export async function saveCheckInAction(data: CheckInData) {
 
       if (regNo) {
         updateData.regNo = regNo;
+      }
+      if (phone) {
+        updateData.phone = phone;
       }
 
       if (participant.id && !participant.id.startsWith("vit-")) {
@@ -299,6 +308,7 @@ export async function saveCheckInAction(data: CheckInData) {
         address: string | null;
         joinedAt: Date;
         regNo?: string;
+        phone?: string;
       } = {
         name,
         collegeName: data.collegeName || "External Institute",
@@ -308,6 +318,9 @@ export async function saveCheckInAction(data: CheckInData) {
 
       if (regNo) {
         updateData.regNo = regNo;
+      }
+      if (phone) {
+        updateData.phone = phone;
       }
 
       if (participant.id && !participant.id.startsWith("ext-")) {

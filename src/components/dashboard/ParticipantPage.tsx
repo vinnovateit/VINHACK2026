@@ -39,11 +39,52 @@ function TimelineContent() {
 
 function TracksContent() {
   const tracks = [
-    { name: "Open Innovation", detail: "Build a bold answer to a problem that matters to you.", tone: "green" },
-    { name: "Social Impact", detail: "Use technology to make everyday life more equitable.", tone: "blue" },
-    { name: "Sustainability", detail: "Design practical ways to protect the future we share.", tone: "pink" },
+    {
+      name: "Industry 6.0",
+      detail: "Power the next evolution of industry. Build solutions bringing humans and intelligent systems together through human-AI collaboration, automation, and smart workspaces.",
+      tone: "green",
+    },
+    {
+      name: "Trust, Safety & Digital Security",
+      detail: "Build solutions that create a safer, more secure, and trustworthy world through cybersecurity, privacy, fraud prevention, digital identity, and resilient systems.",
+      tone: "blue",
+    },
+    {
+      name: "ClimateTech & Resilience",
+      detail: "Build solutions for a climate-resilient future through clean energy, resource efficiency, waste management, climate adaptation, and disaster resilience.",
+      tone: "pink",
+    },
+    {
+      name: "Entertainment Reimagined",
+      detail: "Redefine how we create, experience, and engage with entertainment through gaming, immersive AR/VR experiences, digital media, creator tools, and next-generation platforms.",
+      tone: "green",
+    },
+    {
+      name: "Wildcard",
+      detail: "For bold ideas that don't fit the mould. Explore AI, automation, blockchain, quantum technology, smart devices, and groundbreaking emerging tech.",
+      tone: "blue",
+    },
   ];
-  return <section className={styles.trackGrid} aria-label="Hackathon tracks"><div className={styles.trackLead}><span>{TRACKS.lines[0]}</span><strong>{TRACKS.lines[1]}</strong><span>{TRACKS.lines[2]}</span><p>{TRACKS.sticker}</p></div>{tracks.map((track) => <article className={`${styles.trackCard} ${styles[track.tone]}`} key={track.name}><span>0{tracks.indexOf(track) + 1}</span><h2>{track.name}</h2><p>{track.detail}</p><Link href={`/dashboard?track=${encodeURIComponent(track.name)}`}>Use this direction <ArrowRight size={17} /></Link></article>)}</section>;
+  return (
+    <section className={styles.trackGrid} aria-label="Hackathon tracks">
+      <div className={styles.trackLead}>
+        <span>{TRACKS.lines[0]}</span>
+        <strong>{TRACKS.lines[1]}</strong>
+        <span>{TRACKS.lines[2]}</span>
+        <p>{TRACKS.sticker}</p>
+      </div>
+      {tracks.map((track, idx) => (
+        <article className={`${styles.trackCard} ${styles[track.tone]}`} key={track.name}>
+          <span>0{idx + 1}</span>
+          <h2>{track.name}</h2>
+          <p>{track.detail}</p>
+          <Link href={`/dashboard?track=${encodeURIComponent(track.name)}`}>
+            Use this direction <ArrowRight size={17} />
+          </Link>
+        </article>
+      ))}
+    </section>
+  );
 }
 
 function HelpContent() {

@@ -11,6 +11,7 @@ export interface CheckInData {
   studentType: StudentType;
   name: string;
   regNo: string;
+  phone: string;
   isHosteller: boolean;
   blockType?: "MH" | "LH";
   hostelBlock?: string;
@@ -35,6 +36,7 @@ export default function CheckInChecklist({
 }: CheckInChecklistProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [regNo, setRegNo] = useState(initialData?.regNo ?? "");
+  const [phone, setPhone] = useState(initialData?.phone ?? "");
 
   // Ensure fields sync if initialData arrives after initial mount
   React.useEffect(() => {
@@ -48,6 +50,12 @@ export default function CheckInChecklist({
       setRegNo(initialData.regNo);
     }
   }, [initialData?.regNo]);
+
+  React.useEffect(() => {
+    if (initialData?.phone) {
+      setPhone(initialData.phone);
+    }
+  }, [initialData?.phone]);
 
   // VIT specific
   const [isHosteller, setIsHosteller] = useState<boolean>(initialData?.isHosteller ?? true);
@@ -66,12 +74,13 @@ export default function CheckInChecklist({
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !phone.trim()) return;
 
     onSubmit({
       studentType,
       name: name.trim(),
       regNo: regNo.trim(),
+      phone: phone.trim(),
       isHosteller,
       blockType,
       address: address.trim(),
@@ -135,7 +144,7 @@ export default function CheckInChecklist({
               size="compact"
               type="submit"
               onClick={() => handleSubmit()}
-              disabled={isLoading || !name.trim()}
+              disabled={isLoading || !name.trim() || !phone.trim()}
               className="w-full max-w-[360px]"
             >
               {isLoading ? "SAVING..." : "SAVE AND CONTINUE"}
@@ -239,10 +248,27 @@ export default function CheckInChecklist({
                 </div>
               </div>
 
-              {/* Question 3: Hosteller (VIT) OR College Name (External) */}
+              {/* Question 3: Phone number */}
+              <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                <span className="col-span-2 text-[#676767] font-mono text-xs">Q3</span>
+                <div className="col-span-10 space-y-0.5">
+                  <label className="block text-black text-xs font-semibold">Phone number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="10-digit mobile number (e.g. 9876543210)"
+                    pattern="[0-9]{10}"
+                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition"
+                  />
+                </div>
+              </div>
+
+              {/* Question 4: Hosteller (VIT) OR College Name (External) */}
               {studentType === "vit" ? (
                 <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q3</span>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q4</span>
                   <div className="col-span-10 space-y-0.5">
                     <label className="block text-black text-xs">Are you a hosteller ?</label>
                     <div className="flex items-center gap-5 pt-0.5">
@@ -271,7 +297,7 @@ export default function CheckInChecklist({
                 </div>
               ) : (
                 <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q3</span>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q4</span>
                   <div className="col-span-10 space-y-0.5">
                     <label className="block text-black text-xs">College name</label>
                     <input
@@ -286,10 +312,10 @@ export default function CheckInChecklist({
                 </div>
               )}
 
-              {/* Question 4: Where do you live (VIT) OR Accommodation (External) */}
+              {/* Question 5: Where do you live (VIT) OR Accommodation (External) */}
               {studentType === "vit" ? (
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q4</span>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q5</span>
                   <div className="col-span-10 space-y-1.5">
                     <label className="block text-black text-xs">
                       {isHosteller ? "Where do you live ?" : "Residential Address (Dayscholar)"}
@@ -361,7 +387,7 @@ export default function CheckInChecklist({
               ) : (
                 /* External Accommodation */
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q4</span>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q5</span>
                   <div className="col-span-10 space-y-1.5">
                     <label className="block text-black text-xs">Are you taking accommodation ?</label>
                     <div className="flex items-center gap-5">

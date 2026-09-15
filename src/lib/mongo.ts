@@ -60,6 +60,7 @@ export interface MongoParticipant {
   type: "vit" | "external";
   email: string;
   regNo: string;
+  phone?: string;
   isHosteller: boolean;
   blockType: "MH" | "LH";
   hostelBlock: string;
@@ -137,6 +138,7 @@ export async function getParticipantByEmail(
           type: "vit",
           email: vit.email || email,
           regNo: finalRegNo,
+          phone: vit.phone || "",
           isHosteller: vit.residencyType !== "DAYSCHOLAR",
           blockType,
           hostelBlock: block,
@@ -174,6 +176,7 @@ export async function getParticipantByEmail(
         type: "vit",
         email,
         regNo: userRegNo,
+        phone: user?.phone || "",
         isHosteller: true,
         blockType: "MH",
         hostelBlock: "",
@@ -206,6 +209,7 @@ export async function getParticipantByEmail(
           type: "external",
           email: ext.email || email,
           regNo: ext.regNo || "",
+          phone: ext.phone || "",
           isHosteller: true,
           blockType: "MH",
           hostelBlock: "",
@@ -236,6 +240,7 @@ export async function getParticipantByEmail(
         type: "external",
         email,
         regNo: "",
+        phone: user?.phone || "",
         isHosteller: true,
         blockType: "MH",
         hostelBlock: "",
@@ -284,6 +289,7 @@ export async function getParticipantById(
         type: "vit",
         email: student.email || "",
         regNo: student.regNo || "",
+        phone: student.phone || "",
         isHosteller: student.residencyType !== "DAYSCHOLAR",
         blockType,
         hostelBlock: block,
@@ -311,6 +317,7 @@ export async function getParticipantById(
         type: "external",
         email: student.email || "",
         regNo: student.regNo || "",
+        phone: student.phone || "",
         isHosteller: true,
         blockType: "MH",
         hostelBlock: "",
@@ -343,6 +350,7 @@ export async function saveParticipantCheckInInDb(
   data: {
     name: string;
     regNo: string;
+    phone?: string;
     isHosteller: boolean;
     blockType?: "MH" | "LH";
     hostelBlock?: string;
@@ -371,6 +379,7 @@ export async function saveParticipantCheckInInDb(
         updatedAt: now,
       };
       if (regNo) updateFields.regNo = regNo;
+      if (data.phone) updateFields.phone = data.phone.trim();
 
       if (participant.id && !participant.id.startsWith("vit-")) {
         await db
@@ -390,6 +399,7 @@ export async function saveParticipantCheckInInDb(
         joinedAt: now,
       };
       if (regNo) updateFields.regNo = regNo;
+      if (data.phone) updateFields.phone = data.phone.trim();
 
       if (participant.id && !participant.id.startsWith("ext-")) {
         await db

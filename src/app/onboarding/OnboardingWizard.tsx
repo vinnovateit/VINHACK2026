@@ -138,6 +138,7 @@ export default function OnboardingWizard({
           initialData={{
             name: participantName || initialParticipant?.name || "",
             regNo: initialParticipant?.regNo ?? "",
+            phone: initialParticipant?.phone ?? "",
             isHosteller: initialParticipant?.isHosteller ?? true,
             blockType: initialParticipant?.blockType ?? "MH",
             hostelBlock: initialParticipant?.hostelBlock ?? "",
