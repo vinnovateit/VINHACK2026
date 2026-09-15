@@ -25,6 +25,7 @@ export type CurrentOnboardingParticipant = {
   email?: string;
   regNo?: string;
   phone?: string;
+  year?: number;
   isHosteller?: boolean;
   blockType?: "MH" | "LH";
   hostelBlock?: string;
@@ -63,11 +64,14 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
                 name: student.name,
                 type: "vit",
                 regNo: student.regNo,
+                phone: student.phone || "",
+                year: student.year ?? undefined,
                 isHosteller: student.residencyType === "HOSTELLER",
                 blockType: student.block?.startsWith("L") ? "LH" : "MH",
                 hostelBlock: student.block || "",
                 roomNo: student.room || "",
                 address: student.address || "",
+                collegeName: "Vellore Institute of Technology",
                 teamId: student.teamId,
                 userId,
                 email: student.email,
@@ -86,7 +90,9 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
                 name: student.name,
                 type: "external",
                 regNo: student.regNo || "",
-                collegeName: student.collegeName || "",
+                phone: student.phone || "",
+                year: student.year ?? undefined,
+                collegeName: student.collegeName || "External Institute",
                 address: student.address || "",
                 takingAccommodation: true,
                 teamId: student.teamId,
@@ -141,6 +147,7 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               type: "vit",
               regNo: finalRegNo,
               phone: vit.phone || "",
+              year: vit.year ?? undefined,
               isHosteller: vit.residencyType === "HOSTELLER",
               blockType: vit.block?.startsWith("L") ? "LH" : "MH",
               hostelBlock: vit.block || "",
@@ -167,6 +174,7 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
               type: "external",
               regNo: ext.regNo || "",
               phone: ext.phone || "",
+              year: ext.year ?? undefined,
               collegeName: ext.collegeName || "External Institute",
               address: ext.address || "",
               takingAccommodation: true,
@@ -222,6 +230,7 @@ export async function saveCheckInAction(data: CheckInData) {
         name,
         regNo,
         phone,
+        year: data.year,
         isHosteller: data.isHosteller,
         blockType: data.blockType,
         hostelBlock: data.hostelBlock,
@@ -230,7 +239,7 @@ export async function saveCheckInAction(data: CheckInData) {
         collegeName: data.collegeName,
       });
       if (saved) {
-        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo}, ${phone})`);
+        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo}, ${phone}, Year: ${data.year || "N/A"})`);
         return { success: true };
       }
     } catch (mongoSaveErr) {
@@ -250,6 +259,7 @@ export async function saveCheckInAction(data: CheckInData) {
         address: string | null;
         regNo?: string;
         phone?: string;
+        year?: number;
       } = {
         name,
         residencyType,
@@ -263,6 +273,9 @@ export async function saveCheckInAction(data: CheckInData) {
       }
       if (phone) {
         updateData.phone = phone;
+      }
+      if (data.year !== undefined && data.year !== null) {
+        updateData.year = Number(data.year);
       }
 
       if (participant.id && !participant.id.startsWith("vit-")) {
@@ -285,6 +298,7 @@ export async function saveCheckInAction(data: CheckInData) {
         joinedAt: Date;
         regNo?: string;
         phone?: string;
+        year?: number;
       } = {
         name,
         collegeName: data.collegeName || "External Institute",
@@ -298,6 +312,9 @@ export async function saveCheckInAction(data: CheckInData) {
       if (phone) {
         updateData.phone = phone;
       }
+      if (data.year !== undefined && data.year !== null) {
+        updateData.year = Number(data.year);
+      }
 
       if (participant.id && !participant.id.startsWith("ext-")) {
         await prisma.externalStudent.update({
@@ -310,7 +327,8 @@ export async function saveCheckInAction(data: CheckInData) {
           update: updateData,
           create: {
             email: participant.email,
-            phone: "",
+            phone: phone || "",
+            year: data.year ? Number(data.year) : 1,
             ...updateData,
           },
         });

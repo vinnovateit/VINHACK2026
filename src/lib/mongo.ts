@@ -61,6 +61,7 @@ export interface MongoParticipant {
   email: string;
   regNo: string;
   phone?: string;
+  year?: number;
   isHosteller: boolean;
   blockType: "MH" | "LH";
   hostelBlock: string;
@@ -139,6 +140,7 @@ export async function getParticipantByEmail(
           email: vit.email || email,
           regNo: finalRegNo,
           phone: vit.phone || "",
+          year: typeof vit.year === "number" ? vit.year : undefined,
           isHosteller: vit.residencyType !== "DAYSCHOLAR",
           blockType,
           hostelBlock: block,
@@ -210,6 +212,7 @@ export async function getParticipantByEmail(
           email: ext.email || email,
           regNo: ext.regNo || "",
           phone: ext.phone || "",
+          year: typeof ext.year === "number" ? ext.year : undefined,
           isHosteller: true,
           blockType: "MH",
           hostelBlock: "",
@@ -241,6 +244,7 @@ export async function getParticipantByEmail(
         email,
         regNo: "",
         phone: user?.phone || "",
+        year: typeof user?.year === "number" ? user.year : undefined,
         isHosteller: true,
         blockType: "MH",
         hostelBlock: "",
@@ -290,6 +294,7 @@ export async function getParticipantById(
         email: student.email || "",
         regNo: student.regNo || "",
         phone: student.phone || "",
+        year: typeof student.year === "number" ? student.year : undefined,
         isHosteller: student.residencyType !== "DAYSCHOLAR",
         blockType,
         hostelBlock: block,
@@ -318,6 +323,7 @@ export async function getParticipantById(
         email: student.email || "",
         regNo: student.regNo || "",
         phone: student.phone || "",
+        year: typeof student.year === "number" ? student.year : undefined,
         isHosteller: true,
         blockType: "MH",
         hostelBlock: "",
@@ -351,6 +357,7 @@ export async function saveParticipantCheckInInDb(
     name: string;
     regNo: string;
     phone?: string;
+    year?: number;
     isHosteller: boolean;
     blockType?: "MH" | "LH";
     hostelBlock?: string;
@@ -380,6 +387,7 @@ export async function saveParticipantCheckInInDb(
       };
       if (regNo) updateFields.regNo = regNo;
       if (data.phone) updateFields.phone = data.phone.trim();
+      if (data.year !== undefined && data.year !== null) updateFields.year = Number(data.year);
 
       if (participant.id && !participant.id.startsWith("vit-")) {
         await db
@@ -400,6 +408,7 @@ export async function saveParticipantCheckInInDb(
       };
       if (regNo) updateFields.regNo = regNo;
       if (data.phone) updateFields.phone = data.phone.trim();
+      if (data.year !== undefined && data.year !== null) updateFields.year = Number(data.year);
 
       if (participant.id && !participant.id.startsWith("ext-")) {
         await db
@@ -410,7 +419,7 @@ export async function saveParticipantCheckInInDb(
           { email: new RegExp(`^${escapeRegex(participant.email)}$`, "i") },
           {
             $set: updateFields,
-            $setOnInsert: { email: participant.email, phone: "", createdAt: now },
+            $setOnInsert: { email: participant.email, phone: "", createdAt: now, year: data.year ? Number(data.year) : 1 },
           },
           { upsert: true }
         );

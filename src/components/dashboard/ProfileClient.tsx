@@ -13,6 +13,7 @@ interface ProfileClientProps {
     email: string;
     type: "vit" | "external";
     regNo?: string;
+    year?: number;
     collegeName?: string;
     isHosteller?: boolean;
     hostelBlock?: string;
@@ -30,10 +31,13 @@ export default function ProfileClient({ participant, teamName }: ProfileClientPr
     setTimeout(() => setSavedNotice(false), 2500);
   };
 
+  const yearSuffix = (y: number) => (y === 1 ? "st" : y === 2 ? "nd" : y === 3 ? "rd" : "th");
+  const yearLabel = participant.year ? `${participant.year}${yearSuffix(participant.year)} Year` : null;
+
   const categoryLabel =
     participant.type === "vit"
-      ? `VIT Student (${participant.isHosteller ? `Hosteller - Block ${participant.hostelBlock || "MH"}, Room ${participant.roomNo || "-"}` : "Dayscholar"})`
-      : `External Student (${participant.collegeName || "Institute"})`;
+      ? `VIT Student ${yearLabel ? `(${yearLabel})` : ""}${participant.isHosteller ? ` - Hosteller (${participant.hostelBlock || "MH"}, Room ${participant.roomNo || "-"})` : " - Dayscholar"}`
+      : `External Student ${yearLabel ? `(${yearLabel})` : ""}${participant.collegeName ? ` - ${participant.collegeName}` : ""}`;
 
   return (
     <main className={styles.page}>
@@ -79,6 +83,13 @@ export default function ProfileClient({ participant, teamName }: ProfileClientPr
             <label>
               Registration Number
               <input defaultValue={participant.regNo} readOnly />
+            </label>
+          )}
+
+          {yearLabel && (
+            <label>
+              Year of study
+              <input defaultValue={yearLabel} readOnly />
             </label>
           )}
 

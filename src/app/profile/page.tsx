@@ -33,6 +33,7 @@ export default async function ProfilePage() {
         email: participant.email || "",
         type: participant.type,
         regNo: participant.regNo,
+        year: participant.year,
         collegeName: participant.collegeName,
         isHosteller: participant.isHosteller,
         hostelBlock: participant.hostelBlock,

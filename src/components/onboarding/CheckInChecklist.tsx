@@ -11,6 +11,7 @@ export interface CheckInData {
   name: string;
   regNo: string;
   phone: string;
+  year?: number;
   isHosteller: boolean;
   blockType?: "MH" | "LH";
   hostelBlock?: string;
@@ -36,6 +37,7 @@ export default function CheckInChecklist({
   const [name, setName] = useState(initialData?.name ?? "");
   const [regNo, setRegNo] = useState(initialData?.regNo ?? "");
   const [phone, setPhone] = useState(initialData?.phone ?? "");
+  const [year, setYear] = useState<number | undefined>(initialData?.year);
 
   // Ensure fields sync if initialData arrives after initial mount
   React.useEffect(() => {
@@ -55,6 +57,12 @@ export default function CheckInChecklist({
       setPhone(initialData.phone);
     }
   }, [initialData?.phone]);
+
+  React.useEffect(() => {
+    if (initialData?.year !== undefined) {
+      setYear(initialData.year);
+    }
+  }, [initialData?.year]);
 
   // VIT specific
   const [isHosteller, setIsHosteller] = useState<boolean>(initialData?.isHosteller ?? true);
@@ -95,6 +103,7 @@ export default function CheckInChecklist({
       }
     } else {
       if (!collegeName.trim()) missing.push("College Name");
+      if (!year) missing.push("Year of Study");
       if (takingAccommodation) {
         if (!hostelBlock.trim()) missing.push("Hostel Block");
         if (!roomNo.trim()) missing.push("Room Number");
@@ -127,6 +136,8 @@ export default function CheckInChecklist({
         document.getElementById("checkin-address")?.focus();
       } else if (studentType === "external" && !collegeName.trim()) {
         document.getElementById("checkin-college")?.focus();
+      } else if (studentType === "external" && !year) {
+        document.getElementById("checkin-year-1")?.focus();
       } else if (studentType === "external" && takingAccommodation && !hostelBlock.trim()) {
         document.getElementById("checkin-hostelBlock")?.focus();
       } else if (studentType === "external" && takingAccommodation && !roomNo.trim()) {
@@ -143,6 +154,7 @@ export default function CheckInChecklist({
       name: name.trim(),
       regNo: regNo.trim(),
       phone: phone.trim(),
+      year,
       isHosteller,
       blockType,
       address: address.trim(),
@@ -248,7 +260,7 @@ export default function CheckInChecklist({
           {/* Front Checklist Sheet (Tilted ~0.6deg) */}
           <form
             onSubmit={handleSubmit}
-            className="relative w-[320px] sm:w-[380px] md:w-[430px] max-h-[calc(100dvh-100px)] bg-[#F4F4EF] border border-black rounded-sm p-3.5 sm:p-4 md:p-5 shadow-2xl rotate-[0.6deg] text-black z-20 flex flex-col justify-between"
+            className="relative w-[320px] sm:w-[380px] md:w-[430px] max-h-[calc(100dvh-100px)] bg-[#F4F4EF] border border-black rounded-sm p-3.5 sm:p-4 md:p-5 shadow-2xl rotate-[0.6deg] text-black z-20 flex flex-col justify-between overflow-y-auto"
           >
             {/* Realistic Pin at top right */}
             <div className="absolute -top-[20px] right-[20px] w-[42px] h-[64px] pointer-events-none z-30 drop-shadow-md">
@@ -412,7 +424,42 @@ export default function CheckInChecklist({
                 </div>
               )}
 
-              {/* Question 5: Where do you live (VIT) OR Accommodation (External) */}
+              {/* Question 5: Year of study (External only) */}
+              {studentType === "external" && (
+                <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
+                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q5</span>
+                  <div className="col-span-10 space-y-1">
+                    <label className="block text-black text-xs font-semibold">Year of study</label>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+                      {[
+                        { value: 1, label: "1st Year" },
+                        { value: 2, label: "2nd Year" },
+                        { value: 3, label: "3rd Year" },
+                        { value: 4, label: "4th Year" },
+                        { value: 5, label: "5th Year / PG" },
+                      ].map(({ value, label }) => (
+                        <label key={value} className="inline-flex items-center gap-1 cursor-pointer select-none">
+                          <input
+                            id={`checkin-year-${value}`}
+                            type="radio"
+                            name="yearOfStudy"
+                            value={value}
+                            checked={year === value}
+                            onChange={() => setYear(value)}
+                            className="size-3.5 accent-[#FC2425] cursor-pointer"
+                          />
+                          <span className="text-black text-xs font-['Rotonto',sans-serif]">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {attemptedSubmit && !year && (
+                      <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Year of study is required</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Question 5: Where do you live (VIT) OR Question 6: Accommodation (External) */}
               {studentType === "vit" ? (
                 <div className="grid grid-cols-12 gap-2 items-start">
                   <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q5</span>
@@ -513,7 +560,7 @@ export default function CheckInChecklist({
               ) : (
                 /* External Accommodation */
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q5</span>
+                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q6</span>
                   <div className="col-span-10 space-y-1.5">
                     <label className="block text-black text-xs">Are you taking accommodation ?</label>
                     <div className="flex items-center gap-5">

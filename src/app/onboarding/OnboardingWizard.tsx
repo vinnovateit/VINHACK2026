@@ -139,6 +139,7 @@ export default function OnboardingWizard({
             name: participantName || initialParticipant?.name || "",
             regNo: initialParticipant?.regNo ?? "",
             phone: initialParticipant?.phone ?? "",
+            year: initialParticipant?.year,
             isHosteller: initialParticipant?.isHosteller ?? true,
             blockType: initialParticipant?.blockType ?? "MH",
             hostelBlock: initialParticipant?.hostelBlock ?? "",

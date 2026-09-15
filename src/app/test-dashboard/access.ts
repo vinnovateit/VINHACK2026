@@ -13,6 +13,7 @@ export type CurrentParticipant = {
   type: ParticipantType;
   teamId: string | null;
   userId: string | null;
+  year?: number | null;
 };
 
 export async function getCurrentParticipant(): Promise<CurrentParticipant | null> {
@@ -22,10 +23,10 @@ export async function getCurrentParticipant(): Promise<CurrentParticipant | null
     if ((type === "vit" || type === "external") && id) {
       try {
         if (type === "vit") {
-          const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
+          const student = await prisma.vITStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true, year: true } });
           if (student) return { ...student, type };
         } else {
-          const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true } });
+          const student = await prisma.externalStudent.findUnique({ where: { id }, select: { id: true, name: true, teamId: true, userId: true, year: true } });
           if (student) return { ...student, type };
         }
       } catch (err) {
@@ -45,6 +46,7 @@ export async function getCurrentParticipant(): Promise<CurrentParticipant | null
         type: participant.type,
         teamId: participant.teamId || null,
         userId: participant.userId || null,
+        year: participant.year || null,
       };
     }
   } catch (err) {
