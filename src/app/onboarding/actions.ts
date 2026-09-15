@@ -17,6 +17,8 @@ import {
   generateUniqueTeamCodeFromDb,
   createTeamInDb,
   validateTeamNameInDb,
+  validateTeamCodeInDb,
+  joinTeamInDb,
 } from "@/lib/mongo";
 
 export type CurrentOnboardingParticipant = {
@@ -511,6 +513,23 @@ export async function validateTeamCodeAction(code: string) {
     return { success: false, error: "Please enter a team code." };
   }
 
+  // 1. Primary: Native MongoDB (works on Cloudflare Workers)
+  try {
+    const participant = await resolveCurrentParticipant();
+    const mongoRes = await validateTeamCodeInDb(
+      normalized,
+      participant?.type,
+      participant?.id
+    );
+    if (mongoRes.success || mongoRes.error) {
+      console.log(`[validateTeamCodeAction] MongoDB result:`, mongoRes);
+      return mongoRes;
+    }
+  } catch (mongoErr) {
+    console.warn("[validateTeamCodeAction] MongoDB lookup failed, trying Prisma fallback:", mongoErr);
+  }
+
+  // 2. Prisma fallback (Node.js only)
   try {
     const participant = await resolveCurrentParticipant();
     const team = await prisma.team.findUnique({
@@ -570,12 +589,32 @@ export async function validateTeamCodeAction(code: string) {
 export async function joinTeamAction(code: string) {
   const normalized = code.trim().toUpperCase();
 
-  try {
-    const participant = await resolveCurrentParticipant();
-    if (!participant) {
-      return { success: false, error: "Session not found. Please log in again." };
-    }
+  const participant = await resolveCurrentParticipant();
+  if (!participant) {
+    return { success: false, error: "Session not found. Please log in again." };
+  }
 
+  // 1. Primary: Native MongoDB (works on Cloudflare Workers)
+  try {
+    const mongoRes = await joinTeamInDb(
+      {
+        id: participant.id,
+        type: participant.type,
+        userId: participant.userId,
+        currentTeamId: participant.teamId,
+      },
+      normalized
+    );
+    if (mongoRes.success || mongoRes.error) {
+      console.log(`[joinTeamAction] MongoDB result:`, mongoRes);
+      return { success: mongoRes.success, status: mongoRes.status, error: mongoRes.error };
+    }
+  } catch (mongoErr) {
+    console.warn("[joinTeamAction] MongoDB join failed, trying Prisma fallback:", mongoErr);
+  }
+
+  // 2. Prisma fallback (Node.js only)
+  try {
     const res = await joinTeamByCode(
       {
         id: participant.id,
