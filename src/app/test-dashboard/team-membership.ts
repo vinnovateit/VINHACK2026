@@ -203,7 +203,10 @@ export async function joinTeamByCode(participant: Participant & { currentTeamId:
     });
   } catch (error) {
     if (error instanceof TeamMembershipError) throw error;
-    throw new TeamMembershipError("Failed to join team. Please try again.");
+    // Surface the actual Prisma/DB error message so it's visible in logs and UI
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error("[joinTeamByCode] Unexpected error:", detail);
+    throw new TeamMembershipError(`Failed to join team: ${detail}`);
   }
 
   return { status: switchedTeams ? ("switched" as const) : ("joined" as const) };

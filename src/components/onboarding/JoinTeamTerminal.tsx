@@ -321,10 +321,14 @@ export default function JoinTeamTerminal({
 
     if (res.success) {
       setStage("joined");
-      // Trigger full thermal ticket printing animation
+      // Trigger full thermal ticket printing animation, then auto-redirect to dashboard
       setTimeout(() => {
         triggerPrint();
       }, 100);
+      // Let the ticket animation (~2s) play out before redirecting
+      setTimeout(() => {
+        onContinueToDashboard();
+      }, 2800);
     } else {
       setFeedback(res.error ?? "COULD NOT JOIN TEAM");
     }
