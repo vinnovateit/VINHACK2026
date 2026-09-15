@@ -27,13 +27,12 @@ export async function getMongoClient(): Promise<MongoClient | null> {
   try {
     if (!cachedClient) {
       cachedClient = new MongoClient(uri, {
-        maxPoolSize: 20,
-        minPoolSize: 2,
-        serverSelectionTimeoutMS: 8000,
-        connectTimeoutMS: 8000,
-        socketTimeoutMS: 30000,
-        maxIdleTimeMS: 60000,
-        waitQueueTimeoutMS: 10000,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
+        socketTimeoutMS: 10000,
+        maxIdleTimeMS: 30000,
+        waitQueueTimeoutMS: 5000,
       });
     }
     return cachedClient;
