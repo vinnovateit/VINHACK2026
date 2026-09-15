@@ -195,32 +195,8 @@ export async function resolveCurrentParticipant(): Promise<CurrentOnboardingPart
       }
     }
 
-    // Demo / Dev fallback: Retrieve test participant only if DB is accessible
-    try {
-      const firstVit = await prisma.vITStudent.findFirst({
-        include: { team: true },
-      });
-      if (firstVit) {
-        const userId = firstVit.userId || (await getOrCreateEligibleUser("vit", firstVit.id).catch(() => null));
-        return {
-          id: firstVit.id,
-          name: firstVit.name,
-          type: "vit",
-          regNo: firstVit.regNo,
-          isHosteller: firstVit.residencyType === "HOSTELLER",
-          blockType: firstVit.block?.startsWith("L") ? "LH" : "MH",
-          hostelBlock: firstVit.block || "",
-          roomNo: firstVit.room || "",
-          address: firstVit.address || "",
-          teamId: firstVit.teamId,
-          userId,
-          email: firstVit.email,
-          team: firstVit.team,
-        };
-      }
-    } catch (fallbackErr) {
-      console.warn("[Onboarding] Database unavailable for dev fallback participant:", fallbackErr);
-    }
+    // No authenticated session found
+    return null;
   } catch (topLevelErr) {
     console.error("[Onboarding] Top-level error in resolveCurrentParticipant:", topLevelErr);
   }

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { resolveCurrentParticipant } from "./actions";
 import OnboardingWizard from "./OnboardingWizard";
 
@@ -21,11 +22,10 @@ export default async function OnboardingPage({
     console.warn("[OnboardingPage] Could not read searchParams:", paramErr);
   }
 
-  let participant = null;
-  try {
-    participant = await resolveCurrentParticipant();
-  } catch (err) {
-    console.warn("[OnboardingPage] resolveCurrentParticipant caught error:", err);
+  const participant = await resolveCurrentParticipant();
+
+  if (!participant) {
+    redirect("/login");
   }
 
   return (
