@@ -23,6 +23,7 @@ export default function CreateTeamDossier({
 }: CreateTeamDossierProps) {
   const [teamName, setTeamName] = useState(initialTeamName);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCopy = async () => {
     try {
@@ -37,6 +38,11 @@ export default function CreateTeamDossier({
   };
 
   const handleContinue = () => {
+    if (!teamName.trim()) {
+      setError("Please enter a team name before continuing.");
+      return;
+    }
+    setError(null);
     onSaveAndContinue(teamName.trim());
   };
 
@@ -85,10 +91,18 @@ export default function CreateTeamDossier({
             <input
               type="text"
               value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
+              onChange={(e) => {
+                setTeamName(e.target.value);
+                if (error && e.target.value.trim()) setError(null);
+              }}
               placeholder="e.g. CreamChicken"
-              className="w-full bg-neutral-950 border border-neutral-800 focus:border-[#FC2425] rounded-xl px-4 py-2.5 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition"
+              className={`w-full bg-neutral-950 border ${
+                error ? "border-red-500 bg-red-500/10" : "border-neutral-800 focus:border-[#FC2425]"
+              } rounded-xl px-4 py-2.5 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
             />
+            {error && (
+              <p className="text-red-400 text-xs font-mono">{error}</p>
+            )}
           </div>
 
           <div className="font-['Rotonto',sans-serif] text-[16px] sm:text-[18px] md:text-[20px] text-neutral-300 font-light leading-relaxed max-w-[420px] space-y-1 sm:space-y-2">
@@ -111,7 +125,7 @@ export default function CreateTeamDossier({
               color="blue"
               size="compact"
               onClick={handleContinue}
-              disabled={isLoading}
+              disabled={isLoading || !teamName.trim()}
               className="flex-1"
             >
               {isLoading ? "SAVING..." : "SAVE AND CONTINUE"}

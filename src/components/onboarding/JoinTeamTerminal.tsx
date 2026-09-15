@@ -202,10 +202,11 @@ export default function JoinTeamTerminal({
 
   // STEP 1 -> STEP 2: Validate code with CRT progress animation
   const handleValidate = async () => {
-    const targetCode = code.trim() || "VH26-3515";
     if (!code.trim()) {
-      setCode(targetCode);
+      setFeedback("PLEASE ENTER A TEAM CODE");
+      return;
     }
+    const targetCode = code.trim();
     setIsLoading(true);
     setStage("validating");
     setProgressSegments(0);
@@ -246,7 +247,11 @@ export default function JoinTeamTerminal({
 
   // STEP 2 -> STEP 3: Join team and roll out full thermal ticket
   const handleJoin = async () => {
-    const targetCode = code.trim() || "VH26-3515";
+    if (!code.trim()) {
+      setFeedback("PLEASE ENTER A TEAM CODE");
+      return;
+    }
+    const targetCode = code.trim();
     setIsLoading(true);
 
     const res = await onJoinTeam(targetCode);

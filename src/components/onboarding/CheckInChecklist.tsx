@@ -71,10 +71,73 @@ export default function CheckInChecklist({
   const [hostelBlock, setHostelBlock] = useState(initialData?.hostelBlock ?? "");
   const [roomNo, setRoomNo] = useState(initialData?.roomNo ?? "");
 
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const isPhoneValid = (num: string) => {
+    const digits = num.replace(/\D/g, "");
+    return digits.length === 10;
+  };
+
+  const getMissingFieldLabels = (): string[] => {
+    const missing: string[] = [];
+    if (!name.trim()) missing.push("Name");
+    if (!regNo.trim()) missing.push("Registration Number");
+    if (!phone.trim()) missing.push("Phone Number");
+    else if (!isPhoneValid(phone)) missing.push("Valid 10-digit Phone Number");
+
+    if (studentType === "vit") {
+      if (isHosteller) {
+        if (!hostelBlock.trim()) missing.push("Hostel Block");
+        if (!roomNo.trim()) missing.push("Room Number");
+      } else {
+        if (!address.trim()) missing.push("Residential Address");
+      }
+    } else {
+      if (!collegeName.trim()) missing.push("College Name");
+      if (takingAccommodation) {
+        if (!hostelBlock.trim()) missing.push("Hostel Block");
+        if (!roomNo.trim()) missing.push("Room Number");
+      } else {
+        if (!address.trim()) missing.push("Current Address / City");
+      }
+    }
+    return missing;
+  };
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!name.trim() || !phone.trim()) return;
+    setAttemptedSubmit(true);
 
+    const missing = getMissingFieldLabels();
+    if (missing.length > 0) {
+      setFormError(`Please fill in all required fields: ${missing.join(", ")}`);
+      // Auto-focus first empty field
+      if (!name.trim()) {
+        document.getElementById("checkin-name")?.focus();
+      } else if (!regNo.trim()) {
+        document.getElementById("checkin-regNo")?.focus();
+      } else if (!phone.trim() || !isPhoneValid(phone)) {
+        document.getElementById("checkin-phone")?.focus();
+      } else if (studentType === "vit" && isHosteller && !hostelBlock.trim()) {
+        document.getElementById("checkin-hostelBlock")?.focus();
+      } else if (studentType === "vit" && isHosteller && !roomNo.trim()) {
+        document.getElementById("checkin-roomNo")?.focus();
+      } else if (studentType === "vit" && !isHosteller && !address.trim()) {
+        document.getElementById("checkin-address")?.focus();
+      } else if (studentType === "external" && !collegeName.trim()) {
+        document.getElementById("checkin-college")?.focus();
+      } else if (studentType === "external" && takingAccommodation && !hostelBlock.trim()) {
+        document.getElementById("checkin-hostelBlock")?.focus();
+      } else if (studentType === "external" && takingAccommodation && !roomNo.trim()) {
+        document.getElementById("checkin-roomNo")?.focus();
+      } else if (studentType === "external" && !takingAccommodation && !address.trim()) {
+        document.getElementById("checkin-address")?.focus();
+      }
+      return;
+    }
+
+    setFormError(null);
     onSubmit({
       studentType,
       name: name.trim(),
@@ -137,13 +200,20 @@ export default function CheckInChecklist({
             </p>
           </div>
 
+          {formError && (
+            <div className="bg-red-500/15 border border-red-500/40 rounded-lg px-3 py-2 text-xs font-mono text-red-300 max-w-[360px] flex items-start gap-2">
+              <span className="text-red-400 font-bold">⚠️</span>
+              <span className="leading-snug">{formError}</span>
+            </div>
+          )}
+
           <div className="pt-2">
             <KeyButton
               color="pink"
               size="compact"
               type="submit"
               onClick={() => handleSubmit()}
-              disabled={isLoading || !name.trim() || !phone.trim()}
+              disabled={isLoading}
               className="w-full max-w-[360px]"
             >
               {isLoading ? "SAVING..." : "SAVE AND CONTINUE"}
@@ -211,29 +281,48 @@ export default function CheckInChecklist({
                 <div className="col-span-10 space-y-0.5">
                   <label className="block text-black text-xs font-semibold">What do we call you ?</label>
                   <input
+                    id="checkin-name"
                     type="text"
                     required
                     readOnly
                     value={name}
                     placeholder="Participant name"
-                    className="w-full bg-transparent border-b-2 border-black/40 outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] cursor-default select-none font-medium"
+                    className={`w-full bg-transparent border-b-2 ${
+                      attemptedSubmit && !name.trim()
+                        ? "border-red-500 bg-red-500/10"
+                        : "border-black/40"
+                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] cursor-default select-none font-medium transition`}
                   />
+                  {attemptedSubmit && !name.trim() && (
+                    <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Name is required</span>
+                  )}
                 </div>
               </div>
 
-              {/* Question 2: Registration Number (Read-only) */}
+              {/* Question 2: Registration Number */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
                 <span className="col-span-2 text-[#676767] font-mono text-xs">Q2</span>
                 <div className="col-span-10 space-y-0.5">
                   <label className="block text-black text-xs font-semibold">Registration number</label>
                   <input
+                    id="checkin-regNo"
                     type="text"
                     required
-                    readOnly
+                    readOnly={studentType === "vit"}
                     value={regNo}
-                    placeholder="Registration number"
-                    className="w-full bg-transparent border-b-2 border-black/40 outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] cursor-default select-none font-medium"
+                    onChange={(e) => setRegNo(e.target.value)}
+                    placeholder={studentType === "vit" ? "Registration number" : "College Roll No / Reg No"}
+                    className={`w-full bg-transparent border-b-2 ${
+                      attemptedSubmit && !regNo.trim()
+                        ? "border-red-500 bg-red-500/10"
+                        : "border-black/40"
+                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] ${
+                      studentType === "vit" ? "cursor-default select-none font-medium" : "focus:border-black transition"
+                    }`}
                   />
+                  {attemptedSubmit && !regNo.trim() && (
+                    <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Registration number is required</span>
+                  )}
                 </div>
               </div>
 
@@ -243,14 +332,25 @@ export default function CheckInChecklist({
                 <div className="col-span-10 space-y-0.5">
                   <label className="block text-black text-xs font-semibold">Phone number</label>
                   <input
+                    id="checkin-phone"
                     type="tel"
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="10-digit mobile number (e.g. 9876543210)"
                     pattern="[0-9]{10}"
-                    className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition"
+                    maxLength={10}
+                    className={`w-full bg-transparent border-b-2 ${
+                      attemptedSubmit && (!phone.trim() || !isPhoneValid(phone))
+                        ? "border-red-500 bg-red-500/10"
+                        : "border-black/60 focus:border-black"
+                    } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition`}
                   />
+                  {attemptedSubmit && (!phone.trim() || !isPhoneValid(phone)) && (
+                    <span className="text-[10px] text-red-600 font-mono block pt-0.5">
+                      {!phone.trim() ? "* Phone number is required" : "* Must be a valid 10-digit mobile number"}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -290,13 +390,21 @@ export default function CheckInChecklist({
                   <div className="col-span-10 space-y-0.5">
                     <label className="block text-black text-xs">College name</label>
                     <input
+                      id="checkin-college"
                       type="text"
                       required
                       value={collegeName}
                       onChange={(e) => setCollegeName(e.target.value)}
                       placeholder="e.g. IIT Madras, BITS Pilani..."
-                      className="w-full bg-transparent border-b-2 border-black/60 focus:border-black outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[14px] transition"
+                      className={`w-full bg-transparent border-b-2 ${
+                        attemptedSubmit && !collegeName.trim()
+                          ? "border-red-500 bg-red-500/10"
+                          : "border-black/60 focus:border-black"
+                      } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[14px] transition`}
                     />
+                    {attemptedSubmit && !collegeName.trim() && (
+                      <span className="text-[10px] text-red-600 font-mono block pt-0.5">* College name is required</span>
+                    )}
                   </div>
                 </div>
               )}
@@ -339,22 +447,40 @@ export default function CheckInChecklist({
                           <div>
                             <label className="block text-[10px] text-neutral-600 mb-0.5">Hostel Block</label>
                             <input
+                              id="checkin-hostelBlock"
                               type="text"
+                              required
                               value={hostelBlock}
                               onChange={(e) => setHostelBlock(e.target.value)}
                               placeholder="e.g. Q Block"
-                              className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
+                              className={`w-full bg-transparent border-b ${
+                                attemptedSubmit && !hostelBlock.trim()
+                                  ? "border-red-500 bg-red-500/10"
+                                  : "border-black/60 focus:border-black"
+                              } outline-none px-1 py-0.5 text-black text-xs`}
                             />
+                            {attemptedSubmit && !hostelBlock.trim() && (
+                              <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                            )}
                           </div>
                           <div>
                             <label className="block text-[10px] text-neutral-600 mb-0.5">Room No</label>
                             <input
+                              id="checkin-roomNo"
                               type="text"
+                              required
                               value={roomNo}
                               onChange={(e) => setRoomNo(e.target.value)}
                               placeholder="e.g. 412"
-                              className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
+                              className={`w-full bg-transparent border-b ${
+                                attemptedSubmit && !roomNo.trim()
+                                  ? "border-red-500 bg-red-500/10"
+                                  : "border-black/60 focus:border-black"
+                              } outline-none px-1 py-0.5 text-black text-xs`}
                             />
+                            {attemptedSubmit && !roomNo.trim() && (
+                              <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -362,13 +488,21 @@ export default function CheckInChecklist({
                       /* Dayscholar Residential Address */
                       <div className="pt-0.5">
                         <input
+                          id="checkin-address"
                           type="text"
                           required
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
                           placeholder="e.g. Katpadi, Vellore / Local address"
-                          className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition"
+                          className={`w-full bg-transparent border-b ${
+                            attemptedSubmit && !address.trim()
+                              ? "border-red-500 bg-red-500/10"
+                              : "border-black/60 focus:border-black"
+                          } outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition`}
                         />
+                        {attemptedSubmit && !address.trim() && (
+                          <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Residential address is required</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -407,35 +541,61 @@ export default function CheckInChecklist({
                         <div>
                           <label className="block text-[10px] text-neutral-600 mb-0.5">Hostel Block</label>
                           <input
+                            id="checkin-hostelBlock"
                             type="text"
+                            required
                             value={hostelBlock}
                             onChange={(e) => setHostelBlock(e.target.value)}
-                            placeholder="Optional / Assigned"
-                            className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
+                            placeholder="e.g. Block / Campus or TBD"
+                            className={`w-full bg-transparent border-b ${
+                              attemptedSubmit && !hostelBlock.trim()
+                                ? "border-red-500 bg-red-500/10"
+                                : "border-black/60 focus:border-black"
+                            } outline-none px-1 py-0.5 text-black text-xs`}
                           />
+                          {attemptedSubmit && !hostelBlock.trim() && (
+                            <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                          )}
                         </div>
                         <div>
                           <label className="block text-[10px] text-neutral-600 mb-0.5">Room No</label>
                           <input
+                            id="checkin-roomNo"
                             type="text"
+                            required
                             value={roomNo}
                             onChange={(e) => setRoomNo(e.target.value)}
-                            placeholder="Optional / Assigned"
-                            className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs"
+                            placeholder="e.g. Room No or TBD"
+                            className={`w-full bg-transparent border-b ${
+                              attemptedSubmit && !roomNo.trim()
+                                ? "border-red-500 bg-red-500/10"
+                                : "border-black/60 focus:border-black"
+                            } outline-none px-1 py-0.5 text-black text-xs`}
                           />
+                          {attemptedSubmit && !roomNo.trim() && (
+                            <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                          )}
                         </div>
                       </div>
                     ) : (
                       <div className="pt-0.5">
                         <label className="block text-[10px] text-neutral-600 mb-0.5">Current Address / City</label>
                         <input
+                          id="checkin-address"
                           type="text"
                           required
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
                           placeholder="e.g. Chennai / Hotel / City address"
-                          className="w-full bg-transparent border-b border-black/60 focus:border-black outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition"
+                          className={`w-full bg-transparent border-b ${
+                            attemptedSubmit && !address.trim()
+                              ? "border-red-500 bg-red-500/10"
+                              : "border-black/60 focus:border-black"
+                          } outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition`}
                         />
+                        {attemptedSubmit && !address.trim() && (
+                          <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Address / City is required</span>
+                        )}
                       </div>
                     )}
                   </div>
