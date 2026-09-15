@@ -35,12 +35,14 @@ export default function JoinTeamTerminal({
   const [feedback, setFeedback] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progressSegments, setProgressSegments] = useState<number>(0);
+  const [validatedTeamName, setValidatedTeamName] = useState<string>("");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number>(0.85);
 
   const paperRef = useRef<HTMLDivElement>(null);
   const smallSlipRef = useRef<HTMLDivElement>(null);
+  const validatingSlipRef = useRef<HTMLDivElement>(null);
   const printerInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamically scale the 470px x 725px terminal to fit available container bounds
@@ -140,21 +142,19 @@ export default function JoinTeamTerminal({
     return tl;
   };
 
-  const triggerSmallSlipPrint = () => {
-    const slip = smallSlipRef.current;
+  const triggerValidatingSlipPrint = () => {
+    const slip = validatingSlipRef.current;
     if (!slip) return null;
 
     const ac = audio();
     if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
 
-    const full = slip.offsetHeight || 98;
+    const full = slip.offsetHeight || 100;
     const ink = Array.from(slip.children) as HTMLElement[];
 
     const feed = (p: number) => {
       const shown = full * p;
-      gsap.set(slip, {
-        clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)`,
-      });
+      gsap.set(slip, { clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)` });
       gsap.set(ink, { y: shown - full });
     };
 
@@ -163,7 +163,7 @@ export default function JoinTeamTerminal({
     feed(0);
     gsap.set(slip, { rotation: 0, transformOrigin: "50% 0%" });
 
-    const tl = gsap
+    return gsap
       .timeline({ delay: 0.05 })
       .to(roll, {
         p: 1.0,
@@ -172,17 +172,59 @@ export default function JoinTeamTerminal({
         onUpdate: () => {
           feed(roll.p);
           const currentStep = Math.round(roll.p * 8);
-          if (currentStep > fed) {
-            fed = currentStep;
-            feedTick();
-          }
+          if (currentStep > fed) { fed = currentStep; feedTick(); }
         },
       })
       .call(tearRip)
       .to(slip, { rotation: 0.8, duration: 0.08, ease: "power3.in" })
       .to(slip, { rotation: 0, duration: 0.6, ease: "elastic.out(1, 0.45)" });
+  };
 
-    return tl;
+  const triggerSmallSlipPrint = () => {
+    const slip = smallSlipRef.current;
+    if (!slip) return null;
+
+    const ac = audio();
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
+
+    // Read actual height — 300px for the validated ACCESS GRANTED slip
+    const full = slip.offsetHeight || 300;
+    const ink = Array.from(slip.children) as HTMLElement[];
+
+    const feed = (p: number) => {
+      const shown = full * p;
+      gsap.set(slip, { clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)` });
+      gsap.set(ink, { y: shown - full });
+    };
+
+    const roll = { p: 0 };
+    let fed = 0;
+    feed(0);
+    gsap.set(slip, { rotation: 0, transformOrigin: "50% 0%" });
+
+    const stepTo = (targetP: number, dur: number, stepCount: number) => ({
+      p: targetP,
+      duration: dur,
+      ease: `steps(${stepCount})`,
+      onUpdate: () => {
+        feed(roll.p);
+        const currentStep = Math.round(roll.p * 20);
+        if (currentStep > fed) { fed = currentStep; feedTick(); }
+      },
+    });
+
+    return gsap
+      .timeline({ delay: 0.15 })
+      .to(roll, stepTo(0.30, 0.42, 7))
+      .to({}, { duration: 0.18 })
+      .to(roll, stepTo(0.58, 0.44, 7))
+      .to({}, { duration: 0.14 })
+      .to(roll, stepTo(0.85, 0.40, 7))
+      .to({}, { duration: 0.14 })
+      .to(roll, stepTo(1.0, 0.28, 5))
+      .call(tearRip)
+      .to(slip, { rotation: 1.1, duration: 0.09, ease: "power3.in" })
+      .to(slip, { rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" });
   };
 
   // Initial page load mount effect: Roll out the pre-validation request ticket with mechanical audio
@@ -225,12 +267,12 @@ export default function JoinTeamTerminal({
     setStage("validating");
     setProgressSegments(0);
 
-    // Roll out the small slip
+    // Roll out the small disclaimer slip during validation
     setTimeout(() => {
-      triggerSmallSlipPrint();
+      triggerValidatingSlipPrint();
     }, 40);
 
-    // Animate 18 progress bar blocks over ~1.1s
+    // Animate 18 progress bar blocks over ~1.8s
     const totalSegments = 18;
     const progressPromise = new Promise<void>((resolve) => {
       let current = 0;
@@ -242,7 +284,7 @@ export default function JoinTeamTerminal({
           clearInterval(interval);
           resolve();
         }
-      }, 60);
+      }, 100);
     });
 
     const validatePromise = onValidateCode(targetCode);
@@ -251,8 +293,14 @@ export default function JoinTeamTerminal({
     setIsLoading(false);
 
     if (res.success) {
+      setValidatedTeamName(res.teamName ?? "");
       setStage("validated");
-      setFeedback("");
+      // Use rAF to guarantee React has painted the new 300px slip before reading offsetHeight
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          triggerSmallSlipPrint();
+        });
+      });
     } else {
       setStage("input");
       setFeedback(res.error ?? "INVALID TEAM CODE");
@@ -674,29 +722,29 @@ export default function JoinTeamTerminal({
                       <span>vinnovateit@gmail.com</span>
                     </div>
                   </div>
-                ) : stage === "validating" || stage === "validated" ? (
-                  /* STAGES 1 & 2 ("JOIN TEAM - 2" & "JOIN TEAM - 3"): Small slip ticket */
+                ) : stage === "validating" ? (
+                  /* STAGE 1 ("JOIN TEAM - 2"): Small disclaimer slip rolling out during validation */
                   <div
-                    ref={smallSlipRef}
+                    ref={validatingSlipRef}
                     style={{
                       position: "absolute",
                       left: "47.5px",
                       top: "29px",
                       width: "220px",
                       height: "100px",
-                      clipPath: stage === "validating" ? "inset(0 0 100% 0)" : "none",
+                      clipPath: "inset(0 0 100% 0)",
                     }}
                     className="overflow-clip z-10 select-none"
                     data-node-id="343:2041"
                   >
-                    {/* Perforated receipt sheet with authentic saw-tooth bottom edge */}
+                    {/* Perforated receipt sheet */}
                     <div
                       aria-hidden
                       className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
                       data-node-id="343:2061"
                     />
 
-                    {/* Disclaimer text with dashed line and URLs - Perfectly Centered */}
+                    {/* Disclaimer text */}
                     <div
                       style={{
                         position: "absolute",
@@ -738,6 +786,126 @@ export default function JoinTeamTerminal({
                       style={{
                         position: "absolute",
                         top: "56px",
+                        left: "14px",
+                        width: "192px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "6.5px",
+                        fontFamily: "monospace",
+                        color: "#4a4a4a",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      <span>vinhack.vinnovateit.com</span>
+                      <span>vinnovateit@gmail.com</span>
+                    </div>
+                  </div>
+                ) : stage === "validated" ? (
+                  /* STAGE 2 ("JOIN TEAM - 3"): ACCESS GRANTED slip — mirrors the full joined ticket layout */
+                  <div
+                    ref={smallSlipRef}
+                    style={{
+                      position: "absolute",
+                      left: "47.5px",
+                      top: "29px",
+                      width: "220px",
+                      height: "300px",
+                      clipPath: "inset(0 0 100% 0)",
+                    }}
+                    className="overflow-clip z-10 select-none"
+                    data-node-id="343:2041"
+                  >
+                    {/* Perforated receipt sheet */}
+                    <div
+                      aria-hidden
+                      className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
+                    />
+
+                    {/* Logo */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "20px",
+                        left: "41px",
+                        width: "138px",
+                        height: "46px",
+                      }}
+                    >
+                      <Image
+                        src="/figma/logo-red.svg"
+                        alt="VinHack"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+
+                    {/* Top dashed divider */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "74px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* Title: TEAM JOIN REQUEST */}
+                    <div className="absolute top-[84px] left-0 w-full text-center text-[13px] leading-tight font-light uppercase tracking-wider text-black font-['Rotonto',sans-serif]">
+                      TEAM JOIN REQUEST
+                    </div>
+
+                    {/* VinHack 2026 */}
+                    <div className="absolute top-[102px] left-0 w-full text-center leading-tight font-light text-[10px] text-neutral-800 font-['Rotonto',sans-serif]">
+                      VinHack 2026
+                    </div>
+
+                    {/* Dashed line 1 */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "120px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* Participant row */}
+                    <div className="absolute top-[130px] left-[18px] right-[18px] flex justify-between items-center text-[10.5px] leading-none font-light font-['Rotonto',sans-serif]">
+                      <span className="text-neutral-700">Participant</span>
+                      <span className="font-semibold text-black truncate max-w-[110px] text-right">
+                        {participantName || "John Doe"}
+                      </span>
+                    </div>
+
+                    {/* Dashed line 2 */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "150px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* Enter Team Code label */}
+                    <div className="absolute top-[160px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
+                      Enter Team Code
+                    </div>
+
+                    {/* Team code value */}
+                    <div className="absolute top-[174px] left-0 w-full text-center text-[24px] font-bold tracking-wider leading-none font-['Rotonto',sans-serif] text-black">
+                      {code.trim() ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`) : "VH26-3515"}
+                    </div>
+
+                    {/* ACCESS GRANTED badge */}
+                    <div
+                      style={{ position: "absolute", top: "214px", left: "42px", width: "136px" }}
+                      className="border-[1.5px] border-black rounded-[4px] py-1 text-[11px] font-['Rotonto',sans-serif] font-bold text-black tracking-wider uppercase text-center whitespace-nowrap bg-white/40"
+                    >
+                      ACCESS GRANTED
+                    </div>
+
+                    {/* Dashed line 3 */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "244px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* URLs */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "254px",
                         left: "14px",
                         width: "192px",
                         display: "flex",
@@ -857,9 +1025,10 @@ export default function JoinTeamTerminal({
                     <div className="absolute top-[168px] left-0 w-full flex items-center justify-center z-20 pointer-events-auto">
                       <div
                         onClick={() => printerInputRef.current?.focus()}
-                        className="inline-flex items-center justify-center font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider border-b border-dashed border-black/30 focus-within:border-black py-0.5 px-1 cursor-text"
+                        className="inline-flex items-center justify-center font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider border-b border-dashed border-black/30 focus-within:border-black py-0.5 cursor-text"
+                        style={{ maxWidth: "196px" }}
                       >
-                        <span className="select-none text-black leading-none">VH26-</span>
+                        <span className="select-none text-black leading-none flex-shrink-0">VH26-</span>
                         <input
                           ref={printerInputRef}
                           type="text"
@@ -873,9 +1042,7 @@ export default function JoinTeamTerminal({
                           autoFocus
                           autoComplete="off"
                           spellCheck={false}
-                          style={{
-                            width: `${Math.max(4, suffix.length || 4)}ch`,
-                          }}
+                          style={{ width: "90px" }}
                           className="bg-transparent text-left font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider outline-none placeholder:text-neutral-400 uppercase cursor-text leading-none p-0 m-0"
                         />
                       </div>

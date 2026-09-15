@@ -522,10 +522,8 @@ export async function validateTeamCodeAction(code: string) {
       return { success: false, error: "Team not found. Verify the code." };
     }
 
-    const memberCount = team.teamType === "VIT" ? team.vitStudents.length : team.externalStudents.length;
-    if (memberCount >= team.capacity) {
-      return { success: false, error: "This team is already full (5/5 members)." };
-    }
+    const members = team.teamType === "VIT" ? team.vitStudents : team.externalStudents;
+    const memberCount = members.length;
 
     if (participant) {
       const expectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
@@ -534,6 +532,17 @@ export async function validateTeamCodeAction(code: string) {
           success: false,
           error: `Type mismatch: ${expectedType} participants cannot join a ${team.teamType} team.`,
         };
+      }
+
+      // Check if participant is already on this team — their slot is already counted,
+      // so don't block them with the full-team check
+      const alreadyMember = members.some((m: { id: string }) => m.id === participant.id);
+      if (!alreadyMember && memberCount >= team.capacity) {
+        return { success: false, error: "This team is already full (5/5 members)." };
+      }
+    } else {
+      if (memberCount >= team.capacity) {
+        return { success: false, error: "This team is already full (5/5 members)." };
       }
     }
 
@@ -564,7 +573,7 @@ export async function joinTeamAction(code: string) {
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant) {
-      return { success: true, status: "JOINED_EXISTING" };
+      return { success: false, error: "Session not found. Please log in again." };
     }
 
     const res = await joinTeamByCode(

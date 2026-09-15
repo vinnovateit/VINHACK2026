@@ -137,7 +137,23 @@ export async function joinTeamByCode(participant: Participant & { currentTeamId:
     return { status: "already-member" as const };
   }
 
+  // Check if the existing team actually still exists — it may have been deleted
+  // leaving a stale teamId on the participant record.
+  let resolvedExistingTeamId: string | null = existingTeamId;
   if (existingTeamId) {
+    const existingTeam = await prisma.team.findUnique({ where: { id: existingTeamId }, select: { id: true } });
+    if (!existingTeam) {
+      // Stale reference — clear it directly before joining
+      if (participant.type === "vit") {
+        await prisma.vITStudent.update({ where: { id: participant.id }, data: { teamId: null, joinedAt: null } });
+      } else {
+        await prisma.externalStudent.update({ where: { id: participant.id }, data: { teamId: null, joinedAt: null } });
+      }
+      resolvedExistingTeamId = null;
+    }
+  }
+
+  if (resolvedExistingTeamId) {
     switchedTeams = true;
   }
 
@@ -165,8 +181,8 @@ export async function joinTeamByCode(participant: Participant & { currentTeamId:
       }
 
       // Leave old team atomically within same transaction
-      if (existingTeamId) {
-        await removeParticipantFromTeamInTransaction(tx, participant, existingTeamId);
+      if (resolvedExistingTeamId) {
+        await removeParticipantFromTeamInTransaction(tx, participant, resolvedExistingTeamId);
       }
 
       // Join new team
