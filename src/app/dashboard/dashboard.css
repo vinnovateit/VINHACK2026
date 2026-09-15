@@ -966,3 +966,145 @@
     transition: none;
   }
 }
+
+/* ── Leader Management Panel ─────────────────────────────── */
+.leader-actions {
+  margin-top: 18px;
+  border-top: 1px solid #1e1e1e;
+  padding-top: 14px;
+}
+
+.leader-manage-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #aaa;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.leader-manage-btn:hover {
+  border-color: #555;
+  color: #fff;
+}
+
+.leader-panel {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: dropdownFadeIn 0.18s ease-out;
+}
+
+.leader-action-btn {
+  align-items: center;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #ccc;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.leader-action-btn.transfer:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: rgba(102, 203, 231, 0.06);
+}
+
+.leader-action-btn.delete:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: rgba(255, 32, 40, 0.06);
+}
+
+.leader-transfer-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 4px;
+}
+
+.leader-confirm-btn {
+  align-items: center;
+  background: var(--blue);
+  border: 0;
+  border-radius: 4px;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 16px;
+  transition: background 0.2s;
+}
+
+.leader-confirm-btn:hover:not(:disabled) {
+  background: #7dd6ed;
+}
+
+.leader-confirm-btn.danger {
+  background: var(--red);
+  color: #fff;
+}
+
+.leader-confirm-btn.danger:hover:not(:disabled) {
+  background: #ff383f;
+}
+
+.leader-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.leader-delete-confirm {
+  padding: 10px 0 4px;
+}
+
+.leader-delete-confirm p {
+  color: #888;
+  font-size: 12px;
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.leader-confirm-row {
+  display: flex;
+  gap: 8px;
+}
+
+.leader-cancel-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 13px;
+  min-height: 36px;
+  padding: 0 14px;
+  transition: all 0.2s;
+}
+
+.leader-cancel-btn:hover {
+  border-color: #555;
+  color: #ccc;
+}

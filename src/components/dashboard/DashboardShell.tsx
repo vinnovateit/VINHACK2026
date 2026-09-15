@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   ArrowRight,
@@ -15,12 +16,16 @@ import {
   LogOut,
   Menu,
   Send,
+  Shield,
+  Trash2,
   UserRound,
   Users,
   X,
   CheckCircle2,
 } from "lucide-react";
 import { saveSubmissionAction } from "@/app/dashboard/actions";
+import { transferLeadershipAction, deleteTeamAction } from "@/app/onboarding/actions";
+
 
 export interface DashboardShellProps {
   participant: {
@@ -68,6 +73,7 @@ export default function DashboardShell({
   team,
   initialTrack = "",
 }: DashboardShellProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -77,6 +83,7 @@ export default function DashboardShell({
 
   // Form state
   const [projectTitle, setProjectTitle] = useState(team.submission?.title || "");
+  const [projectDescription, setProjectDescription] = useState(team.submission?.description || "");
   const [selectedTrack, setSelectedTrack] = useState(initialTrack || team.track || "Industry 6.0");
   const [githubLink, setGithubLink] = useState(team.submission?.githubLink || "");
   const [figmaLink, setFigmaLink] = useState(team.submission?.figmaLink || "");
@@ -85,6 +92,14 @@ export default function DashboardShell({
   const [progressStatus, setProgressStatus] = useState("In progress");
   const [teamConfidence, setTeamConfidence] = useState("Feeling good");
   const [progressNote, setProgressNote] = useState(team.submission?.progressNote || "");
+
+  // Leader management state
+  const [showLeaderActions, setShowLeaderActions] = useState(false);
+  const [showTransferPicker, setShowTransferPicker] = useState(false);
+  const [selectedNewLeader, setSelectedNewLeader] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isLeaderActionPending, startLeaderTransition] = useTransition();
+
 
   // Real countdown state (target: Sept 18, 2026, 2:00 PM IST)
   const [timeLeft, setTimeLeft] = useState({ hours: 74, minutes: 22, seconds: 15 });
@@ -150,7 +165,7 @@ export default function DashboardShell({
         teamId: team.id,
         track: selectedTrack,
         projectTitle: projectTitle.trim(),
-        projectDescription: projectTitle.trim(),
+        projectDescription: projectDescription.trim(),
         githubLink: githubLink.trim(),
         figmaLink: figmaLink.trim(),
         deckLink: deckLink.trim(),
@@ -165,6 +180,40 @@ export default function DashboardShell({
       }
     });
   };
+
+  const handleTransferLeadership = () => {
+    if (!selectedNewLeader) return;
+    const [id, type] = selectedNewLeader.split("|");
+    if (!id || (type !== "vit" && type !== "external")) return;
+
+    startLeaderTransition(async () => {
+      const res = await transferLeadershipAction(id, type as "vit" | "external");
+      if (res.success) {
+        showNotice("Leadership transferred! Refreshing...");
+        setTimeout(() => router.refresh(), 1200);
+      } else {
+        showNotice(res.error || "Failed to transfer leadership.");
+      }
+      setShowTransferPicker(false);
+      setShowLeaderActions(false);
+    });
+  };
+
+  const handleDeleteTeam = () => {
+    startLeaderTransition(async () => {
+      const res = await deleteTeamAction();
+      if (res.success) {
+        showNotice("Team deleted. Redirecting...");
+        setTimeout(() => router.push("/onboarding"), 1200);
+      } else {
+        showNotice(res.error || "Failed to delete team.");
+      }
+      setShowDeleteConfirm(false);
+      setShowLeaderActions(false);
+    });
+  };
+
+
 
   const firstName = participant.name.split(" ")[0] || "Hacker";
   const userInitial = (participant.name.charAt(0) || "P").toUpperCase();
@@ -316,7 +365,100 @@ export default function DashboardShell({
                 {copied ? "Copied!" : "Copy code"}
               </button>
             </div>
+
+            {/* Leader-only management actions */}
+            {participant.isLeader && (
+              <div className="leader-actions">
+                <button
+                  className="leader-manage-btn"
+                  onClick={() => {
+                    setShowLeaderActions((v) => !v);
+                    setShowTransferPicker(false);
+                    setShowDeleteConfirm(false);
+                  }}
+                >
+                  <Shield size={14} /> Manage Team
+                </button>
+
+                {showLeaderActions && (
+                  <div className="leader-panel">
+                    {/* Transfer leadership */}
+                    {!showDeleteConfirm && (
+                      <>
+                        <button
+                          className="leader-action-btn transfer"
+                          onClick={() => setShowTransferPicker((v) => !v)}
+                        >
+                          <Shield size={13} /> Transfer Leadership
+                        </button>
+
+                        {showTransferPicker && (
+                          <div className="leader-transfer-picker">
+                            <select
+                              className="select-field"
+                              value={selectedNewLeader}
+                              onChange={(e) => setSelectedNewLeader(e.target.value)}
+                              aria-label="Select new leader"
+                            >
+                              <option value="">Select a member...</option>
+                              {team.members
+                                .filter((m) => !m.isLeader)
+                                .map((m) => (
+                                  <option key={m.id} value={`${m.id}|${m.type}`}>
+                                    {m.name}
+                                  </option>
+                                ))}
+                            </select>
+                            <button
+                              className="leader-confirm-btn"
+                              onClick={handleTransferLeadership}
+                              disabled={!selectedNewLeader || isLeaderActionPending}
+                            >
+                              {isLeaderActionPending ? "Transferring..." : "Confirm Transfer"}
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Delete team */}
+                    {!showTransferPicker && (
+                      <>
+                        <button
+                          className="leader-action-btn delete"
+                          onClick={() => setShowDeleteConfirm((v) => !v)}
+                        >
+                          <Trash2 size={13} /> Delete Team
+                        </button>
+
+                        {showDeleteConfirm && (
+                          <div className="leader-delete-confirm">
+                            <p>This will remove all members and delete the team permanently.</p>
+                            <div className="leader-confirm-row">
+                              <button
+                                className="leader-confirm-btn danger"
+                                onClick={handleDeleteTeam}
+                                disabled={isLeaderActionPending}
+                              >
+                                {isLeaderActionPending ? "Deleting..." : "Yes, Delete"}
+                              </button>
+                              <button
+                                className="leader-cancel-btn"
+                                onClick={() => setShowDeleteConfirm(false)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
+
 
           {/* Top Right: Quick Actions */}
           <section className="quick-panel dashboard-panel">
@@ -396,8 +538,20 @@ export default function DashboardShell({
                       </select>
                     </label>
                   </div>
+
+                  <label className="full-field">
+                    Project Description*
+                    <textarea
+                      aria-label="Project description"
+                      value={projectDescription}
+                      onChange={(e) => setProjectDescription(e.target.value)}
+                      placeholder="Briefly describe what your project does and the problem it solves..."
+                      rows={3}
+                    />
+                  </label>
                 </div>
               )}
+
 
               {activeStep === "Links & Assets" && (
                 <div className="submission-form">

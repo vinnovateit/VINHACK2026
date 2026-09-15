@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { TEST_SESSION_COOKIE } from "../test-dashboard/access";
 import { generateUniqueTeamCode } from "../test-dashboard/utils";
-import { joinTeamByCode, TeamMembershipError } from "../test-dashboard/team-membership";
+import { joinTeamByCode, transferLeadership, deleteTeam, TeamMembershipError } from "../test-dashboard/team-membership";
 import { getOrCreateEligibleUser } from "../test-dashboard/participant-eligibility";
 import type { CheckInData, StudentType } from "@/components/onboarding/CheckInChecklist";
 import {
@@ -511,6 +511,74 @@ export async function joinTeamAction(code: string) {
   } catch (error) {
     const message = error instanceof TeamMembershipError ? error.message : "Failed to join team.";
     console.error("[joinTeamAction] Error:", error);
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Rename an already-created team. Used when the user types a custom name after
+ * the wizard has already pre-created the team — prevents double-create.
+ */
+export async function renameTeamAction(teamId: string, teamName: string) {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.userId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const trimmed = teamName.trim().slice(0, 100);
+    if (!trimmed) return { success: false, error: "Team name cannot be empty." };
+
+    const team = await prisma.team.findUnique({ where: { id: teamId }, select: { leaderId: true } });
+    if (!team) return { success: false, error: "Team not found." };
+    if (team.leaderId !== participant.userId) return { success: false, error: "Only the leader can rename the team." };
+
+    await prisma.team.update({ where: { id: teamId }, data: { name: trimmed } });
+    return { success: true };
+  } catch (err) {
+    console.error("[renameTeamAction] Error:", err);
+    return { success: false, error: "Failed to rename team." };
+  }
+}
+
+export async function transferLeadershipAction(newLeaderParticipantId: string, newLeaderType: "vit" | "external") {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.userId || !participant.teamId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    await transferLeadership({
+      requesterUserId: participant.userId,
+      newLeaderParticipantId,
+      newLeaderType,
+      teamId: participant.teamId,
+    });
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof TeamMembershipError ? error.message : "Failed to transfer leadership.";
+    console.error("[transferLeadershipAction] Error:", error);
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteTeamAction() {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.userId || !participant.teamId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    await deleteTeam({
+      requesterUserId: participant.userId,
+      teamId: participant.teamId,
+    });
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof TeamMembershipError ? error.message : "Failed to delete team.";
+    console.error("[deleteTeamAction] Error:", error);
     return { success: false, error: message };
   }
 }
