@@ -30,6 +30,8 @@ export async function getMongoClient(): Promise<MongoClient | null> {
         maxPoolSize: 2,
         serverSelectionTimeoutMS: 5000,
         connectTimeoutMS: 5000,
+        socketTimeoutMS: 5000,
+        maxIdleTimeMS: 5000,
       });
     }
     return cachedClient;
@@ -161,13 +163,13 @@ export async function getParticipantByEmail(
           userId: vit.userId ? String(vit.userId) : null,
           team: team
             ? {
-                id: team._id.toString(),
-                name: team.name,
-                code: team.code,
-                capacity: team.capacity || 5,
-                teamType: team.teamType || "VIT",
-                leaderId: team.leaderId ? String(team.leaderId) : null,
-              }
+              id: team._id.toString(),
+              name: team.name,
+              code: team.code,
+              capacity: team.capacity || 5,
+              teamType: team.teamType || "VIT",
+              leaderId: team.leaderId ? String(team.leaderId) : null,
+            }
             : null,
         };
       }
@@ -242,13 +244,13 @@ export async function getParticipantByEmail(
           team: team
 
             ? {
-                id: team._id.toString(),
-                name: team.name,
-                code: team.code,
-                capacity: team.capacity || 5,
-                teamType: team.teamType || "EXTERNAL",
-                leaderId: team.leaderId ? String(team.leaderId) : null,
-              }
+              id: team._id.toString(),
+              name: team.name,
+              code: team.code,
+              capacity: team.capacity || 5,
+              teamType: team.teamType || "EXTERNAL",
+              leaderId: team.leaderId ? String(team.leaderId) : null,
+            }
             : null,
         };
       }
@@ -324,13 +326,13 @@ export async function getParticipantById(
         userId: student.userId ? String(student.userId) : null,
         team: team
           ? {
-              id: team._id.toString(),
-              name: team.name,
-              code: team.code,
-              capacity: team.capacity || 5,
-              teamType: team.teamType || "VIT",
-              leaderId: team.leaderId ? String(team.leaderId) : null,
-            }
+            id: team._id.toString(),
+            name: team.name,
+            code: team.code,
+            capacity: team.capacity || 5,
+            teamType: team.teamType || "VIT",
+            leaderId: team.leaderId ? String(team.leaderId) : null,
+          }
           : null,
       };
     } else {
@@ -353,13 +355,13 @@ export async function getParticipantById(
         userId: student.userId ? String(student.userId) : null,
         team: team
           ? {
-              id: team._id.toString(),
-              name: team.name,
-              code: team.code,
-              capacity: team.capacity || 5,
-              teamType: team.teamType || "EXTERNAL",
-              leaderId: team.leaderId ? String(team.leaderId) : null,
-            }
+            id: team._id.toString(),
+            name: team.name,
+            code: team.code,
+            capacity: team.capacity || 5,
+            teamType: team.teamType || "EXTERNAL",
+            leaderId: team.leaderId ? String(team.leaderId) : null,
+          }
           : null,
       };
     }
@@ -456,3 +458,229 @@ export async function saveParticipantCheckInInDb(
     return false;
   }
 }
+
+const CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+export async function generateUniqueTeamCodeFromDb(): Promise<string> {
+  try {
+    const db = await getMongoDb();
+    if (db) {
+      for (let attempt = 0; attempt < 30; attempt++) {
+        let randomPart = "";
+        for (let i = 0; i < 4; i++) {
+          randomPart += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+        }
+        const candidate = `VH26-${randomPart}`;
+
+        const existing = await db.collection("teams").findOne(
+          { code: new RegExp(`^${candidate}$`, "i") },
+          { projection: { _id: 1 } }
+        );
+
+        if (!existing) {
+          return candidate;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[MongoDB] generateUniqueTeamCodeFromDb error, using random fallback:", err);
+  }
+
+  const ts = Date.now().toString(36).slice(-3).toUpperCase();
+  const r1 = CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  const r2 = CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  return `VH26-${r1}${r2}${ts}`;
+}
+
+export function levenshteinDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+export function normalizeTeamName(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export async function validateTeamNameInDb(
+  candidateName: string,
+  excludeTeamId?: string
+): Promise<{ valid: boolean; error?: string; conflictName?: string }> {
+  const trimmed = candidateName.trim();
+  if (!trimmed || trimmed.length < 2) {
+    return { valid: false, error: "Team name must be at least 2 characters long." };
+  }
+  if (trimmed.length > 50) {
+    return { valid: false, error: "Team name cannot exceed 50 characters." };
+  }
+
+  const candidateNorm = normalizeTeamName(trimmed);
+  if (!candidateNorm || candidateNorm.length < 2) {
+    return { valid: false, error: "Team name must contain at least 2 letters or numbers." };
+  }
+
+  try {
+    const db = await getMongoDb();
+    if (!db) {
+      return { valid: true };
+    }
+
+    // 1. Exact case-insensitive check
+    const query: any = {
+      name: new RegExp(`^${escapeRegex(trimmed)}$`, "i"),
+    };
+    if (excludeTeamId) {
+      query._id = { $ne: toObjectId(excludeTeamId) };
+    }
+
+    const exactMatch = await db.collection("teams").findOne(query, { projection: { name: 1 } });
+    if (exactMatch) {
+      return {
+        valid: false,
+        conflictName: exactMatch.name,
+        error: `This team name is already taken or too similar to an existing team.`,
+      };
+    }
+
+    // 2. Fetch all team names to check normalized & fuzzy similarity
+    const teams = await db
+      .collection("teams")
+      .find(
+        excludeTeamId ? { _id: { $ne: toObjectId(excludeTeamId) } } : {},
+        { projection: { name: 1 } }
+      )
+      .toArray();
+
+    for (const team of teams) {
+      if (!team.name || typeof team.name !== "string") continue;
+      const existingTrimmed = team.name.trim();
+      const existingNorm = normalizeTeamName(existingTrimmed);
+      if (!existingNorm) continue;
+
+      // Exact normalized equality (catches spacing, punctuation, hyphens, lowercase/uppercase)
+      // e.g. "Cyber Knights" vs "CyberKnights" vs "cyber-knights"
+      if (candidateNorm === existingNorm) {
+        return {
+          valid: false,
+          conflictName: existingTrimmed,
+          error: `This team name is already taken or too similar to an existing team.`,
+        };
+      }
+
+      // Fuzzy / Levenshtein similarity check
+      const maxLen = Math.max(candidateNorm.length, existingNorm.length);
+      const dist = levenshteinDistance(candidateNorm, existingNorm);
+      const similarity = 1 - dist / maxLen;
+
+      let isTooSimilar = false;
+      if (maxLen <= 4 && dist <= 1) {
+        isTooSimilar = true;
+      } else if (maxLen <= 8 && (dist <= 2 || similarity >= 0.75)) {
+        isTooSimilar = true;
+      } else if (maxLen > 8 && (dist <= 2 || similarity >= 0.82)) {
+        isTooSimilar = true;
+      }
+
+      if (isTooSimilar) {
+        return {
+          valid: false,
+          conflictName: existingTrimmed,
+          error: `This team name is already taken or too similar to an existing team.`,
+        };
+      }
+    }
+
+    return { valid: true };
+  } catch (err) {
+    console.warn("[validateTeamNameInDb] Validation error:", err);
+    return { valid: true };
+  }
+}
+
+export async function createTeamInDb(data: {
+  name: string;
+  code: string;
+  participant: MongoParticipant;
+}): Promise<{ success: boolean; teamId?: string; error?: string }> {
+  try {
+    const db = await getMongoDb();
+    if (!db) {
+      return { success: false, error: "Database connection unavailable." };
+    }
+
+    const { name, code, participant } = data;
+    const trimmedName = name.trim().slice(0, 100);
+    const normalizedCode = code.trim().toUpperCase();
+
+    // Verify team name uniqueness and similarity in MongoDB
+    const nameValidation = await validateTeamNameInDb(trimmedName);
+    if (!nameValidation.valid) {
+      return { success: false, error: nameValidation.error || "This team name is not available." };
+    }
+
+    // Verify code uniqueness in MongoDB
+    const existing = await db.collection("teams").findOne({
+      code: new RegExp(`^${normalizedCode}$`, "i"),
+    });
+    if (existing) {
+      return { success: false, error: "This team code is already in use. Please try another." };
+    }
+
+    const now = new Date();
+    const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
+
+    let leaderUserId: any = null;
+    if (participant.userId) {
+      leaderUserId = toObjectId(participant.userId);
+    } else if (participant.id && !participant.id.startsWith("vit-") && !participant.id.startsWith("ext-")) {
+      leaderUserId = toObjectId(participant.id);
+    }
+
+    const newTeamDoc = {
+      name: trimmedName,
+      code: normalizedCode,
+      capacity: 5,
+      teamType,
+      track: null,
+      leaderId: leaderUserId,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const insertRes = await db.collection("teams").insertOne(newTeamDoc);
+    const teamId = insertRes.insertedId.toString();
+
+    // Associate participant with team
+    const collectionName = participant.type === "vit" ? "vit_students" : "external_students";
+    if (participant.id && !participant.id.startsWith("vit-") && !participant.id.startsWith("ext-")) {
+      await db.collection(collectionName).updateOne(
+        { _id: toObjectId(participant.id) },
+        { $set: { teamId: insertRes.insertedId, joinedAt: now, updatedAt: now } }
+      );
+    } else if (participant.email) {
+      await db.collection(collectionName).updateOne(
+        { email: new RegExp(`^${escapeRegex(participant.email)}$`, "i") },
+        { $set: { teamId: insertRes.insertedId, joinedAt: now, updatedAt: now } }
+      );
+    }
+
+    return { success: true, teamId };
+  } catch (err) {
+    console.error("[MongoDB] createTeamInDb error:", err);
+    return { success: false, error: "Failed to create team in database." };
+  }
+}
+

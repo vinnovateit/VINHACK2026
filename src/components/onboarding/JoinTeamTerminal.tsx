@@ -24,17 +24,26 @@ export default function JoinTeamTerminal({
   onBack,
   initialCode = "",
 }: JoinTeamTerminalProps) {
-  const [code, setCode] = useState(initialCode);
+  const extractSuffix = (val: string) => {
+    if (!val) return "";
+    return val.replace(/^VH26[-_]?/i, "").trim().toUpperCase();
+  };
+
+  const [suffix, setSuffix] = useState(() => extractSuffix(initialCode));
+  const code = suffix.trim() ? `VH26-${suffix.trim().toUpperCase()}` : "";
   const [stage, setStage] = useState<"input" | "validating" | "validated" | "joined">("input");
   const [feedback, setFeedback] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progressSegments, setProgressSegments] = useState<number>(0);
+  const [validatedTeamName, setValidatedTeamName] = useState<string>("");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number>(0.85);
 
   const paperRef = useRef<HTMLDivElement>(null);
   const smallSlipRef = useRef<HTMLDivElement>(null);
+  const validatingSlipRef = useRef<HTMLDivElement>(null);
+  const printerInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamically scale the 470px x 725px terminal to fit available container bounds
   // ensuring the entire view fits in 100dvh with strictly zero scrolling.
@@ -80,7 +89,7 @@ export default function JoinTeamTerminal({
     if (!paper) return null;
 
     const ac = audio();
-    if (ac && ac.state === "suspended") void ac.resume().catch(() => {});
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
 
     const full = paper.offsetHeight || 285;
     const ink = Array.from(paper.children) as HTMLElement[];
@@ -133,21 +142,19 @@ export default function JoinTeamTerminal({
     return tl;
   };
 
-  const triggerSmallSlipPrint = () => {
-    const slip = smallSlipRef.current;
+  const triggerValidatingSlipPrint = () => {
+    const slip = validatingSlipRef.current;
     if (!slip) return null;
 
     const ac = audio();
-    if (ac && ac.state === "suspended") void ac.resume().catch(() => {});
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
 
-    const full = slip.offsetHeight || 98;
+    const full = slip.offsetHeight || 100;
     const ink = Array.from(slip.children) as HTMLElement[];
 
     const feed = (p: number) => {
       const shown = full * p;
-      gsap.set(slip, {
-        clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)`,
-      });
+      gsap.set(slip, { clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)` });
       gsap.set(ink, { y: shown - full });
     };
 
@@ -156,7 +163,7 @@ export default function JoinTeamTerminal({
     feed(0);
     gsap.set(slip, { rotation: 0, transformOrigin: "50% 0%" });
 
-    const tl = gsap
+    return gsap
       .timeline({ delay: 0.05 })
       .to(roll, {
         p: 1.0,
@@ -165,17 +172,59 @@ export default function JoinTeamTerminal({
         onUpdate: () => {
           feed(roll.p);
           const currentStep = Math.round(roll.p * 8);
-          if (currentStep > fed) {
-            fed = currentStep;
-            feedTick();
-          }
+          if (currentStep > fed) { fed = currentStep; feedTick(); }
         },
       })
       .call(tearRip)
       .to(slip, { rotation: 0.8, duration: 0.08, ease: "power3.in" })
       .to(slip, { rotation: 0, duration: 0.6, ease: "elastic.out(1, 0.45)" });
+  };
 
-    return tl;
+  const triggerSmallSlipPrint = () => {
+    const slip = smallSlipRef.current;
+    if (!slip) return null;
+
+    const ac = audio();
+    if (ac && ac.state === "suspended") void ac.resume().catch(() => { });
+
+    // Read actual height — 300px for the validated ACCESS GRANTED slip
+    const full = slip.offsetHeight || 300;
+    const ink = Array.from(slip.children) as HTMLElement[];
+
+    const feed = (p: number) => {
+      const shown = full * p;
+      gsap.set(slip, { clipPath: `inset(0 0 ${((full - shown) / full) * 100}% 0)` });
+      gsap.set(ink, { y: shown - full });
+    };
+
+    const roll = { p: 0 };
+    let fed = 0;
+    feed(0);
+    gsap.set(slip, { rotation: 0, transformOrigin: "50% 0%" });
+
+    const stepTo = (targetP: number, dur: number, stepCount: number) => ({
+      p: targetP,
+      duration: dur,
+      ease: `steps(${stepCount})`,
+      onUpdate: () => {
+        feed(roll.p);
+        const currentStep = Math.round(roll.p * 20);
+        if (currentStep > fed) { fed = currentStep; feedTick(); }
+      },
+    });
+
+    return gsap
+      .timeline({ delay: 0.15 })
+      .to(roll, stepTo(0.30, 0.42, 7))
+      .to({}, { duration: 0.18 })
+      .to(roll, stepTo(0.58, 0.44, 7))
+      .to({}, { duration: 0.14 })
+      .to(roll, stepTo(0.85, 0.40, 7))
+      .to({}, { duration: 0.14 })
+      .to(roll, stepTo(1.0, 0.28, 5))
+      .call(tearRip)
+      .to(slip, { rotation: 1.1, duration: 0.09, ease: "power3.in" })
+      .to(slip, { rotation: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" });
   };
 
   // Initial page load mount effect: Roll out the pre-validation request ticket with mechanical audio
@@ -183,6 +232,9 @@ export default function JoinTeamTerminal({
     let tl: gsap.core.Timeline | null = null;
     const timer = setTimeout(() => {
       tl = triggerPrint();
+      setTimeout(() => {
+        printerInputRef.current?.focus();
+      }, 1100);
     }, 200);
 
     return () => {
@@ -191,9 +243,13 @@ export default function JoinTeamTerminal({
     };
   }, []);
 
-  const handleInputChange = (val: string) => {
-    const formatted = val.toUpperCase();
-    setCode(formatted);
+  const handleSuffixChange = (val: string) => {
+    const cleaned = val
+      .replace(/^VH26[-_]?/i, "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 8);
+    setSuffix(cleaned);
     if (stage !== "input") {
       setStage("input");
       setFeedback("");
@@ -202,21 +258,21 @@ export default function JoinTeamTerminal({
 
   // STEP 1 -> STEP 2: Validate code with CRT progress animation
   const handleValidate = async () => {
-    if (!code.trim()) {
+    if (!suffix.trim()) {
       setFeedback("PLEASE ENTER A TEAM CODE");
       return;
     }
-    const targetCode = code.trim();
+    const targetCode = `VH26-${suffix.trim().toUpperCase()}`;
     setIsLoading(true);
     setStage("validating");
     setProgressSegments(0);
 
-    // Roll out the small slip
+    // Roll out the small disclaimer slip during validation
     setTimeout(() => {
-      triggerSmallSlipPrint();
+      triggerValidatingSlipPrint();
     }, 40);
 
-    // Animate 18 progress bar blocks over ~1.1s
+    // Animate 18 progress bar blocks over ~1.8s
     const totalSegments = 18;
     const progressPromise = new Promise<void>((resolve) => {
       let current = 0;
@@ -228,7 +284,7 @@ export default function JoinTeamTerminal({
           clearInterval(interval);
           resolve();
         }
-      }, 60);
+      }, 100);
     });
 
     const validatePromise = onValidateCode(targetCode);
@@ -237,8 +293,14 @@ export default function JoinTeamTerminal({
     setIsLoading(false);
 
     if (res.success) {
+      setValidatedTeamName(res.teamName ?? "");
       setStage("validated");
-      setFeedback("");
+      // Use rAF to guarantee React has painted the new 300px slip before reading offsetHeight
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          triggerSmallSlipPrint();
+        });
+      });
     } else {
       setStage("input");
       setFeedback(res.error ?? "INVALID TEAM CODE");
@@ -247,11 +309,11 @@ export default function JoinTeamTerminal({
 
   // STEP 2 -> STEP 3: Join team and roll out full thermal ticket
   const handleJoin = async () => {
-    if (!code.trim()) {
+    if (!suffix.trim()) {
       setFeedback("PLEASE ENTER A TEAM CODE");
       return;
     }
-    const targetCode = code.trim();
+    const targetCode = `VH26-${suffix.trim().toUpperCase()}`;
     setIsLoading(true);
 
     const res = await onJoinTeam(targetCode);
@@ -259,10 +321,14 @@ export default function JoinTeamTerminal({
 
     if (res.success) {
       setStage("joined");
-      // Trigger full thermal ticket printing animation
+      // Trigger full thermal ticket printing animation, then auto-redirect to dashboard
       setTimeout(() => {
         triggerPrint();
       }, 100);
+      // Let the ticket animation (~2s) play out before redirecting
+      setTimeout(() => {
+        onContinueToDashboard();
+      }, 2800);
     } else {
       setFeedback(res.error ?? "COULD NOT JOIN TEAM");
     }
@@ -338,7 +404,7 @@ export default function JoinTeamTerminal({
               <KeyButton
                 color="blue"
                 size="compact"
-                onClick={() => {}}
+                onClick={() => { }}
                 disabled={true}
                 className="w-full max-w-[360px] opacity-80"
               >
@@ -421,8 +487,8 @@ export default function JoinTeamTerminal({
                   {stage === "validating"
                     ? "VALIDATING CODE"
                     : stage === "validated" || stage === "joined"
-                    ? "TEAM CODE VALIDATED"
-                    : "ENTER TEAM CODE"}
+                      ? "TEAM CODE VALIDATED"
+                      : "ENTER TEAM CODE"}
                 </div>
 
                 {/* Center Content: Mode-specific UI */}
@@ -433,11 +499,10 @@ export default function JoinTeamTerminal({
                       {Array.from({ length: 18 }).map((_, i) => (
                         <div
                           key={i}
-                          className={`h-[22px] flex-1 rounded-[1.5px] transition-all duration-75 ${
-                            i < progressSegments
-                              ? "bg-[#83ee91] shadow-[0_0_6px_#83ee91]"
-                              : "bg-[#83ee91]/15"
-                          }`}
+                          className={`h-[22px] flex-1 rounded-[1.5px] transition-all duration-75 ${i < progressSegments
+                            ? "bg-[#83ee91] shadow-[0_0_6px_#83ee91]"
+                            : "bg-[#83ee91]/15"
+                            }`}
                         />
                       ))}
                     </div>
@@ -450,20 +515,14 @@ export default function JoinTeamTerminal({
                     </span>
                   </div>
                 ) : (
-                  /* Initial State: Editable Input Box matching user screenshot */
-                  <div className="absolute top-[58px] left-[21.9px] rounded-[8px] border-[0.8px] border-[#83ee91] box-border w-[278px] h-[41px] flex items-center px-3 bg-black/50">
-                    <input
-                      type="text"
-                      value={code}
-                      onChange={(e) => handleInputChange(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleValidate();
-                      }}
-                      placeholder="AWAITING ACCESS CODE"
-                      autoComplete="off"
-                      spellCheck={false}
-                      className="w-full bg-transparent font-mono text-[#83ee91] text-[13px] tracking-widest uppercase outline-none placeholder:text-[#83ee91]/60 font-light cursor-text text-center"
-                    />
+                  /* Initial State: Clean Terminal Readout (User types directly on the printer ticket below) */
+                  <div
+                    onClick={() => printerInputRef.current?.focus()}
+                    className="absolute top-[58px] left-[21.9px] rounded-[8px] border-[0.8px] border-[#83ee91]/70 box-border w-[278px] h-[41px] flex items-center justify-center px-3 bg-black/50 cursor-pointer hover:border-[#83ee91] transition"
+                  >
+                    <span className="font-mono text-[#83ee91] text-[13px] tracking-widest uppercase font-light select-none">
+                      {code.trim() ? `CODE: ${code.trim()}` : "AWAITING ACCESS CODE"}
+                    </span>
                   </div>
                 )}
 
@@ -487,9 +546,8 @@ export default function JoinTeamTerminal({
 
               {/* NETWORK */}
               <div
-                className={`absolute top-[211px] left-[370px] rounded-full bg-[#ffed25] w-[12px] h-[12px] shadow-[0_0_8px_#ffed25] ${
-                  stage === "validating" ? "animate-ping" : ""
-                }`}
+                className={`absolute top-[211px] left-[370px] rounded-full bg-[#ffed25] w-[12px] h-[12px] shadow-[0_0_8px_#ffed25] ${stage === "validating" ? "animate-ping" : ""
+                  }`}
               />
               <div className="absolute top-[208px] left-[391px] font-light text-[14px] text-black leading-none">
                 NETWORK
@@ -497,11 +555,10 @@ export default function JoinTeamTerminal({
 
               {/* READY */}
               <div
-                className={`absolute top-[242px] left-[370px] rounded-full w-[12px] h-[12px] transition-colors duration-200 ${
-                  stage === "validated" || stage === "joined"
-                    ? "bg-[#00d753] shadow-[0_0_8px_#00d753]"
-                    : "bg-[#656565]"
-                }`}
+                className={`absolute top-[242px] left-[370px] rounded-full w-[12px] h-[12px] transition-colors duration-200 ${stage === "validated" || stage === "joined"
+                  ? "bg-[#00d753] shadow-[0_0_8px_#00d753]"
+                  : "bg-[#656565]"
+                  }`}
               />
               <div className="absolute top-[239px] left-[391px] font-light text-[14px] text-black leading-none">
                 READY
@@ -669,29 +726,29 @@ export default function JoinTeamTerminal({
                       <span>vinnovateit@gmail.com</span>
                     </div>
                   </div>
-                ) : stage === "validating" || stage === "validated" ? (
-                  /* STAGES 1 & 2 ("JOIN TEAM - 2" & "JOIN TEAM - 3"): Small slip ticket */
+                ) : stage === "validating" ? (
+                  /* STAGE 1 ("JOIN TEAM - 2"): Small disclaimer slip rolling out during validation */
                   <div
-                    ref={smallSlipRef}
+                    ref={validatingSlipRef}
                     style={{
                       position: "absolute",
                       left: "47.5px",
                       top: "29px",
                       width: "220px",
                       height: "100px",
-                      clipPath: stage === "validating" ? "inset(0 0 100% 0)" : "none",
+                      clipPath: "inset(0 0 100% 0)",
                     }}
                     className="overflow-clip z-10 select-none"
                     data-node-id="343:2041"
                   >
-                    {/* Perforated receipt sheet with authentic saw-tooth bottom edge */}
+                    {/* Perforated receipt sheet */}
                     <div
                       aria-hidden
                       className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
                       data-node-id="343:2061"
                     />
 
-                    {/* Disclaimer text with dashed line and URLs - Perfectly Centered */}
+                    {/* Disclaimer text */}
                     <div
                       style={{
                         position: "absolute",
@@ -733,6 +790,126 @@ export default function JoinTeamTerminal({
                       style={{
                         position: "absolute",
                         top: "56px",
+                        left: "14px",
+                        width: "192px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "6.5px",
+                        fontFamily: "monospace",
+                        color: "#4a4a4a",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      <span>vinhack.vinnovateit.com</span>
+                      <span>vinnovateit@gmail.com</span>
+                    </div>
+                  </div>
+                ) : stage === "validated" ? (
+                  /* STAGE 2 ("JOIN TEAM - 3"): ACCESS GRANTED slip — mirrors the full joined ticket layout */
+                  <div
+                    ref={smallSlipRef}
+                    style={{
+                      position: "absolute",
+                      left: "47.5px",
+                      top: "29px",
+                      width: "220px",
+                      height: "300px",
+                      clipPath: "inset(0 0 100% 0)",
+                    }}
+                    className="overflow-clip z-10 select-none"
+                    data-node-id="343:2041"
+                  >
+                    {/* Perforated receipt sheet */}
+                    <div
+                      aria-hidden
+                      className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] border-x border-neutral-300/60 shadow-md"
+                    />
+
+                    {/* Logo */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "20px",
+                        left: "41px",
+                        width: "138px",
+                        height: "46px",
+                      }}
+                    >
+                      <Image
+                        src="/figma/logo-red.svg"
+                        alt="VinHack"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+
+                    {/* Top dashed divider */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "74px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* Title: TEAM JOIN REQUEST */}
+                    <div className="absolute top-[84px] left-0 w-full text-center text-[13px] leading-tight font-light uppercase tracking-wider text-black font-['Rotonto',sans-serif]">
+                      TEAM JOIN REQUEST
+                    </div>
+
+                    {/* VinHack 2026 */}
+                    <div className="absolute top-[102px] left-0 w-full text-center leading-tight font-light text-[10px] text-neutral-800 font-['Rotonto',sans-serif]">
+                      VinHack 2026
+                    </div>
+
+                    {/* Dashed line 1 */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "120px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* Participant row */}
+                    <div className="absolute top-[130px] left-[18px] right-[18px] flex justify-between items-center text-[10.5px] leading-none font-light font-['Rotonto',sans-serif]">
+                      <span className="text-neutral-700">Participant</span>
+                      <span className="font-semibold text-black truncate max-w-[110px] text-right">
+                        {participantName || "John Doe"}
+                      </span>
+                    </div>
+
+                    {/* Dashed line 2 */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "150px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* Enter Team Code label */}
+                    <div className="absolute top-[160px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
+                      Enter Team Code
+                    </div>
+
+                    {/* Team code value */}
+                    <div className="absolute top-[174px] left-0 w-full text-center text-[24px] font-bold tracking-wider leading-none font-['Rotonto',sans-serif] text-black">
+                      {code.trim() ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`) : "VH26-3515"}
+                    </div>
+
+                    {/* ACCESS GRANTED badge */}
+                    <div
+                      style={{ position: "absolute", top: "214px", left: "42px", width: "136px" }}
+                      className="border-[1.5px] border-black rounded-[4px] py-1 text-[11px] font-['Rotonto',sans-serif] font-bold text-black tracking-wider uppercase text-center whitespace-nowrap bg-white/40"
+                    >
+                      ACCESS GRANTED
+                    </div>
+
+                    {/* Dashed line 3 */}
+                    <div
+                      className="receipt-rule"
+                      style={{ position: "absolute", top: "244px", left: "18px", width: "184px", height: "1px" }}
+                    />
+
+                    {/* URLs */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "254px",
                         left: "14px",
                         width: "192px",
                         display: "flex",
@@ -844,15 +1021,35 @@ export default function JoinTeamTerminal({
                     />
 
                     {/* Enter Team Code label */}
-                    <div className="absolute top-[160px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
+                    <div className="absolute top-[156px] left-0 w-full text-center text-[9px] leading-none font-light text-neutral-600 uppercase tracking-wider font-['Rotonto',sans-serif]">
                       Enter Team Code
                     </div>
 
-                    {/* Enter Team Code value */}
-                    <div className="absolute top-[174px] left-0 w-full text-center text-[22px] font-bold tracking-wider leading-none select-none font-['Rotonto',sans-serif] text-black">
-                      {code.trim()
-                        ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`)
-                        : "VH26-____"}
+                    {/* Enter Team Code interactive input directly on the printer ticket with fixed VH26- */}
+                    <div className="absolute top-[168px] left-0 w-full flex items-center justify-center z-20 pointer-events-auto">
+                      <div
+                        onClick={() => printerInputRef.current?.focus()}
+                        className="inline-flex items-center justify-center font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider border-b border-dashed border-black/30 focus-within:border-black py-0.5 cursor-text"
+                        style={{ maxWidth: "196px" }}
+                      >
+                        <span className="select-none text-black leading-none flex-shrink-0">VH26-</span>
+                        <input
+                          ref={printerInputRef}
+                          type="text"
+                          value={suffix}
+                          onChange={(e) => handleSuffixChange(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleValidate();
+                          }}
+                          placeholder="____"
+                          maxLength={6}
+                          autoFocus
+                          autoComplete="off"
+                          spellCheck={false}
+                          style={{ width: "90px" }}
+                          className="bg-transparent text-left font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider outline-none placeholder:text-neutral-400 uppercase cursor-text leading-none p-0 m-0"
+                        />
+                      </div>
                     </div>
 
                     {/* Dashed line 3 */}

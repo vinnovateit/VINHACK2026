@@ -28,6 +28,15 @@ export default async function OnboardingPage({
     redirect("/login");
   }
 
+  // If the participant already has a team, send them straight to the dashboard
+  // unless they're explicitly navigating to a specific onboarding step (e.g. via
+  // a shared join-team link with ?step=join-team&code=VH26-XXXX).
+  const explicitStep = params.step;
+  const isOnboardingStep = explicitStep === "join-team" || explicitStep === "create-team";
+  if (participant.teamId && !isOnboardingStep) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="h-[100dvh] max-h-[100dvh] bg-black text-white overflow-hidden">
       <Suspense fallback={<div className="h-[100dvh] bg-black flex items-center justify-center text-neutral-500 font-mono">LOADING ONBOARDING...</div>}>

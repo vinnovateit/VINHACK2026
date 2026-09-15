@@ -1108,3 +1108,70 @@
   border-color: #555;
   color: #ccc;
 }
+
+.leader-action-btn.kick:hover {
+  border-color: #f97316;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.06);
+}
+
+.leader-kick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+
+.kick-empty {
+  color: #666;
+  font-size: 12px;
+  margin: 0;
+}
+
+.kick-member-row {
+  align-items: center;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+}
+
+.kick-member-name {
+  color: #ccc;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+
+.kick-btn {
+  background: transparent;
+  border: 1px solid #3a1a1a;
+  border-radius: 4px;
+  color: #e05555;
+  cursor: pointer;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  transition: all 0.2s;
+}
+
+.kick-btn:hover:not(:disabled) {
+  background: rgba(224, 85, 85, 0.12);
+  border-color: #e05555;
+}
+
+.kick-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.leave-team-section {
+  margin-top: 12px;
+}

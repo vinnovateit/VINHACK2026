@@ -303,13 +303,6 @@ export default function CardboardBoxOpeningAnimation() {
           />
         </motion.div>
       </motion.div>
-
-      {/* Subtle interactive hint */}
-      <div className="mt-2 text-center transition-all duration-300">
-        <span className="font-['Rotonto',sans-serif] text-[11px] uppercase tracking-wider text-neutral-400 bg-neutral-900/70 hover:bg-neutral-800/90 border border-neutral-800 rounded-full px-3.5 py-1 backdrop-blur-sm shadow-sm transition">
-          Click box to replay opening
-        </span>
-      </div>
     </div>
   );
 }
