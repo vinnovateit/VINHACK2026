@@ -8,7 +8,7 @@ interface CreateTeamDossierProps {
   initialTeamName?: string;
   teamCode: string;
   qrDataUrl?: string;
-  onSaveAndContinue: (teamName: string) => Promise<void> | void;
+  onSaveAndContinue: (teamName: string) => Promise<{ success: boolean; error?: string } | void> | void;
   onBack?: () => void;
   isLoading?: boolean;
 }
@@ -37,13 +37,16 @@ export default function CreateTeamDossier({
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!teamName.trim()) {
       setError("Please enter a team name before continuing.");
       return;
     }
     setError(null);
-    onSaveAndContinue(teamName.trim());
+    const res = await onSaveAndContinue(teamName.trim());
+    if (res && !res.success && res.error) {
+      setError(res.error);
+    }
   };
 
   return (
@@ -95,10 +98,8 @@ export default function CreateTeamDossier({
                 setTeamName(e.target.value);
                 if (error && e.target.value.trim()) setError(null);
               }}
-              placeholder="e.g. CreamChicken"
-              className={`w-full bg-neutral-950 border ${
-                error ? "border-red-500 bg-red-500/10" : "border-neutral-800 focus:border-[#FC2425]"
-              } rounded-xl px-4 py-2.5 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
+              className={`w-full bg-neutral-950 border ${error ? "border-red-500 bg-red-500/10" : "border-neutral-800 focus:border-[#FC2425]"
+                } rounded-xl px-4 py-2.5 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
             />
             {error && (
               <p className="text-red-400 text-xs font-mono">{error}</p>
@@ -133,87 +134,118 @@ export default function CreateTeamDossier({
           </div>
         </div>
 
-        {/* Right Column: Red Dispenser & Printed Thermal Receipt */}
-        <div className="lg:col-span-6 flex flex-col items-center justify-center relative select-none h-full min-h-0 py-2">
-          {/* Red Dispenser Hood */}
-          <div className="relative w-[280px] sm:w-[320px] md:w-[340px] h-[52px] md:h-[64px] bg-[#FA1A1D] rounded-[14px] shadow-2xl flex items-center justify-center z-20">
-            {/* Black Exit Slot */}
-            <div className="w-[240px] sm:w-[270px] md:w-[290px] h-[10px] md:h-[12px] bg-black rounded-full" />
-          </div>
+        {/* Right Column: Red Dispenser & Printed Thermal Receipt (matching Homepage Timeline ReceiptPrinter) */}
+        <div className="lg:col-span-6 flex items-start justify-center relative select-none h-full min-h-0 py-2 pt-2 md:pt-4">
+          {/* Red Dispenser Housing (data-node-id="343:2039") */}
+          <div
+            className="relative bg-[#fa1a1d] rounded-[16px] w-[310px] sm:w-[335px] md:w-[350px] h-[58px] md:h-[64px] shadow-2xl z-20"
+            data-node-id="343:2039"
+          >
+            {/* Black Exit Slot (data-node-id="343:2040") */}
+            <div
+              className="-translate-x-1/2 -translate-y-1/2 absolute bg-black h-[12px] md:h-[14px] left-1/2 top-1/2 w-[260px] sm:w-[280px] md:w-[295px] rounded-full"
+              data-node-id="343:2040"
+            />
 
-          {/* Printed Thermal Receipt coming out of slot */}
-          <div className="relative w-[240px] sm:w-[270px] md:w-[290px] max-h-[calc(100dvh-130px)] bg-[#F1F0F0] text-black shadow-2xl rounded-b-none -mt-3 pt-5 px-5 pb-5 z-10 border-x border-neutral-300">
-            {/* Top Logo on ticket */}
-            <div className="w-[120px] h-[36px] mx-auto relative mb-2">
-              <Image
-                src="/figma/logo-red.svg"
-                alt="VinHack"
-                fill
-                className="object-contain"
+            {/* Ticket Container: feeds emerging directly out from inside the black slot */}
+            <div
+              className="absolute -translate-x-1/2 left-1/2 top-[29px] md:top-[32px] w-[240px] sm:w-[260px] md:w-[272px] h-[410px] sm:h-[430px] md:h-[450px] max-h-[calc(100dvh-150px)] z-10 select-none overflow-hidden"
+              data-node-id="343:2041"
+            >
+              {/* Authentic saw-tooth perforated receipt paper sheet (matching timeline) */}
+              <div
+                aria-hidden
+                className="receipt-paper-sheet pointer-events-none absolute inset-0 bg-[#f1f0f0] shadow-xl"
+                data-node-id="343:2061"
               />
-            </div>
 
-            <div className="border-t border-b border-black/20 py-1.5 text-center my-2">
-              <p className="text-[10px] font-mono tracking-widest text-[#676767] uppercase">VinHack 2026</p>
-              <h2 className="font-['Rotonto',sans-serif] text-[17px] md:text-[20px] tracking-wider uppercase font-bold text-black">
-                TEAM DOSSIER
-              </h2>
-            </div>
-
-            {/* Receipt Metadata */}
-            <div className="flex justify-between items-center text-[11px] md:text-[12px] font-mono border-b border-black/20 pb-1.5 text-neutral-800">
-              <span>Date :</span>
-              <span className="font-semibold">18th Sept</span>
-            </div>
-
-            <div className="text-center pt-2 pb-0.5">
-              <p className="text-[10px] md:text-[11px] font-mono uppercase text-neutral-600 tracking-wider">
-                Your shareable team code
-              </p>
-              <div className="font-['Rotonto',sans-serif] text-[28px] md:text-[34px] font-bold text-black tracking-widest my-0.5 select-all">
-                {teamCode}
-              </div>
-            </div>
-
-            {/* Dynamic QR Code */}
-            <div className="my-2 flex justify-center">
-              <div className="p-1.5 bg-white rounded-lg border border-neutral-300 shadow-inner">
-                {qrDataUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={qrDataUrl}
-                    alt="Team QR Code"
-                    className="w-[80px] h-[80px] md:w-[90px] md:h-[90px] object-contain"
-                  />
-                ) : (
-                  <div className="w-[80px] h-[80px] md:w-[90px] md:h-[90px] relative">
+              {/* Receipt Inner Content */}
+              <div className="relative h-full flex flex-col justify-between pt-4 md:pt-5 pb-6 px-4 z-10 text-black">
+                <div>
+                  {/* Top Logo */}
+                  <div className="w-[110px] md:w-[125px] h-[32px] md:h-[36px] mx-auto relative mb-1.5">
                     <Image
-                      src="/onboarding/imgQrCodeGeneratorUxhf8J_f8e80aef.png"
-                      alt="QR"
+                      src="/figma/logo-red.svg"
+                      alt="VinHack"
                       fill
                       className="object-contain"
+                      priority
                     />
                   </div>
-                )}
+
+                  {/* Header Title with receipt rules */}
+                  <div className="receipt-rule w-full h-[1px] my-1" />
+                  <div className="py-1 text-center min-h-[34px] md:min-h-[38px] flex flex-col justify-center items-center">
+                    <p className="text-[9px] md:text-[10px] font-mono tracking-widest text-[#676767] uppercase leading-none mb-0.5">
+                      VinHack 2026
+                    </p>
+                    {teamName ? (
+                      <h2 className="font-['Rotonto',sans-serif] text-[15px] md:text-[18px] tracking-wider uppercase font-bold text-black leading-tight break-words px-1 max-w-full line-clamp-2">
+                        {teamName}
+                      </h2>
+                    ) : (
+                      <div className="h-[20px] md:h-[22px]" />
+                    )}
+                  </div>
+                  <div className="receipt-rule w-full h-[1px] my-1" />
+
+                  {/* Date metadata */}
+                  <div className="flex justify-between items-center text-[10px] md:text-[11px] font-mono text-neutral-800 py-1">
+                    <span>Date :</span>
+                    <span className="font-semibold">18th Sept</span>
+                  </div>
+                  <div className="receipt-rule w-full h-[1px] my-1" />
+
+                  {/* Shareable Team Code */}
+                  <div className="text-center pt-1.5 pb-0.5">
+                    <p className="text-[9px] md:text-[10px] font-mono uppercase text-neutral-600 tracking-wider">
+                      Your shareable team code
+                    </p>
+                    <div className="font-['Rotonto',sans-serif] text-[24px] md:text-[28px] font-bold text-black tracking-widest my-0.5 select-all">
+                      {teamCode}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dynamic QR Code */}
+                <div className="my-1 flex justify-center">
+                  <div className="p-1.5 bg-white rounded-lg border border-neutral-300 shadow-inner">
+                    {qrDataUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={qrDataUrl}
+                        alt="Team QR Code"
+                        className="w-[78px] h-[78px] md:w-[86px] md:h-[86px] object-contain"
+                      />
+                    ) : (
+                      <div className="w-[78px] h-[78px] md:w-[86px] md:h-[86px] relative">
+                        <Image
+                          src="/onboarding/imgQrCodeGeneratorUxhf8J_f8e80aef.png"
+                          alt="QR"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer URL metadata */}
+                <div>
+                  <div className="receipt-rule w-full h-[1px] mb-1.5" />
+                  <div className="flex justify-between text-[6.5px] md:text-[7.5px] font-mono text-neutral-600">
+                    <span>vinhack.vinnovateit.com</span>
+                    <span>vinnovateit@gmail.com</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Receipt Footer */}
-            <div className="border-t border-black/20 pt-1.5 flex justify-between text-[7px] md:text-[8px] font-mono text-neutral-500">
-              <span>vinhack.vinnovateit.com</span>
-              <span>vinnovateit@gmail.com</span>
-            </div>
-
-            {/* Serrated tear-off bottom edge */}
-            <div className="absolute -bottom-[14px] left-0 w-full h-[15px] overflow-hidden pointer-events-none">
-              <Image
-                src="/onboarding/imgGroup48095504_946d3f55.svg"
-                alt=""
-                width={290}
-                height={15}
-                className="w-full h-full object-cover rotate-180"
-              />
-            </div>
+            {/* Slot Exit Shadow Lip (matching ReceiptPrinter.tsx) */}
+            <div
+              aria-hidden
+              className="-translate-x-1/2 pointer-events-none absolute left-1/2 top-[27px] md:top-[30px] h-[5px] w-[262px] sm:w-[282px] md:w-[297px] rounded-full bg-[#161616] shadow-[0_3px_5px_rgba(0,0,0,0.55)] z-20"
+            />
           </div>
         </div>
       </div>

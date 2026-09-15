@@ -16,6 +16,7 @@ import {
   formatNameFromEmail,
   generateUniqueTeamCodeFromDb,
   createTeamInDb,
+  validateTeamNameInDb,
 } from "@/lib/mongo";
 
 export type CurrentOnboardingParticipant = {
@@ -393,11 +394,26 @@ export async function prepareTeamCodeAction() {
   }
 }
 
+export async function validateTeamNameAction(teamName: string) {
+  try {
+    return await validateTeamNameInDb(teamName);
+  } catch (err) {
+    console.error("[validateTeamNameAction] Error:", err);
+    return { valid: true };
+  }
+}
+
 export async function createTeamAction(teamName: string, customCode?: string) {
   try {
     const trimmedName = teamName.trim();
     if (!trimmedName) {
       return { success: false, error: "Please enter a team name before continuing." };
+    }
+
+    // Upfront check for unique and distinct team name
+    const validation = await validateTeamNameInDb(trimmedName);
+    if (!validation.valid) {
+      return { success: false, error: validation.error || "This team name is already taken or too similar to an existing team." };
     }
 
     const participant = await resolveCurrentParticipant();

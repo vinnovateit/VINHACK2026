@@ -102,14 +102,15 @@ export default function OnboardingWizard({
     try {
       const res = await createTeamAction(teamName, createdTeamCode);
       if (res && !res.success) {
-        alert(res.error || "Failed to create team. Please try again.");
         setIsLoading(false);
-        return;
+        return { success: false, error: res.error || "Failed to create team. Please try another name." };
       }
       router.push("/dashboard");
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       console.error("Failed to finalize team:", err);
-      router.push("/dashboard");
+      setIsLoading(false);
+      return { success: false, error: err?.message || "Failed to save team. Please try again." };
     } finally {
       setIsLoading(false);
     }
