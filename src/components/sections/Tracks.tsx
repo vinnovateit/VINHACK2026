@@ -1,7 +1,13 @@
+"use client";
+
 import { TRACKS } from "@/content/site";
 import TracksCardDeck from "@/components/tracks/TracksCardDeck";
+import { useInView } from "@/components/useInView";
 
 export default function TracksSection() {
+  const [headerRef, inView] = useInView<HTMLDivElement>(0.15);
+  const iosEase = "cubic-bezier(0.32, 0.72, 0, 1)";
+
   return (
     <section
       aria-label="Tracks"
@@ -29,6 +35,7 @@ export default function TracksSection() {
           the space it leaves instead. `HEADER_BOTTOM` in the deck is this
           block's own bottom edge, and the hand-over is timed off it. */}
       <div
+        ref={headerRef}
         className="-translate-x-1/2 absolute z-10 h-[298px] left-[calc(50%-0.32px)] top-[99px] w-[1155.364px]"
         data-node-id="594:34"
         data-tracks-header
@@ -38,8 +45,13 @@ export default function TracksSection() {
           data-node-id="594:35"
         >
           <div
-            className="absolute content-stretch flex gap-[20px] items-center left-0 top-0"
+            className="absolute content-stretch flex gap-[20px] items-center left-0 top-0 will-change-transform"
             data-node-id="594:36"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-160px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0s, opacity 0.5s ${iosEase} 0s`,
+            }}
           >
             <p
               className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap"
@@ -66,13 +78,24 @@ export default function TracksSection() {
             </div>
           </div>
           <div
-            className="absolute h-px left-0 w-[819.022px] top-[86px] bg-[#fa1a1d]"
+            className="absolute h-px left-0 w-[819.022px] top-[86px] bg-[#fa1a1d] will-change-transform"
             data-node-id="594:39"
             aria-hidden
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "left center",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0s, opacity 0.5s ${iosEase} 0s`,
+            }}
           />
           <div
-            className="absolute content-stretch flex gap-[20px] items-center left-[500px] top-[106px]"
+            className="absolute content-stretch flex gap-[20px] items-center left-[500px] top-[106px] will-change-transform"
             data-node-id="594:40"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(160px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.1s, opacity 0.5s ${iosEase} 0.1s`,
+            }}
           >
             <h2
               className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap"
@@ -100,13 +123,24 @@ export default function TracksSection() {
             </div>
           </div>
           <div
-            className="absolute h-px left-0 w-[819.022px] top-[192px] bg-[#fa1a1d]"
+            className="absolute h-px left-0 w-[819.022px] top-[192px] bg-[#fa1a1d] will-change-transform"
             data-node-id="594:45"
             aria-hidden
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "right center",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.1s, opacity 0.5s ${iosEase} 0.1s`,
+            }}
           />
           <div
-            className="absolute content-stretch flex gap-[20px] items-center left-[250px] top-[212px]"
+            className="absolute content-stretch flex gap-[20px] items-center left-[250px] top-[212px] will-change-transform"
             data-node-id="594:46"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-160px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.2s, opacity 0.5s ${iosEase} 0.2s`,
+            }}
           >
             <p
               className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap"
@@ -134,9 +168,15 @@ export default function TracksSection() {
             </div>
           </div>
           <div
-            className="absolute h-px left-0 w-[819.022px] top-[298px] bg-[#fa1a1d]"
+            className="absolute h-px left-0 w-[819.022px] top-[298px] bg-[#fa1a1d] will-change-transform"
             data-node-id="594:49"
             aria-hidden
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "left center",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.2s, opacity 0.5s ${iosEase} 0.2s`,
+            }}
           />
         </div>
       </div>

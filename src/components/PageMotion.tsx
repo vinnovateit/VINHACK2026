@@ -26,6 +26,7 @@ import { audio } from "@/components/motion/audio";
 import { toggleSnap } from "@/components/motion/machine";
 import { reveal, strikeOnce } from "@/components/motion/reveal";
 import { stampIn } from "@/components/motion/stamp";
+import { wireCursorFollower } from "@/components/motion/cursorFollower";
 
 gsap.registerPlugin(useGSAP);
 
@@ -191,7 +192,6 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
       { node: "343:2222", settle: { rotation: -5 } },
       { node: "343:2039", drift: -79 },
       { node: "343:2115", drift: 40 },
-      { node: "343:2119", settle: { rotation: -5 } },
       // The six loose stickers. All of them stamp down as the section arrives,
       // dealt out a tenth of a second apart so the section is stuck together
       // in front of you rather than appearing assembled, and all of them are
@@ -247,7 +247,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
       // it is printed on the paper, and a heading that stayed put while the
       // page it is on arrived would be the one thing giving the trick away.
       { node: "343:756", slideIn: true },
-      { node: "343:757", slideIn: true, reveal: { select: "p", stagger: 0 } },
+      { node: "343:757", slideIn: true },
       // Both stamped once the sheet has actually landed — `top 40%` rather
       // than the default `top 70%`, which is still inside the pan.
       { node: "343:760", stamp: 0.1, stampAt: "top 40%", slideIn: true },
@@ -520,6 +520,17 @@ export default function PageMotion({ children }: { children: ReactNode }) {
 
         // ---- Timeline receipt ------------------------------------------
         cleanups.push(wireTimelineReceipt(scope));
+
+        // ---- Cursor followers (Recap & Timeline) -----------------------
+        const recapCursor = scope.querySelector<HTMLElement>('[data-cursor-follower="recap"]');
+        if (recapCursor) {
+          cleanups.push(wireCursorFollower(recapCursor, { baseAngle: 135, maxOffset: 12, lag: 0.45 }));
+        }
+
+        const timelineCursor = scope.querySelector<HTMLElement>('[data-cursor-follower="timeline"]');
+        if (timelineCursor) {
+          cleanups.push(wireCursorFollower(timelineCursor, { baseAngle: -126, maxOffset: 8, lag: 0.45 }));
+        }
 
         return () => {
           cleanups.forEach((fn) => fn());

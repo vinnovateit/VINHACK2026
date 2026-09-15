@@ -12,6 +12,7 @@ import { reveal } from "@/components/motion/reveal";
 import { wireSpeaker } from "@/components/motion/speaker";
 import { stampIn } from "@/components/motion/stamp";
 import { wireTimelineReceipt } from "@/components/motion/receipt";
+import { wireCursorFollower } from "@/components/motion/cursorFollower";
 import { HERO } from "@/content/site";
 
 gsap.registerPlugin(useGSAP);
@@ -341,6 +342,12 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
 
         // ---- the timeline receipt --------------------------------------
         cleanups.push(wireTimelineReceipt(scope));
+
+        // ---- the recap cursor follower ---------------------------------
+        const recapCursor = scope.querySelector<HTMLElement>('[data-cursor-follower="recap"]');
+        if (recapCursor) {
+          cleanups.push(wireCursorFollower(recapCursor, { baseAngle: 135, maxOffset: 20, lag: 0.5 }));
+        }
 
         return () => cleanups.forEach((fn) => fn());
       });

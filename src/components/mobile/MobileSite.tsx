@@ -42,6 +42,7 @@ import {
   TIMELINE,
   TRACKS,
 } from "@/content/site";
+import { useInView } from "@/components/useInView";
 import MobileTracksDeck from "@/components/tracks/MobileTracksDeck";
 
 /**
@@ -171,7 +172,7 @@ function Spark({ x, y, size }: { x: number; y: number; size: number }) {
   return (
     <svg
       aria-hidden
-      className="deal-in pointer-events-none absolute [--deal-delay:1.5s]"
+      className="deal-in pointer-events-none absolute z-40 [--deal-delay:1.5s]"
       style={{ left: x, top: y, width: size, height: size }}
       viewBox="0 0 24 24"
       fill="#fcfcfc"
@@ -215,8 +216,8 @@ function MobileHero() {
           >
             <div className="size-full pointer-events-none rotate-[-8deg] rounded-[50%] border border-white/30" />
           </div>
-          <Spark x={240} y={124} size={20} />
-          <Spark x={116} y={304} size={16} />
+          <Spark x={240} y={106} size={20} />
+          <Spark x={211} y={305} size={16} />
 
           {/* The wordmark, as two layers — the solid lettering and the offset
               outline drawn behind it — which stack back to exactly the Figma
@@ -631,15 +632,29 @@ function MobileProjects() {
 /* ------------------------------------------------------------- tracks */
 
 function MobileTracks() {
+  const [sectionRef, inView] = useInView<HTMLElement>(0.15);
+  const iosEase = "cubic-bezier(0.32, 0.72, 0, 1)";
+
   return (
-    <section aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
+    <section ref={sectionRef} aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
       <div className="border-t border-[#fa1a1d]">
         {TRACKS.lines.map((line, i) => {
           const Tag = i === 1 ? "h2" : "p";
+          const isRight = i === 1;
+          const delay = `${i * 0.1}s`;
           return (
             <div
               key={line}
-              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4"
+              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4 will-change-transform"
+              style={{
+                transform: inView
+                  ? "translateX(0)"
+                  : isRight
+                    ? "translateX(100px)"
+                    : "translateX(-100px)",
+                opacity: inView ? 1 : 0,
+                transition: `transform 0.5s ${iosEase} ${delay}, opacity 0.5s ${iosEase} ${delay}`,
+              }}
             >
               <Tag className="text-[30px] leading-[1.1] text-[#fa1a1d]">
                 {line}
@@ -935,7 +950,7 @@ function MobileGuidelines() {
           <h2 className="font-rotonto font-light text-[38px] text-[#2849cb]">{GUIDELINES.heading}</h2>
         </div>
 
-        <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white" data-m-reveal>
+        <div className="relative mt-7 space-y-5 text-[15px] leading-[1.6] text-white">
           {GUIDELINES.paragraphs.map((para) => (
             <p key={para}>{para}</p>
           ))}

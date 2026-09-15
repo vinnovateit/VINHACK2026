@@ -85,17 +85,19 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         }}
       >
         <BuildersCounter inView={inView} />
-        <Image
-          className="w-[30px] h-[30px] object-contain ml-[6px] mt-[14px] pointer-events-none transition-transform duration-500 delay-500"
-          style={{
-            transform: inView ? "translate(0, 0)" : "translate(12px, 12px)",
-          }}
-          src="/recap/blue_mouse.svg"
-          width={49}
-          height={48}
-          alt="Arrow"
-          unoptimized
-        />
+        <div data-cursor-follower="recap" className="inline-block ml-[6px] mt-[14px]">
+          <Image
+            className="w-[30px] h-[30px] object-contain pointer-events-none transition-transform duration-500 delay-500"
+            style={{
+              transform: inView ? "translate(0, 0)" : "translate(12px, 12px)",
+            }}
+            src="/recap/blue_mouse.svg"
+            width={49}
+            height={48}
+            alt="Arrow"
+            unoptimized
+          />
+        </div>
       </div>
 
       {/* 3. Green Rotating Badge with Corner Fly-In & Dynamic Pixel Smiley + 99+ Projects Ticket */}

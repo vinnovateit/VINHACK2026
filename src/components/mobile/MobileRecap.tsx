@@ -78,14 +78,16 @@ export default function MobileRecap() {
           <div className="scale-85 origin-center">
             <BuildersCounter inView={inView} />
           </div>
-          <Image
-            className="w-[20px] h-[20px] object-contain -ml-1 mt-2 pointer-events-none"
-            src="/recap/blue_mouse.svg"
-            width={49}
-            height={48}
-            alt="Arrow"
-            unoptimized
-          />
+          <div data-cursor-follower="recap" className="inline-block -ml-1 mt-2">
+            <Image
+              className="w-[20px] h-[20px] object-contain pointer-events-none"
+              src="/recap/blue_mouse.svg"
+              width={49}
+              height={48}
+              alt="Arrow"
+              unoptimized
+            />
+          </div>
         </div>
 
         {/* Smiley & 99+ Projects Built */}
