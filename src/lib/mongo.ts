@@ -1,4 +1,6 @@
 import { MongoClient, ObjectId, type Db } from "mongodb";
+import { after } from "next/server";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -15,7 +17,31 @@ export function formatNameFromEmail(email: string): string {
     .join(" ");
 }
 
+const CLIENT_OPTIONS = {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 5000,
+  socketTimeoutMS: 10000,
+  maxIdleTimeMS: 30000,
+  waitQueueTimeoutMS: 5000,
+};
+
+const isWorkerd =
+  typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+
+// Node (next dev / scripts): one client for the whole process.
 let cachedClient: MongoClient | null = null;
+
+// Workers: sockets opened while handling one request cannot be used by another
+// ("Cannot perform I/O on behalf of a different request"), so a module-level
+// client breaks on the second request an isolate serves. Scope the client to
+// the request's ExecutionContext instead and close it once the response is done.
+const requestClients = new WeakMap<object, MongoClient>();
+
+function formatError(err: unknown): string {
+  if (err instanceof Error) return `${err.name}: ${err.message}\n${err.stack ?? ""}`;
+  return String(err);
+}
 
 export async function getMongoClient(): Promise<MongoClient | null> {
   const uri = process.env.DATABASE_URL;
@@ -25,19 +51,26 @@ export async function getMongoClient(): Promise<MongoClient | null> {
   }
 
   try {
-    if (!cachedClient) {
-      cachedClient = new MongoClient(uri, {
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        connectTimeoutMS: 5000,
-        socketTimeoutMS: 10000,
-        maxIdleTimeMS: 30000,
-        waitQueueTimeoutMS: 5000,
-      });
+    if (!isWorkerd) {
+      cachedClient ??= new MongoClient(uri, CLIENT_OPTIONS);
+      return cachedClient;
     }
-    return cachedClient;
+
+    const { ctx } = getCloudflareContext();
+    let client = requestClients.get(ctx);
+    if (!client) {
+      const created = new MongoClient(uri, CLIENT_OPTIONS);
+      client = created;
+      requestClients.set(ctx, created);
+      try {
+        after(() => created.close().catch(() => {}));
+      } catch {
+        // Outside a Next request scope; the isolate reclaims the sockets when the request ends.
+      }
+    }
+    return client;
   } catch (err) {
-    console.error("[MongoDB] Error creating MongoClient:", err);
+    console.error("[MongoDB] Error creating MongoClient:", formatError(err));
     return null;
   }
 }
@@ -138,7 +171,7 @@ export async function getParticipantByEmail(
               { $set: { regNo: detectedRegNo, name: resolvedName, updatedAt: new Date() } }
             );
           } catch (updateErr) {
-            console.warn("[MongoDB] Auto-syncing regNo from Google name failed:", updateErr);
+            console.warn("[MongoDB] Auto-syncing regNo from Google name failed:", formatError(updateErr));
           }
         }
 
@@ -279,7 +312,7 @@ export async function getParticipantByEmail(
       };
     }
   } catch (err) {
-    console.error("[MongoDB] getParticipantByEmail error:", err);
+    console.error("[MongoDB] getParticipantByEmail error:", formatError(err));
     return null;
   }
 }
@@ -367,7 +400,7 @@ export async function getParticipantById(
       };
     }
   } catch (err) {
-    console.error("[MongoDB] getParticipantById error:", err);
+    console.error("[MongoDB] getParticipantById error:", formatError(err));
     return null;
   }
 }
@@ -455,7 +488,7 @@ export async function saveParticipantCheckInInDb(
 
     return true;
   } catch (err) {
-    console.error("[MongoDB] saveParticipantCheckInInDb error:", err);
+    console.error("[MongoDB] saveParticipantCheckInInDb error:", formatError(err));
     return false;
   }
 }
@@ -484,7 +517,7 @@ export async function generateUniqueTeamCodeFromDb(): Promise<string> {
       }
     }
   } catch (err) {
-    console.warn("[MongoDB] generateUniqueTeamCodeFromDb error, using random fallback:", err);
+    console.warn("[MongoDB] generateUniqueTeamCodeFromDb error, using random fallback:", formatError(err));
   }
 
   const ts = Date.now().toString(36).slice(-3).toUpperCase();
@@ -655,7 +688,7 @@ export async function createTeamInDb(data: {
 
     return { success: true, teamId };
   } catch (err) {
-    console.error("[MongoDB] createTeamInDb error:", err);
+    console.error("[MongoDB] createTeamInDb error:", formatError(err));
     return { success: false, error: "Failed to create team in database." };
   }
 }
