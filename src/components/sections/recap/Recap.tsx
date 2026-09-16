@@ -10,18 +10,18 @@ import { playStampSlam, playPhotoClick, playSmileyChirp } from "@/components/mot
 
 const EVENT_PHOTOS = [
   "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
-  "/about_us/1.webp",
   "/about_us/67637ab629928adcbde8469183aac1877a08026b.webp",
-  "/about_us/2.webp",
   "/about_us/924203fb63dc0f4fd3cb3bfe64c9230caf80a54e.webp",
-  "/about_us/3.webp",
   "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
+  "/about_us/1.webp",
+  "/about_us/2.webp",
   "/about_us/4.webp",
   "/about_us/5.webp",
-  "/about_us/6.webp",
-  "/about_us/7.webp",
-  "/about_us/8.webp",
   "/about_us/9.webp",
+  "/about_us/gowx2f74mufdtcrqn7ec.webp",
+  "/about_us/ifdydabdclosmnjkoost.webp",
+  "/about_us/l14tfnskth0qqdlngimp.webp",
+  "/about_us/tva3o82zu1clyssjrif2.webp",
 ];
 
 const SPROCKET_COUNT = 65;
