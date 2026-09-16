@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+# Signed-in pages and auth endpoints; crawling them only renders redirects on the Worker.
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /profile
+Disallow: /memories
+Disallow: /help
+Disallow: /timeline
+Disallow: /tracks
