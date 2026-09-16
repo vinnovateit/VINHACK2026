@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Send,
+  Lock,
 } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
 import LiveCountdown from "@/components/dashboard/LiveCountdown";
@@ -34,6 +35,12 @@ import {
   TEAM_CONFIDENCE_OPTIONS,
   TRACK_OPTIONS,
 } from "@/lib/validation";
+
+const SECTION_TITLES: Record<TabType, string> = {
+  details: "Project Details",
+  links: "Links & Assets",
+  progress: "Progress Update",
+};
 
 const ZIGZAG_CLIP_PATH =
   "polygon(6px 0%, calc(100% - 6px) 0%, 100% 16.6%, calc(100% - 6px) 33.3%, 100% 50%, calc(100% - 6px) 66.6%, 100% 83.3%, calc(100% - 6px) 100%, 6px 100%, 0% 83.3%, 6px 66.6%, 0% 50%, 6px 33.3%, 0% 16.6%)";
@@ -89,6 +96,8 @@ export interface DashboardShellProps {
       linksUpdatedAt: string | null;
       progressUpdatedAt: string | null;
     } | null;
+    /** Submission sections the organisers have frozen for this team. */
+    locks: Record<TabType, boolean>;
   };
   initialTrack?: string;
 }
@@ -200,9 +209,29 @@ export default function DashboardShell({
 
   const isLeader = Boolean(participant.isLeader);
 
+  // A locked section stays readable — the team can still see what they submitted — but nobody,
+  // leader included, can change it. The server re-checks this on save.
+  const sectionLocks: Record<TabType, boolean> = team.locks ?? {
+    details: false,
+    links: false,
+    progress: false,
+  };
+  const canEdit: Record<TabType, boolean> = {
+    details: isLeader && !sectionLocks.details,
+    links: isLeader && !sectionLocks.links,
+    progress: isLeader && !sectionLocks.progress,
+  };
+  const canEditDetails = canEdit.details;
+  const canEditLinks = canEdit.links;
+  const canEditProgress = canEdit.progress;
+
   const handleSaveSection = (section: TabType) => {
     if (!isLeader) {
       showToast("Only the Team Leader can submit project reviews.", "error");
+      return;
+    }
+    if (sectionLocks[section]) {
+      showToast(`${SECTION_TITLES[section]} is locked by the organisers.`, "error");
       return;
     }
     if (section === "details" && !projectType) {
@@ -935,6 +964,14 @@ export default function DashboardShell({
               </button>
             </div>
 
+            {sectionLocks[activeTab] && (
+              <p className="flex items-center gap-2 border border-[#fa1a1d]/40 bg-[#fa1a1d]/10 text-[#ff8a8d] text-xs sm:text-sm font-light px-3 py-2 mb-3">
+                <Lock size={14} strokeWidth={2} className="shrink-0" />
+                {SECTION_TITLES[activeTab]} is locked by the organisers. You can still read what
+                your team submitted, but it can no longer be changed.
+              </p>
+            )}
+
             {/* Form Content */}
             <div className="min-h-[85px] flex flex-col justify-center">
               {/* Step 1: Project Title & Track */}
@@ -951,11 +988,11 @@ export default function DashboardShell({
                       id="proj-title"
                       type="text"
                       value={projectTitle}
-                      onChange={(e) => isLeader && setProjectTitle(e.target.value)}
-                      readOnly={!isLeader}
-                      placeholder={isLeader ? "" : (projectTitle || "Not submitted yet")}
+                      onChange={(e) => canEditDetails && setProjectTitle(e.target.value)}
+                      readOnly={!canEditDetails}
+                      placeholder={canEditDetails ? "" : (projectTitle || "Not submitted yet")}
                       className={`bg-black border border-[#666060] text-white px-3.5 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        canEditDetails ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -971,10 +1008,10 @@ export default function DashboardShell({
                       <select
                         id="proj-track"
                         value={selectedTrack}
-                        onChange={(e) => isLeader && setSelectedTrack(e.target.value)}
-                        disabled={!isLeader}
+                        onChange={(e) => canEditDetails && setSelectedTrack(e.target.value)}
+                        disabled={!canEditDetails}
                         className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
-                          isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                          canEditDetails ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
                         }`}
                       >
                         {!selectedTrack && (
@@ -988,7 +1025,7 @@ export default function DashboardShell({
                           </option>
                         ))}
                       </select>
-                      {isLeader && (
+                      {canEditDetails && (
                         <ChevronDown
                           size={18}
                           className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
@@ -1008,14 +1045,14 @@ export default function DashboardShell({
                       <select
                         id="proj-type"
                         value={projectType}
-                        onChange={(e) => isLeader && setProjectType(e.target.value)}
-                        disabled={!isLeader}
+                        onChange={(e) => canEditDetails && setProjectType(e.target.value)}
+                        disabled={!canEditDetails}
                         className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
-                          isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                          canEditDetails ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
                         }`}
                       >
                         <option value="" disabled>
-                          {isLeader ? "Select project type" : "Not submitted yet"}
+                          {canEditDetails ? "Select project type" : "Not submitted yet"}
                         </option>
                         {PROJECT_TYPE_OPTIONS.map((type) => (
                           <option key={type} value={type}>
@@ -1023,7 +1060,7 @@ export default function DashboardShell({
                           </option>
                         ))}
                       </select>
-                      {isLeader && (
+                      {canEditDetails && (
                         <ChevronDown
                           size={18}
                           className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
@@ -1044,15 +1081,15 @@ export default function DashboardShell({
                       rows={3}
                       maxLength={FIELD_LIMITS.projectDescription}
                       value={projectDescription}
-                      onChange={(e) => isLeader && setProjectDescription(e.target.value)}
-                      readOnly={!isLeader}
+                      onChange={(e) => canEditDetails && setProjectDescription(e.target.value)}
+                      readOnly={!canEditDetails}
                       placeholder={
-                        isLeader
+                        canEditDetails
                           ? "What does your project do, and what problem does it solve?"
                           : (projectDescription || "Not submitted yet")
                       }
                       className={`bg-black border border-[#666060] text-white px-3.5 py-3 text-sm sm:text-base w-full min-h-[96px] focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
+                        canEditDetails ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -1073,11 +1110,11 @@ export default function DashboardShell({
                       id="github-link"
                       type="url"
                       value={githubLink}
-                      onChange={(e) => isLeader && setGithubLink(e.target.value)}
-                      readOnly={!isLeader}
-                      placeholder={isLeader ? "" : (githubLink || "Not provided")}
+                      onChange={(e) => canEditLinks && setGithubLink(e.target.value)}
+                      readOnly={!canEditLinks}
+                      placeholder={canEditLinks ? "" : (githubLink || "Not provided")}
                       className={`bg-black border border-[#666060] text-white px-3 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        canEditLinks ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -1093,11 +1130,11 @@ export default function DashboardShell({
                       id="figma-link"
                       type="url"
                       value={figmaLink}
-                      onChange={(e) => isLeader && setFigmaLink(e.target.value)}
-                      readOnly={!isLeader}
-                      placeholder={isLeader ? "" : (figmaLink || "Not provided")}
+                      onChange={(e) => canEditLinks && setFigmaLink(e.target.value)}
+                      readOnly={!canEditLinks}
+                      placeholder={canEditLinks ? "" : (figmaLink || "Not provided")}
                       className={`bg-black border border-[#666060] text-white px-3 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        canEditLinks ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -1113,11 +1150,11 @@ export default function DashboardShell({
                       id="ppt-link"
                       type="url"
                       value={deckLink}
-                      onChange={(e) => isLeader && setDeckLink(e.target.value)}
-                      readOnly={!isLeader}
-                      placeholder={isLeader ? "" : (deckLink || "Not provided")}
+                      onChange={(e) => canEditLinks && setDeckLink(e.target.value)}
+                      readOnly={!canEditLinks}
+                      placeholder={canEditLinks ? "" : (deckLink || "Not provided")}
                       className={`bg-black border border-[#666060] text-white px-3 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        canEditLinks ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -1133,11 +1170,11 @@ export default function DashboardShell({
                       id="other-links"
                       type="url"
                       value={otherLinks}
-                      onChange={(e) => isLeader && setOtherLinks(e.target.value)}
-                      readOnly={!isLeader}
-                      placeholder={isLeader ? "" : (otherLinks || "Not provided")}
+                      onChange={(e) => canEditLinks && setOtherLinks(e.target.value)}
+                      readOnly={!canEditLinks}
+                      placeholder={canEditLinks ? "" : (otherLinks || "Not provided")}
                       className={`bg-black border border-[#666060] text-white px-3 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        canEditLinks ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -1181,10 +1218,10 @@ export default function DashboardShell({
                           <select
                             id={field.id}
                             value={field.value}
-                            onChange={(e) => isLeader && field.setValue(e.target.value)}
-                            disabled={!isLeader}
+                            onChange={(e) => canEditProgress && field.setValue(e.target.value)}
+                            disabled={!canEditProgress}
                             className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
-                              isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                              canEditProgress ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
                             }`}
                           >
                             {!field.value && (
@@ -1198,7 +1235,7 @@ export default function DashboardShell({
                               </option>
                             ))}
                           </select>
-                          {isLeader && (
+                          {canEditProgress && (
                             <ChevronDown
                               size={18}
                               className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
@@ -1221,15 +1258,15 @@ export default function DashboardShell({
                       rows={3}
                       maxLength={FIELD_LIMITS.progressNote}
                       value={progressNote}
-                      onChange={(e) => isLeader && setProgressNote(e.target.value)}
-                      readOnly={!isLeader}
+                      onChange={(e) => canEditProgress && setProgressNote(e.target.value)}
+                      readOnly={!canEditProgress}
                       placeholder={
-                        isLeader
+                        canEditProgress
                           ? "What did you build or learn? Where are you stuck?"
                           : (progressNote || "No updates submitted yet")
                       }
                       className={`bg-black border border-[#666060] text-white px-3.5 py-3 text-sm sm:text-base w-full min-h-[96px] focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                        isLeader ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
+                        canEditProgress ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
                       }`}
                     />
                   </div>
@@ -1265,10 +1302,14 @@ export default function DashboardShell({
                   <button
                     type="button"
                     onClick={() => handleSaveSection(activeTab)}
-                    disabled={isSaving}
-                    className="h-[44px] px-6 sm:px-8 rounded-full bg-[#74d4f0] hover:bg-[#60caf0] text-black font-light text-sm sm:text-base uppercase tracking-wider transition cursor-pointer flex items-center justify-center shrink-0 disabled:opacity-50"
+                    disabled={isSaving || sectionLocks[activeTab]}
+                    className="h-[44px] px-6 sm:px-8 rounded-full bg-[#74d4f0] hover:bg-[#60caf0] text-black font-light text-sm sm:text-base uppercase tracking-wider transition cursor-pointer flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {savingSection === activeTab ? "SAVING..." : SAVE_LABELS[activeTab]}
+                    {sectionLocks[activeTab]
+                      ? "LOCKED"
+                      : savingSection === activeTab
+                        ? "SAVING..."
+                        : SAVE_LABELS[activeTab]}
                   </button>
                 )}
               </div>

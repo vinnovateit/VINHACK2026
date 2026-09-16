@@ -13,6 +13,7 @@ import {
   isValidTeamConfidence,
   isValidTrack,
 } from "@/lib/validation";
+import { getSectionLocksForTeam, SECTION_LOCK_LABELS } from "@/lib/submission-locks";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import {
   deleteTeam,
@@ -126,11 +127,23 @@ export async function saveSubmissionSectionAction(teamId: string, payload: Submi
     const teamOid = toObjectId(teamId);
     if (!teamOid) return { success: false, message: "Team not found." };
 
-    const teamDoc = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+    const teamDoc = await db
+      .collection("teams")
+      .findOne({ _id: teamOid }, { projection: { leaderId: 1, sectionLocks: 1 } });
     if (!teamDoc) return { success: false, message: "Team not found." };
 
     if (!isTeamLeader(teamDoc.leaderId, participant)) {
       return { success: false, message: "Only the Team Leader can submit or update project reviews." };
+    }
+
+    // The dashboard also greys out a locked section, but this is the check that counts: a server
+    // action is a public endpoint, so the lock has to be enforced here.
+    const locks = await getSectionLocksForTeam(teamDoc.sectionLocks);
+    if (locks[payload.section]) {
+      return {
+        success: false,
+        message: `${SECTION_LOCK_LABELS[payload.section]} has been locked by the organisers and can no longer be edited.`,
+      };
     }
 
     const [vitCount, extCount] = await Promise.all([

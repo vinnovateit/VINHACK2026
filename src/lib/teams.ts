@@ -10,6 +10,7 @@ import {
   TEAM_MAX_SIZE,
   TEAM_MIN_SIZE,
 } from "@/lib/mongo";
+import { getGlobalSubmissionLocks, resolveSectionLocks } from "@/lib/submission-locks";
 
 // Not a server action: this module must never be imported from a "use server" file or a client
 // component, because fetchFullTeam returns every member's contact details for any team id it is given.
@@ -48,10 +49,11 @@ export async function fetchFullTeam(teamId: string) {
 
     // Members and submissions reference the team by ObjectId, or by string id in older documents.
     const teamRef = { teamId: { $in: [teamDoc._id, teamId] } };
-    const [vitList, extList, subDoc] = await Promise.all([
+    const [vitList, extList, subDoc, globalLocks] = await Promise.all([
       db.collection("vit_students").find(teamRef).toArray(),
       db.collection("external_students").find(teamRef).toArray(),
       db.collection("submissions").findOne(teamRef),
+      getGlobalSubmissionLocks(),
     ]);
 
     const members = [
@@ -110,6 +112,8 @@ export async function fetchFullTeam(teamId: string) {
       leaderId,
       leaderName: members.find((m) => m.isLeader)?.name || null,
       members,
+      // Which submission sections the organisers have frozen for this team.
+      locks: resolveSectionLocks(teamDoc.sectionLocks, globalLocks),
       submission: subDoc
         ? {
             title: subDoc.title || "",
