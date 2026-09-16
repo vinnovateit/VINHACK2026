@@ -772,6 +772,14 @@ export const SNEAK_PEEK = {
 
 /* ------------------------------------------------------------- footer */
 
+/* ------------------------------------------------------------ discord */
+
+/** The invite the floating sticker in the corner opens. */
+export const DISCORD = {
+  label: "DISCORD",
+  href: "https://discord.gg/G9JtmGhQV",
+} as const;
+
 export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
