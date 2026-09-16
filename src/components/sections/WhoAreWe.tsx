@@ -4,7 +4,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { WHO_ARE_WE } from "@/content/site";
-import { DESKTOP } from "@/components/motion/recipes";
+import { DESKTOP, MOBILE } from "@/components/motion/recipes";
 
 /**
  * The "WHO ARE WE" interactive collage section.
@@ -19,6 +19,13 @@ import { DESKTOP } from "@/components/motion/recipes";
 // -------------------- TIMING & SCROLL FACTORS --------------------
 // 1. Total scroll travel in pixels (Increase to make the whole section scroll slower)
 const SCROLL_TRAVEL = 1800;
+
+/**
+ * The room the canvas gives this section: Projects' shifted top (2496 + the
+ * 1296 `.recap-extended-sections` carries) less this section's own top of 1392.
+ * Keep it in step with that translate.
+ */
+const CANVAS_RESERVED = 2400;
 
 // 2. Text transition factors (values between 0.0 and 1.0 of scroll progress)
 const TEXT_TRANSITION = {
@@ -197,7 +204,27 @@ function smoothDamp(
 
 const emptySubscribe = () => () => {};
 
-export default function WhoAreWeSection() {
+/**
+ * `canvas` is the collage's own placeholder — absolutely positioned at its
+ * Figma offset inside the 1280 frame. `flow` is the same section as an ordinary
+ * block in the phone's single column.
+ *
+ * The stage itself is identical either way: it is a fixed, viewport-sized
+ * portal on `document.body`, so it was never inside the scaled canvas to begin
+ * with and it needs nothing from the layout around it but a run of scroll to
+ * park against. That is the whole reason the phone can have the desktop
+ * collage rather than a list standing in for it — only the reserved scroll
+ * space differs, and only the card scale is read off the screen.
+ *
+ * Both layouts are in the document at once (see `app/page.tsx`), so each
+ * instance is gated on the breakpoint it belongs to. Exactly one is ever armed;
+ * the other holds its portal at `display: none` and runs no measurement.
+ */
+export default function WhoAreWeSection({
+  variant = "canvas",
+}: {
+  variant?: "canvas" | "flow";
+} = {}) {
   const containerRef = useRef<HTMLElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const text1Ref = useRef<HTMLDivElement>(null);
@@ -216,7 +243,7 @@ export default function WhoAreWeSection() {
     const text2 = text2Ref.current;
     if (!container || !portalEl || !text1 || !text2) return;
 
-    const desktop = window.matchMedia(DESKTOP);
+    const inRange = window.matchMedia(variant === "flow" ? MOBILE : DESKTOP);
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let parkStart = 0;
@@ -228,7 +255,7 @@ export default function WhoAreWeSection() {
     let cardScale = 1;
 
     const measure = () => {
-      if (!desktop.matches) {
+      if (!inRange.matches) {
         armed = false;
         portalEl.style.display = "none";
         return;
@@ -243,12 +270,49 @@ export default function WhoAreWeSection() {
 
       hw = window.innerWidth / 2;
       hh = window.innerHeight / 2;
-      // Proportional card scale for different screen sizes
-      cardScale = clamp(0.85, 1.15, Math.min(window.innerWidth / 1440, window.innerHeight / 900));
+      // Proportional card scale. The phone is not a smaller monitor: a card
+      // kept at the desktop's scale would be two thirds of the screen wide and
+      // the ten of them would sit on top of one another instead of scattering,
+      // so the narrow layout is scaled off the width alone and much further
+      // down. The scatter targets are fractions of the half-screen, so the
+      // arrangement itself comes through unchanged at either size.
+      cardScale =
+        variant === "flow"
+          ? clamp(0.34, 0.6, window.innerWidth / 900)
+          : clamp(0.85, 1.15, Math.min(window.innerWidth / 1440, window.innerHeight / 900));
 
       const containerTopDoc = window.scrollY + rect.top;
       parkStart = containerTopDoc;
-      travelPx = Math.max(1500, Math.round(SCROLL_TRAVEL * (rect.width / 1280 || 1)));
+      /* The park has to end while the stage is still the only thing on the
+         screen. It is a fixed, viewport-tall panel, so it is not clear of the
+         page until a further `innerHeight` of scrolling has gone by — and
+         whatever the layout draws next is underneath it for every pixel of
+         that. The section reserves a fixed run (the canvas cannot do otherwise:
+         everything below it sits at a hard Figma offset), so it is the *park*
+         that gives way, not the reservation. Without this the collage is still
+         sliding off while Projects is already on screen behind it, which is
+         exactly as wrong as it sounds — and it only shows on a tall window,
+         because that is when the exit is longer than the surplus. */
+      const exit = window.innerHeight;
+
+      if (variant === "flow") {
+        travelPx = Math.max(900, Math.round(SCROLL_TRAVEL * 0.7));
+        // In flow the reservation can simply be told how much room to keep.
+        container.style.height = `${travelPx + exit}px`;
+      } else {
+        /* What the collage actually has on the canvas, and it is not this
+           section's own `height`: everything from Projects down is shifted by
+           `.recap-extended-sections` (+1296px in globals.css), which puts
+           Projects at 3792 against this section's 1392 — 2400px of room, not
+           the 2632 the placeholder is drawn at. Reserve against the real
+           number or the last screenful of the park has Projects under it. */
+        const reserved = CANVAS_RESERVED;
+        travelPx = clamp(
+          900,
+          Math.max(900, reserved - exit),
+          Math.max(1500, Math.round(SCROLL_TRAVEL * (rect.width / 1280 || 1))),
+        );
+      }
     };
 
     const render = (progress: number) => {
@@ -335,7 +399,7 @@ export default function WhoAreWeSection() {
 
     const update = (dt: number) => {
       if (!armed) {
-        if (desktop.matches) {
+        if (inRange.matches) {
           measure();
         }
         if (!armed) {
@@ -443,7 +507,7 @@ export default function WhoAreWeSection() {
       window.removeEventListener("resize", onLayout);
       if (portalEl) portalEl.style.display = "none";
     };
-  }, [mounted]);
+  }, [mounted, variant]);
 
   const registerCard = (id: string, el: HTMLDivElement | null) => {
     if (el) cardElementsRef.current.set(id, el);
@@ -457,13 +521,20 @@ export default function WhoAreWeSection() {
 
   return (
     <>
-      {/* Canvas placeholder - reserves exact scroll space in document flow */}
+      {/* Placeholder — reserves the scroll the stage parks against. */}
       <section
         ref={containerRef}
         aria-label="Who Are We"
-        className="-translate-x-1/2 absolute bg-black left-1/2 overflow-visible top-[1392px] w-[1280px]"
+        className={
+          variant === "flow"
+            ? "relative w-full bg-black"
+            : "-translate-x-1/2 absolute bg-black left-1/2 overflow-visible top-[1392px] w-[1280px]"
+        }
         style={{
-          height: `${SCROLL_TRAVEL + 832}px`,
+          height:
+            variant === "flow"
+              ? `${Math.round(SCROLL_TRAVEL * 0.7) + 520}px`
+              : `${CANVAS_RESERVED}px`,
           overflowAnchor: "none",
         }}
         data-name="WHO ARE WE"
@@ -500,7 +571,7 @@ export default function WhoAreWeSection() {
                   ref={text1Ref}
                   className="absolute transition-transform duration-75 text-center px-4 will-change-transform opacity-0"
                 >
-                  <h2 className="font-rotonto text-[#bfea88] text-[78px] md:text-[90px] lg:text-[104px] tracking-[0.06em] leading-none whitespace-nowrap drop-shadow-[0_0_45px_rgba(191,234,136,0.45)]">
+                  <h2 className="font-rotonto text-[#bfea88] text-[clamp(34px,10.5vw,104px)] tracking-[0.06em] leading-none whitespace-nowrap drop-shadow-[0_0_45px_rgba(191,234,136,0.45)]">
                     {WHO_ARE_WE.title}
                   </h2>
                 </div>
@@ -510,13 +581,13 @@ export default function WhoAreWeSection() {
                   ref={text2Ref}
                   className="absolute flex flex-col items-center justify-center text-center px-6 will-change-transform opacity-0"
                 >
-                  <span className="font-rotonto text-[#bfea88] text-[18px] md:text-[22px] tracking-[0.25em] mb-2 uppercase opacity-90">
+                  <span className="font-rotonto text-[#bfea88] text-[clamp(12px,3vw,22px)] tracking-[0.25em] mb-2 uppercase opacity-90">
                     {WHO_ARE_WE.reveal.eyebrow}
                   </span>
-                  <h2 className="font-rotonto text-[#bfea88] text-[78px] md:text-[90px] lg:text-[104px] tracking-[0.04em] leading-none uppercase drop-shadow-[0_0_50px_rgba(191,234,136,0.5)] whitespace-nowrap">
+                  <h2 className="font-rotonto text-[#bfea88] text-[clamp(28px,8.6vw,104px)] tracking-[0.04em] leading-none uppercase drop-shadow-[0_0_50px_rgba(191,234,136,0.5)] whitespace-nowrap">
                     {WHO_ARE_WE.reveal.brand}
                   </h2>
-                  <p className="font-sans font-semibold text-[#fcfcfc] text-[15px] md:text-[18px] tracking-[0.24em] mt-4 uppercase opacity-95">
+                  <p className="font-rotonto text-[#fcfcfc] text-[clamp(10px,2.6vw,18px)] tracking-[0.24em] mt-4 uppercase opacity-95">
                     {WHO_ARE_WE.reveal.tagline}
                   </p>
                 </div>
