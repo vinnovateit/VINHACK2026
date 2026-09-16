@@ -1163,7 +1163,7 @@ function MobileFAQs() {
                 {/* Sheet 1 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-5 left-[-4px] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[7deg] origin-bottom-left"
+                  className="absolute bottom-5 left-[6%] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[2.5deg] origin-bottom"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
@@ -1173,7 +1173,7 @@ function MobileFAQs() {
                 {/* Sheet 2 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-3 left-[3px] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom-left"
+                  className="absolute bottom-3 left-[6%] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
@@ -1183,7 +1183,7 @@ function MobileFAQs() {
                 {/* Sheet 3 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-2.5 left-[2px] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom-right"
+                  className="absolute bottom-2.5 left-[6%] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
@@ -1191,7 +1191,7 @@ function MobileFAQs() {
                 />
 
                 {/* Sheet 4 (Front Main Paper) */}
-                <div className="absolute bottom-0 left-[2px] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-4deg] origin-bottom-center overflow-hidden flex flex-col justify-start">
+                <div className="absolute bottom-0 left-[4%] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start">
                   <div className="pt-2 px-2.5">
                     <div className="font-rotonto text-[8px] tracking-wider text-neutral-500 uppercase">
                       VINHACK 2026
