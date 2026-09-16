@@ -99,9 +99,22 @@ export const metadata: Metadata = {
   title: "VinHack 2026 — VinnovateIT",
   description:
     "VinHack is a 36-hour hybrid hackathon by VinnovateIT at Vellore Institute of Technology, bringing together creative minds to build impactful solutions for real-world problems.",
-  // Served from public/ as a static asset. As src/app/icon.svg it became a Next route handler, so
+  // Served from public/ as static assets. As src/app/icon.svg it became a Next route handler, so
   // every page load ran the Worker (and burned CPU) just to return a 180 KB file.
-  icons: { icon: "/icon.svg", shortcut: "/favicon.ico", apple: "/apple-touch-icon.png" },
+  //
+  // The PNGs are for Safari, which ignores SVG favicons outright and refuses an
+  // ICO that is not one — the old favicon.ico was a renamed PNG, which is why an
+  // iPhone showed nothing. PNG first, so Safari finds one it will take before the
+  // SVG; browsers that prefer the vector still pick it from the list.
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
+  },
 };
 
 export default function RootLayout({

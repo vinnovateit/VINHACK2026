@@ -131,12 +131,7 @@ export default function MobileRecap() {
             unoptimized
           />
           <div className="absolute left-[44%] top-[48.6%] -translate-x-1/2 -translate-y-1/2 -rotate-90 flex flex-col items-center gap-[1px] pointer-events-none whitespace-nowrap font-rotonto">
-            <span className="text-[10px] font-normal tracking-wider text-black leading-tight">
-              ROLLING
-            </span>
-            <span className="text-[10px] font-normal tracking-wider text-black leading-tight">
-              BACK TO &apos;25
-            </span>
+           
           </div>
         </div>
 
