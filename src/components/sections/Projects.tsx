@@ -15,7 +15,6 @@ type CardConfig = {
   width: number;
   height: number;
   tilt: string;
-  popupClass: string;
 };
 
 /** Base stacking order, lowest to highest paint — kept as real classes
@@ -40,7 +39,6 @@ const CARDS: CardConfig[] = [
     width: 318,
     height: 364,
     tilt: "rotate-[1deg]",
-    popupClass: "left-3 right-3 bottom-3.5",
   },
   {
     name: "LATCH",
@@ -51,7 +49,6 @@ const CARDS: CardConfig[] = [
     width: 335,
     height: 280,
     tilt: "rotate-0",
-    popupClass: "left-3.5 right-3.5 bottom-3.5",
   },
   {
     name: "STUDYHUB",
@@ -62,7 +59,6 @@ const CARDS: CardConfig[] = [
     width: 350,
     height: 430,
     tilt: "rotate-[1deg]",
-    popupClass: "left-4 right-4 bottom-4",
   },
   {
     name: "BUNKBUDDIES",
@@ -73,7 +69,6 @@ const CARDS: CardConfig[] = [
     width: 275,
     height: 314,
     tilt: "rotate-[-1.5deg]",
-    popupClass: "left-2 right-2 bottom-3",
   },
 ];
 
@@ -152,17 +147,17 @@ export default function ProjectsSection() {
                 style={{ color: frameColor }}
               >
                 {/* Outer bounding frame */}
-                <div className="absolute inset-1 border-2 border-current opacity-90" />
+                <div className="absolute inset-1  opacity-90" />
 
                 {/* Viewfinder corner brackets */}
-                <span className="absolute top-0 left-0 size-3 border-t-[3px] border-l-[3px] border-current" />
-                <span className="absolute top-0 right-0 size-3 border-t-[3px] border-r-[3px] border-current" />
-                <span className="absolute bottom-0 left-0 size-3 border-b-[3px] border-l-[3px] border-current" />
-                <span className="absolute bottom-0 right-0 size-3 border-b-[3px] border-r-[3px] border-current" />
+                <span className="absolute top-0 left-0 size-3 " />
+                <span className="absolute top-0 right-0 size-3 " />
+                <span className="absolute bottom-0 left-0 size-3 " />
+                <span className="absolute bottom-0 right-0 size-3" />
 
                 {/* Viewfinder corner label */}
                 <div className="absolute top-2 right-2.5 flex items-center gap-1 font-mono text-[10px] tracking-wider uppercase opacity-85">
-                  <span>{`[ 0${idx + 1} // VISIT ]`}</span>
+                  
                 </div>
               </div>
 
@@ -200,45 +195,48 @@ export default function ProjectsSection() {
                 </p>
               </div>
 
-              {/* Besharm-style Animated Pop-up with Brief App Info */}
-              <div
-                className={`pointer-events-none absolute z-30 opacity-0 translate-y-3 scale-95 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-hover:pointer-events-auto ${card.popupClass}`}
-              >
-                <div
-                  className={`rounded-xl border-2 border-[#bfea88] bg-[#0c0c0c]/95 p-3.5 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)] backdrop-blur-md transition-transform duration-300 ${card.tilt}`}
-                >
-                  {/* Pop-up Header */}
-                  <div className="flex items-center justify-between border-b border-white/15 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="relative flex size-2">
-                        <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#bfea88] opacity-75" />
-                        <span className="relative inline-flex size-2 rounded-full bg-[#bfea88]" />
-                      </span>
-                      <span className="font-rotonto text-[15px] tracking-wide text-white">
-                        {info.displayName}
-                      </span>
-                    </div>
-                    <span className="rounded bg-[#bfea88]/15 px-2 py-0.5 font-rotonto text-[11px] text-[#bfea88]">
-                      EXPLORE ↗
+              {/* The receipt the card prints when you touch it: a slip of the
+                  same stock, pulled out from behind the card's bottom edge and
+                  still tucked under it, so the two read as one object rather
+                  than a tooltip floating nearby. */}
+              <div className="pointer-events-none absolute top-full right-1.5 left-1.5 z-0 -mt-px origin-top scale-y-[0.35] opacity-0 transition-all duration-300 ease-out group-hover:pointer-events-auto group-hover:scale-y-100 group-hover:opacity-100">
+                <div className="relative border border-t-0 border-black bg-[#fcfcfc] px-3 pt-2.5 pb-3 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.85)]">
+                  {/* Perforation along the edge it was torn from */}
+                  <span className="pointer-events-none absolute inset-x-2 top-0 border-t border-dashed border-black/25" />
+
+                  {/* Header: name + destination cue */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-rotonto text-[15px] leading-none tracking-tight text-black">
+                      {info.displayName}
+                    </span>
+                    <span
+                      className="font-rotonto text-[10px] leading-none tracking-[0.12em]"
+                      style={{ color: info.bg === "#ffffff" ? "#fa1a1d" : info.bg }}
+                    >
+                      OPEN&nbsp;↗
                     </span>
                   </div>
 
-                  {/* Pop-up Tagline */}
-                  <p className="mt-2 font-rotonto text-[13px] leading-snug text-[#bfea88]">
+                  {/* Tagline, in the section's red */}
+                  <p className="mt-1.5 font-rotonto text-[12.5px] leading-snug text-[#fa1a1d]">
                     “{info.tagline}”
                   </p>
 
-                  {/* Pop-up Body Description */}
-                  <p className="mt-1 text-[11.5px] leading-relaxed font-sans text-neutral-300">
+                  {/* Body */}
+                  <p className="mt-1 font-rotonto text-[11px] leading-relaxed text-black/70">
                     {info.body}
                   </p>
 
-                  {/* Pop-up Footer */}
-                  <div className="mt-2.5 flex items-center justify-between font-mono text-[9.5px] text-neutral-400">
-                    <span className="flex items-center gap-1 font-semibold text-[#bfea88]">
-                      OPEN APP &rarr;
-                    </span>
-                  </div>
+                  {/* Torn bottom edge */}
+                  <span
+                    className="pointer-events-none absolute inset-x-0 -bottom-[7px] h-2 bg-[#fcfcfc]"
+                    style={{
+                      maskImage:
+                        "repeating-linear-gradient(90deg, #000 0 4px, transparent 4px 8px)",
+                      WebkitMaskImage:
+                        "repeating-linear-gradient(90deg, #000 0 4px, transparent 4px 8px)",
+                    }}
+                  />
                 </div>
               </div>
             </motion.a>

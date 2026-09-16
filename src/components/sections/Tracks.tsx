@@ -2,6 +2,12 @@ import { TRACKS } from "@/content/site";
 import TracksCardDeck from "@/components/tracks/TracksCardDeck";
 
 export default function TracksSection() {
+<<<<<<< Updated upstream
+=======
+  const [headerRef, inView] = useInView<HTMLDivElement>(0.01);
+  const iosEase = "cubic-bezier(0.32, 0.72, 0, 1)";
+
+>>>>>>> Stashed changes
   return (
     <section
       aria-label="Tracks"
@@ -40,6 +46,14 @@ export default function TracksSection() {
           <div
             className="absolute content-stretch flex gap-[20px] items-center left-0 top-0"
             data-node-id="594:36"
+<<<<<<< Updated upstream
+=======
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-980px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.85s ${iosEase} 0s, opacity 0.4s ${iosEase} 0s`,
+            }}
+>>>>>>> Stashed changes
           >
             <p
               className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap"
@@ -69,10 +83,27 @@ export default function TracksSection() {
             className="absolute h-px left-0 w-[819.022px] top-[86px] bg-[#fa1a1d]"
             data-node-id="594:39"
             aria-hidden
+<<<<<<< Updated upstream
+=======
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "left center",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.85s ${iosEase} 0s, opacity 0.4s ${iosEase} 0s`,
+            }}
+>>>>>>> Stashed changes
           />
           <div
             className="absolute content-stretch flex gap-[20px] items-center left-[500px] top-[106px]"
             data-node-id="594:40"
+<<<<<<< Updated upstream
+=======
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(980px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.85s ${iosEase} 0.12s, opacity 0.4s ${iosEase} 0.12s`,
+            }}
+>>>>>>> Stashed changes
           >
             <h2
               className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap"
@@ -103,10 +134,27 @@ export default function TracksSection() {
             className="absolute h-px left-0 w-[819.022px] top-[192px] bg-[#fa1a1d]"
             data-node-id="594:45"
             aria-hidden
+<<<<<<< Updated upstream
+=======
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "right center",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.85s ${iosEase} 0.12s, opacity 0.4s ${iosEase} 0.12s`,
+            }}
+>>>>>>> Stashed changes
           />
           <div
             className="absolute content-stretch flex gap-[20px] items-center left-[250px] top-[212px]"
             data-node-id="594:46"
+<<<<<<< Updated upstream
+=======
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-980px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.85s ${iosEase} 0.24s, opacity 0.4s ${iosEase} 0.24s`,
+            }}
+>>>>>>> Stashed changes
           >
             <p
               className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[#fa1a1d] text-[55px] whitespace-nowrap"
@@ -137,6 +185,15 @@ export default function TracksSection() {
             className="absolute h-px left-0 w-[819.022px] top-[298px] bg-[#fa1a1d]"
             data-node-id="594:49"
             aria-hidden
+<<<<<<< Updated upstream
+=======
+            style={{
+              transform: inView ? "scaleX(1)" : "scaleX(0)",
+              transformOrigin: "left center",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.85s ${iosEase} 0.24s, opacity 0.4s ${iosEase} 0.24s`,
+            }}
+>>>>>>> Stashed changes
           />
         </div>
       </div>
