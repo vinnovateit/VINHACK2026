@@ -1,14 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import { getMongoDb } from "@/lib/mongo";
+import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
 import { ObjectId } from "mongodb";
+import { cleanText, FIELD_LIMITS, isValidHttpUrl, isValidProjectType, isValidTrack } from "@/lib/validation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
+import {
+  deleteTeam,
+  leaveCurrentTeam,
+  removeTeamMember,
+  transferLeadership,
+  TeamMembershipError,
+} from "@/lib/team-membership";
 
 export interface SubmissionPayload {
   teamId: string;
   track?: string;
+  projectType?: string;
   projectTitle?: string;
   projectDescription?: string;
   githubLink?: string;
@@ -37,174 +45,86 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
       return { success: false, message: "Unauthorized team action." };
     }
 
-    const {
-      teamId,
-      track,
-      projectTitle,
-      projectDescription,
-      githubLink,
-      figmaLink,
-      deckLink,
-      otherLinks,
-      progressNote,
-    } = payload;
+    const { teamId, track } = payload;
+
+    if (track !== undefined && track !== "" && !isValidTrack(track)) {
+      return { success: false, message: "Please choose one of the listed tracks." };
+    }
+
+    if (!isValidProjectType(payload.projectType)) {
+      return { success: false, message: "Please choose whether your project is Software or Hardware." };
+    }
+
+    const links = {
+      githubLink: cleanText(payload.githubLink, FIELD_LIMITS.link),
+      figmaLink: cleanText(payload.figmaLink, FIELD_LIMITS.link),
+      deckLink: cleanText(payload.deckLink, FIELD_LIMITS.link),
+    };
+    for (const [field, value] of Object.entries(links)) {
+      if (value && !isValidHttpUrl(value)) {
+        return { success: false, message: `${field.replace("Link", "")} link must be a valid http(s) URL.` };
+      }
+    }
 
     const now = new Date();
+    const db = await getMongoDb();
+    if (!db) return { success: false, message: "Database unavailable." };
 
-    // 1. Native MongoDB write (works seamlessly on Cloudflare Workers edge & Node.js)
-    try {
-      const db = await getMongoDb();
-      if (db) {
-        const teamOid = toObjectId(teamId);
+    const teamOid = toObjectId(teamId);
 
-        // Upsert submission
-        await db.collection("submissions").updateOne(
-          { teamId: teamOid },
-          {
-            $set: {
-              title: projectTitle?.trim() || null,
-              description: projectDescription?.trim() || null,
-              githubLink: githubLink?.trim() || null,
-              figmaLink: figmaLink?.trim() || null,
-              deckLink: deckLink?.trim() || null,
-              otherLinks: otherLinks?.trim() || null,
-              progressNote: progressNote?.trim() || null,
-              submittedAt: now,
-              updatedAt: now,
-            },
-            $setOnInsert: {
-              teamId: teamOid,
-            },
-          },
-          { upsert: true }
-        );
+    const teamDoc = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+    if (!teamDoc) return { success: false, message: "Team not found." };
 
-        // Update track on team if provided
-        if (track) {
-          await db.collection("teams").updateOne(
-            { _id: teamOid },
-            { $set: { track, updatedAt: now } }
-          );
-        }
-
-        revalidatePath("/dashboard");
-        return { success: true, message: "Project submission saved successfully!" };
-      }
-    } catch (mongoErr) {
-      console.warn("[saveSubmissionAction] MongoDB native save failed, trying Prisma fallback:", mongoErr);
+    if (!isTeamLeader(teamDoc.leaderId, participant)) {
+      return { success: false, message: "Only the Team Leader can submit or update project reviews." };
     }
 
-    // 2. Prisma fallback
-    try {
-      await prisma.submission.upsert({
-        where: { teamId },
-        create: {
-          teamId,
-          title: projectTitle?.trim() || null,
-          description: projectDescription?.trim() || null,
-          githubLink: githubLink?.trim() || null,
-          figmaLink: figmaLink?.trim() || null,
-          deckLink: deckLink?.trim() || null,
-          otherLinks: otherLinks?.trim() || null,
-          progressNote: progressNote?.trim() || null,
-          submittedAt: now,
-        },
-        update: {
-          title: projectTitle?.trim() || null,
-          description: projectDescription?.trim() || null,
-          githubLink: githubLink?.trim() || null,
-          figmaLink: figmaLink?.trim() || null,
-          deckLink: deckLink?.trim() || null,
-          otherLinks: otherLinks?.trim() || null,
-          progressNote: progressNote?.trim() || null,
-          submittedAt: now,
-        },
-      });
-
-      if (track) {
-        await prisma.team.update({
-          where: { id: teamId },
-          data: { track },
-        });
-      }
-
-      revalidatePath("/dashboard");
-      return { success: true, message: "Project submission saved successfully!" };
-    } catch (prismaErr) {
-      console.error("[saveSubmissionAction] Prisma fallback failed:", prismaErr);
-      return { success: false, message: "Failed to save submission. Please try again." };
+    const [vitCount, extCount] = await Promise.all([
+      db.collection("vit_students").countDocuments({ teamId: teamOid }),
+      db.collection("external_students").countDocuments({ teamId: teamOid }),
+    ]);
+    if (vitCount + extCount < TEAM_MIN_SIZE) {
+      return {
+        success: false,
+        message: `Teams need at least ${TEAM_MIN_SIZE} members before submitting. Share your team code to invite teammates.`,
+      };
     }
+
+    await db.collection("submissions").updateOne(
+      { teamId: teamOid },
+      {
+        $set: {
+          title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
+          description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
+          projectType: payload.projectType,
+          ...links,
+          otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks),
+          progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
+          updatedAt: now,
+        },
+        $setOnInsert: { teamId: teamOid, submittedAt: now },
+      },
+      { upsert: true }
+    );
+
+    if (track) {
+      await db.collection("teams").updateOne(
+        { _id: teamOid },
+        { $set: { track, updatedAt: now } }
+      );
+    }
+
+    revalidatePath("/dashboard");
+    return { success: true, message: "Project submission saved successfully!" };
   } catch (error) {
     console.error("[saveSubmissionAction] Unexpected error:", error);
     return { success: false, message: "An unexpected error occurred while saving." };
   }
 }
 
+
 export async function fetchFullTeam(teamId: string) {
   try {
-    // 1. Try Prisma query first
-    try {
-      const team = await prisma.team.findUnique({
-        where: { id: teamId },
-        include: {
-          vitStudents: true,
-          externalStudents: true,
-          submission: true,
-          leader: true,
-        },
-      });
-
-      if (team) {
-        const members = [
-          ...team.vitStudents.map((m) => ({
-            id: m.id,
-            name: m.name,
-            email: m.email,
-            regNo: m.regNo,
-            type: "vit" as const,
-            userId: m.userId,
-            isLeader: Boolean(team.leaderId && m.userId === team.leaderId),
-          })),
-          ...team.externalStudents.map((m) => ({
-            id: m.id,
-            name: m.name,
-            email: m.email,
-            regNo: m.regNo || "",
-            type: "external" as const,
-            userId: m.userId,
-            isLeader: Boolean(team.leaderId && m.userId === team.leaderId),
-          })),
-        ];
-
-        return {
-          id: team.id,
-          name: team.name,
-          code: team.code,
-          capacity: team.capacity || 5,
-          teamType: team.teamType,
-          track: team.track,
-          leaderId: team.leaderId,
-          leaderName: team.leader?.name || null,
-          members,
-          submission: team.submission
-            ? {
-                title: team.submission.title || "",
-                description: team.submission.description || "",
-                githubLink: team.submission.githubLink || "",
-                figmaLink: team.submission.figmaLink || "",
-                deckLink: team.submission.deckLink || "",
-                otherLinks: team.submission.otherLinks || "",
-                progressNote: team.submission.progressNote || "",
-                submittedAt: team.submission.submittedAt?.toISOString() || null,
-              }
-            : null,
-        };
-      }
-    } catch (prismaErr) {
-      console.warn("[fetchFullTeam] Prisma lookup failed, trying native MongoDB:", prismaErr);
-    }
-
-    // 2. Native Mongo fallback
     const db = await getMongoDb();
     if (!db) return null;
 
@@ -215,7 +135,7 @@ export async function fetchFullTeam(teamId: string) {
 
     if (!teamDoc) return null;
 
-    const [vitList, extList, subDoc, leaderDoc] = await Promise.all([
+    const [vitList, extList, subDoc] = await Promise.all([
       db.collection("vit_students").find({
         $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
       }).toArray(),
@@ -225,9 +145,6 @@ export async function fetchFullTeam(teamId: string) {
       db.collection("submissions").findOne({
         $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
       }),
-      teamDoc.leaderId
-        ? db.collection("users").findOne({ _id: toObjectId(String(teamDoc.leaderId)) })
-        : null,
     ]);
 
     const members = [
@@ -238,7 +155,7 @@ export async function fetchFullTeam(teamId: string) {
         regNo: m.regNo || "",
         type: "vit" as const,
         userId: m.userId ? String(m.userId) : null,
-        isLeader: Boolean(teamDoc.leaderId && String(m.userId) === String(teamDoc.leaderId)),
+        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
       })),
       ...extList.map((m: any) => ({
         id: m._id.toString(),
@@ -247,24 +164,42 @@ export async function fetchFullTeam(teamId: string) {
         regNo: m.regNo || "",
         type: "external" as const,
         userId: m.userId ? String(m.userId) : null,
-        isLeader: Boolean(teamDoc.leaderId && String(m.userId) === String(teamDoc.leaderId)),
+        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
       })),
     ];
+
+    let leaderId = teamDoc.leaderId ? String(teamDoc.leaderId) : null;
+    if (members.length > 0 && !members.some((m) => m.isLeader)) {
+      // Legacy teams can point at a users._id no member is linked to (or at nobody); promote the earliest joiner.
+      const earliest = [...vitList, ...extList].sort(
+        (a: any, b: any) =>
+          (a.joinedAt ? new Date(a.joinedAt).getTime() : Number.MAX_SAFE_INTEGER) -
+          (b.joinedAt ? new Date(b.joinedAt).getTime() : Number.MAX_SAFE_INTEGER)
+      )[0];
+      await db.collection("teams").updateOne(
+        { _id: teamDoc._id, leaderId: teamDoc.leaderId ?? null },
+        { $set: { leaderId: earliest._id, updatedAt: new Date() } }
+      );
+      leaderId = earliest._id.toString();
+      for (const m of members) m.isLeader = m.id === leaderId;
+    }
 
     return {
       id: teamDoc._id.toString(),
       name: teamDoc.name || "My Team",
       code: teamDoc.code || "VH26-000",
-      capacity: teamDoc.capacity || 5,
+      capacity: Math.min(teamDoc.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE),
+      minSize: TEAM_MIN_SIZE,
       teamType: teamDoc.teamType || "VIT",
       track: teamDoc.track || null,
-      leaderId: teamDoc.leaderId ? String(teamDoc.leaderId) : null,
-      leaderName: leaderDoc?.name || null,
+      leaderId,
+      leaderName: members.find((m) => m.isLeader)?.name || null,
       members,
       submission: subDoc
         ? {
             title: subDoc.title || "",
             description: subDoc.description || "",
+            projectType: subDoc.projectType || "",
             githubLink: subDoc.githubLink || "",
             figmaLink: subDoc.figmaLink || "",
             deckLink: subDoc.deckLink || "",
@@ -280,213 +215,120 @@ export async function fetchFullTeam(teamId: string) {
   }
 }
 
+function toRequester(participant: { id: string; type: "vit" | "external"; userId: string | null }) {
+  return { id: participant.id, type: participant.type, userId: participant.userId };
+}
+
+function membershipErrorMessage(err: unknown, fallback: string) {
+  return err instanceof TeamMembershipError ? err.message : fallback;
+}
+
 export async function deleteTeamAction() {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId || !participant.teamId) {
+    if (!participant || !participant.teamId) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const teamId = participant.teamId;
+    await deleteTeam({ requester: toRequester(participant), teamId: participant.teamId });
 
-    // 1. Native MongoDB (Works on Cloudflare Workers & Node.js)
-    try {
-      const db = await getMongoDb();
-      if (db) {
-        const teamOid = toObjectId(teamId);
-        const team = await db.collection("teams").findOne({
-          $or: [{ _id: teamOid }, { id: teamId }],
-        });
-
-        if (!team) {
-          return { success: false, error: "Team not found." };
-        }
-
-        if (String(team.leaderId) !== String(participant.userId)) {
-          return { success: false, error: "Only the team leader can delete the team." };
-        }
-
-        const teamFilter = {
-          $or: [{ teamId: teamOid }, { teamId: team._id }, { teamId }],
-        };
-
-        // Clear teamId on all members and delete team + submissions
-        await Promise.all([
-          db.collection("vit_students").updateMany(teamFilter, {
-            $set: { teamId: null, joinedAt: null, updatedAt: new Date() },
-          }),
-          db.collection("external_students").updateMany(teamFilter, {
-            $set: { teamId: null, joinedAt: null, updatedAt: new Date() },
-          }),
-          db.collection("submissions").deleteMany(teamFilter),
-          db.collection("teams").deleteOne({ _id: team._id }),
-        ]);
-
-        revalidatePath("/dashboard");
-        revalidatePath("/onboarding");
-        return { success: true };
-      }
-    } catch (mongoErr) {
-      console.warn("[deleteTeamAction] MongoDB native failed, trying Prisma fallback:", mongoErr);
-    }
-
-    // 2. Prisma fallback
-    try {
-      const team = await prisma.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
-      if (!team) return { success: false, error: "Team not found." };
-      if (team.leaderId !== participant.userId) return { success: false, error: "Only the team leader can delete the team." };
-
-      await prisma.$transaction(async (tx) => {
-        await tx.vITStudent.updateMany({ where: { teamId }, data: { teamId: null, joinedAt: null } });
-        await tx.externalStudent.updateMany({ where: { teamId }, data: { teamId: null, joinedAt: null } });
-        await tx.submission.deleteMany({ where: { teamId } });
-        await tx.team.delete({ where: { id: teamId } });
-      });
-
-      revalidatePath("/dashboard");
-      revalidatePath("/onboarding");
-      return { success: true };
-    } catch (prismaErr) {
-      console.error("[deleteTeamAction] Prisma failed:", prismaErr);
-      return { success: false, error: "Failed to delete team." };
-    }
+    revalidatePath("/dashboard");
+    revalidatePath("/onboarding");
+    return { success: true };
   } catch (err) {
-    console.error("[deleteTeamAction] Uncaught error:", err);
-    return { success: false, error: "An unexpected error occurred." };
+    console.error("[deleteTeamAction] Error:", err);
+    return { success: false, error: membershipErrorMessage(err, "An unexpected error occurred.") };
+  }
+}
+
+export async function leaveTeamAction() {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "No active team session found." };
+    }
+
+    await leaveCurrentTeam(toRequester(participant), participant.teamId);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/onboarding");
+    return { success: true };
+  } catch (err) {
+    console.error("[leaveTeamAction] Error:", err);
+    return { success: false, error: membershipErrorMessage(err, "Failed to leave team.") };
+  }
+}
+
+export async function removeTeamMemberAction(
+  targetParticipantId: string,
+  targetType: "vit" | "external"
+) {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    await removeTeamMember({
+      requester: toRequester(participant),
+      targetParticipantId,
+      targetType,
+      teamId: participant.teamId,
+    });
+
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err) {
+    console.error("[removeTeamMemberAction] Error:", err);
+    return { success: false, error: membershipErrorMessage(err, "Failed to remove member.") };
   }
 }
 
 export async function transferLeadershipAction(newLeaderParticipantId: string, newLeaderType: "vit" | "external") {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId || !participant.teamId) {
+    if (!participant || !participant.teamId) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const teamId = participant.teamId;
+    await transferLeadership({
+      requester: toRequester(participant),
+      newLeaderParticipantId,
+      newLeaderType,
+      teamId: participant.teamId,
+    });
 
-    // 1. Native MongoDB (Works on Cloudflare Workers & Node.js)
-    try {
-      const db = await getMongoDb();
-      if (db) {
-        const teamOid = toObjectId(teamId);
-        const team = await db.collection("teams").findOne({
-          $or: [{ _id: teamOid }, { id: teamId }],
-        });
-
-        if (!team) return { success: false, error: "Team not found." };
-        if (String(team.leaderId) !== String(participant.userId)) {
-          return { success: false, error: "Only the team leader can transfer leadership." };
-        }
-
-        const targetCollection = newLeaderType === "vit" ? "vit_students" : "external_students";
-        const newLeaderOid = toObjectId(newLeaderParticipantId);
-        const newLeaderDoc = await db.collection(targetCollection).findOne({
-          $or: [{ _id: newLeaderOid }, { id: newLeaderParticipantId }],
-        });
-
-        if (!newLeaderDoc) {
-          return { success: false, error: "Selected member not found." };
-        }
-
-        const newLeaderUserId = newLeaderDoc.userId ? toObjectId(String(newLeaderDoc.userId)) : null;
-        if (!newLeaderUserId) {
-          return { success: false, error: "Selected member has no linked user account yet." };
-        }
-
-        await db.collection("teams").updateOne(
-          { _id: team._id },
-          { $set: { leaderId: newLeaderUserId, updatedAt: new Date() } }
-        );
-
-        revalidatePath("/dashboard");
-        return { success: true };
-      }
-    } catch (mongoErr) {
-      console.warn("[transferLeadershipAction] MongoDB failed, trying Prisma fallback:", mongoErr);
-    }
-
-    // 2. Prisma fallback
-    try {
-      const team = await prisma.team.findUnique({ where: { id: teamId }, select: { id: true, leaderId: true } });
-      if (!team) return { success: false, error: "Team not found." };
-      if (team.leaderId !== participant.userId) return { success: false, error: "Only the team leader can transfer leadership." };
-
-      const target =
-        newLeaderType === "vit"
-          ? await prisma.vITStudent.findUnique({ where: { id: newLeaderParticipantId }, select: { userId: true } })
-          : await prisma.externalStudent.findUnique({ where: { id: newLeaderParticipantId }, select: { userId: true } });
-
-      if (!target?.userId) return { success: false, error: "Target participant has no linked account." };
-
-      await prisma.team.update({
-        where: { id: teamId },
-        data: { leaderId: target.userId },
-      });
-
-      revalidatePath("/dashboard");
-      return { success: true };
-    } catch (prismaErr) {
-      console.error("[transferLeadershipAction] Prisma failed:", prismaErr);
-      return { success: false, error: "Failed to transfer leadership." };
-    }
+    revalidatePath("/dashboard");
+    return { success: true };
   } catch (err) {
-    console.error("[transferLeadershipAction] Uncaught error:", err);
-    return { success: false, error: "An unexpected error occurred." };
+    console.error("[transferLeadershipAction] Error:", err);
+    return { success: false, error: membershipErrorMessage(err, "An unexpected error occurred.") };
   }
 }
 
 export async function renameTeamAction(teamId: string, teamName: string) {
   try {
     const participant = await resolveCurrentParticipant();
-    if (!participant || !participant.userId) {
+    if (!participant || participant.teamId !== teamId) {
       return { success: false, error: "Unauthorized." };
     }
 
-    const trimmed = teamName.trim().slice(0, 100);
-    if (!trimmed) return { success: false, error: "Team name cannot be empty." };
+    const db = await getMongoDb();
+    if (!db) return { success: false, error: "Database unavailable." };
 
-    // 1. Native MongoDB (Works on Cloudflare Workers & Node.js)
-    try {
-      const db = await getMongoDb();
-      if (db) {
-        const teamOid = toObjectId(teamId);
-        const team = await db.collection("teams").findOne({
-          $or: [{ _id: teamOid }, { id: teamId }],
-        });
-        if (!team) return { success: false, error: "Team not found." };
-        if (String(team.leaderId) !== String(participant.userId)) {
-          return { success: false, error: "Only the leader can rename the team." };
-        }
-
-        await db.collection("teams").updateOne(
-          { _id: team._id },
-          { $set: { name: trimmed, updatedAt: new Date() } }
-        );
-
-        revalidatePath("/dashboard");
-        return { success: true };
-      }
-    } catch (mongoErr) {
-      console.warn("[renameTeamAction] MongoDB native failed, trying Prisma fallback:", mongoErr);
+    const team = await db.collection("teams").findOne({ _id: toObjectId(teamId) }, { projection: { leaderId: 1 } });
+    if (!team) return { success: false, error: "Team not found." };
+    if (!isTeamLeader(team.leaderId, participant)) {
+      return { success: false, error: "Only the leader can rename the team." };
     }
 
-    // 2. Prisma fallback
-    try {
-      const team = await prisma.team.findUnique({ where: { id: teamId }, select: { leaderId: true } });
-      if (!team) return { success: false, error: "Team not found." };
-      if (team.leaderId !== participant.userId) return { success: false, error: "Only the leader can rename the team." };
+    const res = await renameTeamInDb(teamId, teamName);
+    if (!res.success) return res;
 
-      await prisma.team.update({ where: { id: teamId }, data: { name: trimmed } });
-      revalidatePath("/dashboard");
-      return { success: true };
-    } catch (prismaErr) {
-      console.error("[renameTeamAction] Prisma failed:", prismaErr);
-      return { success: false, error: "Failed to rename team." };
-    }
+    revalidatePath("/dashboard");
+    return { success: true };
   } catch (err) {
     console.error("[renameTeamAction] Error:", err);
     return { success: false, error: "Failed to rename team." };
   }
 }
-

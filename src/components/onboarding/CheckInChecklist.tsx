@@ -26,6 +26,8 @@ interface CheckInChecklistProps {
   studentType: StudentType;
   onSubmit: (data: CheckInData) => Promise<void> | void;
   isLoading?: boolean;
+  /** Error returned by the server for the last submit attempt. */
+  submitError?: string | null;
 }
 
 export default function CheckInChecklist({
@@ -33,6 +35,7 @@ export default function CheckInChecklist({
   studentType,
   onSubmit,
   isLoading = false,
+  submitError = null,
 }: CheckInChecklistProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [regNo, setRegNo] = useState(initialData?.regNo ?? "");
@@ -166,7 +169,7 @@ export default function CheckInChecklist({
   };
 
   return (
-    <div className="relative w-full max-w-[1280px] h-full max-h-[100dvh] mx-auto bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-full max-w-[1280px] min-h-[100dvh] lg:h-full lg:max-h-[100dvh] mx-auto bg-black text-white px-4 sm:px-6 md:px-12 py-3 md:py-4 flex flex-col justify-start lg:justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden">
       {/* Top bar: Brand logo & locked participant type badge */}
       <div className="flex-shrink-0 flex items-center justify-between z-10 h-10 md:h-12">
         <div className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative">
@@ -212,10 +215,10 @@ export default function CheckInChecklist({
             </p>
           </div>
 
-          {formError && (
+          {(formError || submitError) && (
             <div className="bg-red-500/15 border border-red-500/40 rounded-lg px-3 py-2 text-xs font-mono text-red-300 max-w-[360px] flex items-start gap-2">
               <span className="text-red-400 font-bold">⚠️</span>
-              <span className="leading-snug">{formError}</span>
+              <span className="leading-snug">{formError || submitError}</span>
             </div>
           )}
 
@@ -246,10 +249,10 @@ export default function CheckInChecklist({
                 FAQS
               </span>
               <h3 className="font-['Rotonto',sans-serif] text-[18px] md:text-[20px] text-black leading-snug">
-                What is the maximum team size?
+                What is the team size?
               </h3>
               <p className="font-['Rotonto',sans-serif] text-[14px] text-neutral-800 leading-relaxed pt-1">
-                Each team can have up to 5 members.
+                Each team must have 2 to 5 members.
               </p>
               <p className="font-['Rotonto',sans-serif] text-[13px] text-neutral-700 leading-relaxed">
                 Cross-domain and cross-expertise teams are highly encouraged.

@@ -124,12 +124,16 @@ export function TimelineDay1Stamp() {
 
 export function TimelineArrowVector() {
   return (
-    <div className="-translate-y-1/2 absolute aspect-[77.25666706933134/71.41451740581158] flex items-center justify-center left-[23.93%] right-[70.04%] top-[calc(50%-127.69px)]" data-node-id="343:2119" style={{ containerType: "size" }}>
-      <div className="-scale-x-100 flex-none h-[hypot(-71.9713cqw,-38.2022cqh)] rotate-[116.14deg] w-[hypot(28.0287cqw,-61.7978cqh)]">
-        <div className="relative size-full" data-name="Vector">
-          <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector17.svg" />
-        </div>
-      </div>
+    <div
+      className="-translate-y-1/2 absolute flex items-center justify-center left-[24%] top-[calc(50%-127.69px)] w-[60px] h-[72px] pointer-events-none z-20"
+      data-node-id="343:2119"
+      data-cursor-follower="timeline"
+    >
+      <img
+        alt=""
+        className="block w-[49px] h-[62px] object-contain pointer-events-none"
+        src="/figma/vector17.svg"
+      />
     </div>
   );
 }

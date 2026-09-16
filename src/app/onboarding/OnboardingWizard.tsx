@@ -8,13 +8,12 @@ import CreateTeamDossier from "@/components/onboarding/CreateTeamDossier";
 import JoinTeamTerminal from "@/components/onboarding/JoinTeamTerminal";
 import {
   saveCheckInAction,
+  prepareTeamCodeAction,
   createTeamAction,
   validateTeamCodeAction,
   joinTeamAction,
   type CurrentOnboardingParticipant,
 } from "./actions";
-import { renameTeamAction } from "@/app/dashboard/actions";
-
 
 interface OnboardingWizardProps {
   initialParticipant: CurrentOnboardingParticipant | null;
@@ -49,26 +48,30 @@ export default function OnboardingWizard({
   );
 
   const [createdTeamCode, setCreatedTeamCode] = useState<string>(
-    initialParticipant?.team?.code ?? "VH26-242"
+    initialParticipant?.team?.code ?? ""
   );
   const [createdTeamId, setCreatedTeamId] = useState<string | null>(
     initialParticipant?.teamId ?? null
   );
-  const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
 
 
   // STEP 1: Save Check-In data
   const handleCheckInSubmit = async (data: CheckInData) => {
     setIsLoading(true);
+    setCheckInError(null);
     try {
+      const res = await saveCheckInAction(data);
+      if (!res.success) {
+        setCheckInError(res.error || "Could not save your details. Please try again.");
+        return;
+      }
       setParticipantName(data.name);
-      await saveCheckInAction(data);
       setStep("team-type");
     } catch (err) {
       console.error("Check-in error:", err);
-      // Even if network/db hiccup, allow moving forward in wizard for preview
-      setStep("team-type");
+      setCheckInError("Could not save your details. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -77,17 +80,15 @@ export default function OnboardingWizard({
   // STEP 2: Handle Team Choice
   const handleTeamTypeSelect = async (choice: TeamChoice) => {
     if (choice === "create") {
-      // Pre-create team immediately so the user has a real code/QR to share
       setIsLoading(true);
       try {
-        const res = await createTeamAction(participantName ? `${participantName}'s Squad` : "");
+        // Generate unique code & QR code WITHOUT saving to MongoDB yet
+        const res = await prepareTeamCodeAction();
         if (res.success) {
           setCreatedTeamCode(res.teamCode);
-          setCreatedTeamId(res.teamId);
-          if (res.qrDataUrl) setQrDataUrl(res.qrDataUrl);
         }
       } catch (err) {
-        console.error("Failed to pre-create team:", err);
+        console.error("Failed to prepare team code:", err);
       } finally {
         setIsLoading(false);
         setStep("create-team");
@@ -98,23 +99,21 @@ export default function OnboardingWizard({
   };
 
   // STEP 3A: Create Team Save and Continue
-  // If a real team was already pre-created (teamId is not a "preview-*" id),
-  // we only rename it — we do NOT call createTeamAction again to avoid duplicates.
+  // The team is ONLY created and saved in MongoDB when the user clicks Save and Continue!
   const handleCreateTeamContinue = async (teamName: string) => {
     setIsLoading(true);
     try {
-      const isRealTeam = createdTeamId && !createdTeamId.startsWith("preview-");
-      if (teamName && isRealTeam) {
-        // Team already exists — just rename it
-        await renameTeamAction(createdTeamId, teamName);
-      } else if (teamName && !isRealTeam) {
-        // No real team yet (DB was unavailable during pre-create) — create fresh
-        await createTeamAction(teamName);
+      const res = await createTeamAction(teamName, createdTeamCode);
+      if (res && !res.success) {
+        setIsLoading(false);
+        return { success: false, error: res.error || "Failed to create team. Please try another name." };
       }
       router.push("/dashboard");
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       console.error("Failed to finalize team:", err);
-      router.push("/dashboard");
+      setIsLoading(false);
+      return { success: false, error: err?.message || "Failed to save team. Please try again." };
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +144,7 @@ export default function OnboardingWizard({
   };
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full bg-black text-white flex flex-col justify-center overflow-hidden">
+    <div className="min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] w-full bg-black text-white flex flex-col justify-start lg:justify-center overflow-x-hidden overflow-y-auto lg:overflow-hidden">
       {/* Wizard Step Views */}
       {step === "checkin" && (
         <CheckInChecklist
@@ -165,6 +164,7 @@ export default function OnboardingWizard({
           }}
           onSubmit={handleCheckInSubmit}
           isLoading={isLoading}
+          submitError={checkInError}
         />
       )}
 
@@ -178,8 +178,7 @@ export default function OnboardingWizard({
       {step === "create-team" && (
         <CreateTeamDossier
           teamCode={createdTeamCode}
-          qrDataUrl={qrDataUrl}
-          initialTeamName={participantName ? `${participantName}'s Squad` : ""}
+          initialTeamName=""
           onSaveAndContinue={handleCreateTeamContinue}
           onBack={() => setStep("team-type")}
           isLoading={isLoading}

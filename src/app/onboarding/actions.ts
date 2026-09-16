@@ -1,20 +1,27 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
-import QRCode from "qrcode";
-import { prisma } from "@/lib/prisma";
+
+
 import { auth } from "@/lib/auth";
-import { TEST_SESSION_COOKIE } from "../test-dashboard/access";
-import { generateUniqueTeamCode } from "../test-dashboard/utils";
-import { joinTeamByCode, TeamMembershipError } from "../test-dashboard/team-membership";
-import { getOrCreateEligibleUser } from "../test-dashboard/participant-eligibility";
+import { joinTeamByCode, TeamMembershipError } from "@/lib/team-membership";
+
 import type { CheckInData, StudentType } from "@/components/onboarding/CheckInChecklist";
 import {
+  getMongoDb,
   getParticipantByEmail,
-  getParticipantById,
   saveParticipantCheckInInDb,
-  formatNameFromEmail,
+  generateUniqueTeamCodeFromDb,
+  createTeamInDb,
+  validateTeamNameInDb,
+  normalizeTeamCode,
+  TEAM_MAX_SIZE,
 } from "@/lib/mongo";
+import { cleanOptionalNumber, cleanText, FIELD_LIMITS } from "@/lib/validation";
+import { ObjectId } from "mongodb";
+
+function toObjectId(id: string): any {
+  try { return new ObjectId(id); } catch { return id; }
+}
 
 export type CurrentOnboardingParticipant = {
   id: string;
@@ -43,419 +50,166 @@ export type CurrentOnboardingParticipant = {
   } | null;
 };
 
+// Only the signed NextAuth session identifies a participant. Never trust unsigned cookies here.
 export async function resolveCurrentParticipant(): Promise<CurrentOnboardingParticipant | null> {
   try {
-    const cookieStore = await cookies();
-    const testSession = cookieStore.get(TEST_SESSION_COOKIE)?.value;
+    const session = await auth();
+    if (!session?.user?.email) return null;
 
-    if (testSession) {
-      const [type, id] = testSession.split(":");
-      if ((type === "vit" || type === "external") && id) {
-        try {
-          if (type === "vit") {
-            const student = await prisma.vITStudent.findUnique({
-              where: { id },
-              include: { team: true },
-            });
-            if (student) {
-              const userId = student.userId || (await getOrCreateEligibleUser("vit", student.id).catch(() => null));
-              return {
-                id: student.id,
-                name: student.name,
-                type: "vit",
-                regNo: student.regNo,
-                phone: student.phone || "",
-                year: student.year ?? undefined,
-                isHosteller: student.residencyType === "HOSTELLER",
-                blockType: student.block?.startsWith("L") ? "LH" : "MH",
-                hostelBlock: student.block || "",
-                roomNo: student.room || "",
-                address: student.address || "",
-                collegeName: "Vellore Institute of Technology",
-                teamId: student.teamId,
-                userId,
-                email: student.email,
-                team: student.team,
-              };
-            }
-          } else {
-            const student = await prisma.externalStudent.findUnique({
-              where: { id },
-              include: { team: true },
-            });
-            if (student) {
-              const userId = student.userId || (await getOrCreateEligibleUser("external", student.id).catch(() => null));
-              return {
-                id: student.id,
-                name: student.name,
-                type: "external",
-                regNo: student.regNo || "",
-                phone: student.phone || "",
-                year: student.year ?? undefined,
-                collegeName: student.collegeName || "External Institute",
-                address: student.address || "",
-                takingAccommodation: true,
-                teamId: student.teamId,
-                userId,
-                email: student.email,
-                team: student.team,
-              };
-            }
-          }
-        } catch (sessionDbErr) {
-          console.warn("[Onboarding] Error querying test session student:", sessionDbErr);
-        }
-      }
-    }
-
-    // 1. Primary: Check NextAuth session (Production Google OAuth authenticated users)
-    try {
-      const session = await auth();
-      if (session?.user?.email) {
-        const email = session.user.email.toLowerCase().trim();
-        console.log(`[Onboarding] Resolving participant for authenticated session: ${email}`);
-
-        // Fast native Mongo lookup (works on Cloudflare Workers & Node.js)
-        const mongoParticipant = await getParticipantByEmail(email, session.user.name);
-        if (mongoParticipant) {
-          console.log(
-            `[Onboarding] Successfully resolved participant via MongoDB: ${mongoParticipant.name}, RegNo: ${mongoParticipant.regNo}`
-          );
-          return mongoParticipant;
-        }
-
-        // Prisma fallback (if running in full Node.js environment)
-        const isVitEmail = email.endsWith("@vitstudent.ac.in");
-        if (isVitEmail) {
-          const vit = await prisma.vITStudent.findFirst({
-            where: { email: { equals: email, mode: "insensitive" } },
-            include: { team: true },
-          });
-          if (vit) {
-            const userId = vit.userId || (await getOrCreateEligibleUser("vit", vit.id).catch(() => null));
-            const regMatch = (session.user.name || vit.name || "").match(/\b(\d{2}[A-Za-z]{3}\d{4})\b/);
-            const detectedRegNo = regMatch ? regMatch[1].toUpperCase() : null;
-            let cleanName = (vit.name || session.user.name || formatNameFromEmail(email)).trim();
-            if (regMatch) {
-              cleanName = cleanName.replace(new RegExp(regMatch[0], "i"), "").trim();
-            }
-            const finalRegNo = (detectedRegNo || vit.regNo || "").toUpperCase();
-
-            return {
-              id: vit.id,
-              name: cleanName,
-              type: "vit",
-              regNo: finalRegNo,
-              phone: vit.phone || "",
-              year: vit.year ?? undefined,
-              isHosteller: vit.residencyType === "HOSTELLER",
-              blockType: vit.block?.startsWith("L") ? "LH" : "MH",
-              hostelBlock: vit.block || "",
-              roomNo: vit.room || "",
-              address: vit.address || "",
-              collegeName: "Vellore Institute of Technology",
-              takingAccommodation: true,
-              teamId: vit.teamId,
-              userId,
-              email: vit.email,
-              team: vit.team,
-            };
-          }
-        } else {
-          const ext = await prisma.externalStudent.findFirst({
-            where: { email: { equals: email, mode: "insensitive" } },
-            include: { team: true },
-          });
-          if (ext) {
-            const userId = ext.userId || (await getOrCreateEligibleUser("external", ext.id).catch(() => null));
-            return {
-              id: ext.id,
-              name: ext.name || session.user.name || formatNameFromEmail(email),
-              type: "external",
-              regNo: ext.regNo || "",
-              phone: ext.phone || "",
-              year: ext.year ?? undefined,
-              collegeName: ext.collegeName || "External Institute",
-              address: ext.address || "",
-              takingAccommodation: true,
-              teamId: ext.teamId,
-              userId,
-              email: ext.email,
-              team: ext.team,
-            };
-          }
-        }
-      }
-    } catch (authErr) {
-      console.warn("[Onboarding] Session lookup threw error, checking fallbacks:", authErr);
-    }
-
-    // 2. Secondary: Check preview / test session cookie
-    if (testSession) {
-      const [type, id] = testSession.split(":");
-      if ((type === "vit" || type === "external") && id) {
-        try {
-          const mongoParticipant = await getParticipantById(type, id);
-          if (mongoParticipant) return mongoParticipant;
-        } catch {
-          // Ignore
-        }
-      }
-    }
-
-    // No authenticated session found
+    const email = session.user.email.toLowerCase().trim();
+    return await getParticipantByEmail(email, session.user.name);
+  } catch (err) {
+    console.error("[Onboarding] Failed to resolve participant from session:", err);
     return null;
-  } catch (topLevelErr) {
-    console.error("[Onboarding] Top-level error in resolveCurrentParticipant:", topLevelErr);
   }
-
-  return null;
 }
 
 export async function saveCheckInAction(data: CheckInData) {
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant) {
-      return { success: true, warning: "Session not found, continuing in preview mode." };
+      return { success: false, error: "Your session expired. Please sign in again." };
+    }
+    if (participant.id.startsWith("vit-") || participant.id.startsWith("ext-")) {
+      return { success: false, error: "Your participant record was not found. Please contact the organisers." };
     }
 
-    const name = data.name.trim();
-    const regNo = (data.regNo || "").trim();
-    const phone = (data.phone || "").trim();
-    const address = (data.address || "").trim();
+    const name = cleanText(data.name, FIELD_LIMITS.name);
+    const regNo = cleanText(data.regNo, FIELD_LIMITS.regNo);
+    const phone = cleanText(data.phone, FIELD_LIMITS.phone);
+    if (!name) return { success: false, error: "Please enter your name." };
+    if (!phone) return { success: false, error: "Please enter your phone number." };
 
-    // 1. Native MongoDB update (works on Cloudflare Workers & Node.js)
-    try {
-      const saved = await saveParticipantCheckInInDb(participant as any, {
-        name,
-        regNo,
-        phone,
-        year: data.year,
-        isHosteller: data.isHosteller,
-        blockType: data.blockType,
-        hostelBlock: data.hostelBlock,
-        roomNo: data.roomNo,
-        address,
-        collegeName: data.collegeName,
-      });
-      if (saved) {
-        console.log(`[saveCheckInAction] Successfully persisted check-in data via MongoDB: ${name} (${regNo}, ${phone}, Year: ${data.year || "N/A"})`);
-        return { success: true };
-      }
-    } catch (mongoSaveErr) {
-      console.warn("[saveCheckInAction] Native mongo update failed, trying Prisma fallback:", mongoSaveErr);
-    }
-
-    // 2. Prisma fallback
-    const isVit = participant.type === "vit";
-
-    if (isVit) {
-      const residencyType = data.isHosteller ? "HOSTELLER" : "DAYSCHOLAR";
-      const updateData: {
-        name: string;
-        residencyType: "HOSTELLER" | "DAYSCHOLAR";
-        block: string | null;
-        room: string | null;
-        address: string | null;
-        regNo?: string;
-        phone?: string;
-        year?: number;
-      } = {
-        name,
-        residencyType,
-        block: data.isHosteller ? (data.hostelBlock || data.blockType || null) : null,
-        room: data.isHosteller ? (data.roomNo || null) : null,
-        address: !data.isHosteller ? (address || null) : null,
-      };
-
-      if (regNo) {
-        updateData.regNo = regNo;
-      }
-      if (phone) {
-        updateData.phone = phone;
-      }
-      if (data.year !== undefined && data.year !== null) {
-        updateData.year = Number(data.year);
-      }
-
-      if (participant.id && !participant.id.startsWith("vit-")) {
-        await prisma.vITStudent.update({
-          where: { id: participant.id },
-          data: updateData,
-        });
-      } else if (participant.email) {
-        await prisma.vITStudent.update({
-          where: { email: participant.email },
-          data: updateData,
-        });
-      }
-    } else {
-      // External participant
-      const updateData: {
-        name: string;
-        collegeName: string;
-        address: string | null;
-        joinedAt: Date;
-        regNo?: string;
-        phone?: string;
-        year?: number;
-      } = {
-        name,
-        collegeName: data.collegeName || "External Institute",
-        address: address || null,
-        joinedAt: new Date(),
-      };
-
-      if (regNo) {
-        updateData.regNo = regNo;
-      }
-      if (phone) {
-        updateData.phone = phone;
-      }
-      if (data.year !== undefined && data.year !== null) {
-        updateData.year = Number(data.year);
-      }
-
-      if (participant.id && !participant.id.startsWith("ext-")) {
-        await prisma.externalStudent.update({
-          where: { id: participant.id },
-          data: updateData,
-        });
-      } else if (participant.email) {
-        await prisma.externalStudent.upsert({
-          where: { email: participant.email },
-          update: updateData,
-          create: {
-            email: participant.email,
-            phone: phone || "",
-            year: data.year ? Number(data.year) : 1,
-            ...updateData,
-          },
-        });
-      }
-    }
-
-    if (participant.userId) {
-      await prisma.user.update({
-        where: { id: participant.userId },
-        data: { name },
-      });
+    const saved = await saveParticipantCheckInInDb(participant as any, {
+      name,
+      regNo: regNo || "",
+      phone,
+      year: cleanOptionalNumber(data.year, 1, 5),
+      isHosteller: Boolean(data.isHosteller),
+      blockType: data.blockType === "LH" ? "LH" : "MH",
+      hostelBlock: cleanText(data.hostelBlock, FIELD_LIMITS.hostelBlock) || "",
+      roomNo: cleanText(data.roomNo, FIELD_LIMITS.roomNo) || "",
+      address: cleanText(data.address, FIELD_LIMITS.address) || "",
+      collegeName: cleanText(data.collegeName, FIELD_LIMITS.collegeName) || "",
+    });
+    if (!saved) {
+      return { success: false, error: "Could not save your details. Please try again." };
     }
 
     return { success: true };
   } catch (err) {
-    console.warn("[saveCheckInAction] Could not persist to DB, continuing:", err);
-    return { success: true, warning: "Saved in preview mode." };
+    console.error("[saveCheckInAction] Failed to persist check-in:", err);
+    return { success: false, error: "Could not save your details. Please try again." };
   }
 }
 
-export async function createTeamAction(teamName: string) {
+export async function prepareTeamCodeAction() {
   try {
-    const participant = await resolveCurrentParticipant();
-    const fallbackCode = "VH26-" + Math.floor(100 + Math.random() * 900);
-    const code = participant ? await generateUniqueTeamCode().catch(() => fallbackCode) : fallbackCode;
-    const name = (teamName.trim() || (participant?.name ? `${participant.name}'s Squad` : "My Squad")).slice(0, 100);
-
-    let teamId = "preview-" + Date.now();
-
-    if (participant && participant.userId) {
-      try {
-        const teamType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-        const now = new Date();
-
-        const team = await prisma.$transaction(async (tx) => {
-          const newTeam = await tx.team.create({
-            data: {
-              name,
-              code,
-              teamType,
-              leaderId: participant.userId,
-            },
-          });
-
-          if (participant.type === "vit") {
-            await tx.vITStudent.update({
-              where: { id: participant.id },
-              data: { teamId: newTeam.id, joinedAt: now },
-            });
-          } else {
-            await tx.externalStudent.update({
-              where: { id: participant.id },
-              data: { teamId: newTeam.id, joinedAt: now },
-            });
-          }
-
-          return newTeam;
-        });
-        teamId = team.id;
-      } catch (txErr) {
-        console.warn("[createTeamAction] DB transaction failed, falling back to preview team:", txErr);
-      }
-    }
-
-    // Generate QR code for instant joining
-    let qrDataUrl = "";
-    try {
-      const reqHeaders = await headers();
-      const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-      const host = reqHeaders.get("x-forwarded-host") || reqHeaders.get("host") || "localhost:3000";
-      const protocol = reqHeaders.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-      const origin = configuredOrigin || `${protocol}://${host}`;
-      const joinUrl = `${origin}/onboarding?step=join-team&code=${code}`;
-
-      qrDataUrl = await QRCode.toDataURL(joinUrl, {
-        width: 256,
-        margin: 1,
-        color: {
-          dark: "#000000",
-          light: "#ffffff",
-        },
-      });
-    } catch {
-      qrDataUrl = "";
-    }
-
+    const code = await generateUniqueTeamCodeFromDb();
     return {
       success: true,
-      teamId,
       teamCode: code,
-      teamName: name,
-      qrDataUrl,
     };
   } catch (err) {
-    console.error("[createTeamAction] Unhandled error:", err);
-    const code = "VH26-" + Math.floor(100 + Math.random() * 900);
+    console.error("[prepareTeamCodeAction] Error:", err);
+    const fallback = `VH26-${Date.now().toString(36).slice(-4).toUpperCase()}`;
     return {
       success: true,
-      teamId: "preview-fallback",
-      teamCode: code,
-      teamName: teamName || "My Squad",
-      qrDataUrl: "",
+      teamCode: fallback,
+    };
+  }
+}
+
+export async function validateTeamNameAction(teamName: string) {
+  try {
+    return await validateTeamNameInDb(teamName);
+  } catch (err) {
+    console.error("[validateTeamNameAction] Error:", err);
+    return { valid: true };
+  }
+}
+
+export async function createTeamAction(teamName: string, customCode?: string) {
+  try {
+    const trimmedName = teamName.trim();
+    if (!trimmedName) {
+      return { success: false, error: "Please enter a team name before continuing." };
+    }
+
+    const participant = await resolveCurrentParticipant();
+    if (!participant) {
+      return { success: false, error: "Participant session not found. Please log in again." };
+    }
+    if (participant.teamId) {
+      return { success: false, error: "You are already in a team. Leave it before creating a new one." };
+    }
+
+    // Use the code shown to the user if it's well-formed, otherwise generate a fresh one
+    const code = normalizeTeamCode(customCode || "") || (await generateUniqueTeamCodeFromDb());
+
+    const res = await createTeamInDb({
+      name: trimmedName,
+      code,
+      participant: participant as any,
+    });
+
+    if (res.success && res.teamId) {
+      console.log(`[createTeamAction] Team successfully saved to MongoDB: ${trimmedName} (${code})`);
+      return {
+        success: true,
+        teamId: res.teamId,
+        teamCode: res.code || code,
+        teamName: trimmedName,
+      };
+    }
+
+    return { success: false, error: res.error || "Failed to create team." };
+  } catch (err) {
+    console.error("[createTeamAction] Unhandled error:", err);
+    return {
+      success: false,
+      error: "An unexpected error occurred while saving your team.",
     };
   }
 }
 
 export async function validateTeamCodeAction(code: string) {
-  const normalized = code.trim().toUpperCase();
-  if (!normalized) {
+  if (!code.trim()) {
     return { success: false, error: "Please enter a team code." };
+  }
+  const normalized = normalizeTeamCode(code);
+  if (!normalized) {
+    return { success: false, error: "Team not found. Verify the code." };
   }
 
   try {
-    const participant = await resolveCurrentParticipant();
-    const team = await prisma.team.findUnique({
-      where: { code: normalized },
-      include: { vitStudents: true, externalStudents: true },
-    });
+    const db = await getMongoDb();
+    if (!db) {
+      return { success: false, error: "Could not connect to database to verify team code." };
+    }
+
+    const [participant, team] = await Promise.all([
+      resolveCurrentParticipant(),
+      db.collection("teams").findOne(
+        { code: normalized },
+        { projection: { name: 1, teamType: 1, capacity: 1 } }
+      ),
+    ]);
 
     if (!team) {
       return { success: false, error: "Team not found. Verify the code." };
     }
 
-    const memberCount = team.teamType === "VIT" ? team.vitStudents.length : team.externalStudents.length;
-    if (memberCount >= team.capacity) {
-      return { success: false, error: "This team is already full (5/5 members)." };
-    }
+    const capacity = Math.min(team.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE);
+    const memberCol = team.teamType === "VIT" ? "vit_students" : "external_students";
+    const teamOid = team._id;
+
+    const [memberCount, alreadyMember] = await Promise.all([
+      db.collection(memberCol).countDocuments({ teamId: teamOid }),
+      participant
+        ? db.collection(memberCol).findOne({ teamId: teamOid, _id: toObjectId(participant.id) }, { projection: { _id: 1 } })
+        : Promise.resolve(null),
+    ]);
 
     if (participant) {
       const expectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
@@ -465,28 +219,22 @@ export async function validateTeamCodeAction(code: string) {
           error: `Type mismatch: ${expectedType} participants cannot join a ${team.teamType} team.`,
         };
       }
+      if (!alreadyMember && memberCount >= capacity) {
+        return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
+      }
+    } else {
+      if (memberCount >= capacity) {
+        return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
+      }
     }
 
-    return {
-      success: true,
-      teamName: team.name,
-      memberCount,
-      capacity: team.capacity,
-    };
+    return { success: true, teamName: team.name, memberCount, capacity };
   } catch (err) {
     console.error("[validateTeamCodeAction] Error:", err);
-    // In preview mode if DB is disconnected, treat codes like VH26-XXX as mock valid
-    if (/^VH26-[A-Z0-9]{3,}$/i.test(normalized)) {
-      return {
-        success: true,
-        teamName: "Alpha Squad (Preview)",
-        memberCount: 2,
-        capacity: 5,
-      };
-    }
     return { success: false, error: "Could not connect to database to verify team code." };
   }
 }
+
 
 export async function joinTeamAction(code: string) {
   const normalized = code.trim().toUpperCase();
@@ -494,7 +242,7 @@ export async function joinTeamAction(code: string) {
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant) {
-      return { success: true, status: "JOINED_EXISTING" };
+      return { success: false, error: "Session not found. Please log in again." };
     }
 
     const res = await joinTeamByCode(

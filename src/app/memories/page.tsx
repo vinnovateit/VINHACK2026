@@ -26,11 +26,18 @@ export const dynamic = "force-dynamic";
  * no fixed 1280 canvas and no second mobile tree, because the card is the only
  * thing on it that has a fixed size and it carries its own scaling.
  */
-export default async function MemoriesPage() {
+interface MemoriesPageProps {
+  searchParams?: Promise<{ from?: string }> | { from?: string };
+}
+
+export default async function MemoriesPage({ searchParams }: MemoriesPageProps) {
   const participant = await resolveCurrentParticipant();
   if (!participant) {
     redirect("/login");
   }
 
-  return <MemoriesStudio />;
+  const resolvedParams = await searchParams;
+  const fromDashboard = resolvedParams?.from === "dashboard";
+
+  return <MemoriesStudio fromDashboard={fromDashboard} />;
 }

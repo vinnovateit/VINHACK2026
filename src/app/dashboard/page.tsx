@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import { fetchFullTeam } from "./actions";
 import DashboardShell from "@/components/dashboard/DashboardShell";
-import "./dashboard.css";
 
 export const metadata = {
   title: "Dashboard | VinHack 2026",
@@ -37,10 +36,7 @@ export default async function DashboardPage({
     redirect("/onboarding?step=team-type");
   }
 
-  const isLeader = Boolean(
-    (team.leaderId && participant.userId && team.leaderId === participant.userId) ||
-      (team.members.length > 0 && team.members[0].id === participant.id)
-  );
+  const isLeader = team.members.some((m) => m.isLeader && m.id === participant.id);
 
   return (
     <DashboardShell
