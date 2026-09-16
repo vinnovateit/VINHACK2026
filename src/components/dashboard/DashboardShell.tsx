@@ -294,7 +294,7 @@ export default function DashboardShell({
       <header className="flex items-center justify-between w-full mb-4 sm:mb-6">
         <Link
           href="/"
-          className="-rotate-3 hover:rotate-0 transition-transform duration-200 block relative w-[145px] sm:w-[169px] h-[50px] sm:h-[59px]"
+          className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative block"
           aria-label="VinHack Home"
         >
           <Image
