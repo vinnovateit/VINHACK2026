@@ -572,25 +572,24 @@ export const TIMELINE = {
         row("Hackathon Begins", "2:00 PM"),
         row("Speaker Session", "4:00 PM"),
         row("Dinner Break", "7:00 PM"),
-        row("Participants Report Back to Venue", "8:30 PM – 9:00 PM"),
+        row("Participants Report Back", "8:30 PM – 9:00 PM"),
         row("Jamming Session", "12:00 AM – 1:00 AM"),
         row("Review 1 & Team Evaluations", "3:00 AM – 5:00 AM", true),
-        row("Review 1 Results Finalised & Announced", "5:00 AM – 6:00 AM", true),
-        row("Participants may leave the venue and return for Day 2", "6:00 AM onwards"),
+        row("Review 1 Results Announced", "5:00 AM – 6:00 AM", true),
+        row("Participants May Leave & Return for Day 2", "6:00 AM onwards"),
       ],
     },
     {
       name: "Day 2",
       date: "19 September",
       entries: [
-        row("Participants Report Back to Venue", "8:00 AM"),
+        row("Participants Report Back", "8:00 AM"),
         row("Work Sprint", "8:00 AM – 1:00 PM"),
         row("Lunch Break", "1:00 PM – 2:00 PM"),
-        row("Review 2 Begins", "2:00 PM", true),
         row("Review 2 & Team Evaluations", "2:00 PM – 5:30 PM", true),
         row("Review 2 Results Announced", "5:30 PM", true),
         row("Final Review & Evaluation", "6:00 PM – 8:00 PM", true),
-        row("VinHack 6.0 Hackathon Concludes", "8:00 PM"),
+        row("VinHack 6.0 Concludes", "8:00 PM"),
       ],
     },
   ] satisfies Day[],
@@ -775,6 +774,14 @@ export const SNEAK_PEEK = {
 } as const;
 
 /* ------------------------------------------------------------- footer */
+
+/* ------------------------------------------------------------ discord */
+
+/** The invite the floating sticker in the corner opens. */
+export const DISCORD = {
+  label: "DISCORD",
+  href: "https://discord.gg/G9JtmGhQV",
+} as const;
 
 export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is

@@ -1,5 +1,26 @@
 import { TIMELINE, type ScheduleEntry } from "@/content/site";
 
+/* The printed schedule, between the Date header's rule and the footer's.
+
+   It is laid out rather than placed: the receipt used to carry one hand-measured
+   `top` per line and one per divider, transcribed from the Figma frame, which
+   only holds for as long as the schedule does. A day with a longer label in it
+   wraps to two lines and every measurement below that point is wrong by one.
+
+   So the lines are a column with a fixed rhythm, and the dividers are worked
+   out from the content: a review is fenced above and below, and a run of them
+   is fenced once as a block rather than ruled between every line. */
+const SHEET_TOP = 303;
+const SHEET_BOTTOM = 527;
+
+function isReviewEntry(entry: ScheduleEntry): boolean {
+  return entry.kind === "review" || Boolean(entry.isReview);
+}
+
+function Fence() {
+  return <div className="receipt-rule my-[3px] h-px w-full shrink-0" aria-hidden />;
+}
+
 function DaySheet({ index }: { index: number }) {
   const day = TIMELINE.days[index];
 
@@ -16,37 +37,47 @@ function DaySheet({ index }: { index: number }) {
         {day.date}
       </p>
 
-      {/* Top dashed divider above schedule items */}
+      {/* The rule the schedule hangs from. */}
       <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[297.2px] w-[294.233px]" />
 
-      {/* Schedule Items List */}
+      {/* Centred in what is left before the footer rule, so a short day sits in
+          the middle of the paper instead of hanging off the top of it. */}
       <div
-        className="absolute left-[33.8px] right-[33.8px] top-[305px] flex flex-col justify-between"
-        style={{ height: "220px" }}
+        className="absolute left-[33.8px] right-[33.8px] flex flex-col justify-center gap-[4px]"
+        style={{ top: SHEET_TOP, height: SHEET_BOTTOM - SHEET_TOP }}
       >
-        {day.entries.map((entry: ScheduleEntry) => {
-          const isRow = entry.kind === "row";
-          const label = entry.label;
-          const time = isRow ? entry.time : "";
-          const isReview =
-            (entry.kind === "row" && Boolean(entry.isReview)) ||
-            entry.kind === "review";
+        {day.entries.map((entry: ScheduleEntry, i) => {
+          const review = isReviewEntry(entry);
+          const time = entry.kind === "row" ? entry.time : entry.time ?? "";
+          /* One fence per run, not one per line: four review rows in a row are
+             a single block of the day, and ruling between each of them would
+             read as four separate ones. */
+          const opensRun = review && !(i > 0 && isReviewEntry(day.entries[i - 1]));
+          const closesRun =
+            review && !(i < day.entries.length - 1 && isReviewEntry(day.entries[i + 1]));
 
           return (
-            <div
-              key={label}
-              className={`flex items-baseline justify-between gap-1.5 font-rotonto text-black ${
-                isReview ? "font-bold" : ""
-              }`}
-            >
-              <span className="min-w-0 flex-1 text-[11.8px] leading-[13px] tracking-tight">
-                {label}
-              </span>
-              {time ? (
-                <span className="shrink-0 text-right text-[11.2px] tabular-nums whitespace-nowrap leading-[13px] opacity-90">
-                  {time}
+            <div key={entry.label} className="contents">
+              {opensRun && <Fence />}
+              <div className="flex items-baseline justify-between gap-2 font-rotonto text-black">
+                <span
+                  className={`min-w-0 flex-1 text-[11.5px] leading-[12.6px] tracking-tight ${
+                    review ? "font-bold" : ""
+                  }`}
+                >
+                  {entry.label}
                 </span>
-              ) : null}
+                {time ? (
+                  <span
+                    className={`shrink-0 text-right text-[10.8px] leading-[12.6px] whitespace-nowrap tabular-nums ${
+                      review ? "font-bold" : "opacity-90"
+                    }`}
+                  >
+                    {time}
+                  </span>
+                ) : null}
+              </div>
+              {closesRun && <Fence />}
             </div>
           );
         })}
