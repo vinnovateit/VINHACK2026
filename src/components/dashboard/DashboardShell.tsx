@@ -1161,7 +1161,7 @@ export default function DashboardShell({
                       htmlFor="progress-note"
                       className="text-sm sm:text-base lg:text-[18px] text-white font-light"
                     >
-                      What has changed since the last review?
+                      What has changed since your last update?
                     </label>
                     <textarea
                       id="progress-note"
