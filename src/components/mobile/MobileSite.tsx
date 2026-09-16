@@ -12,7 +12,7 @@ import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
 import WordmarkArt from "@/components/hero/WordmarkArt";
 import MobileRecap from "@/components/mobile/MobileRecap";
-import MobileWhoAreWe from "@/components/mobile/MobileWhoAreWe";
+import WhoAreWeSection from "@/components/sections/WhoAreWe";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
 import ReceiptPrinter from "@/components/timeline/ReceiptPrinter";
 import TimelineToggle from "@/components/timeline/TimelineToggle";
@@ -83,7 +83,10 @@ export default function MobileSite() {
     <div className="md:hidden bg-black text-[#fcfcfc] w-full overflow-x-clip">
       <MobileHero />
       <MobileRecap />
-      {FEATURES.whoAreWe && <MobileWhoAreWe />}
+      {/* The same collage the desktop gets, not a phone-shaped stand-in for it:
+          the stage is a viewport-sized portal either way, so only the reserved
+          scroll and the card scale change. See the note on `WhoAreWeSection`. */}
+      {FEATURES.whoAreWe && <WhoAreWeSection variant="flow" />}
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
       <MobileSponsors />
