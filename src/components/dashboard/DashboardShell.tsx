@@ -24,7 +24,7 @@ import {
   Send,
 } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
-import { TRACK_OPTIONS } from "@/lib/validation";
+import { FIELD_LIMITS, TRACK_OPTIONS } from "@/lib/validation";
 
 const ZIGZAG_CLIP_PATH =
   "polygon(6px 0%, calc(100% - 6px) 0%, 100% 16.6%, calc(100% - 6px) 33.3%, 100% 50%, calc(100% - 6px) 66.6%, 100% 83.3%, calc(100% - 6px) 100%, 6px 100%, 0% 83.3%, 6px 66.6%, 0% 50%, 6px 33.3%, 0% 16.6%)";
@@ -876,6 +876,31 @@ export default function DashboardShell({
                         />
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label
+                      htmlFor="proj-description"
+                      className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                    >
+                      Project Description<span className="text-[#fa1a1d] ml-0.5">*</span>
+                    </label>
+                    <textarea
+                      id="proj-description"
+                      rows={3}
+                      maxLength={FIELD_LIMITS.projectDescription}
+                      value={projectDescription}
+                      onChange={(e) => isLeader && setProjectDescription(e.target.value)}
+                      readOnly={!isLeader}
+                      placeholder={
+                        isLeader
+                          ? "What does your project do, and what problem does it solve?"
+                          : (projectDescription || "Not submitted yet")
+                      }
+                      className={`bg-black border border-[#666060] text-white px-3.5 py-3 text-sm sm:text-base w-full min-h-[96px] focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
+                        isLeader ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
+                      }`}
+                    />
                   </div>
                 </div>
               )}
