@@ -29,7 +29,7 @@ const TEXT_TRANSITION = {
   text1FadeOutEnd: 0.70,     // Scroll progress when "WHO ARE WE ?" is completely gone (increase to fade out slower)
 
   // Phase 2: "WE ARE VINNOVATEIT"
-  text2FadeInStart: 0.20,    // Scroll progress when "WE ARE VINNOVATEIT" starts appearing
+  text2FadeInStart: 0.40,    // Scroll progress when "WE ARE VINNOVATEIT" starts appearing
   text2FadeInEnd: 0.90,      // Scroll progress when "WE ARE VINNOVATEIT" reaches full opacity (increase to fade in slower)
 };
 
