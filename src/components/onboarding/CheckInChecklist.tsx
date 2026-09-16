@@ -26,6 +26,8 @@ interface CheckInChecklistProps {
   studentType: StudentType;
   onSubmit: (data: CheckInData) => Promise<void> | void;
   isLoading?: boolean;
+  /** Error returned by the server for the last submit attempt. */
+  submitError?: string | null;
 }
 
 export default function CheckInChecklist({
@@ -33,6 +35,7 @@ export default function CheckInChecklist({
   studentType,
   onSubmit,
   isLoading = false,
+  submitError = null,
 }: CheckInChecklistProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [regNo, setRegNo] = useState(initialData?.regNo ?? "");
@@ -212,10 +215,10 @@ export default function CheckInChecklist({
             </p>
           </div>
 
-          {formError && (
+          {(formError || submitError) && (
             <div className="bg-red-500/15 border border-red-500/40 rounded-lg px-3 py-2 text-xs font-mono text-red-300 max-w-[360px] flex items-start gap-2">
               <span className="text-red-400 font-bold">⚠️</span>
-              <span className="leading-snug">{formError}</span>
+              <span className="leading-snug">{formError || submitError}</span>
             </div>
           )}
 

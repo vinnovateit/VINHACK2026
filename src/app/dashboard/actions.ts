@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
 import { ObjectId } from "mongodb";
+import { cleanText, FIELD_LIMITS, isValidHttpUrl, isValidTrack } from "@/lib/validation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import {
   deleteTeam,
@@ -43,17 +44,22 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
       return { success: false, message: "Unauthorized team action." };
     }
 
-    const {
-      teamId,
-      track,
-      projectTitle,
-      projectDescription,
-      githubLink,
-      figmaLink,
-      deckLink,
-      otherLinks,
-      progressNote,
-    } = payload;
+    const { teamId, track } = payload;
+
+    if (track !== undefined && track !== "" && !isValidTrack(track)) {
+      return { success: false, message: "Please choose one of the listed tracks." };
+    }
+
+    const links = {
+      githubLink: cleanText(payload.githubLink, FIELD_LIMITS.link),
+      figmaLink: cleanText(payload.figmaLink, FIELD_LIMITS.link),
+      deckLink: cleanText(payload.deckLink, FIELD_LIMITS.link),
+    };
+    for (const [field, value] of Object.entries(links)) {
+      if (value && !isValidHttpUrl(value)) {
+        return { success: false, message: `${field.replace("Link", "")} link must be a valid http(s) URL.` };
+      }
+    }
 
     const now = new Date();
     const db = await getMongoDb();
@@ -76,17 +82,14 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
       { teamId: teamOid },
       {
         $set: {
-          title: projectTitle?.trim() || null,
-          description: projectDescription?.trim() || null,
-          githubLink: githubLink?.trim() || null,
-          figmaLink: figmaLink?.trim() || null,
-          deckLink: deckLink?.trim() || null,
-          otherLinks: otherLinks?.trim() || null,
-          progressNote: progressNote?.trim() || null,
-          submittedAt: now,
+          title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
+          description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
+          ...links,
+          otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks),
+          progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
           updatedAt: now,
         },
-        $setOnInsert: { teamId: teamOid },
+        $setOnInsert: { teamId: teamOid, submittedAt: now },
       },
       { upsert: true }
     );

@@ -339,94 +339,6 @@ export async function getParticipantByEmail(
   }
 }
 
-export async function getParticipantById(
-  type: "vit" | "external",
-  id: string
-): Promise<MongoParticipant | null> {
-  try {
-    const db = await getMongoDb();
-    if (!db) return null;
-
-    const collectionName = type === "vit" ? "vit_students" : "external_students";
-    const student = await db.collection(collectionName).findOne({ _id: toObjectId(id) });
-    if (!student) return null;
-
-    let team = null;
-    if (student.teamId) {
-      try {
-        team = await db.collection("teams").findOne({ _id: toObjectId(String(student.teamId)) });
-      } catch {
-        team = null;
-      }
-    }
-
-    if (type === "vit") {
-      const block = student.block || "";
-      const blockType: "MH" | "LH" = block.toUpperCase().startsWith("L") ? "LH" : "MH";
-      return {
-        id: student._id.toString(),
-        name: student.name || "",
-        type: "vit",
-        email: student.email || "",
-        regNo: student.regNo || "",
-        phone: student.phone || "",
-        year: typeof student.year === "number" ? student.year : undefined,
-        isHosteller: student.residencyType !== "DAYSCHOLAR",
-        blockType,
-        hostelBlock: block,
-        roomNo: student.room || "",
-        address: student.address || "",
-        collegeName: "Vellore Institute of Technology",
-        takingAccommodation: true,
-        teamId: student.teamId ? String(student.teamId) : null,
-        userId: student.userId ? String(student.userId) : null,
-        team: team
-          ? {
-            id: team._id.toString(),
-            name: team.name,
-            code: team.code,
-            capacity: team.capacity || 5,
-            teamType: team.teamType || "VIT",
-            leaderId: team.leaderId ? String(team.leaderId) : null,
-          }
-          : null,
-      };
-    } else {
-      return {
-        id: student._id.toString(),
-        name: student.name || "",
-        type: "external",
-        email: student.email || "",
-        regNo: student.regNo || "",
-        phone: student.phone || "",
-        year: typeof student.year === "number" ? student.year : undefined,
-        isHosteller: true,
-        blockType: "MH",
-        hostelBlock: "",
-        roomNo: "",
-        address: student.address || "",
-        collegeName: student.collegeName || "External Institute",
-        takingAccommodation: true,
-        teamId: student.teamId ? String(student.teamId) : null,
-        userId: student.userId ? String(student.userId) : null,
-        team: team
-          ? {
-            id: team._id.toString(),
-            name: team.name,
-            code: team.code,
-            capacity: team.capacity || 5,
-            teamType: team.teamType || "EXTERNAL",
-            leaderId: team.leaderId ? String(team.leaderId) : null,
-          }
-          : null,
-      };
-    }
-  } catch (err) {
-    console.error("[MongoDB] getParticipantById error:", formatError(err));
-    return null;
-  }
-}
-
 export async function saveParticipantCheckInInDb(
   participant: MongoParticipant,
   data: {
@@ -548,25 +460,6 @@ export async function generateUniqueTeamCodeFromDb(): Promise<string> {
   return `VH26-${r1}${r2}${ts}`;
 }
 
-export function levenshteinDistance(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost
-      );
-    }
-  }
-  return dp[m][n];
-}
-
 export function normalizeTeamName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -633,7 +526,7 @@ export async function createTeamInDb(data: {
   name: string;
   code: string;
   participant: MongoParticipant;
-}): Promise<{ success: boolean; teamId?: string; error?: string }> {
+}): Promise<{ success: boolean; teamId?: string; code?: string; error?: string }> {
   try {
     const db = await getMongoDb();
     if (!db) {
@@ -678,24 +571,29 @@ export async function createTeamInDb(data: {
 
     const now = new Date();
     const normalizedName = normalizeTeamName(trimmedName);
-    let teamOid: ObjectId;
-    try {
-      const insertRes = await db.collection("teams").insertOne({
-        name: trimmedName,
-        code: normalizedCode,
-        capacity: TEAM_MAX_SIZE,
-        teamType: participant.type === "vit" ? "VIT" : "EXTERNAL",
-        track: null,
-        leaderId: participantOid,
-        createdAt: now,
-        updatedAt: now,
-      });
-      teamOid = insertRes.insertedId;
-    } catch (insertErr: any) {
-      if (insertErr?.code === 11000) {
-        return { success: false, error: "This team code is already in use. Please refresh and try again." };
+    let teamOid: ObjectId | null = null;
+    let code = normalizedCode;
+    for (let attempt = 0; attempt < 3 && !teamOid; attempt++) {
+      try {
+        const insertRes = await db.collection("teams").insertOne({
+          name: trimmedName,
+          code,
+          capacity: TEAM_MAX_SIZE,
+          teamType: participant.type === "vit" ? "VIT" : "EXTERNAL",
+          track: null,
+          leaderId: participantOid,
+          createdAt: now,
+          updatedAt: now,
+        });
+        teamOid = insertRes.insertedId;
+      } catch (insertErr: any) {
+        // Another team claimed this code first; take a fresh one rather than losing the name.
+        if (insertErr?.code !== 11000) throw insertErr;
+        code = await generateUniqueTeamCodeFromDb();
       }
-      throw insertErr;
+    }
+    if (!teamOid) {
+      return { success: false, error: "Could not allocate a team code. Please try again." };
     }
 
     // Claim the participant only if they are still teamless (guards double-submits and parallel tabs).
@@ -717,7 +615,7 @@ export async function createTeamInDb(data: {
       return { success: false, error: TEAM_NAME_TAKEN };
     }
 
-    return { success: true, teamId: teamOid.toString() };
+    return { success: true, teamId: teamOid.toString(), code };
   } catch (err) {
     console.error("[MongoDB] createTeamInDb error:", formatError(err));
     return { success: false, error: "Failed to create team in database." };

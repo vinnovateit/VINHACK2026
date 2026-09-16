@@ -55,19 +55,24 @@ export default function OnboardingWizard({
   );
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
 
 
   // STEP 1: Save Check-In data
   const handleCheckInSubmit = async (data: CheckInData) => {
     setIsLoading(true);
+    setCheckInError(null);
     try {
+      const res = await saveCheckInAction(data);
+      if (!res.success) {
+        setCheckInError(res.error || "Could not save your details. Please try again.");
+        return;
+      }
       setParticipantName(data.name);
-      await saveCheckInAction(data);
       setStep("team-type");
     } catch (err) {
       console.error("Check-in error:", err);
-      // Even if network/db hiccup, allow moving forward in wizard for preview
-      setStep("team-type");
+      setCheckInError("Could not save your details. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -161,6 +166,7 @@ export default function OnboardingWizard({
           }}
           onSubmit={handleCheckInSubmit}
           isLoading={isLoading}
+          submitError={checkInError}
         />
       )}
 

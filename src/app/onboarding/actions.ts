@@ -17,6 +17,7 @@ import {
   normalizeTeamCode,
   TEAM_MAX_SIZE,
 } from "@/lib/mongo";
+import { cleanOptionalNumber, cleanText, FIELD_LIMITS } from "@/lib/validation";
 import { ObjectId } from "mongodb";
 
 function toObjectId(id: string): any {
@@ -68,39 +69,40 @@ export async function saveCheckInAction(data: CheckInData) {
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant) {
-      return { success: true, warning: "Session not found, continuing in preview mode." };
+      return { success: false, error: "Your session expired. Please sign in again." };
+    }
+    if (participant.id.startsWith("vit-") || participant.id.startsWith("ext-")) {
+      return { success: false, error: "Your participant record was not found. Please contact the organisers." };
     }
 
-    const name = data.name.trim();
-    const regNo = (data.regNo || "").trim();
-    const phone = (data.phone || "").trim();
-    const address = (data.address || "").trim();
+    const name = cleanText(data.name, FIELD_LIMITS.name);
+    const regNo = cleanText(data.regNo, FIELD_LIMITS.regNo);
+    const phone = cleanText(data.phone, FIELD_LIMITS.phone);
+    if (!name) return { success: false, error: "Please enter your name." };
+    if (!phone) return { success: false, error: "Please enter your phone number." };
 
-    if (participant.id && !participant.id.startsWith("vit-") && !participant.id.startsWith("ext-")) {
-      const saved = await saveParticipantCheckInInDb(participant as any, {
-        name,
-        regNo,
-        phone,
-        year: data.year,
-        isHosteller: data.isHosteller,
-        blockType: data.blockType,
-        hostelBlock: data.hostelBlock,
-        roomNo: data.roomNo,
-        address,
-        collegeName: data.collegeName,
-      });
-      if (saved) {
-        console.log(`[saveCheckInAction] Persisted check-in via MongoDB: ${name}`);
-      }
+    const saved = await saveParticipantCheckInInDb(participant as any, {
+      name,
+      regNo: regNo || "",
+      phone,
+      year: cleanOptionalNumber(data.year, 1, 5),
+      isHosteller: Boolean(data.isHosteller),
+      blockType: data.blockType === "LH" ? "LH" : "MH",
+      hostelBlock: cleanText(data.hostelBlock, FIELD_LIMITS.hostelBlock) || "",
+      roomNo: cleanText(data.roomNo, FIELD_LIMITS.roomNo) || "",
+      address: cleanText(data.address, FIELD_LIMITS.address) || "",
+      collegeName: cleanText(data.collegeName, FIELD_LIMITS.collegeName) || "",
+    });
+    if (!saved) {
+      return { success: false, error: "Could not save your details. Please try again." };
     }
 
     return { success: true };
   } catch (err) {
-    console.warn("[saveCheckInAction] Could not persist to DB, continuing:", err);
-    return { success: true, warning: "Saved in preview mode." };
+    console.error("[saveCheckInAction] Failed to persist check-in:", err);
+    return { success: false, error: "Could not save your details. Please try again." };
   }
 }
-
 
 export async function prepareTeamCodeAction() {
   try {
@@ -182,7 +184,7 @@ export async function createTeamAction(teamName: string, customCode?: string) {
       return {
         success: true,
         teamId: res.teamId,
-        teamCode: code,
+        teamCode: res.code || code,
         teamName: trimmedName,
       };
     }

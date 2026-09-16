@@ -24,6 +24,7 @@ import {
   X,
   CheckCircle2,
 } from "lucide-react";
+import { TRACK_OPTIONS } from "@/lib/validation";
 import {
   saveSubmissionAction,
   transferLeadershipAction,
@@ -91,7 +92,7 @@ export default function DashboardShell({
   // Form state
   const [projectTitle, setProjectTitle] = useState(team.submission?.title || "");
   const [projectDescription, setProjectDescription] = useState(team.submission?.description || "");
-  const [selectedTrack, setSelectedTrack] = useState(initialTrack || team.track || "Industry 6.0");
+  const [selectedTrack, setSelectedTrack] = useState(initialTrack || team.track || TRACK_OPTIONS[0]);
   const [githubLink, setGithubLink] = useState(team.submission?.githubLink || "");
   const [figmaLink, setFigmaLink] = useState(team.submission?.figmaLink || "");
   const [deckLink, setDeckLink] = useState(team.submission?.deckLink || "");
@@ -651,11 +652,11 @@ export default function DashboardShell({
                           showNotice(`${e.target.value} selected`);
                         }}
                       >
-                        <option value="Industry 6.0">Industry 6.0</option>
-                        <option value="Trust, Safety & Digital Security">Trust, Safety & Digital Security</option>
-                        <option value="ClimateTech & Resilience">ClimateTech & Resilience</option>
-                        <option value="Entertainment Reimagined">Entertainment Reimagined</option>
-                        <option value="Wildcard">Wildcard</option>
+                        {TRACK_OPTIONS.map((track) => (
+                          <option key={track} value={track}>
+                            {track}
+                          </option>
+                        ))}
                       </select>
                     </label>
                   </div>
