@@ -324,7 +324,7 @@ const bubble: Prop["draw"] = (ctx) => {
   ctx.closePath();
   ctx.fill();
   ctx.fillStyle = INK;
-  label(ctx, "36 HOURS. NO SLEEP.", 0.115, 0.86, -0.045);
+  label(ctx, "30 HOURS. NO SLEEP.", 0.115, 0.86, -0.045);
 };
 
 const badge: Prop["draw"] = (ctx) => {

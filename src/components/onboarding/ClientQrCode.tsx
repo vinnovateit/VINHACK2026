@@ -7,12 +7,16 @@ interface ClientQrCodeProps {
   value: string;
   size?: number;
   className?: string;
+  darkColor?: string;
+  lightColor?: string;
 }
 
 export default function ClientQrCode({
   value,
   size = 86,
   className = "",
+  darkColor = "#000000",
+  lightColor = "#ffffff",
 }: ClientQrCodeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState(false);
@@ -24,14 +28,14 @@ export default function ClientQrCode({
       width: size,
       margin: 1,
       color: {
-        dark: "#000000",
-        light: "#ffffff",
+        dark: darkColor,
+        light: lightColor,
       },
     }).catch((err) => {
       console.error("[ClientQrCode] Failed to render canvas QR:", err);
       setError(true);
     });
-  }, [value, size]);
+  }, [value, size, darkColor, lightColor]);
 
   if (error || !value) {
     return (

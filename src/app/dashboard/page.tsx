@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import { fetchFullTeam } from "./actions";
 import DashboardShell from "@/components/dashboard/DashboardShell";
-import "./dashboard.css";
 
 export const metadata = {
   title: "Dashboard | VinHack 2026",

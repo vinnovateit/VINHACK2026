@@ -146,9 +146,8 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
 
       {/* Filmstrip Assembly - Rolls out from canister on reveal and touches right screen edge */}
       <div
-        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${
-          inView ? "film-rollout-open" : ""
-        }`}
+        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${inView ? "film-rollout-open" : ""
+          }`}
       >
         {/* Top Film Sprocket Holes (stretching all the way to right screen edge) */}
         <div className="absolute top-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
@@ -243,11 +242,10 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         </p>
       </div>
 
-      {/* 5. 36 HOURS Red Grunge Stamp - Authentic Rubber Stamp Slam Animation (Click to stamp again!) */}
+      {/* 5. 30 HOURS Red Grunge Stamp - Authentic Rubber Stamp Slam Animation (Click to stamp again!) */}
       <div
-        className={`absolute top-[442px] left-[550px] z-20 flex items-center cursor-pointer select-none ${
-          stampTrigger ? "stamp-active" : "opacity-0 scale-[2.8]"
-        }`}
+        className={`absolute top-[442px] left-[550px] z-20 flex items-center cursor-pointer select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2.8]"
+          }`}
         onClick={handleRestamp}
         title="Click to stamp again!"
       >
@@ -256,7 +254,7 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
           src="/recap/hours.svg"
           width={193}
           height={98}
-          alt="36 HOURS"
+          alt="30 HOURS"
           unoptimized
         />
         <Image

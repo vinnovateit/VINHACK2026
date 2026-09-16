@@ -67,6 +67,13 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
 
     const teamOid = toObjectId(teamId);
 
+    const teamDoc = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
+    if (!teamDoc) return { success: false, message: "Team not found." };
+
+    if (!isTeamLeader(teamDoc.leaderId, participant)) {
+      return { success: false, message: "Only the Team Leader can submit or update project reviews." };
+    }
+
     const [vitCount, extCount] = await Promise.all([
       db.collection("vit_students").countDocuments({ teamId: teamOid }),
       db.collection("external_students").countDocuments({ teamId: teamOid }),

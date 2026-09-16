@@ -186,7 +186,7 @@ export default function MobileRecap() {
         </div>
       </div>
 
-      {/* 3. Bottom Section: Quote + 36 Hours Stamp + Core Memory */}
+      {/* 3. Bottom Section: Quote + 30 Hours Stamp + Core Memory */}
       <div className="px-5 max-w-[440px] mx-auto flex flex-col gap-4 mt-2">
         {/* Quote */}
         <div className="text-center">
@@ -201,7 +201,7 @@ export default function MobileRecap() {
 
         {/* Stamp & Core Memory */}
         <div className="flex items-center justify-between gap-2 pt-1">
-          {/* 36 Hours Stamp */}
+          {/* 3 0Hours Stamp */}
           <div
             className={`flex items-center cursor-pointer select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2]"
               }`}
@@ -213,7 +213,7 @@ export default function MobileRecap() {
               src="/recap/hours.svg"
               width={193}
               height={98}
-              alt="36 HOURS"
+              alt="30 HOURS"
               unoptimized
             />
             <Image

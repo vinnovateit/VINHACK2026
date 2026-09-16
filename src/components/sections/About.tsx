@@ -66,7 +66,7 @@ export default function AboutSection() {
                 Participant
               </p>
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[345.86px] not-italic text-[#105266] text-[17.6px] text-right top-[357.17px] whitespace-nowrap" data-node-id="297:342">
-                36 Hours
+                30 Hours
               </p>
               <div className="absolute contents inset-[74.38%_13.27%_3.92%_11.8%]" data-node-id="297:343" data-name="Group">
                 <div className="absolute inset-[74.38%_87.17%_7.9%_11.8%]" data-node-id="297:344" data-name="Vector">
@@ -249,7 +249,7 @@ export default function AboutSection() {
                 Participant
               </p>
               <p className="-translate-x-full [word-break:break-word] absolute font-rotonto leading-[normal] left-[345.86px] not-italic text-[#105266] text-[17.6px] text-right top-[357.17px] whitespace-nowrap" data-node-id="297:398">
-                36 Hours
+                30 Hours
               </p>
               <div className="absolute contents inset-[74.38%_13.27%_3.92%_11.8%]" data-node-id="297:399" data-name="Group">
                 <div className="absolute inset-[74.38%_87.17%_7.9%_11.8%]" data-node-id="297:400" data-name="Vector">

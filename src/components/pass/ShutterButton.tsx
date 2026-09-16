@@ -7,7 +7,7 @@ import { PASS } from "@/content/site";
  * The shutter on the attendee pass, and the only door into `/memories`.
  *
  * It sits in the gap the design already leaves between the two field columns —
- * "Type / Participant" ends around x 108 and "Duration / 36 Hours" starts
+ * "Type / Participant" ends around x 108 and "Duration / 30 Hours" starts
  * around x 264 in the card's own 374.669 x 546.48 drawing, so a 62px button
  * centred on (176.64, 349) lands between them without moving a single thing the
  * design placed. Those are card units, and the card is scaled as a whole by

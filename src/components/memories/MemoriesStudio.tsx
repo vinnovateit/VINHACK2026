@@ -169,7 +169,39 @@ const same = (a: Target | null, b: Target) =>
   a.kind === b.kind &&
   (a.kind === "text" || (b.kind !== "text" && a.id === b.id));
 
-export default function MemoriesStudio() {
+export default function MemoriesStudio({
+  fromDashboard = false,
+}: {
+  fromDashboard?: boolean;
+}) {
+  const [isFromDashboard, setIsFromDashboard] = useState(fromDashboard);
+
+  useEffect(() => {
+    if (fromDashboard) {
+      try {
+        sessionStorage.setItem("memories_from_dashboard", "true");
+      } catch {}
+      setIsFromDashboard(true);
+    } else {
+      try {
+        const stored = sessionStorage.getItem("memories_from_dashboard");
+        const urlParam =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("from")
+            : null;
+        if (stored === "true" || urlParam === "dashboard") {
+          setIsFromDashboard(true);
+        }
+      } catch {}
+    }
+  }, [fromDashboard]);
+
+  const handleReturnToDashboard = () => {
+    try {
+      sessionStorage.removeItem("memories_from_dashboard");
+    } catch {}
+  };
+
   const [stage, setStage] = useState<Stage>("intro");
   const [aspect, setAspect] = useState<Aspect>("square");
   const [index, setIndex] = useState(0);
@@ -728,23 +760,38 @@ export default function MemoriesStudio() {
       >
         {stage === "intro" ? (
           <Link
-            href="/"
+            href={isFromDashboard ? "/dashboard" : "/"}
+            onClick={handleReturnToDashboard}
             data-memories-appear="back"
             className="relative z-10 inline-block shrink-0 self-start text-[15px] text-[#a8a2a2] underline-offset-[4px] hover:text-[#bfea88] hover:underline"
           >
-            ← {MEMORIES.back}
+            ← {isFromDashboard ? "back to dashboard" : MEMORIES.back}
           </Link>
         ) : (
-          <button
-            type="button"
-            onClick={() => {
-              stopCamera();
-              setStage("intro");
-            }}
-            className="relative z-10 inline-block text-[15px] text-[#a8a2a2] underline-offset-[4px] hover:text-[#bfea88] hover:underline"
-          >
-            ← {MEMORIES.booth.back}
-          </button>
+          <div className="relative z-10 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                stopCamera();
+                setStage("intro");
+              }}
+              className="inline-block text-[15px] text-[#a8a2a2] underline-offset-[4px] hover:text-[#bfea88] hover:underline"
+            >
+              ← {MEMORIES.booth.back}
+            </button>
+            {isFromDashboard && (
+              <Link
+                href="/dashboard"
+                onClick={() => {
+                  stopCamera();
+                  handleReturnToDashboard();
+                }}
+                className="inline-block text-[13px] sm:text-[14px] text-[#fa1a1d] underline-offset-[4px] hover:underline uppercase tracking-wider font-light"
+              >
+                Back to Dashboard →
+              </Link>
+            )}
+          </div>
         )}
 
         {/* The title, and on the way in everything around it. The slots below

@@ -22,7 +22,7 @@ import type { FEATURES } from "@/content/features";
 /* --------------------------------------------------------------- hero */
 
 export const HERO = {
-  lede: "Where ideas become prototypes and prototypes become possibilities. VinHack brings together curious minds, creative thinkers, and passionate developers to build, learn, and innovate in just 36 hours.",
+  lede: "Where ideas become prototypes and prototypes become possibilities. VinHack brings together curious minds, creative thinkers, and passionate developers to build, learn, and innovate in just 30 hours.",
   /**
    * The lines the commit sticker types, one after another, forever.
    *
@@ -160,7 +160,7 @@ export const PASS = {
   watermark: "VH26",
   fields: [
     { label: "Type", value: "Participant" },
-    { label: "Duration", value: "36 Hours" },
+    { label: "Duration", value: "30 Hours" },
   ],
   barcode: "VINHACK2026",
   /** The shutter sits in the gap the design leaves between the Type and
@@ -279,7 +279,7 @@ export const MEMORIES = {
   messages: [
     "WE SURVIVED VINHACK",
     "WE COOKED AT VINHACK",
-    "36 HOURS. NO REGRETS.",
+    "30 HOURS. NO REGRETS.",
     "IT WORKED ON MY MACHINE",
     "CTRL+S SAVED MY LIFE",
     "I CAME, I SAW, I DEPLOYED",
@@ -598,7 +598,7 @@ export const RULES = {
   heading: "RULES",
   items: [
     "Teams must have 2–4 participants (no solo participation, no multiple teams).",
-    "Hackathon runs for 36 hours continuously.",
+    "Hackathon runs for 30 hours continuously.",
     "All work must be done during the event; only open-source tools/libraries allowed; any AI tools can be used.",
     "Any tech stack may be used; projects must align with at least one track.",
     "Internet access is permitted. Submissions must include working prototype/demo, pitch deck or documentation, and GitHub repo with source code.",
