@@ -88,7 +88,10 @@ export const HERO = {
  */
 export type NavItem = {
   name: string;
-  target: string;
+  /** The `aria-label` of the section on this page that the book scrolls to. */
+  target?: string;
+  /** A separate page the book opens instead, such as the login page. */
+  href?: string;
   spine: string;
   cap: string;
   ink: string;
@@ -140,6 +143,7 @@ export const NAV = {
     { name: "RULES", target: "Rules", spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
     { name: "GUIDELINES", target: "Guidelines", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
     { name: "FAQS", target: "Frequently Asked Questions", spine: "#ee1b1e", cap: "#7d1113", ink: "#ffffff", book: 1.05 },
+    { name: "LOGIN", href: "/login", spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 0.94 },
   ] satisfies readonly NavItem[],
 } as const;
 

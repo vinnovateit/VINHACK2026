@@ -1820,6 +1820,7 @@ footer ::selection,
   height: 100%;
   overflow: visible;
   cursor: pointer;
+  text-decoration: none; /* the LOGIN book is a link */
 }
 
 /* The board, and everything printed on it. This is the layer that moves under

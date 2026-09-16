@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 import NavLogo from "@/components/nav/NavLogo";
 import { FEATURES } from "@/content/features";
@@ -84,6 +85,20 @@ function scrollToSection(target: string) {
     top: Math.max(0, section.getBoundingClientRect().top + window.scrollY),
     behavior: prefersReducedMotion() ? "auto" : "smooth",
   });
+}
+
+function SpineBody({ name, index }: { name: string; index: number }) {
+  return (
+    <span className="nav-spine-body">
+      <span className="nav-cap" aria-hidden />
+      <span className="nav-spine-label">{name}</span>
+      {/* Printed on the board, at the foot of the spine. The order is already in
+          the list for a screen reader; here it is part of the drawing. */}
+      <span className="nav-spine-index" aria-hidden>
+        {String(index + 1).padStart(2, "0")}
+      </span>
+    </span>
+  );
 }
 
 export default function SiteNav() {
@@ -229,25 +244,25 @@ export default function SiteNav() {
                 } as CSSProperties
               }
             >
-              <button
-                type="button"
-                className="nav-spine"
-                onClick={() => {
-                  pending.current = book.target;
-                  close();
-                }}
-              >
-                <span className="nav-spine-body">
-                  <span className="nav-cap" aria-hidden />
-                  <span className="nav-spine-label">{book.name}</span>
-                  {/* Printed on the board, at the foot of the spine. The order
-                      is already in the list for a screen reader; here it is
-                      part of the drawing. */}
-                  <span className="nav-spine-index" aria-hidden>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                </span>
-              </button>
+              {book.href ? (
+                /* A book that opens another page (LOGIN) is a real link, so it
+                   can be opened in a new tab and reads as a link to a screen
+                   reader; the rest scroll this page and stay buttons. */
+                <Link href={book.href} className="nav-spine" onClick={() => setOpen(false)}>
+                  <SpineBody name={book.name} index={i} />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="nav-spine"
+                  onClick={() => {
+                    pending.current = book.target ?? null;
+                    close();
+                  }}
+                >
+                  <SpineBody name={book.name} index={i} />
+                </button>
+              )}
             </li>
           ))}
         </ul>
