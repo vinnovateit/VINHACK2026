@@ -18,6 +18,8 @@
     }
   ],
   "vars": {
-    "AUTH_TRUST_HOST": "true"
+    "AUTH_TRUST_HOST": "true",
+    "AUTH_URL": "https://vinhack.vinnovateit.com",
+    "NEXTAUTH_URL": "https://vinhack.vinnovateit.com"
   }
 }

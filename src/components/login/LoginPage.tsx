@@ -20,12 +20,23 @@ const CardboardBoxOpeningAnimation = dynamic(
 );
 
 export default function LoginPage() {
+  const [mounted, setMounted] = React.useState(false);
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/onboarding" });
   };
+
+  if (!mounted) {
+    return (
+      <div className="relative w-full max-w-[1440px] mx-auto h-[100dvh] max-h-[100dvh] bg-black" />
+    );
+  }
 
   return (
     <div className="relative w-full max-w-[1440px] mx-auto h-[100dvh] max-h-[100dvh] bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
