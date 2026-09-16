@@ -135,7 +135,7 @@ export const NAV = {
   badge: { closed: "PLAY ALONG", open: "CLOSE" },
   items: [
     { name: "HOME", target: "VinHack", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
-    { name: "ABOUT", target: "About VinHack", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
+    { name: "ABOUT", target: "Who Are We", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
     { name: "PROJECTS", target: "Projects", spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
     { name: "TRACKS", target: "Tracks", spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
     { name: "SPONSORS", target: "Sponsors", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
