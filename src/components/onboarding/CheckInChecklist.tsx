@@ -191,18 +191,6 @@ export default function CheckInChecklist({
             priority
           />
         </div>
-
-        {/* Locked participant status pill (cannot be switched) */}
-        <div className="flex items-center gap-2 bg-neutral-900/90 border border-neutral-800 rounded-full px-3.5 py-1.5 text-xs font-['Rotonto',sans-serif] text-neutral-300 select-none shadow-sm">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              studentType === "vit" ? "bg-[#FC2425]" : "bg-sky-400"
-            }`}
-          />
-          <span className="tracking-wide uppercase">
-            {studentType === "vit" ? "INTERNAL (VIT STUDENT)" : "EXTERNAL PARTICIPANT"}
-          </span>
-        </div>
       </div>
 
       {/* Main 2-column layout */}
