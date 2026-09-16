@@ -21,20 +21,35 @@ import {
   TeamMembershipError,
 } from "@/lib/team-membership";
 
-export interface SubmissionPayload {
-  teamId: string;
-  track?: string;
-  projectType?: string;
-  projectTitle?: string;
-  projectDescription?: string;
-  githubLink?: string;
-  figmaLink?: string;
-  deckLink?: string;
-  otherLinks?: string;
-  progressStatus?: string;
-  teamConfidence?: string;
-  progressNote?: string;
-}
+export type SubmissionSection = "details" | "links" | "progress";
+
+export type SubmissionSectionPayload =
+  | {
+      section: "details";
+      track?: string;
+      projectType?: string;
+      projectTitle?: string;
+      projectDescription?: string;
+    }
+  | {
+      section: "links";
+      githubLink?: string;
+      figmaLink?: string;
+      deckLink?: string;
+      otherLinks?: string;
+    }
+  | {
+      section: "progress";
+      progressStatus?: string;
+      teamConfidence?: string;
+      progressNote?: string;
+    };
+
+const SECTION_SAVED_MESSAGES: Record<SubmissionSection, string> = {
+  details: "Project details saved.",
+  links: "Links & assets saved.",
+  progress: "Progress update submitted.",
+};
 
 function toObjectId(id: string): any {
   try {
@@ -44,43 +59,74 @@ function toObjectId(id: string): any {
   }
 }
 
-export async function saveSubmissionAction(payload: SubmissionPayload) {
+// Validates one section and returns only the submission fields that section owns, so saving one
+// section never overwrites another.
+function buildSectionFields(
+  payload: SubmissionSectionPayload
+): { fields: Record<string, unknown>; track?: string } | { error: string } {
+  switch (payload?.section) {
+    case "details": {
+      if (!isValidTrack(payload.track)) {
+        return { error: "Please choose one of the listed tracks." };
+      }
+      if (!isValidProjectType(payload.projectType)) {
+        return { error: "Please choose whether your project is Software or Hardware." };
+      }
+      return {
+        track: payload.track,
+        fields: {
+          title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
+          description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
+          projectType: payload.projectType,
+        },
+      };
+    }
+    case "links": {
+      const links = {
+        githubLink: cleanText(payload.githubLink, FIELD_LIMITS.link),
+        figmaLink: cleanText(payload.figmaLink, FIELD_LIMITS.link),
+        deckLink: cleanText(payload.deckLink, FIELD_LIMITS.link),
+      };
+      for (const [field, value] of Object.entries(links)) {
+        if (value && !isValidHttpUrl(value)) {
+          return { error: `${field.replace("Link", "")} link must be a valid http(s) URL.` };
+        }
+      }
+      return { fields: { ...links, otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks) } };
+    }
+    case "progress": {
+      if (!isValidProgressStatus(payload.progressStatus) || !isValidTeamConfidence(payload.teamConfidence)) {
+        return { error: "Please choose your current status and team confidence." };
+      }
+      return {
+        fields: {
+          progressStatus: payload.progressStatus,
+          teamConfidence: payload.teamConfidence,
+          progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
+        },
+      };
+    }
+    default:
+      return { error: "Unknown submission section." };
+  }
+}
+
+export async function saveSubmissionSectionAction(teamId: string, payload: SubmissionSectionPayload) {
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant || !participant.teamId) {
       return { success: false, message: "Unauthorized. Please sign in to submit." };
     }
 
-    if (participant.teamId !== payload.teamId) {
+    if (participant.teamId !== teamId) {
       return { success: false, message: "Unauthorized team action." };
     }
 
-    const { teamId, track } = payload;
-
-    if (track !== undefined && track !== "" && !isValidTrack(track)) {
-      return { success: false, message: "Please choose one of the listed tracks." };
+    const built = buildSectionFields(payload);
+    if ("error" in built) {
+      return { success: false, message: built.error };
     }
 
-    if (!isValidProjectType(payload.projectType)) {
-      return { success: false, message: "Please choose whether your project is Software or Hardware." };
-    }
-
-    if (!isValidProgressStatus(payload.progressStatus) || !isValidTeamConfidence(payload.teamConfidence)) {
-      return { success: false, message: "Please choose your current status and team confidence." };
-    }
-
-    const links = {
-      githubLink: cleanText(payload.githubLink, FIELD_LIMITS.link),
-      figmaLink: cleanText(payload.figmaLink, FIELD_LIMITS.link),
-      deckLink: cleanText(payload.deckLink, FIELD_LIMITS.link),
-    };
-    for (const [field, value] of Object.entries(links)) {
-      if (value && !isValidHttpUrl(value)) {
-        return { success: false, message: `${field.replace("Link", "")} link must be a valid http(s) URL.` };
-      }
-    }
-
-    const now = new Date();
     const db = await getMongoDb();
     if (!db) return { success: false, message: "Database unavailable." };
 
@@ -104,40 +150,27 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
       };
     }
 
+    const now = new Date();
     await db.collection("submissions").updateOne(
       { teamId: teamOid },
       {
-        $set: {
-          title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
-          description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
-          projectType: payload.projectType,
-          ...links,
-          otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks),
-          progressStatus: payload.progressStatus,
-          teamConfidence: payload.teamConfidence,
-          progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
-          updatedAt: now,
-        },
+        $set: { ...built.fields, [`${payload.section}UpdatedAt`]: now, updatedAt: now },
         $setOnInsert: { teamId: teamOid, submittedAt: now },
       },
       { upsert: true }
     );
 
-    if (track) {
-      await db.collection("teams").updateOne(
-        { _id: teamOid },
-        { $set: { track, updatedAt: now } }
-      );
+    if (built.track) {
+      await db.collection("teams").updateOne({ _id: teamOid }, { $set: { track: built.track, updatedAt: now } });
     }
 
     revalidatePath("/dashboard");
-    return { success: true, message: "Project submission saved successfully!" };
+    return { success: true, message: SECTION_SAVED_MESSAGES[payload.section], savedAt: now.toISOString() };
   } catch (error) {
-    console.error("[saveSubmissionAction] Unexpected error:", error);
+    console.error("[saveSubmissionSectionAction] Unexpected error:", error);
     return { success: false, message: "An unexpected error occurred while saving." };
   }
 }
-
 
 export async function fetchFullTeam(teamId: string) {
   try {
@@ -224,6 +257,9 @@ export async function fetchFullTeam(teamId: string) {
             teamConfidence: subDoc.teamConfidence || "",
             progressNote: subDoc.progressNote || "",
             submittedAt: subDoc.submittedAt ? new Date(subDoc.submittedAt).toISOString() : null,
+            detailsUpdatedAt: subDoc.detailsUpdatedAt ? new Date(subDoc.detailsUpdatedAt).toISOString() : null,
+            linksUpdatedAt: subDoc.linksUpdatedAt ? new Date(subDoc.linksUpdatedAt).toISOString() : null,
+            progressUpdatedAt: subDoc.progressUpdatedAt ? new Date(subDoc.progressUpdatedAt).toISOString() : null,
           }
         : null,
     };

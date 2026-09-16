@@ -35,7 +35,7 @@ import {
 const ZIGZAG_CLIP_PATH =
   "polygon(6px 0%, calc(100% - 6px) 0%, 100% 16.6%, calc(100% - 6px) 33.3%, 100% 50%, calc(100% - 6px) 66.6%, 100% 83.3%, calc(100% - 6px) 100%, 6px 100%, 0% 83.3%, 6px 66.6%, 0% 50%, 6px 33.3%, 0% 16.6%)";
 import {
-  saveSubmissionAction,
+  saveSubmissionSectionAction,
   transferLeadershipAction,
   deleteTeamAction,
   leaveTeamAction,
@@ -82,6 +82,9 @@ export interface DashboardShellProps {
       teamConfidence: string;
       progressNote: string;
       submittedAt: string | null;
+      detailsUpdatedAt: string | null;
+      linksUpdatedAt: string | null;
+      progressUpdatedAt: string | null;
     } | null;
   };
   initialTrack?: string;
@@ -106,6 +109,13 @@ export default function DashboardShell({
   // Active step tab in "Submit for Review"
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const [isSaving, startSaveTransition] = useTransition();
+  const [savingSection, setSavingSection] = useState<TabType | null>(null);
+  // Each section is saved on its own, so each keeps its own "last saved" time.
+  const [sectionSavedAt, setSectionSavedAt] = useState<Record<TabType, string | null>>({
+    details: team.submission?.detailsUpdatedAt ?? null,
+    links: team.submission?.linksUpdatedAt ?? null,
+    progress: team.submission?.progressUpdatedAt ?? null,
+  });
 
   // Submission Form state
   const [projectTitle, setProjectTitle] = useState(team.submission?.title || "");
@@ -203,39 +213,64 @@ export default function DashboardShell({
 
   const isLeader = Boolean(participant.isLeader);
 
-  const handleSaveSubmission = () => {
+  const handleSaveSection = (section: TabType) => {
     if (!isLeader) {
       showToast("Only the Team Leader can submit project reviews.", "error");
       return;
     }
-    if (!projectType) {
-      setActiveTab("details");
+    if (section === "details" && !projectType) {
       showToast("Choose whether your project is Software or Hardware.", "error");
       return;
     }
+
+    const payload =
+      section === "details"
+        ? {
+            section,
+            track: selectedTrack,
+            projectType,
+            projectTitle: projectTitle.trim(),
+            projectDescription: projectDescription.trim(),
+          }
+        : section === "links"
+          ? {
+              section,
+              githubLink: githubLink.trim(),
+              figmaLink: figmaLink.trim(),
+              deckLink: deckLink.trim(),
+              otherLinks: otherLinks.trim(),
+            }
+          : { section, progressStatus, teamConfidence, progressNote: progressNote.trim() };
+
+    setSavingSection(section);
     startSaveTransition(async () => {
-      const res = await saveSubmissionAction({
-        teamId: team.id,
-        track: selectedTrack,
-        projectType,
-        projectTitle: projectTitle.trim(),
-        projectDescription: projectDescription.trim(),
-        githubLink: githubLink.trim(),
-        figmaLink: figmaLink.trim(),
-        deckLink: deckLink.trim(),
-        otherLinks: otherLinks.trim(),
-        progressStatus,
-        teamConfidence,
-        progressNote: progressNote.trim(),
-      });
+      const res = await saveSubmissionSectionAction(team.id, payload);
+      setSavingSection(null);
 
       if (res.success) {
-        showToast(res.message || "Submission saved successfully!", "success");
+        if (res.savedAt) setSectionSavedAt((prev) => ({ ...prev, [section]: res.savedAt }));
+        showToast(res.message || "Saved!", "success");
       } else {
-        showToast(res.message || "Failed to save submission.", "error");
+        showToast(res.message || "Failed to save.", "error");
       }
     });
   };
+
+  const SAVE_LABELS: Record<TabType, string> = {
+    details: "SAVE DETAILS",
+    links: "SAVE LINKS",
+    progress: "SUBMIT UPDATE",
+  };
+
+  const formatSavedAt = (iso: string | null) =>
+    iso
+      ? `Last saved ${new Date(iso).toLocaleString("en-IN", {
+          day: "numeric",
+          month: "short",
+          hour: "numeric",
+          minute: "2-digit",
+        })}`
+      : "Not saved yet";
 
   const handleKickMember = (memberId: string, memberType: "vit" | "external", memberName: string) => {
     startActionTransition(async () => {
@@ -1149,50 +1184,41 @@ export default function DashboardShell({
               )}
             </div>
 
-            {/* Pager Controls and Submit Action on Bottom Right */}
-            <div className="flex items-center justify-end gap-3 mt-4">
-              {activeTab !== "progress" ? (
-                <>
+            {/* Pager controls, and a save button for the section being viewed */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+              <p className="text-xs sm:text-sm font-light text-[#9a9898]">
+                {mounted ? formatSavedAt(sectionSavedAt[activeTab]) : ""}
+              </p>
+              <div className="flex items-center gap-3 ml-auto">
+                <button
+                  type="button"
+                  className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+                  onClick={() => moveTab(-1)}
+                  disabled={activeTab === "details"}
+                  aria-label="Previous step"
+                >
+                  <ArrowLeft size={20} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+                  onClick={() => moveTab(1)}
+                  disabled={activeTab === "progress"}
+                  aria-label="Next step"
+                >
+                  <ArrowRight size={20} strokeWidth={2} />
+                </button>
+                {isLeader && (
                   <button
                     type="button"
-                    className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
-                    onClick={() => moveTab(-1)}
-                    disabled={activeTab === "details"}
-                    aria-label="Previous step"
+                    onClick={() => handleSaveSection(activeTab)}
+                    disabled={isSaving}
+                    className="h-[44px] px-6 sm:px-8 rounded-full bg-[#74d4f0] hover:bg-[#60caf0] text-black font-light text-sm sm:text-base uppercase tracking-wider transition cursor-pointer flex items-center justify-center shrink-0 disabled:opacity-50"
                   >
-                    <ArrowLeft size={20} strokeWidth={2} />
+                    {savingSection === activeTab ? "SAVING..." : SAVE_LABELS[activeTab]}
                   </button>
-                  <button
-                    type="button"
-                    className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] transition cursor-pointer shrink-0"
-                    onClick={() => moveTab(1)}
-                    aria-label="Next step"
-                  >
-                    <ArrowRight size={20} strokeWidth={2} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] transition cursor-pointer shrink-0"
-                    onClick={() => moveTab(-1)}
-                    aria-label="Previous step"
-                  >
-                    <ArrowLeft size={20} strokeWidth={2} />
-                  </button>
-                  {isLeader && (
-                    <button
-                      type="button"
-                      onClick={handleSaveSubmission}
-                      disabled={isSaving}
-                      className="h-[44px] px-8 rounded-full bg-[#74d4f0] hover:bg-[#60caf0] text-black font-light text-sm sm:text-base uppercase tracking-wider transition cursor-pointer flex items-center justify-center shrink-0 disabled:opacity-50"
-                    >
-                      {isSaving ? "SUBMITTING..." : "SUBMIT"}
-                    </button>
-                  )}
-                </>
-              )}
+                )}
+              </div>
             </div>
           </section>
         </div>
