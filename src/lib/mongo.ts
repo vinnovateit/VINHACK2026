@@ -51,17 +51,15 @@ function formatError(err: unknown): string {
 export const TEAM_MIN_SIZE = 2;
 export const TEAM_MAX_SIZE = 5;
 
-// Team codes are the only thing that lets someone join a team, so they must not be guessable:
-// "VH26-" plus 8 characters from a 31-character alphabet (31^8 ≈ 8.5 × 10^11 combinations),
-// drawn with a cryptographically secure RNG. Ambiguous characters (0/O, 1/I/L) are excluded.
+// Team codes are "VH26-" plus 4 characters from a 31-character alphabet (31^4 = 923,521
+// combinations), kept short so they're easy to read out and type. Codes are drawn with a
+// cryptographically secure RNG, looking one up requires a signed-in participant, and a leader can
+// rotate their code. Ambiguous characters (0/O, 1/I/L) are excluded.
 const CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-const TEAM_CODE_RANDOM_LENGTH = 8;
-const TEAM_CODE_PATTERN = /^VH26-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/;
+const TEAM_CODE_RANDOM_LENGTH = 4;
+const TEAM_CODE_PATTERN = /^VH26-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$/;
 
-/**
- * Returns the canonical team code, or null for anything that isn't a current-format code.
- * Older 4-character codes are rejected, so they can no longer be used to join a team.
- */
+/** Returns the canonical team code, or null for anything that isn't a current-format code. */
 export function normalizeTeamCode(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const code = raw.trim().toUpperCase();

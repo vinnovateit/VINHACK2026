@@ -91,8 +91,9 @@ export async function fetchFullTeam(teamId: string) {
       for (const m of members) m.isLeader = m.id === leaderId;
     }
 
-    // Teams created with the old 4-character codes get a strong code the next time they're viewed.
-    // Old codes are already rejected when joining, so this only makes the team joinable again.
+    // A team whose code isn't in the current format (e.g. an 8-character code from before codes
+    // went back to 4 characters) gets a new one the next time it's viewed, since only current-format
+    // codes can be joined.
     let code: string | null = teamDoc.code ?? null;
     if (!isCurrentTeamCode(code)) {
       code = await assignNewTeamCode(db, teamDoc._id, teamDoc.code);

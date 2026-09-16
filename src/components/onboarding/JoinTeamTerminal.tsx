@@ -248,7 +248,7 @@ export default function JoinTeamTerminal({
       .replace(/^VH26[-_]?/i, "")
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")
-      .slice(0, 8);
+      .slice(0, 4);
     setSuffix(cleaned);
     if (stage !== "input") {
       setStage("input");
@@ -677,7 +677,7 @@ export default function JoinTeamTerminal({
                     </div>
 
                     {/* Target Team Code value */}
-                    <div className="absolute top-[176px] left-0 w-full text-center text-[19px] font-bold tracking-wide leading-none select-all font-['Rotonto',sans-serif] text-black">
+                    <div className="absolute top-[174px] left-0 w-full text-center text-[24px] font-bold tracking-wider leading-none select-all font-['Rotonto',sans-serif] text-black">
                       {code.trim() ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`) : "VH26-3515"}
                     </div>
 
@@ -887,7 +887,7 @@ export default function JoinTeamTerminal({
                     </div>
 
                     {/* Team code value */}
-                    <div className="absolute top-[176px] left-0 w-full text-center text-[19px] font-bold tracking-wide leading-none font-['Rotonto',sans-serif] text-black">
+                    <div className="absolute top-[174px] left-0 w-full text-center text-[24px] font-bold tracking-wider leading-none font-['Rotonto',sans-serif] text-black">
                       {code.trim() ? (code.toUpperCase().startsWith("VH26") ? code.toUpperCase() : `VH26-${code.toUpperCase()}`) : "VH26-3515"}
                     </div>
 
@@ -1029,7 +1029,7 @@ export default function JoinTeamTerminal({
                     <div className="absolute top-[168px] left-0 w-full flex items-center justify-center z-20 pointer-events-auto">
                       <div
                         onClick={() => printerInputRef.current?.focus()}
-                        className="inline-flex items-center justify-center font-['Rotonto',sans-serif] font-bold text-[18px] text-black tracking-wide border-b border-dashed border-black/30 focus-within:border-black py-0.5 cursor-text"
+                        className="inline-flex items-center justify-center font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider border-b border-dashed border-black/30 focus-within:border-black py-0.5 cursor-text"
                         style={{ maxWidth: "196px" }}
                       >
                         <span className="select-none text-black leading-none flex-shrink-0">VH26-</span>
@@ -1041,13 +1041,13 @@ export default function JoinTeamTerminal({
                           onKeyDown={(e) => {
                             if (e.key === "Enter") handleValidate();
                           }}
-                          placeholder="________"
-                          maxLength={8}
+                          placeholder="____"
+                          maxLength={4}
                           autoFocus
                           autoComplete="off"
                           spellCheck={false}
-                          style={{ width: "112px" }}
-                          className="bg-transparent text-left font-['Rotonto',sans-serif] font-bold text-[18px] text-black tracking-wider outline-none placeholder:text-neutral-400 uppercase cursor-text leading-none p-0 m-0"
+                          style={{ width: "90px" }}
+                          className="bg-transparent text-left font-['Rotonto',sans-serif] font-bold text-[21px] text-black tracking-wider outline-none placeholder:text-neutral-400 uppercase cursor-text leading-none p-0 m-0"
                         />
                       </div>
                     </div>
