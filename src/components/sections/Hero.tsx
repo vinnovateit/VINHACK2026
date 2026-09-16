@@ -114,7 +114,13 @@ export default function HeroSection() {
         {/* Real box — see the note on `git`. The card no longer loops, but it
             still scales under the cursor, and the red tab and arrow badge have
             to stay attached to it when it does. */}
-        <Link href="/login" aria-label="Login to VinHack" className="absolute h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px] z-20" data-hero="note" data-node-id="343:1552">
+        <Link
+          href="/login"
+          className="absolute h-[287.765px] left-[128.43px] top-[454.03px] w-[275.16px] z-20 cursor-pointer block pointer-events-auto"
+          data-hero="note"
+          data-node-id="343:1552"
+          aria-label="Login"
+        >
           {/* The artwork layer, scaled about the note's centre. The hover lift
               stays on the box outside it, so the two scales compose instead of
               overwriting each other. */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 import CameraFeed from "@/components/CameraFeed";
@@ -320,18 +321,20 @@ function MobileHero() {
             </div>
           </Placed>
 
-          {/* The "Register Now" note. */}
+          {/* The "Register Now" / "Login" note. */}
           <Placed
             x={96}
             y={278}
             w={275.16}
             h={287.765}
             scale={0.46}
-            className="deal-in z-30 pointer-events-none [--deal-delay:1.55s] [--deal-r:-8deg] [--deal-x:-40px]"
+            className="deal-in z-30 cursor-pointer pointer-events-auto [--deal-delay:1.55s] [--deal-r:-8deg] [--deal-x:-40px]"
             data-hero="note"
             style={{ touchAction: "manipulation" }}
           >
-            <NoteArt />
+            <Link href="/login" className="block size-full" aria-label="Login">
+              <NoteArt />
+            </Link>
           </Placed>
 
           {/* The scroll cue. */}
