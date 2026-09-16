@@ -22,9 +22,19 @@ export default async function OnboardingPage({
     console.warn("[OnboardingPage] Could not read searchParams:", paramErr);
   }
 
-  const participant = await resolveCurrentParticipant();
+  let participant = await resolveCurrentParticipant();
 
-  if (!participant) {
+  if (!participant && process.env.NODE_ENV === "development") {
+    participant = {
+      id: "dev-preview-user",
+      name: "VinHack Builder",
+      type: "vit",
+      regNo: "22BCE1001",
+      teamId: null,
+      userId: "dev-preview-user",
+      email: "builder@vinhack.com",
+    };
+  } else if (!participant) {
     redirect("/login");
   }
 

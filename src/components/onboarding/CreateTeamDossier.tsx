@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import KeyButton from "./KeyButton";
+import { getRandomTeamName } from "@/content/teamNames";
 
 interface CreateTeamDossierProps {
   initialTeamName?: string;
@@ -24,6 +25,35 @@ export default function CreateTeamDossier({
   const [teamName, setTeamName] = useState(initialTeamName);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRolling, setIsRolling] = useState(false);
+  const rollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
+    };
+  }, []);
+
+  const handleRollDice = () => {
+    if (isRolling) return;
+    setIsRolling(true);
+    if (error) setError(null);
+
+    let count = 0;
+    if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
+
+    rollIntervalRef.current = setInterval(() => {
+      count++;
+      if (count >= 5) {
+        if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
+        rollIntervalRef.current = null;
+        setTeamName((prev) => getRandomTeamName(prev));
+        setIsRolling(false);
+      } else {
+        setTeamName(getRandomTeamName());
+      }
+    }, 55);
+  };
 
   const handleCopy = async () => {
     try {
@@ -88,19 +118,60 @@ export default function CreateTeamDossier({
           </div>
 
           <div className="max-w-[420px] space-y-2">
-            <label className="block font-['Rotonto',sans-serif] text-neutral-300 text-xs sm:text-sm uppercase tracking-wider">
-              Name your team
-            </label>
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => {
-                setTeamName(e.target.value);
-                if (error && e.target.value.trim()) setError(null);
-              }}
-              className={`w-full bg-neutral-950 border ${error ? "border-red-500 bg-red-500/10" : "border-neutral-800 focus:border-[#FC2425]"
-                } rounded-xl px-4 py-2.5 text-white font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
-            />
+            <div className="flex items-center justify-between">
+              <label className="block font-['Rotonto',sans-serif] text-neutral-300 text-xs sm:text-sm uppercase tracking-wider">
+                Name your team
+              </label>
+              <button
+                type="button"
+                onClick={handleRollDice}
+                disabled={isRolling}
+                className="group flex items-center gap-1.5 text-xs font-['Rotonto',sans-serif] text-[#FC2425] hover:text-[#ff4d4e] transition disabled:opacity-50 select-none cursor-pointer"
+                title="Roll a random funny tech hackathon team name"
+              >
+                <span
+                  className={`text-sm inline-block transition-transform duration-300 ${
+                    isRolling ? "animate-spin" : "group-hover:rotate-45"
+                  }`}
+                >
+                  🎲
+                </span>
+                <span className="underline decoration-dotted underline-offset-2">
+                  {isRolling ? "Rolling..." : "Roll dice"}
+                </span>
+              </button>
+            </div>
+
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                value={teamName}
+                placeholder="e.g. Cyber Knights"
+                onChange={(e) => {
+                  setTeamName(e.target.value);
+                  if (error && e.target.value.trim()) setError(null);
+                }}
+                className={`w-full bg-neutral-950 border ${
+                  error ? "border-red-500 bg-red-500/10" : "border-neutral-800 focus:border-[#FC2425]"
+                } rounded-xl pl-4 pr-12 py-2.5 text-white placeholder:text-neutral-600 font-['Rotonto',sans-serif] text-base md:text-lg outline-none transition`}
+              />
+              <button
+                type="button"
+                onClick={handleRollDice}
+                disabled={isRolling}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 hover:border-[#FC2425] hover:bg-neutral-850 text-neutral-300 hover:text-white transition active:scale-95 disabled:opacity-60 cursor-pointer"
+                title="Roll a random funny tech hackathon team name"
+                aria-label="Roll random team name"
+              >
+                <span
+                  className={`text-base block transition-transform duration-300 ${
+                    isRolling ? "animate-spin" : "hover:rotate-12"
+                  }`}
+                >
+                  🎲
+                </span>
+              </button>
+            </div>
             {error && (
               <p className="text-red-400 text-xs font-mono">{error}</p>
             )}
