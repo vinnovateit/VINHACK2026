@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
 import { ObjectId } from "mongodb";
-import { cleanText, FIELD_LIMITS, isValidHttpUrl, isValidTrack } from "@/lib/validation";
+import { cleanText, FIELD_LIMITS, isValidHttpUrl, isValidProjectType, isValidTrack } from "@/lib/validation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import {
   deleteTeam,
@@ -16,6 +16,7 @@ import {
 export interface SubmissionPayload {
   teamId: string;
   track?: string;
+  projectType?: string;
   projectTitle?: string;
   projectDescription?: string;
   githubLink?: string;
@@ -48,6 +49,10 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
 
     if (track !== undefined && track !== "" && !isValidTrack(track)) {
       return { success: false, message: "Please choose one of the listed tracks." };
+    }
+
+    if (!isValidProjectType(payload.projectType)) {
+      return { success: false, message: "Please choose whether your project is Software or Hardware." };
     }
 
     const links = {
@@ -91,6 +96,7 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
         $set: {
           title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
           description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
+          projectType: payload.projectType,
           ...links,
           otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks),
           progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
@@ -193,6 +199,7 @@ export async function fetchFullTeam(teamId: string) {
         ? {
             title: subDoc.title || "",
             description: subDoc.description || "",
+            projectType: subDoc.projectType || "",
             githubLink: subDoc.githubLink || "",
             figmaLink: subDoc.figmaLink || "",
             deckLink: subDoc.deckLink || "",

@@ -15,6 +15,14 @@ export function isValidTrack(value: unknown): value is Track {
   return typeof value === "string" && (TRACK_OPTIONS as readonly string[]).includes(value);
 }
 
+export const PROJECT_TYPE_OPTIONS = ["Software", "Hardware"] as const;
+
+export type ProjectType = (typeof PROJECT_TYPE_OPTIONS)[number];
+
+export function isValidProjectType(value: unknown): value is ProjectType {
+  return typeof value === "string" && (PROJECT_TYPE_OPTIONS as readonly string[]).includes(value);
+}
+
 export const FIELD_LIMITS = {
   name: 100,
   regNo: 20,

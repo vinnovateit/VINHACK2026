@@ -24,7 +24,7 @@ import {
   Send,
 } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
-import { FIELD_LIMITS, TRACK_OPTIONS } from "@/lib/validation";
+import { FIELD_LIMITS, PROJECT_TYPE_OPTIONS, TRACK_OPTIONS } from "@/lib/validation";
 
 const ZIGZAG_CLIP_PATH =
   "polygon(6px 0%, calc(100% - 6px) 0%, 100% 16.6%, calc(100% - 6px) 33.3%, 100% 50%, calc(100% - 6px) 66.6%, 100% 83.3%, calc(100% - 6px) 100%, 6px 100%, 0% 83.3%, 6px 66.6%, 0% 50%, 6px 33.3%, 0% 16.6%)";
@@ -67,6 +67,7 @@ export interface DashboardShellProps {
     submission: {
       title: string;
       description: string;
+      projectType: string;
       githubLink: string;
       figmaLink: string;
       deckLink: string;
@@ -102,6 +103,7 @@ export default function DashboardShell({
   const [projectTitle, setProjectTitle] = useState(team.submission?.title || "");
   const [projectDescription, setProjectDescription] = useState(team.submission?.description || "");
   const [selectedTrack, setSelectedTrack] = useState(initialTrack || team.track || TRACK_OPTIONS[0]);
+  const [projectType, setProjectType] = useState(team.submission?.projectType || "");
   const [githubLink, setGithubLink] = useState(team.submission?.githubLink || "");
   const [figmaLink, setFigmaLink] = useState(team.submission?.figmaLink || "");
   const [deckLink, setDeckLink] = useState(team.submission?.deckLink || "");
@@ -190,10 +192,16 @@ export default function DashboardShell({
       showToast("Only the Team Leader can submit project reviews.", "error");
       return;
     }
+    if (!projectType) {
+      setActiveTab("details");
+      showToast("Choose whether your project is Software or Hardware.", "error");
+      return;
+    }
     startSaveTransition(async () => {
       const res = await saveSubmissionAction({
         teamId: team.id,
         track: selectedTrack,
+        projectType,
         projectTitle: projectTitle.trim(),
         projectDescription: projectDescription.trim(),
         githubLink: githubLink.trim(),
@@ -825,7 +833,7 @@ export default function DashboardShell({
             <div className="min-h-[85px] flex flex-col justify-center">
               {/* Step 1: Project Title & Track */}
               {activeTab === "details" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="proj-title"
@@ -878,7 +886,42 @@ export default function DashboardShell({
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="proj-type"
+                      className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                    >
+                      Software or Hardware?<span className="text-[#fa1a1d] ml-0.5">*</span>
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="proj-type"
+                        value={projectType}
+                        onChange={(e) => isLeader && setProjectType(e.target.value)}
+                        disabled={!isLeader}
+                        className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
+                          isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        }`}
+                      >
+                        <option value="" disabled>
+                          {isLeader ? "Select project type" : "Not submitted yet"}
+                        </option>
+                        {PROJECT_TYPE_OPTIONS.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      {isLeader && (
+                        <ChevronDown
+                          size={18}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
                     <label
                       htmlFor="proj-description"
                       className="text-sm sm:text-base lg:text-[18px] text-white font-light"
