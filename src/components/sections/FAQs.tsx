@@ -116,7 +116,7 @@ export default function FAQsSection() {
                 {/* Sheet 1 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-8 left-[-10px] w-[226px] h-[300px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[4px] rotate-[7deg] origin-bottom-left transition-transform duration-300 ease-out group-hover:-translate-y-6 group-hover:rotate-[11deg] group-hover:-translate-x-2"
+                  className="absolute bottom-8 left-[23px] w-[198px] h-[300px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[4px] rotate-[2.5deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-6 group-hover:rotate-[4deg]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.35) 15px, rgba(140, 214, 238, 0.35) 16px)",
@@ -126,7 +126,7 @@ export default function FAQsSection() {
                 {/* Sheet 2 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-4 left-[8px] w-[226px] h-[302px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[4px] rotate-[1deg] origin-bottom-left transition-transform duration-300 ease-out group-hover:-translate-y-8 group-hover:rotate-[3.5deg]"
+                  className="absolute bottom-4 left-[23px] w-[198px] h-[302px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[4px] rotate-[1deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-8 group-hover:rotate-[2deg]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.35) 15px, rgba(140, 214, 238, 0.35) 16px)",
@@ -136,7 +136,7 @@ export default function FAQsSection() {
                 {/* Sheet 3 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-3 left-[7px] w-[226px] h-[300px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[4px] rotate-[-1deg] origin-bottom-right transition-transform duration-300 ease-out group-hover:-translate-y-7 group-hover:rotate-[-3.5deg] group-hover:translate-x-1"
+                  className="absolute bottom-3 left-[23px] w-[198px] h-[300px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[4px] rotate-[-1deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-7 group-hover:rotate-[-2deg]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.35) 15px, rgba(140, 214, 238, 0.35) 16px)",
@@ -144,7 +144,7 @@ export default function FAQsSection() {
                 />
 
                 {/* Sheet 4 (Front Main Paper Sheet) */}
-                <div className="absolute bottom-1 left-[6px] w-[230px] h-[305px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[4px] rotate-[-4.5deg] origin-bottom-center overflow-hidden flex flex-col justify-start transition-transform duration-300 ease-out group-hover:-translate-y-9 group-hover:rotate-[-6deg] group-hover:shadow-xl">
+                <div className="absolute bottom-1 left-[22px] w-[200px] h-[305px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[4px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start transition-transform duration-300 ease-out group-hover:-translate-y-9 group-hover:rotate-[-4deg] group-hover:shadow-xl">
                   {/* Header Row */}
                   <div className="pt-2.5 px-3">
                     <div className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">

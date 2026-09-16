@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@prisma/client", ".prisma/client", "mongodb"],
+  serverExternalPackages: ["mongodb"],
   images: {
     unoptimized: true,
   },
@@ -9,5 +10,7 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-initOpenNextCloudflareForDev();
+// Only needed for `next dev` against the Cloudflare adapter; skip it on Vercel builds.
+if (!process.env.VERCEL) {
+  initOpenNextCloudflareForDev();
+}

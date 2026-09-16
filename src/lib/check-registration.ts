@@ -3,7 +3,7 @@ import { getMongoDb } from "./mongo";
 export interface VerificationResult {
   isRegistered: boolean;
   participantType?: "vit" | "external" | "user";
-  method: "mongodb-native" | "prisma" | "none";
+  method: "mongodb-native" | "none";
   details?: string;
 }
 

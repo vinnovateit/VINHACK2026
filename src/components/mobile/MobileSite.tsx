@@ -503,13 +503,17 @@ function AttendeePass() {
 /* ----------------------------------------------------------- projects */
 
 /**
- * The desktop cards (`sections/Projects.tsx`) only show their best face — the
- * shape graphic, the viewfinder frame, the tagline pop-up — on `:hover`, which
- * a phone has no equivalent of. Rather than falling back to the plain resting
- * card, the phone renders that hovered face directly and permanently: the
- * `hoverBg` fill, the shape SVG, the viewfinder corners and the tagline/body
- * copy are all always on, one card per row so each gets the full width the
- * desktop pop-up needs.
+ * The desktop cards (`sections/Projects.tsx`) show their copy on `:hover`, and
+ * a phone has no hover to give. Printing that copy permanently under the face
+ * was the first answer and it was the wrong one: the slip grows with its text,
+ * and whatever it pushed the logo and the shape graphic into was no longer the
+ * arrangement the card was drawn as.
+ *
+ * So the copy is a second side of the same card instead of a third thing
+ * stacked under it. The face keeps its full square — shape graphic, logo,
+ * wordmark, untouched — and the tag in its corner turns the card over in place.
+ * Nothing on the page moves when it does: the back is `absolute inset-0` over
+ * the front, so the row keeps its height whichever side is up.
  */
 function MobileProjects() {
   return (
@@ -517,115 +521,143 @@ function MobileProjects() {
       <h2 className="text-[20px] text-[#fa1a1d]">{PROJECTS.heading}</h2>
       <div className="mt-3 h-px w-full bg-[#fa1a1d]" />
 
-      {/* One column: the desktop's hovered face needs the full row, and a
-          two-up grid would crush the shape graphic and pop-up copy. */}
       <div className="mt-8 flex flex-col gap-5">
-        {PROJECTS.cards.map((card, idx) => {
-          // BunkBuddies' hover fill is red, and white text on it reads too
-          // hot on a phone at rest with no dark card underneath it — black
-          // matches the resting-card colour it already uses on desktop.
-          const textColor = card.name === "BUNKBUDDIES" ? "#000000" : card.hoverTextColor;
-          const isDark = textColor === "#ffffff";
-          const fromLeft = idx % 2 === 0;
-
-          return (
-            <motion.a
-              key={card.name}
-              href={card.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative flex flex-col justify-between overflow-clip p-5 transition-transform duration-200 active:scale-[0.98] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-              style={{ background: card.hoverBg }}
-              initial={{ opacity: 0, x: fromLeft ? -60 : 60 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {/* Shape graphic, sat behind everything else. */}
-              <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-3.5 opacity-90">
-                <img
-                  src={card.shapeSvg}
-                  alt=""
-                  className="size-full max-h-[92%] max-w-[92%] object-contain drop-shadow-sm"
-                />
-              </div>
-
-              {/* Viewfinder frame */}
-              <div
-                className="pointer-events-none absolute inset-0 z-10"
-                style={{ color: isDark ? "#ffffff" : "#000000" }}
-              >
-                <div className="absolute inset-1 border-2 border-current opacity-90" />
-                <span className="absolute top-1 left-1 size-2.5 border-t-[3px] border-l-[3px] border-current" />
-                <span className="absolute top-1 right-1 size-2.5 border-t-[3px] border-r-[3px] border-current" />
-                <span className="absolute bottom-1 left-1 size-2.5 border-b-[3px] border-l-[3px] border-current" />
-                <span className="absolute bottom-1 right-1 size-2.5 border-b-[3px] border-r-[3px] border-current" />
-              </div>
-
-              <div className="relative z-20 flex justify-end">
-                <span
-                  className="rounded-full px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider"
-                  style={{
-                    background: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
-                    color: textColor,
-                  }}
-                >
-                  VISIT ↗
-                </span>
-              </div>
-
-              <div className="relative z-20 flex flex-col items-center py-2">
-                <img
-                  src={card.icon}
-                  alt={`${card.displayName} logo`}
-                  className="size-16 object-contain"
-                  style={card.name === "LATCH" ? { color: textColor } : undefined}
-                />
-                <h3
-                  className="mt-3 font-rotonto text-[24px] tracking-tight"
-                  style={{ color: textColor }}
-                >
-                  {card.name}
-                </h3>
-              </div>
-
-              {/* The desktop's green pop-up, shown here without waiting for a
-                  hover a phone cannot give. */}
-              <div className="relative z-20 mt-2 rounded-xl border-2 border-[#bfea88] bg-[#0c0c0c]/95 p-3.5 text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,0.9)]">
-                <div className="flex items-center justify-between border-b border-white/15 pb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex size-2">
-                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#bfea88] opacity-75" />
-                      <span className="relative inline-flex size-2 rounded-full bg-[#bfea88]" />
-                    </span>
-                    <span className="font-rotonto text-[15px] tracking-wide text-white">
-                      {card.displayName}
-                    </span>
-                  </div>
-                  <span className="rounded bg-[#bfea88]/15 px-2 py-0.5 font-rotonto text-[11px] text-[#bfea88]">
-                    EXPLORE ↗
-                  </span>
-                </div>
-
-                <p className="mt-2 font-rotonto text-[13px] leading-snug text-[#bfea88]">
-                  “{card.tagline}”
-                </p>
-
-                <p className="mt-1 text-[11.5px] leading-relaxed font-sans text-neutral-300">
-                  {card.body}
-                </p>
-
-                <div className="mt-2.5 flex items-center justify-between font-mono text-[9.5px] text-neutral-400">
-                  <span className="flex items-center gap-1 font-semibold text-[#bfea88]">
-                    OPEN APP &rarr;
-                  </span>
-                </div>
-              </div>
-            </motion.a>
-          );
-        })}
+        {PROJECTS.cards.map((card, idx) => (
+          <MobileProjectCard key={card.name} card={card} idx={idx} />
+        ))}
       </div>
     </section>
+  );
+}
+
+function MobileProjectCard({
+  card,
+  idx,
+}: {
+  card: (typeof PROJECTS.cards)[number];
+  idx: number;
+}) {
+  const [flipped, setFlipped] = useState(false);
+
+  // BunkBuddies' hover fill is red, and white text on it reads too hot on a
+  // phone at rest with no dark card underneath it — black matches the
+  // resting-card colour it already uses on desktop.
+  const textColor = card.name === "BUNKBUDDIES" ? "#000000" : card.hoverTextColor;
+  const isDark = textColor === "#ffffff";
+  const fromLeft = idx % 2 === 0;
+
+  return (
+    <motion.div
+      className="relative aspect-[4/3] w-full overflow-clip"
+      style={{ background: card.hoverBg }}
+      initial={{ opacity: 0, x: fromLeft ? -60 : 60 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {/* ---- front: the card as drawn ---- */}
+      <div
+        className={`absolute inset-0 flex flex-col justify-between p-5 transition-opacity duration-300 ${
+          flipped ? "pointer-events-none opacity-0" : "opacity-100"
+        }`}
+      >
+        {/* Shape graphic, sat behind the face. */}
+        <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center p-3.5 opacity-90">
+          <img
+            src={card.shapeSvg}
+            alt=""
+            className="size-full max-h-[92%] max-w-[92%] object-contain drop-shadow-sm"
+          />
+        </div>
+
+        {/* The whole face opens the app; the tag below turns the card over. */}
+        <a
+          href={card.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-10"
+          aria-label={`Open ${card.displayName}`}
+        />
+
+        <div className="relative z-20 flex justify-end">
+          <span
+            className="pointer-events-none rounded-full px-2 py-0.5 font-rotonto text-[11px] tracking-wider"
+            style={{
+              background: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
+              color: textColor,
+            }}
+          >
+            VISIT ↗
+          </span>
+        </div>
+
+        <div className="relative z-20 flex flex-col items-center">
+          <img
+            src={card.icon}
+            alt={`${card.displayName} logo`}
+            className="size-16 object-contain"
+            style={card.name === "LATCH" ? { color: textColor } : undefined}
+          />
+          <h3
+            className="mt-3 font-rotonto text-[24px] tracking-tight"
+            style={{ color: textColor }}
+          >
+            {card.name}
+          </h3>
+        </div>
+
+        {/* The turn-over tag, in the corner the design leaves empty. */}
+        <div className="relative z-20 flex justify-start">
+          <button
+            type="button"
+            onClick={() => setFlipped(true)}
+            className="bg-[#fcfcfc] px-2.5 py-1 font-rotonto text-[11px] tracking-wider text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,0.85)]"
+            aria-expanded={flipped}
+          >
+            WHAT IS IT? ↻
+          </button>
+        </div>
+      </div>
+
+      {/* ---- back: the same paper slip, now the whole card ---- */}
+      <div
+        className={`absolute inset-0 z-30 flex flex-col bg-[#fcfcfc] p-5 text-black transition-opacity duration-300 ${
+          flipped ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="font-rotonto text-[16px] leading-none tracking-tight text-black">
+            {card.displayName}
+          </span>
+          <button
+            type="button"
+            onClick={() => setFlipped(false)}
+            className="font-rotonto text-[11px] leading-none tracking-[0.12em] text-black/50"
+            aria-label="Turn the card back over"
+          >
+            BACK ↺
+          </button>
+        </div>
+
+        <p className="mt-3 font-rotonto text-[14px] leading-snug text-[#fa1a1d]">
+          “{card.tagline}”
+        </p>
+
+        <p className="mt-2 font-rotonto text-[12.5px] leading-relaxed text-black/70">
+          {card.body}
+        </p>
+
+        <a
+          href={card.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-auto self-start px-3 py-1.5 font-rotonto text-[12px] tracking-wider"
+          style={{ background: card.hoverBg, color: textColor }}
+        >
+          OPEN APP ↗
+        </a>
+      </div>
+    </motion.div>
   );
 }
 
@@ -1131,7 +1163,7 @@ function MobileFAQs() {
                 {/* Sheet 1 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-5 left-[-4px] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[7deg] origin-bottom-left"
+                  className="absolute bottom-5 left-[6%] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[2.5deg] origin-bottom"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
@@ -1141,7 +1173,7 @@ function MobileFAQs() {
                 {/* Sheet 2 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-3 left-[3px] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom-left"
+                  className="absolute bottom-3 left-[6%] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
@@ -1151,7 +1183,7 @@ function MobileFAQs() {
                 {/* Sheet 3 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-2.5 left-[2px] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom-right"
+                  className="absolute bottom-2.5 left-[6%] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
@@ -1159,7 +1191,7 @@ function MobileFAQs() {
                 />
 
                 {/* Sheet 4 (Front Main Paper) */}
-                <div className="absolute bottom-0 left-[2px] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-4deg] origin-bottom-center overflow-hidden flex flex-col justify-start">
+                <div className="absolute bottom-0 left-[4%] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start">
                   <div className="pt-2 px-2.5">
                     <div className="font-rotonto text-[8px] tracking-wider text-neutral-500 uppercase">
                       VINHACK 2026
