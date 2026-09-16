@@ -1,20 +1,6 @@
 import { DISCORD } from "@/content/site";
 
-/**
- * The Discord sticker, pressed onto the bottom-right corner of the viewport.
- *
- * It sits *outside* `DesignCanvas`, for the same reason `SiteNav` does: the
- * collage is a fixed 1280px frame scaled whole by a CSS transform, and a
- * transformed ancestor is the containing block for anything `fixed` inside it —
- * put this in there and "fixed" would mean "fixed to the canvas", which
- * scrolls. Out here it is fixed to the screen, at a size chosen for the screen.
- *
- * One copy serves both layouts. It is drawn the way the rest of the page draws
- * a label stuck onto something: a coloured band off the site palette, a black
- * keyline, the hard offset shadow every card and folder on the page carries,
- * and a couple of degrees of turn so it reads as placed rather than positioned.
- * Below the drawer, so the shelf covers it when the shelf is out.
- */
+
 export default function DiscordTab() {
   return (
     <a
@@ -24,9 +10,7 @@ export default function DiscordTab() {
       aria-label={DISCORD.label}
       className="group fixed right-4 bottom-4 z-100 flex items-center gap-2 border border-black bg-[#74d4f0] px-3 py-2 font-rotonto text-[13px] tracking-wide text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)] transition-transform duration-200 ease-out -rotate-2 hover:-translate-y-1 hover:rotate-0 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#bfea88] active:translate-y-0 md:right-7 md:bottom-7 md:gap-2.5 md:px-4 md:py-2.5 md:text-[15px]"
     >
-      {/* The mark, drawn rather than fetched — it is one path, and an <img>
-          for it would be a network round trip for something that never
-          changes colour with the sticker it is on. */}
+
       <svg
         aria-hidden
         viewBox="0 0 127 96"
@@ -38,8 +22,7 @@ export default function DiscordTab() {
 
       {DISCORD.label}
 
-      {/* The cue that this leaves the site, in the corner the tabs in the
-          footer put it. */}
+
       <span className="text-[11px] leading-none opacity-70 transition-opacity duration-200 group-hover:opacity-100 md:text-[12px]">
         ↗
       </span>
