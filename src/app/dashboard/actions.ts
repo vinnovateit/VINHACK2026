@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
 import { ObjectId } from "mongodb";
-import { cleanText, FIELD_LIMITS, isValidHttpUrl, isValidProjectType, isValidTrack } from "@/lib/validation";
+import {
+  cleanText,
+  FIELD_LIMITS,
+  isValidHttpUrl,
+  isValidProgressStatus,
+  isValidProjectType,
+  isValidTeamConfidence,
+  isValidTrack,
+} from "@/lib/validation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import {
   deleteTeam,
@@ -23,6 +31,8 @@ export interface SubmissionPayload {
   figmaLink?: string;
   deckLink?: string;
   otherLinks?: string;
+  progressStatus?: string;
+  teamConfidence?: string;
   progressNote?: string;
 }
 
@@ -53,6 +63,10 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
 
     if (!isValidProjectType(payload.projectType)) {
       return { success: false, message: "Please choose whether your project is Software or Hardware." };
+    }
+
+    if (!isValidProgressStatus(payload.progressStatus) || !isValidTeamConfidence(payload.teamConfidence)) {
+      return { success: false, message: "Please choose your current status and team confidence." };
     }
 
     const links = {
@@ -99,6 +113,8 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
           projectType: payload.projectType,
           ...links,
           otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks),
+          progressStatus: payload.progressStatus,
+          teamConfidence: payload.teamConfidence,
           progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
           updatedAt: now,
         },
@@ -204,6 +220,8 @@ export async function fetchFullTeam(teamId: string) {
             figmaLink: subDoc.figmaLink || "",
             deckLink: subDoc.deckLink || "",
             otherLinks: subDoc.otherLinks || "",
+            progressStatus: subDoc.progressStatus || "",
+            teamConfidence: subDoc.teamConfidence || "",
             progressNote: subDoc.progressNote || "",
             submittedAt: subDoc.submittedAt ? new Date(subDoc.submittedAt).toISOString() : null,
           }
