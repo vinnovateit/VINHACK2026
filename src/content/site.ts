@@ -390,8 +390,8 @@ export const PROJECTS = {
     {
       name: "BUNKBUDDIES",
       displayName: "BunkBuddies",
-      bg: "#fee3d2",
-      hoverBg: "#fa1a1d",
+      bg: "#FA1A1D",
+      hoverBg: "#2E5946",
       hoverTextColor: "#ffffff",
       shapeSvg: "/projects/shape_flower.svg",
       textColor: "#000000",
@@ -405,7 +405,7 @@ export const PROJECTS = {
       name: "STUDYHUB",
       displayName: "Studyhub",
       bg: "#ffffff",
-      hoverBg: "#fdbbff",
+      hoverBg: "#FDBBFF",
       hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_star.svg",
       textColor: "#000000",
@@ -418,11 +418,11 @@ export const PROJECTS = {
     {
       name: "LATCH",
       displayName: "Latch",
-      bg: "#0F0A0B",
-      hoverBg: "#c01221",
+      bg: "#74D4F0",
+      hoverBg: "#FF4337",
       hoverTextColor: "#ffffff",
       shapeSvg: "/projects/shape_notched.svg",
-      textColor: "#ffffff",
+      textColor: "#000000",
       logo: "/projects/latch.svg",
       icon: "/projects/latch.svg",
       url: "https://latch.vinnovateit.com",
@@ -432,8 +432,8 @@ export const PROJECTS = {
     {
       name: "MESSIT",
       displayName: "MessIT",
-      bg: "#2849cb",
-      hoverBg: "#ffffff",
+      bg: "#2849CB",
+      hoverBg: "#BFEA88",
       hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_blob.svg",
       textColor: "#ffffff",
@@ -776,7 +776,7 @@ export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
   marquee:
-    " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক  • વિનહેક  • విన్‌హ్యాక్ • വിൻഹാക്ക് • ವಿನ್‌ಹ್ಯಾಕ್ • ون ہیک •  ",
+    " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক • વિનહેક • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ਪੰਜਾਬੀ • وِن ہیک • ",
   /**
    * The five folder tabs, in the order they stack — each a coloured band with
    * its label in a contrasting colour off the same palette, which is the pair
