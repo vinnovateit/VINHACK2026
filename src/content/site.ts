@@ -786,7 +786,7 @@ export const SNEAK_PEEK = {
 /** The invite the floating sticker in the corner opens. */
 export const DISCORD = {
   label: "DISCORD",
-  href: "https://discord.gg/G9JtmGhQV",
+  href: "https://discord.gg/9MjhswmSb",
 } as const;
 
 export const FOOTER = {

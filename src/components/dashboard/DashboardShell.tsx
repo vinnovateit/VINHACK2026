@@ -14,6 +14,7 @@ import {
   ChevronRight,
   HelpCircle,
   LogOut,
+  MessageCircle,
   Shield,
   Trash2,
   UserMinus,
@@ -431,8 +432,20 @@ export default function DashboardShell({
                 onClick={() => setProfileDropdownOpen(false)}
               >
                 <HelpCircle size={15} />
-                <span>Help & Support</span>
+                <span>Help &amp; Support</span>
               </Link>
+
+              <a
+                href="https://discord.gg/9MjhswmSb"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded text-[#5865F2] hover:text-white hover:bg-[#5865F2]/20 text-xs sm:text-sm transition font-light"
+                role="menuitem"
+                onClick={() => setProfileDropdownOpen(false)}
+              >
+                <MessageCircle size={15} />
+                <span>Join Discord</span>
+              </a>
 
               <button
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded text-[#fa1a1d] hover:text-red-300 hover:bg-red-500/10 border-t border-[#666060]/50 mt-1 pt-2 text-xs sm:text-sm transition cursor-pointer text-left w-full font-light"
