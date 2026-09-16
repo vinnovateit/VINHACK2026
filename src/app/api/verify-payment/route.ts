@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getMongoDb } from "@/lib/mongo";
 
 export async function GET() {
   // 1. Check if user is authenticated
@@ -13,36 +13,27 @@ export async function GET() {
   }
 
   const email = session.user.email.toLowerCase().trim();
+  const db = await getMongoDb();
+  if (!db) {
+    return NextResponse.json({ error: "Database unavailable" }, { status: 500 });
+  }
 
   // 2. Query user, vitStudent, and externalStudent concurrently
   const [user, vitStudent, externalStudent] = await Promise.all([
-    prisma.user.findUnique({
-      where: { email },
-      include: { vitStudent: true, externalStudent: true },
-    }),
-    prisma.vITStudent.findUnique({
-      where: { email },
-    }),
-    prisma.externalStudent.findFirst({
-      where: { email },
-    }),
+    db.collection("users").findOne({ email }),
+    db.collection("vit_students").findOne({ email }),
+    db.collection("external_students").findOne({ email }),
   ]);
 
   // 3. Determine if participant is registered / paid
   const isRegistered = Boolean(
     user?.hasLoggedIn ||
-    user?.vitStudent ||
-    user?.externalStudent ||
     vitStudent ||
     externalStudent
   );
 
   const studentType =
-    user?.vitStudent || vitStudent
-      ? "vit"
-      : user?.externalStudent || externalStudent
-      ? "external"
-      : null;
+    vitStudent ? "vit" : externalStudent ? "external" : null;
 
   return NextResponse.json({
     email: session.user.email,
@@ -50,7 +41,7 @@ export async function GET() {
     type: studentType,
     user: user
       ? {
-          id: user.id,
+          id: user._id?.toString() ?? user.id,
           name: user.name,
           image: user.image,
           hasLoggedIn: user.hasLoggedIn,

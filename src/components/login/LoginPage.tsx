@@ -6,8 +6,18 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import KeyButton from "../onboarding/KeyButton";
-import CardboardBoxOpeningAnimation from "./CardboardBoxOpeningAnimation";
+
+const CardboardBoxOpeningAnimation = dynamic(
+  () => import("./CardboardBoxOpeningAnimation"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="relative w-full max-h-[calc(100dvh-100px)] aspect-[736/824] flex items-center justify-center" />
+    ),
+  }
+);
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
