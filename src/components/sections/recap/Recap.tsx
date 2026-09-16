@@ -15,8 +15,6 @@ const EVENT_PHOTOS = [
   "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
   "/about_us/1.webp",
   "/about_us/2.webp",
-  "/about_us/4.webp",
-  "/about_us/5.webp",
   "/about_us/9.webp",
   "/about_us/gowx2f74mufdtcrqn7ec.webp",
   "/about_us/ifdydabdclosmnjkoost.webp",
