@@ -32,7 +32,23 @@ export default function ProfileClient({ participant, teamName }: ProfileClientPr
   };
 
   const yearSuffix = (y: number) => (y === 1 ? "st" : y === 2 ? "nd" : y === 3 ? "rd" : "th");
-  const yearLabel = participant.year ? `${participant.year}${yearSuffix(participant.year)} Year` : null;
+
+  /** For VIT students derive year from first two digits of the reg number.
+   *  23 → 4th year, 24 → 3rd year, 25 → 2nd year, 26 → 1st year */
+  const deriveYearFromRegNo = (regNo?: string): number | null => {
+    if (!regNo) return null;
+    const prefix = parseInt(regNo.slice(0, 2), 10);
+    const currentYear = 26; // academic year digits
+    const yearOfStudy = currentYear - prefix + 1;
+    return yearOfStudy >= 1 && yearOfStudy <= 5 ? yearOfStudy : null;
+  };
+
+  const effectiveYear =
+    participant.type === "vit"
+      ? deriveYearFromRegNo(participant.regNo) ?? participant.year
+      : participant.year;
+
+  const yearLabel = effectiveYear ? `${effectiveYear}${yearSuffix(effectiveYear)} Year` : null;
 
   const categoryLabel =
     participant.type === "vit"
