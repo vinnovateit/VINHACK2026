@@ -99,6 +99,9 @@ export const metadata: Metadata = {
   title: "VinHack 2026 — VinnovateIT",
   description:
     "VinHack is a 36-hour hybrid hackathon by VinnovateIT at Vellore Institute of Technology, bringing together creative minds to build impactful solutions for real-world problems.",
+  // Served from public/ as a static asset. As src/app/icon.svg it became a Next route handler, so
+  // every page load ran the Worker (and burned CPU) just to return a 180 KB file.
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({
