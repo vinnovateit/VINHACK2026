@@ -9,9 +9,13 @@ import PixelSmiley from "./PixelSmiley";
 import { playStampSlam, playPhotoClick, playSmileyChirp } from "@/components/motion/film";
 
 const EVENT_PHOTOS = [
+  "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
   "/about_us/1.webp",
+  "/about_us/67637ab629928adcbde8469183aac1877a08026b.webp",
   "/about_us/2.webp",
+  "/about_us/924203fb63dc0f4fd3cb3bfe64c9230caf80a54e.webp",
   "/about_us/3.webp",
+  "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
   "/about_us/4.webp",
   "/about_us/5.webp",
   "/about_us/6.webp",
