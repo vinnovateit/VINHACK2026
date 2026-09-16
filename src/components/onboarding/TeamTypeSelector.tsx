@@ -20,7 +20,7 @@ export default function TeamTypeSelector({
   const [selected, setSelected] = useState<TeamChoice | null>(initialChoice ?? null);
 
   return (
-    <div className="relative w-full max-w-[1280px] h-full max-h-[100dvh] mx-auto bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-full max-w-[1280px] min-h-[100dvh] lg:h-full lg:max-h-[100dvh] mx-auto bg-black text-white px-4 sm:px-6 md:px-12 py-3 md:py-4 flex flex-col justify-start lg:justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden">
       {/* Top Bar: Brand Logo & Back link */}
       <div className="flex-shrink-0 flex items-center justify-between z-10 h-10 md:h-12">
         <div className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative">

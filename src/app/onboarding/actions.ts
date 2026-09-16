@@ -1,7 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
-import QRCode from "qrcode";
+
 
 import { auth } from "@/lib/auth";
 import { joinTeamByCode, TeamMembershipError } from "@/lib/team-membership";
@@ -107,33 +106,9 @@ export async function saveCheckInAction(data: CheckInData) {
 export async function prepareTeamCodeAction() {
   try {
     const code = await generateUniqueTeamCodeFromDb();
-
-    // Generate QR code for this candidate code without saving to database yet
-    let qrDataUrl = "";
-    try {
-      const reqHeaders = await headers();
-      const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-      const host = reqHeaders.get("x-forwarded-host") || reqHeaders.get("host") || "localhost:3000";
-      const protocol = reqHeaders.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-      const origin = configuredOrigin || `${protocol}://${host}`;
-      const joinUrl = `${origin}/onboarding?step=join-team&code=${code}`;
-
-      qrDataUrl = await QRCode.toDataURL(joinUrl, {
-        width: 256,
-        margin: 1,
-        color: {
-          dark: "#000000",
-          light: "#ffffff",
-        },
-      });
-    } catch {
-      qrDataUrl = "";
-    }
-
     return {
       success: true,
       teamCode: code,
-      qrDataUrl,
     };
   } catch (err) {
     console.error("[prepareTeamCodeAction] Error:", err);
@@ -141,7 +116,6 @@ export async function prepareTeamCodeAction() {
     return {
       success: true,
       teamCode: fallback,
-      qrDataUrl: "",
     };
   }
 }

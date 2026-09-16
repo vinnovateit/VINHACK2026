@@ -113,7 +113,7 @@ export default function KeyButton({
   return (
     <div
       ref={keyRef}
-      className={`relative ${height} select-none transition-opacity duration-150 will-change-transform ${
+      className={`relative ${height} shrink-0 select-none transition-opacity duration-150 will-change-transform ${
         disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
       } ${className || "w-[340px]"}`}
       onClick={handleClick}

@@ -53,7 +53,6 @@ export default function OnboardingWizard({
   const [createdTeamId, setCreatedTeamId] = useState<string | null>(
     initialParticipant?.teamId ?? null
   );
-  const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
 
@@ -87,7 +86,6 @@ export default function OnboardingWizard({
         const res = await prepareTeamCodeAction();
         if (res.success) {
           setCreatedTeamCode(res.teamCode);
-          if (res.qrDataUrl) setQrDataUrl(res.qrDataUrl);
         }
       } catch (err) {
         console.error("Failed to prepare team code:", err);
@@ -146,7 +144,7 @@ export default function OnboardingWizard({
   };
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full bg-black text-white flex flex-col justify-center overflow-hidden">
+    <div className="min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] w-full bg-black text-white flex flex-col justify-start lg:justify-center overflow-x-hidden overflow-y-auto lg:overflow-hidden">
       {/* Wizard Step Views */}
       {step === "checkin" && (
         <CheckInChecklist
@@ -180,7 +178,6 @@ export default function OnboardingWizard({
       {step === "create-team" && (
         <CreateTeamDossier
           teamCode={createdTeamCode}
-          qrDataUrl={qrDataUrl}
           initialTeamName=""
           onSaveAndContinue={handleCreateTeamContinue}
           onBack={() => setStep("team-type")}

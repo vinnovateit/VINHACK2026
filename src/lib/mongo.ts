@@ -433,7 +433,7 @@ export async function generateUniqueTeamCodeFromDb(): Promise<string> {
   try {
     const db = await getMongoDb();
     if (db) {
-      for (let attempt = 0; attempt < 30; attempt++) {
+      for (let attempt = 0; attempt < 3; attempt++) {
         let randomPart = "";
         for (let i = 0; i < 4; i++) {
           randomPart += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
@@ -464,11 +464,23 @@ export function normalizeTeamName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-// One team per 2-5 participants keeps this list small, so compare in memory with the exact same
-// normalization used for the candidate rather than approximating it in an aggregation.
-async function findTeamsWithNormalizedName(db: Db, normalized: string) {
-  const teams = await db.collection("teams").find({}, { projection: { name: 1 } }).toArray();
-  return teams.filter((t) => normalizeTeamName(String(t.name || "")) === normalized);
+async function findConflictingTeam(db: Db, candidateName: string, excludeTeamId?: string) {
+  const trimmed = candidateName.trim();
+  const normalized = normalizeTeamName(trimmed);
+  if (!normalized) return null;
+
+  const query: any = {
+    $or: [
+      { normalizedName: normalized },
+      { name: { $regex: `^${escapeRegex(trimmed)}$`, $options: "i" } },
+    ],
+  };
+
+  if (excludeTeamId) {
+    query._id = { $ne: toObjectId(excludeTeamId) };
+  }
+
+  return await db.collection("teams").findOne(query, { projection: { _id: 1, name: 1 } });
 }
 
 function validateTeamNameShape(trimmed: string): { valid: false; error: string } | null {
@@ -501,9 +513,7 @@ export async function validateTeamNameInDb(
       return { valid: true };
     }
 
-    const conflict = (await findTeamsWithNormalizedName(db, normalizeTeamName(trimmed))).find(
-      (t) => t._id.toString() !== excludeTeamId
-    );
+    const conflict = await findConflictingTeam(db, trimmed, excludeTeamId);
     if (conflict) {
       return { valid: false, conflictName: conflict.name, error: TEAM_NAME_TAKEN };
     }
@@ -518,8 +528,14 @@ export async function validateTeamNameInDb(
 // Two requests can both pass the name check before either writes. The older team (lower
 // ObjectId) keeps the name; the newer one detects the clash after writing and backs out.
 async function lostTeamNameRace(db: Db, teamOid: ObjectId, normalized: string): Promise<boolean> {
-  const matches = await findTeamsWithNormalizedName(db, normalized);
-  return matches.some((t) => !t._id.equals(teamOid) && t._id.toString() < teamOid.toString());
+  const olderMatch = await db.collection("teams").findOne(
+    {
+      normalizedName: normalized,
+      _id: { $lt: teamOid },
+    },
+    { projection: { _id: 1 } }
+  );
+  return Boolean(olderMatch);
 }
 
 export async function createTeamInDb(data: {
@@ -577,6 +593,7 @@ export async function createTeamInDb(data: {
       try {
         const insertRes = await db.collection("teams").insertOne({
           name: trimmedName,
+          normalizedName,
           code,
           capacity: TEAM_MAX_SIZE,
           teamType: participant.type === "vit" ? "VIT" : "EXTERNAL",
@@ -640,21 +657,11 @@ export async function renameTeamInDb(
   const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { name: 1 } });
   if (!team) return { success: false, error: "Team not found." };
 
+  const normalized = normalizeTeamName(trimmed);
   await db.collection("teams").updateOne(
     { _id: teamOid },
-    { $set: { name: trimmed, updatedAt: new Date() } }
+    { $set: { name: trimmed, normalizedName: normalized, updatedAt: new Date() } }
   );
-
-  const clash = (await findTeamsWithNormalizedName(db, normalizeTeamName(trimmed))).some(
-    (t) => !t._id.equals(team._id)
-  );
-  if (clash) {
-    await db.collection("teams").updateOne(
-      { _id: teamOid, name: trimmed },
-      { $set: { name: team.name, updatedAt: new Date() } }
-    );
-    return { success: false, error: TEAM_NAME_TAKEN };
-  }
 
   return { success: true };
 }

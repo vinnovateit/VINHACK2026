@@ -3,12 +3,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import KeyButton from "./KeyButton";
+import ClientQrCode from "./ClientQrCode";
 import { validateTeamNameAction } from "@/app/onboarding/actions";
 
 interface CreateTeamDossierProps {
   initialTeamName?: string;
   teamCode: string;
-  qrDataUrl?: string;
   onSaveAndContinue: (teamName: string) => Promise<{ success: boolean; error?: string } | void> | void;
   onBack?: () => void;
   isLoading?: boolean;
@@ -17,7 +17,6 @@ interface CreateTeamDossierProps {
 export default function CreateTeamDossier({
   initialTeamName = "",
   teamCode,
-  qrDataUrl,
   onSaveAndContinue,
   onBack,
   isLoading = false,
@@ -112,7 +111,7 @@ export default function CreateTeamDossier({
     : "border-neutral-800 focus:border-[#FC2425]";
 
   return (
-    <div className="relative w-full max-w-[1280px] h-full max-h-[100dvh] mx-auto bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
+    <div className="relative w-full max-w-[1280px] min-h-[100dvh] lg:h-full lg:max-h-[100dvh] mx-auto bg-black text-white px-4 sm:px-6 md:px-12 py-3 md:py-4 flex flex-col justify-start lg:justify-between overflow-x-hidden overflow-y-auto lg:overflow-hidden">
       {/* Top Bar: Brand Logo & Back link */}
       <div className="flex-shrink-0 flex items-center justify-between z-10 h-10 md:h-12">
         <div className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative">
@@ -137,9 +136,9 @@ export default function CreateTeamDossier({
       </div>
 
       {/* Main Content Grid */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center my-auto">
+      <div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start my-2 lg:my-auto">
         {/* Left Column: 03 SETUP YOUR TEAM */}
-        <div className="lg:col-span-6 flex flex-col justify-center space-y-3 sm:space-y-4 md:space-y-5 z-10">
+        <div className="lg:col-span-6 flex flex-col justify-start space-y-3 sm:space-y-4 md:space-y-5 z-10 pt-1 lg:pt-2">
           <div>
             <span className="font-['Rotonto',sans-serif] text-[36px] sm:text-[44px] md:text-[52px] text-[#FC2425] leading-none block">
               03
@@ -202,12 +201,12 @@ export default function CreateTeamDossier({
           </div>
 
           {/* Dual Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1 sm:pt-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <KeyButton
               color="pink"
               size="compact"
               onClick={handleCopy}
-              className="flex-1"
+              className="w-full sm:flex-1 shrink-0"
             >
               {copied ? "COPIED CODE!" : "COPY SHAREABLE CODE"}
             </KeyButton>
@@ -217,7 +216,7 @@ export default function CreateTeamDossier({
               size="compact"
               onClick={handleContinue}
               disabled={isSubmitDisabled}
-              className="flex-1"
+              className="w-full sm:flex-1 shrink-0"
             >
               {isLoading ? "SAVING..." : checking ? "CHECKING..." : "SAVE AND CONTINUE"}
             </KeyButton>
@@ -225,7 +224,7 @@ export default function CreateTeamDossier({
         </div>
 
         {/* Right Column: Red Dispenser & Printed Thermal Receipt (matching Homepage Timeline ReceiptPrinter) */}
-        <div className="lg:col-span-6 flex items-start justify-center relative select-none h-full min-h-0 py-2 pt-2 md:pt-4">
+        <div className="lg:col-span-6 flex items-start justify-center relative select-none w-full min-h-[490px] sm:min-h-[510px] lg:min-h-0 py-4 pb-16 lg:pb-4">
           {/* Red Dispenser Housing (data-node-id="343:2039") */}
           <div
             className="relative bg-[#fa1a1d] rounded-[16px] w-[310px] sm:w-[335px] md:w-[350px] h-[58px] md:h-[64px] shadow-2xl z-20"
@@ -239,7 +238,7 @@ export default function CreateTeamDossier({
 
             {/* Ticket Container: feeds emerging directly out from inside the black slot */}
             <div
-              className="absolute -translate-x-1/2 left-1/2 top-[29px] md:top-[32px] w-[240px] sm:w-[260px] md:w-[272px] h-[410px] sm:h-[430px] md:h-[450px] max-h-[calc(100dvh-150px)] z-10 select-none overflow-hidden"
+              className="absolute -translate-x-1/2 left-1/2 top-[29px] md:top-[32px] w-[240px] sm:w-[260px] md:w-[272px] h-[410px] sm:h-[430px] md:h-[450px] lg:max-h-[calc(100dvh-150px)] z-10 select-none overflow-hidden"
               data-node-id="343:2041"
             >
               {/* Authentic saw-tooth perforated receipt paper sheet (matching timeline) */}
@@ -297,26 +296,17 @@ export default function CreateTeamDossier({
                   </div>
                 </div>
 
-                {/* Dynamic QR Code */}
+                {/* Client-Side Dynamic QR Code (0ms Server CPU) */}
                 <div className="my-1 flex justify-center">
-                  <div className="p-1.5 bg-white rounded-lg border border-neutral-300 shadow-inner">
-                    {qrDataUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={qrDataUrl}
-                        alt="Team QR Code"
-                        className="w-[78px] h-[78px] md:w-[86px] md:h-[86px] object-contain"
-                      />
-                    ) : (
-                      <div className="w-[78px] h-[78px] md:w-[86px] md:h-[86px] relative">
-                        <Image
-                          src="/onboarding/imgQrCodeGeneratorUxhf8J_f8e80aef.png"
-                          alt="QR"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    )}
+                  <div className="p-1.5 bg-white rounded-lg border border-neutral-300 shadow-inner flex items-center justify-center">
+                    <ClientQrCode
+                      value={
+                        typeof window !== "undefined"
+                          ? `${window.location.origin}/onboarding?step=join-team&code=${teamCode}`
+                          : `https://vinhack.vinnovateit.com/onboarding?step=join-team&code=${teamCode}`
+                      }
+                      size={82}
+                    />
                   </div>
                 </div>
 
