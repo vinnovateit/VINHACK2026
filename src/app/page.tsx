@@ -2,6 +2,7 @@ import DesignCanvas from "@/components/DesignCanvas";
 import HeroMotion from "@/components/HeroMotion";
 import MobileMotion from "@/components/mobile/MobileMotion";
 import MobileSite from "@/components/mobile/MobileSite";
+import DiscordTab from "@/components/nav/DiscordTab";
 import SiteNav from "@/components/nav/SiteNav";
 import PageMotion from "@/components/PageMotion";
 import HeroSection from "@/components/sections/Hero";
@@ -47,6 +48,10 @@ export default function Home() {
           would become the containing block for anything fixed inside it. One
           copy serves both layouts; see the note in `SiteNav`. */}
       <SiteNav />
+
+      {/* Also outside the canvas, and also one copy for both layouts — see the
+          note in `DiscordTab`. */}
+      <DiscordTab />
 
       <div className="hidden md:block">
         <DesignCanvas

@@ -18,12 +18,7 @@ export const FilmCanister: FC = () => {
 
         {/* Canister Vertical Title - Centered directly in green cylinder (44% x, 48.6% y) */}
         <div className="absolute left-[44%] top-[48.6%] -translate-x-1/2 -translate-y-1/2 -rotate-90 flex flex-col items-center gap-[2px] pointer-events-none whitespace-nowrap font-rotonto">
-          <span className="text-[17px] font-normal tracking-[0.08em] text-black leading-tight">
-            ROLLING
-          </span>
-          <span className="text-[17px] font-normal tracking-[0.08em] text-black leading-tight">
-            BACK TO &apos;25
-          </span>
+         
         </div>
       </div>
     </div>

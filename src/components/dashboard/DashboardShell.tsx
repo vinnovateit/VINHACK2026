@@ -19,21 +19,30 @@ import {
   UserMinus,
   UserRound,
   X,
+  RefreshCw,
   CheckCircle2,
   AlertTriangle,
   Send,
 } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
-import { TRACK_OPTIONS } from "@/lib/validation";
+import LiveCountdown from "@/components/dashboard/LiveCountdown";
+import {
+  FIELD_LIMITS,
+  PROGRESS_STATUS_OPTIONS,
+  PROJECT_TYPE_OPTIONS,
+  TEAM_CONFIDENCE_OPTIONS,
+  TRACK_OPTIONS,
+} from "@/lib/validation";
 
 const ZIGZAG_CLIP_PATH =
   "polygon(6px 0%, calc(100% - 6px) 0%, 100% 16.6%, calc(100% - 6px) 33.3%, 100% 50%, calc(100% - 6px) 66.6%, 100% 83.3%, calc(100% - 6px) 100%, 6px 100%, 0% 83.3%, 6px 66.6%, 0% 50%, 6px 33.3%, 0% 16.6%)";
 import {
-  saveSubmissionAction,
+  saveSubmissionSectionAction,
   transferLeadershipAction,
   deleteTeamAction,
   leaveTeamAction,
   removeTeamMemberAction,
+  regenerateTeamCodeAction,
 } from "@/app/dashboard/actions";
 
 export interface DashboardShellProps {
@@ -60,19 +69,24 @@ export interface DashboardShellProps {
       id: string;
       name: string;
       email: string;
-      regNo: string;
       type: "vit" | "external";
       isLeader: boolean;
     }>;
     submission: {
       title: string;
       description: string;
+      projectType: string;
       githubLink: string;
       figmaLink: string;
       deckLink: string;
       otherLinks: string;
+      progressStatus: string;
+      teamConfidence: string;
       progressNote: string;
       submittedAt: string | null;
+      detailsUpdatedAt: string | null;
+      linksUpdatedAt: string | null;
+      progressUpdatedAt: string | null;
     } | null;
   };
   initialTrack?: string;
@@ -97,30 +111,45 @@ export default function DashboardShell({
   // Active step tab in "Submit for Review"
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const [isSaving, startSaveTransition] = useTransition();
+  const [savingSection, setSavingSection] = useState<TabType | null>(null);
+  // Each section is saved on its own, so each keeps its own "last saved" time.
+  const [sectionSavedAt, setSectionSavedAt] = useState<Record<TabType, string | null>>({
+    details: team.submission?.detailsUpdatedAt ?? null,
+    links: team.submission?.linksUpdatedAt ?? null,
+    progress: team.submission?.progressUpdatedAt ?? null,
+  });
 
   // Submission Form state
   const [projectTitle, setProjectTitle] = useState(team.submission?.title || "");
   const [projectDescription, setProjectDescription] = useState(team.submission?.description || "");
-  const [selectedTrack, setSelectedTrack] = useState(initialTrack || team.track || TRACK_OPTIONS[0]);
+  // Only the leader's form takes a track from /tracks (?track=); members see what the team saved.
+  const [selectedTrack, setSelectedTrack] = useState(
+    participant.isLeader ? initialTrack || team.track || TRACK_OPTIONS[0] : team.track || ""
+  );
+  const [projectType, setProjectType] = useState(team.submission?.projectType || "");
   const [githubLink, setGithubLink] = useState(team.submission?.githubLink || "");
   const [figmaLink, setFigmaLink] = useState(team.submission?.figmaLink || "");
   const [deckLink, setDeckLink] = useState(team.submission?.deckLink || "");
   const [otherLinks, setOtherLinks] = useState(team.submission?.otherLinks || "");
-  const [progressStatus, setProgressStatus] = useState("In progress");
-  const [teamConfidence, setTeamConfidence] = useState("Feeling good");
+  // Members see only what was saved; the leader's form starts from the first option.
+  const [progressStatus, setProgressStatus] = useState<string>(
+    team.submission?.progressStatus || (participant.isLeader ? PROGRESS_STATUS_OPTIONS[0] : "")
+  );
+  const [teamConfidence, setTeamConfidence] = useState<string>(
+    team.submission?.teamConfidence || (participant.isLeader ? TEAM_CONFIDENCE_OPTIONS[0] : "")
+  );
   const [progressNote, setProgressNote] = useState(team.submission?.progressNote || "");
 
   // Squad Dropdown state
   const [squadDropdownOpen, setSquadDropdownOpen] = useState(false);
-  const [squadSubView, setSquadSubView] = useState<"kick" | "transfer" | "delete" | null>(null);
+  const [squadSubView, setSquadSubView] = useState<"kick" | "transfer" | "code" | "delete" | null>(null);
   const [leaveConfirming, setLeaveConfirming] = useState(false);
   const [selectedNewLeader, setSelectedNewLeader] = useState("");
   const [isActionPending, startActionTransition] = useTransition();
   const squadDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Countdown state (target: Sept 19, 2026, 8:00 PM IST)
+  // Client-only values (local time formatting) render after mount to avoid hydration mismatches.
   const [mounted, setMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ hours: 77, minutes: 22, seconds: 59 });
 
   // Handle outside click & escape key
   useEffect(() => {
@@ -150,23 +179,8 @@ export default function DashboardShell({
     };
   }, []);
 
-  // Countdown timer logic
   useEffect(() => {
     setMounted(true);
-    const targetDate = new Date("2026-09-19T20:00:00+05:30").getTime();
-
-    const updateTimer = () => {
-      const diff = Math.max(0, targetDate - Date.now());
-      const totalSeconds = Math.floor(diff / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      setTimeLeft({ hours, minutes, seconds });
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
   }, []);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
@@ -185,31 +199,64 @@ export default function DashboardShell({
 
   const isLeader = Boolean(participant.isLeader);
 
-  const handleSaveSubmission = () => {
+  const handleSaveSection = (section: TabType) => {
     if (!isLeader) {
       showToast("Only the Team Leader can submit project reviews.", "error");
       return;
     }
+    if (section === "details" && !projectType) {
+      showToast("Choose whether your project is Software or Hardware.", "error");
+      return;
+    }
+
+    const payload =
+      section === "details"
+        ? {
+            section,
+            track: selectedTrack,
+            projectType,
+            projectTitle: projectTitle.trim(),
+            projectDescription: projectDescription.trim(),
+          }
+        : section === "links"
+          ? {
+              section,
+              githubLink: githubLink.trim(),
+              figmaLink: figmaLink.trim(),
+              deckLink: deckLink.trim(),
+              otherLinks: otherLinks.trim(),
+            }
+          : { section, progressStatus, teamConfidence, progressNote: progressNote.trim() };
+
+    setSavingSection(section);
     startSaveTransition(async () => {
-      const res = await saveSubmissionAction({
-        teamId: team.id,
-        track: selectedTrack,
-        projectTitle: projectTitle.trim(),
-        projectDescription: projectDescription.trim(),
-        githubLink: githubLink.trim(),
-        figmaLink: figmaLink.trim(),
-        deckLink: deckLink.trim(),
-        otherLinks: otherLinks.trim(),
-        progressNote: progressNote.trim(),
-      });
+      const res = await saveSubmissionSectionAction(team.id, payload);
+      setSavingSection(null);
 
       if (res.success) {
-        showToast(res.message || "Submission saved successfully!", "success");
+        if (res.savedAt) setSectionSavedAt((prev) => ({ ...prev, [section]: res.savedAt }));
+        showToast(res.message || "Saved!", "success");
       } else {
-        showToast(res.message || "Failed to save submission.", "error");
+        showToast(res.message || "Failed to save.", "error");
       }
     });
   };
+
+  const SAVE_LABELS: Record<TabType, string> = {
+    details: "SAVE DETAILS",
+    links: "SAVE LINKS",
+    progress: "SUBMIT UPDATE",
+  };
+
+  const formatSavedAt = (iso: string | null) =>
+    iso
+      ? `Last saved ${new Date(iso).toLocaleString("en-IN", {
+          day: "numeric",
+          month: "short",
+          hour: "numeric",
+          minute: "2-digit",
+        })}`
+      : "Not saved yet";
 
   const handleKickMember = (memberId: string, memberType: "vit" | "external", memberName: string) => {
     startActionTransition(async () => {
@@ -239,6 +286,20 @@ export default function DashboardShell({
         setTimeout(() => router.refresh(), 800);
       } else {
         showToast(res.error || "Failed to transfer leadership", "error");
+      }
+    });
+  };
+
+  const handleRegenerateCode = () => {
+    startActionTransition(async () => {
+      const res = await regenerateTeamCodeAction();
+      if (res.success) {
+        showToast(`New team code: ${res.code}`, "success");
+        setSquadDropdownOpen(false);
+        setSquadSubView(null);
+        router.refresh();
+      } else {
+        showToast(res.error || "Failed to change the team code", "error");
       }
     });
   };
@@ -294,7 +355,7 @@ export default function DashboardShell({
       <header className="flex items-center justify-between w-full mb-4 sm:mb-6">
         <Link
           href="/"
-          className="-rotate-3 hover:rotate-0 transition-transform duration-200 block relative w-[145px] sm:w-[169px] h-[50px] sm:h-[59px]"
+          className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative block"
           aria-label="VinHack Home"
         >
           <Image
@@ -573,6 +634,18 @@ export default function DashboardShell({
 
                           <button
                             type="button"
+                            onClick={() => setSquadSubView("code")}
+                            className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-neutral-800 text-xs transition cursor-pointer text-left text-neutral-200 hover:text-white"
+                          >
+                            <span className="flex items-center gap-2">
+                              <RefreshCw size={14} className="text-[#fdbbff]" />
+                              <span>New Team Code</span>
+                            </span>
+                            <ChevronRight size={13} className="text-neutral-500" />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => setSquadSubView("delete")}
                             className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-red-500/10 text-xs transition cursor-pointer text-left text-[#fa1a1d] hover:text-red-400 mt-1 pt-2 border-t border-[#666060]/40"
                           >
@@ -680,6 +753,34 @@ export default function DashboardShell({
                         </div>
                       )}
 
+                      {/* Sub-view: New Team Code */}
+                      {squadSubView === "code" && (
+                        <div className="animate-[fadeIn_0.15s_ease-out]">
+                          <button
+                            type="button"
+                            onClick={() => setSquadSubView(null)}
+                            className="text-[11px] text-neutral-400 hover:text-white flex items-center gap-1 mb-2.5 cursor-pointer"
+                          >
+                            <ArrowLeft size={12} /> Back to options
+                          </button>
+                          <div className="text-xs font-medium text-white mb-1">
+                            Get a new team code
+                          </div>
+                          <p className="text-[11px] text-neutral-400 mb-3">
+                            The current code and QR stop working right away. Everyone already in the team stays in it.
+                          </p>
+                          <button
+                            type="button"
+                            className="w-full bg-[#74d4f0] text-black font-semibold text-xs py-1.5 rounded hover:bg-[#8ee0f7] disabled:opacity-40 transition cursor-pointer flex items-center justify-center gap-1.5"
+                            disabled={isActionPending}
+                            onClick={handleRegenerateCode}
+                          >
+                            <RefreshCw size={13} />
+                            {isActionPending ? "Generating..." : "Generate New Code"}
+                          </button>
+                        </div>
+                      )}
+
                       {/* Sub-view: Delete Team */}
                       {squadSubView === "delete" && (
                         <div className="animate-[fadeIn_0.15s_ease-out]">
@@ -759,14 +860,14 @@ export default function DashboardShell({
 
           {/* ── CARD 3: SUBMIT FOR REVIEW (Bottom Left) ─────── */}
           <section className="bg-black border border-[#666060] p-4 sm:p-6 relative flex flex-col justify-between min-h-[240px] sm:min-h-[280px]">
-            <div className="flex items-center justify-between">
+            <div>
               <div className="text-[#fa1a1d] text-base sm:text-lg lg:text-[20px] font-light tracking-wider uppercase">
                 // SUBMIT FOR REVIEW
               </div>
               {!isLeader && (
-                <span className="text-[10px] sm:text-[11px] text-[#74d4f0] bg-[#74d4f0]/10 border border-[#74d4f0]/30 px-2.5 py-0.5 rounded-full font-light tracking-normal">
-                  View only · Leader submits
-                </span>
+                <p className="text-xs sm:text-sm lg:text-[14px] font-light text-[#9a9898] mt-1">
+                  Only your team leader can edit and submit this.
+                </p>
               )}
             </div>
 
@@ -825,7 +926,7 @@ export default function DashboardShell({
             <div className="min-h-[85px] flex flex-col justify-center">
               {/* Step 1: Project Title & Track */}
               {activeTab === "details" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="proj-title"
@@ -863,6 +964,11 @@ export default function DashboardShell({
                           isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
                         }`}
                       >
+                        {!selectedTrack && (
+                          <option value="" disabled>
+                            Not submitted yet
+                          </option>
+                        )}
                         {TRACK_OPTIONS.map((t) => (
                           <option key={t} value={t}>
                             {t}
@@ -876,6 +982,66 @@ export default function DashboardShell({
                         />
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="proj-type"
+                      className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                    >
+                      Software or Hardware?<span className="text-[#fa1a1d] ml-0.5">*</span>
+                    </label>
+                    <div className="relative w-full">
+                      <select
+                        id="proj-type"
+                        value={projectType}
+                        onChange={(e) => isLeader && setProjectType(e.target.value)}
+                        disabled={!isLeader}
+                        className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
+                          isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                        }`}
+                      >
+                        <option value="" disabled>
+                          {isLeader ? "Select project type" : "Not submitted yet"}
+                        </option>
+                        {PROJECT_TYPE_OPTIONS.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      {isLeader && (
+                        <ChevronDown
+                          size={18}
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
+                    <label
+                      htmlFor="proj-description"
+                      className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                    >
+                      Project Description<span className="text-[#fa1a1d] ml-0.5">*</span>
+                    </label>
+                    <textarea
+                      id="proj-description"
+                      rows={3}
+                      maxLength={FIELD_LIMITS.projectDescription}
+                      value={projectDescription}
+                      onChange={(e) => isLeader && setProjectDescription(e.target.value)}
+                      readOnly={!isLeader}
+                      placeholder={
+                        isLeader
+                          ? "What does your project do, and what problem does it solve?"
+                          : (projectDescription || "Not submitted yet")
+                      }
+                      className={`bg-black border border-[#666060] text-white px-3.5 py-3 text-sm sm:text-base w-full min-h-[96px] focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
+                        isLeader ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
+                      }`}
+                    />
                   </div>
                 </div>
               )}
@@ -965,81 +1131,134 @@ export default function DashboardShell({
                 </div>
               )}
 
-              {/* Step 3: Full-width update input */}
+              {/* Step 3: Status, confidence and update note */}
               {activeTab === "progress" && (
-                <div className="flex flex-col gap-1.5 w-full">
-                  <label
-                    htmlFor="progress-note"
-                    className="text-sm sm:text-base lg:text-[18px] text-white font-light"
-                  >
-                    What has changed since the last review ?<span className="text-[#fa1a1d] ml-0.5">*</span>
-                  </label>
-                  <input
-                    id="progress-note"
-                    type="text"
-                    value={progressNote}
-                    onChange={(e) => isLeader && setProgressNote(e.target.value)}
-                    readOnly={!isLeader}
-                    placeholder={isLeader ? "" : (progressNote || "No updates submitted yet")}
-                    className={`bg-black border border-[#666060] text-white px-3.5 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                      isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
-                    }`}
-                  />
+                <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                  <p className="text-xs sm:text-sm lg:text-[14px] font-light text-[#9a9898]">
+                    Give mentors a quick snapshot of your progress.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {(
+                      [
+                        {
+                          id: "progress-status",
+                          label: "Current status",
+                          value: progressStatus,
+                          setValue: setProgressStatus,
+                          options: PROGRESS_STATUS_OPTIONS,
+                        },
+                        {
+                          id: "team-confidence",
+                          label: "Team confidence",
+                          value: teamConfidence,
+                          setValue: setTeamConfidence,
+                          options: TEAM_CONFIDENCE_OPTIONS,
+                        },
+                      ] as const
+                    ).map((field) => (
+                      <div key={field.id} className="flex flex-col gap-1.5">
+                        <label
+                          htmlFor={field.id}
+                          className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                        >
+                          {field.label}
+                        </label>
+                        <div className="relative w-full">
+                          <select
+                            id={field.id}
+                            value={field.value}
+                            onChange={(e) => isLeader && field.setValue(e.target.value)}
+                            disabled={!isLeader}
+                            className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
+                              isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                            }`}
+                          >
+                            {!field.value && (
+                              <option value="" disabled>
+                                Not submitted yet
+                              </option>
+                            )}
+                            {field.options.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          {isLeader && (
+                            <ChevronDown
+                              size={18}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="progress-note"
+                      className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                    >
+                      What has changed since your last update?
+                    </label>
+                    <textarea
+                      id="progress-note"
+                      rows={3}
+                      maxLength={FIELD_LIMITS.progressNote}
+                      value={progressNote}
+                      onChange={(e) => isLeader && setProgressNote(e.target.value)}
+                      readOnly={!isLeader}
+                      placeholder={
+                        isLeader
+                          ? "What did you build or learn? Where are you stuck?"
+                          : (progressNote || "No updates submitted yet")
+                      }
+                      className={`bg-black border border-[#666060] text-white px-3.5 py-3 text-sm sm:text-base w-full min-h-[96px] focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
+                        isLeader ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
+                      }`}
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Pager Controls and Submit Action on Bottom Right */}
-            <div className="flex items-center justify-end gap-3 mt-4">
-              {activeTab !== "progress" ? (
-                <>
+            {/* Pager controls, and a save button for the section being viewed */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+              <p className="text-xs sm:text-sm font-light text-[#9a9898]">
+                {mounted ? formatSavedAt(sectionSavedAt[activeTab]) : ""}
+              </p>
+              <div className="flex items-center gap-3 ml-auto">
+                <button
+                  type="button"
+                  className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+                  onClick={() => moveTab(-1)}
+                  disabled={activeTab === "details"}
+                  aria-label="Previous step"
+                >
+                  <ArrowLeft size={20} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
+                  onClick={() => moveTab(1)}
+                  disabled={activeTab === "progress"}
+                  aria-label="Next step"
+                >
+                  <ArrowRight size={20} strokeWidth={2} />
+                </button>
+                {isLeader && (
                   <button
                     type="button"
-                    className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shrink-0"
-                    onClick={() => moveTab(-1)}
-                    disabled={activeTab === "details"}
-                    aria-label="Previous step"
+                    onClick={() => handleSaveSection(activeTab)}
+                    disabled={isSaving}
+                    className="h-[44px] px-6 sm:px-8 rounded-full bg-[#74d4f0] hover:bg-[#60caf0] text-black font-light text-sm sm:text-base uppercase tracking-wider transition cursor-pointer flex items-center justify-center shrink-0 disabled:opacity-50"
                   >
-                    <ArrowLeft size={20} strokeWidth={2} />
+                    {savingSection === activeTab ? "SAVING..." : SAVE_LABELS[activeTab]}
                   </button>
-                  <button
-                    type="button"
-                    className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] transition cursor-pointer shrink-0"
-                    onClick={() => moveTab(1)}
-                    aria-label="Next step"
-                  >
-                    <ArrowRight size={20} strokeWidth={2} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="w-[44px] h-[44px] rounded-full bg-[#74d4f0] text-black flex items-center justify-center hover:bg-[#60caf0] transition cursor-pointer shrink-0"
-                    onClick={() => moveTab(-1)}
-                    aria-label="Previous step"
-                  >
-                    <ArrowLeft size={20} strokeWidth={2} />
-                  </button>
-                  {isLeader ? (
-                    <button
-                      type="button"
-                      onClick={handleSaveSubmission}
-                      disabled={isSaving}
-                      className="h-[44px] px-8 rounded-full bg-[#74d4f0] hover:bg-[#60caf0] text-black font-light text-sm sm:text-base uppercase tracking-wider transition cursor-pointer flex items-center justify-center shrink-0 disabled:opacity-50"
-                    >
-                      {isSaving ? "SUBMITTING..." : "SUBMIT"}
-                    </button>
-                  ) : (
-                    <div
-                      className="h-[44px] px-6 rounded-full bg-neutral-900 border border-neutral-700 text-[#9a9898] font-light text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center shrink-0 cursor-not-allowed select-none"
-                      title="Only the Team Leader can submit or update project reviews"
-                    >
-                      Leader Submits
-                    </div>
-                  )}
-                </>
-              )}
+                )}
+              </div>
             </div>
           </section>
         </div>
@@ -1122,38 +1341,7 @@ export default function DashboardShell({
                 // VINHACK LIVE
               </div>
 
-              <div className="flex items-center justify-around w-full">
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl lg:text-[55px] font-light text-white tabular-nums leading-none">
-                    {mounted ? String(timeLeft.hours).padStart(2, "0") : "77"}
-                  </span>
-                  <span className="text-xs sm:text-base lg:text-[24px] text-[#9a9898] uppercase tracking-widest mt-2 font-light">
-                    HOURS
-                  </span>
-                </div>
-
-                <span className="text-3xl sm:text-5xl text-white font-light mb-4">:</span>
-
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl lg:text-[55px] font-light text-white tabular-nums leading-none">
-                    {mounted ? String(timeLeft.minutes).padStart(2, "0") : "22"}
-                  </span>
-                  <span className="text-xs sm:text-base lg:text-[24px] text-[#9a9898] uppercase tracking-widest mt-2 font-light">
-                    MINS
-                  </span>
-                </div>
-
-                <span className="text-3xl sm:text-5xl text-white font-light mb-4">:</span>
-
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl lg:text-[55px] font-light text-white tabular-nums leading-none">
-                    {mounted ? String(timeLeft.seconds).padStart(2, "0") : "59"}
-                  </span>
-                  <span className="text-xs sm:text-base lg:text-[24px] text-[#9a9898] uppercase tracking-widest mt-2 font-light">
-                    SECS
-                  </span>
-                </div>
-              </div>
+              <LiveCountdown />
             </section>
           </div>
         </div>

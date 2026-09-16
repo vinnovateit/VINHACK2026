@@ -50,6 +50,8 @@ export default function OnboardingWizard({
   const [createdTeamCode, setCreatedTeamCode] = useState<string>(
     initialParticipant?.team?.code ?? ""
   );
+  // Server signature for the previewed code; createTeamAction only keeps a code the server issued.
+  const [createdTeamCodeToken, setCreatedTeamCodeToken] = useState<string>("");
   const [createdTeamId, setCreatedTeamId] = useState<string | null>(
     initialParticipant?.teamId ?? null
   );
@@ -86,6 +88,7 @@ export default function OnboardingWizard({
         const res = await prepareTeamCodeAction();
         if (res.success) {
           setCreatedTeamCode(res.teamCode);
+          setCreatedTeamCodeToken(res.codeToken);
         }
       } catch (err) {
         console.error("Failed to prepare team code:", err);
@@ -103,7 +106,7 @@ export default function OnboardingWizard({
   const handleCreateTeamContinue = async (teamName: string) => {
     setIsLoading(true);
     try {
-      const res = await createTeamAction(teamName, createdTeamCode);
+      const res = await createTeamAction(teamName, createdTeamCode, createdTeamCodeToken);
       if (res && !res.success) {
         setIsLoading(false);
         return { success: false, error: res.error || "Failed to create team. Please try another name." };

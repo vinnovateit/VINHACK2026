@@ -1,9 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
-import { ObjectId } from "mongodb";
-import { cleanText, FIELD_LIMITS, isValidHttpUrl, isValidTrack } from "@/lib/validation";
+import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MIN_SIZE } from "@/lib/mongo";
+import { toObjectId } from "@/lib/ids";
+import { assignNewTeamCode } from "@/lib/teams";
+import {
+  cleanText,
+  FIELD_LIMITS,
+  isValidHttpUrl,
+  isValidProgressStatus,
+  isValidProjectType,
+  isValidTeamConfidence,
+  isValidTrack,
+} from "@/lib/validation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
 import {
   deleteTeam,
@@ -13,59 +22,109 @@ import {
   TeamMembershipError,
 } from "@/lib/team-membership";
 
-export interface SubmissionPayload {
-  teamId: string;
-  track?: string;
-  projectTitle?: string;
-  projectDescription?: string;
-  githubLink?: string;
-  figmaLink?: string;
-  deckLink?: string;
-  otherLinks?: string;
-  progressNote?: string;
-}
+export type SubmissionSection = "details" | "links" | "progress";
 
-function toObjectId(id: string): any {
-  try {
-    return new ObjectId(id);
-  } catch {
-    return id;
+export type SubmissionSectionPayload =
+  | {
+      section: "details";
+      track?: string;
+      projectType?: string;
+      projectTitle?: string;
+      projectDescription?: string;
+    }
+  | {
+      section: "links";
+      githubLink?: string;
+      figmaLink?: string;
+      deckLink?: string;
+      otherLinks?: string;
+    }
+  | {
+      section: "progress";
+      progressStatus?: string;
+      teamConfidence?: string;
+      progressNote?: string;
+    };
+
+const SECTION_SAVED_MESSAGES: Record<SubmissionSection, string> = {
+  details: "Project details saved.",
+  links: "Links & assets saved.",
+  progress: "Progress update submitted.",
+};
+
+// Validates one section and returns only the submission fields that section owns, so saving one
+// section never overwrites another.
+function buildSectionFields(
+  payload: SubmissionSectionPayload
+): { fields: Record<string, unknown>; track?: string } | { error: string } {
+  switch (payload?.section) {
+    case "details": {
+      if (!isValidTrack(payload.track)) {
+        return { error: "Please choose one of the listed tracks." };
+      }
+      if (!isValidProjectType(payload.projectType)) {
+        return { error: "Please choose whether your project is Software or Hardware." };
+      }
+      return {
+        track: payload.track,
+        fields: {
+          title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
+          description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
+          projectType: payload.projectType,
+        },
+      };
+    }
+    case "links": {
+      const links = {
+        githubLink: cleanText(payload.githubLink, FIELD_LIMITS.link),
+        figmaLink: cleanText(payload.figmaLink, FIELD_LIMITS.link),
+        deckLink: cleanText(payload.deckLink, FIELD_LIMITS.link),
+      };
+      for (const [field, value] of Object.entries(links)) {
+        if (value && !isValidHttpUrl(value)) {
+          return { error: `${field.replace("Link", "")} link must be a valid http(s) URL.` };
+        }
+      }
+      return { fields: { ...links, otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks) } };
+    }
+    case "progress": {
+      if (!isValidProgressStatus(payload.progressStatus) || !isValidTeamConfidence(payload.teamConfidence)) {
+        return { error: "Please choose your current status and team confidence." };
+      }
+      return {
+        fields: {
+          progressStatus: payload.progressStatus,
+          teamConfidence: payload.teamConfidence,
+          progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
+        },
+      };
+    }
+    default:
+      return { error: "Unknown submission section." };
   }
 }
 
-export async function saveSubmissionAction(payload: SubmissionPayload) {
+export async function saveSubmissionSectionAction(teamId: string, payload: SubmissionSectionPayload) {
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant || !participant.teamId) {
       return { success: false, message: "Unauthorized. Please sign in to submit." };
     }
 
-    if (participant.teamId !== payload.teamId) {
+    if (participant.teamId !== teamId) {
       return { success: false, message: "Unauthorized team action." };
     }
 
-    const { teamId, track } = payload;
-
-    if (track !== undefined && track !== "" && !isValidTrack(track)) {
-      return { success: false, message: "Please choose one of the listed tracks." };
+    const built = buildSectionFields(payload);
+    if ("error" in built) {
+      return { success: false, message: built.error };
     }
 
-    const links = {
-      githubLink: cleanText(payload.githubLink, FIELD_LIMITS.link),
-      figmaLink: cleanText(payload.figmaLink, FIELD_LIMITS.link),
-      deckLink: cleanText(payload.deckLink, FIELD_LIMITS.link),
-    };
-    for (const [field, value] of Object.entries(links)) {
-      if (value && !isValidHttpUrl(value)) {
-        return { success: false, message: `${field.replace("Link", "")} link must be a valid http(s) URL.` };
-      }
-    }
-
-    const now = new Date();
     const db = await getMongoDb();
     if (!db) return { success: false, message: "Database unavailable." };
 
     const teamOid = toObjectId(teamId);
+    if (!teamOid) return { success: false, message: "Team not found." };
 
     const teamDoc = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
     if (!teamDoc) return { success: false, message: "Team not found." };
@@ -85,126 +144,25 @@ export async function saveSubmissionAction(payload: SubmissionPayload) {
       };
     }
 
+    const now = new Date();
     await db.collection("submissions").updateOne(
       { teamId: teamOid },
       {
-        $set: {
-          title: cleanText(payload.projectTitle, FIELD_LIMITS.projectTitle),
-          description: cleanText(payload.projectDescription, FIELD_LIMITS.projectDescription),
-          ...links,
-          otherLinks: cleanText(payload.otherLinks, FIELD_LIMITS.otherLinks),
-          progressNote: cleanText(payload.progressNote, FIELD_LIMITS.progressNote),
-          updatedAt: now,
-        },
+        $set: { ...built.fields, [`${payload.section}UpdatedAt`]: now, updatedAt: now },
         $setOnInsert: { teamId: teamOid, submittedAt: now },
       },
       { upsert: true }
     );
 
-    if (track) {
-      await db.collection("teams").updateOne(
-        { _id: teamOid },
-        { $set: { track, updatedAt: now } }
-      );
+    if (built.track) {
+      await db.collection("teams").updateOne({ _id: teamOid }, { $set: { track: built.track, updatedAt: now } });
     }
 
     revalidatePath("/dashboard");
-    return { success: true, message: "Project submission saved successfully!" };
+    return { success: true, message: SECTION_SAVED_MESSAGES[payload.section], savedAt: now.toISOString() };
   } catch (error) {
-    console.error("[saveSubmissionAction] Unexpected error:", error);
+    console.error("[saveSubmissionSectionAction] Unexpected error:", error);
     return { success: false, message: "An unexpected error occurred while saving." };
-  }
-}
-
-
-export async function fetchFullTeam(teamId: string) {
-  try {
-    const db = await getMongoDb();
-    if (!db) return null;
-
-    const teamOid = toObjectId(teamId);
-    const teamDoc = await db.collection("teams").findOne({
-      $or: [{ _id: teamOid }, { id: teamId }],
-    });
-
-    if (!teamDoc) return null;
-
-    const [vitList, extList, subDoc] = await Promise.all([
-      db.collection("vit_students").find({
-        $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
-      }).toArray(),
-      db.collection("external_students").find({
-        $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
-      }).toArray(),
-      db.collection("submissions").findOne({
-        $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
-      }),
-    ]);
-
-    const members = [
-      ...vitList.map((m: any) => ({
-        id: m._id.toString(),
-        name: m.name || "VIT Member",
-        email: m.email || "",
-        regNo: m.regNo || "",
-        type: "vit" as const,
-        userId: m.userId ? String(m.userId) : null,
-        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
-      })),
-      ...extList.map((m: any) => ({
-        id: m._id.toString(),
-        name: m.name || "External Member",
-        email: m.email || "",
-        regNo: m.regNo || "",
-        type: "external" as const,
-        userId: m.userId ? String(m.userId) : null,
-        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
-      })),
-    ];
-
-    let leaderId = teamDoc.leaderId ? String(teamDoc.leaderId) : null;
-    if (members.length > 0 && !members.some((m) => m.isLeader)) {
-      // Legacy teams can point at a users._id no member is linked to (or at nobody); promote the earliest joiner.
-      const earliest = [...vitList, ...extList].sort(
-        (a: any, b: any) =>
-          (a.joinedAt ? new Date(a.joinedAt).getTime() : Number.MAX_SAFE_INTEGER) -
-          (b.joinedAt ? new Date(b.joinedAt).getTime() : Number.MAX_SAFE_INTEGER)
-      )[0];
-      await db.collection("teams").updateOne(
-        { _id: teamDoc._id, leaderId: teamDoc.leaderId ?? null },
-        { $set: { leaderId: earliest._id, updatedAt: new Date() } }
-      );
-      leaderId = earliest._id.toString();
-      for (const m of members) m.isLeader = m.id === leaderId;
-    }
-
-    return {
-      id: teamDoc._id.toString(),
-      name: teamDoc.name || "My Team",
-      code: teamDoc.code || "VH26-000",
-      capacity: Math.min(teamDoc.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE),
-      minSize: TEAM_MIN_SIZE,
-      teamType: teamDoc.teamType || "VIT",
-      track: teamDoc.track || null,
-      leaderId,
-      leaderName: members.find((m) => m.isLeader)?.name || null,
-      members,
-      submission: subDoc
-        ? {
-            title: subDoc.title || "",
-            description: subDoc.description || "",
-            githubLink: subDoc.githubLink || "",
-            figmaLink: subDoc.figmaLink || "",
-            deckLink: subDoc.deckLink || "",
-            otherLinks: subDoc.otherLinks || "",
-            progressNote: subDoc.progressNote || "",
-            submittedAt: subDoc.submittedAt ? new Date(subDoc.submittedAt).toISOString() : null,
-          }
-        : null,
-    };
-  } catch (error) {
-    console.error("[fetchFullTeam] Error fetching team:", error);
-    return null;
   }
 }
 
@@ -309,7 +267,9 @@ export async function renameTeamAction(teamId: string, teamName: string) {
     const db = await getMongoDb();
     if (!db) return { success: false, error: "Database unavailable." };
 
-    const team = await db.collection("teams").findOne({ _id: toObjectId(teamId) }, { projection: { leaderId: 1 } });
+    const teamOid = toObjectId(teamId);
+    if (!teamOid) return { success: false, error: "Team not found." };
+    const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
     if (!team) return { success: false, error: "Team not found." };
     if (!isTeamLeader(team.leaderId, participant)) {
       return { success: false, error: "Only the leader can rename the team." };
@@ -323,5 +283,35 @@ export async function renameTeamAction(teamId: string, teamName: string) {
   } catch (err) {
     console.error("[renameTeamAction] Error:", err);
     return { success: false, error: "Failed to rename team." };
+  }
+}
+
+/** Leader-only: replace the team's join code. The old code and QR stop working immediately. */
+export async function regenerateTeamCodeAction() {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const db = await getMongoDb();
+    if (!db) return { success: false, error: "Database unavailable." };
+
+    const teamOid = toObjectId(participant.teamId);
+    if (!teamOid) return { success: false, error: "Team not found." };
+    const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1, code: 1 } });
+    if (!team) return { success: false, error: "Team not found." };
+    if (!isTeamLeader(team.leaderId, participant)) {
+      return { success: false, error: "Only the team leader can change the team code." };
+    }
+
+    const code = await assignNewTeamCode(db, teamOid, team.code);
+    if (!code) return { success: false, error: "Could not generate a new code. Please try again." };
+
+    revalidatePath("/dashboard");
+    return { success: true, code };
+  } catch (err) {
+    console.error("[regenerateTeamCodeAction] Error:", err);
+    return { success: false, error: "Failed to change the team code." };
   }
 }
