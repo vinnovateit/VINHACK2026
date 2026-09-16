@@ -16,10 +16,8 @@ const EVENT_PHOTOS = [
   "/about_us/1.webp",
   "/about_us/2.webp",
   "/about_us/9.webp",
-  "/about_us/gowx2f74mufdtcrqn7ec.webp",
-  "/about_us/ifdydabdclosmnjkoost.webp",
-  "/about_us/l14tfnskth0qqdlngimp.webp",
-  "/about_us/tva3o82zu1clyssjrif2.webp",
+  "/about_us/myuchdw8z4pxshqbyddz.webp",
+  "/about_us/ywcmb03aeozom8tmqtbs.webp",
 ];
 
 const SPROCKET_COUNT = 65;
