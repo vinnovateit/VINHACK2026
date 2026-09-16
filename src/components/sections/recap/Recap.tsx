@@ -9,10 +9,16 @@ import PixelSmiley from "./PixelSmiley";
 import { playStampSlam, playPhotoClick, playSmileyChirp } from "@/components/motion/film";
 
 const EVENT_PHOTOS = [
-  "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
-  "/about_us/67637ab629928adcbde8469183aac1877a08026b.webp",
-  "/about_us/924203fb63dc0f4fd3cb3bfe64c9230caf80a54e.webp",
-  "/about_us/94fc2ef86e7f542a782c6ecc5761e7547108bf56.webp",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/D5E947B5-FACB-488A-8F50-C690A060A733%20(1).jpg",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/Dr.SB20250923_104919.SB%20pixel.PHOTOSPHERE%20(1).jpg",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_0663.HEIC",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_0798.HEIC",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_0805.HEIC",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_20250922_100714.jpg",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_6077.HEIC",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_7238.HEIC",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/IMG_7238.HEIC",
+  "https://pub-1ed4c6cbb7a441ffaa5f4a43bb9b5862.r2.dev/WhatsApp%20Image%202026-09-16%20at%206.02.14%20PM.jpeg",
 ];
 
 const SPROCKET_COUNT = 65;
