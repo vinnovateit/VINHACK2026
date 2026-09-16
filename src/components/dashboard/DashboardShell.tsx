@@ -24,7 +24,13 @@ import {
   Send,
 } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
-import { FIELD_LIMITS, PROJECT_TYPE_OPTIONS, TRACK_OPTIONS } from "@/lib/validation";
+import {
+  FIELD_LIMITS,
+  PROGRESS_STATUS_OPTIONS,
+  PROJECT_TYPE_OPTIONS,
+  TEAM_CONFIDENCE_OPTIONS,
+  TRACK_OPTIONS,
+} from "@/lib/validation";
 
 const ZIGZAG_CLIP_PATH =
   "polygon(6px 0%, calc(100% - 6px) 0%, 100% 16.6%, calc(100% - 6px) 33.3%, 100% 50%, calc(100% - 6px) 66.6%, 100% 83.3%, calc(100% - 6px) 100%, 6px 100%, 0% 83.3%, 6px 66.6%, 0% 50%, 6px 33.3%, 0% 16.6%)";
@@ -72,6 +78,8 @@ export interface DashboardShellProps {
       figmaLink: string;
       deckLink: string;
       otherLinks: string;
+      progressStatus: string;
+      teamConfidence: string;
       progressNote: string;
       submittedAt: string | null;
     } | null;
@@ -111,8 +119,13 @@ export default function DashboardShell({
   const [figmaLink, setFigmaLink] = useState(team.submission?.figmaLink || "");
   const [deckLink, setDeckLink] = useState(team.submission?.deckLink || "");
   const [otherLinks, setOtherLinks] = useState(team.submission?.otherLinks || "");
-  const [progressStatus, setProgressStatus] = useState("In progress");
-  const [teamConfidence, setTeamConfidence] = useState("Feeling good");
+  // Members see only what was saved; the leader's form starts from the first option.
+  const [progressStatus, setProgressStatus] = useState<string>(
+    team.submission?.progressStatus || (participant.isLeader ? PROGRESS_STATUS_OPTIONS[0] : "")
+  );
+  const [teamConfidence, setTeamConfidence] = useState<string>(
+    team.submission?.teamConfidence || (participant.isLeader ? TEAM_CONFIDENCE_OPTIONS[0] : "")
+  );
   const [progressNote, setProgressNote] = useState(team.submission?.progressNote || "");
 
   // Squad Dropdown state
@@ -211,6 +224,8 @@ export default function DashboardShell({
         figmaLink: figmaLink.trim(),
         deckLink: deckLink.trim(),
         otherLinks: otherLinks.trim(),
+        progressStatus,
+        teamConfidence,
         progressNote: progressNote.trim(),
       });
 
@@ -1041,26 +1056,95 @@ export default function DashboardShell({
                 </div>
               )}
 
-              {/* Step 3: Full-width update input */}
+              {/* Step 3: Status, confidence and update note */}
               {activeTab === "progress" && (
-                <div className="flex flex-col gap-1.5 w-full">
-                  <label
-                    htmlFor="progress-note"
-                    className="text-sm sm:text-base lg:text-[18px] text-white font-light"
-                  >
-                    What has changed since the last review ?<span className="text-[#fa1a1d] ml-0.5">*</span>
-                  </label>
-                  <input
-                    id="progress-note"
-                    type="text"
-                    value={progressNote}
-                    onChange={(e) => isLeader && setProgressNote(e.target.value)}
-                    readOnly={!isLeader}
-                    placeholder={isLeader ? "" : (progressNote || "No updates submitted yet")}
-                    className={`bg-black border border-[#666060] text-white px-3.5 h-[51px] text-sm sm:text-base w-full focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
-                      isLeader ? "focus:border-[#74d4f0]" : "cursor-default opacity-85"
-                    }`}
-                  />
+                <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                  <p className="text-xs sm:text-sm lg:text-[14px] font-light text-[#9a9898]">
+                    Give mentors a quick snapshot of your progress.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {(
+                      [
+                        {
+                          id: "progress-status",
+                          label: "Current status",
+                          value: progressStatus,
+                          setValue: setProgressStatus,
+                          options: PROGRESS_STATUS_OPTIONS,
+                        },
+                        {
+                          id: "team-confidence",
+                          label: "Team confidence",
+                          value: teamConfidence,
+                          setValue: setTeamConfidence,
+                          options: TEAM_CONFIDENCE_OPTIONS,
+                        },
+                      ] as const
+                    ).map((field) => (
+                      <div key={field.id} className="flex flex-col gap-1.5">
+                        <label
+                          htmlFor={field.id}
+                          className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                        >
+                          {field.label}
+                        </label>
+                        <div className="relative w-full">
+                          <select
+                            id={field.id}
+                            value={field.value}
+                            onChange={(e) => isLeader && field.setValue(e.target.value)}
+                            disabled={!isLeader}
+                            className={`bg-black border border-[#666060] text-white px-3.5 pr-10 h-[51px] text-sm sm:text-base w-full appearance-none transition font-['Rotonto',sans-serif] font-light ${
+                              isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
+                            }`}
+                          >
+                            {!field.value && (
+                              <option value="" disabled>
+                                Not submitted yet
+                              </option>
+                            )}
+                            {field.options.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          {isLeader && (
+                            <ChevronDown
+                              size={18}
+                              className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="progress-note"
+                      className="text-sm sm:text-base lg:text-[18px] text-white font-light"
+                    >
+                      What has changed since the last review?
+                    </label>
+                    <textarea
+                      id="progress-note"
+                      rows={3}
+                      maxLength={FIELD_LIMITS.progressNote}
+                      value={progressNote}
+                      onChange={(e) => isLeader && setProgressNote(e.target.value)}
+                      readOnly={!isLeader}
+                      placeholder={
+                        isLeader
+                          ? "What did you build or learn? Where are you stuck?"
+                          : (progressNote || "No updates submitted yet")
+                      }
+                      className={`bg-black border border-[#666060] text-white px-3.5 py-3 text-sm sm:text-base w-full min-h-[96px] focus:outline-none transition font-['Rotonto',sans-serif] font-light ${
+                        isLeader ? "resize-y focus:border-[#74d4f0]" : "resize-none cursor-default opacity-85"
+                      }`}
+                    />
+                  </div>
                 </div>
               )}
             </div>

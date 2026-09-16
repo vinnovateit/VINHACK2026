@@ -23,6 +23,22 @@ export function isValidProjectType(value: unknown): value is ProjectType {
   return typeof value === "string" && (PROJECT_TYPE_OPTIONS as readonly string[]).includes(value);
 }
 
+export const PROGRESS_STATUS_OPTIONS = ["In progress", "Need mentor feedback", "Ready for review"] as const;
+
+export const TEAM_CONFIDENCE_OPTIONS = ["Feeling good", "Could use a nudge", "Blocked"] as const;
+
+function isOneOf(options: readonly string[], value: unknown): value is string {
+  return typeof value === "string" && options.includes(value);
+}
+
+export function isValidProgressStatus(value: unknown): value is (typeof PROGRESS_STATUS_OPTIONS)[number] {
+  return isOneOf(PROGRESS_STATUS_OPTIONS, value);
+}
+
+export function isValidTeamConfidence(value: unknown): value is (typeof TEAM_CONFIDENCE_OPTIONS)[number] {
+  return isOneOf(TEAM_CONFIDENCE_OPTIONS, value);
+}
+
 export const FIELD_LIMITS = {
   name: 100,
   regNo: 20,
