@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId, type Db } from "mongodb";
 import { after } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { attachDatabasePool } from "@vercel/functions";
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -29,8 +30,9 @@ const CLIENT_OPTIONS = {
 const isWorkerd =
   typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
 
-// Node (next dev / scripts): one client for the whole process.
-let cachedClient: MongoClient | null = null;
+// Node (Vercel, next dev): one client per process, reused across requests. Kept on globalThis so
+// dev hot reloads don't open a new pool each time.
+const globalForMongo = globalThis as typeof globalThis & { __mongoClient?: MongoClient };
 
 // Workers: sockets opened while handling one request cannot be used by another
 // ("Cannot perform I/O on behalf of a different request"), so a module-level
@@ -74,8 +76,12 @@ export async function getMongoClient(): Promise<MongoClient | null> {
 
   try {
     if (!isWorkerd) {
-      cachedClient ??= new MongoClient(uri, CLIENT_OPTIONS);
-      return cachedClient;
+      if (!globalForMongo.__mongoClient) {
+        globalForMongo.__mongoClient = new MongoClient(uri, CLIENT_OPTIONS);
+        // Fluid compute: release idle pool connections before the function instance suspends.
+        if (process.env.VERCEL) attachDatabasePool(globalForMongo.__mongoClient);
+      }
+      return globalForMongo.__mongoClient;
     }
 
     const { ctx } = getCloudflareContext();
