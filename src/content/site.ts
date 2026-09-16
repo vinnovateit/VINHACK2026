@@ -134,16 +134,87 @@ export const NAV = {
    */
   badge: { closed: "PLAY ALONG", open: "CLOSE" },
   items: [
-    { name: "HOME", target: "VinHack", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 1 },
-    { name: "ABOUT", target: "Who Are We", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 0.86 },
-    { name: "PROJECTS", target: "Projects", spine: "#db9eef", cap: "#8b5f9c", ink: "#131b24", book: 1.1, flag: "projects" },
-    { name: "TRACKS", target: "Tracks", spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 1.16 },
-    { name: "SPONSORS", target: "Sponsors", spine: "#8f86e8", cap: "#56508f", ink: "#131b24", book: 0.88 },
-    { name: "TIMELINE", target: "Timeline", spine: "#ee1b1e", cap: "#7d1113", ink: "#131b24", book: 1.02 },
-    { name: "RULES", target: "Rules", spine: "#f5a8e8", cap: "#a06a97", ink: "#1c563c", book: 0.96 },
-    { name: "GUIDELINES", target: "Guidelines", spine: "#5cc4e0", cap: "#2f6b7d", ink: "#0f172a", book: 1.22 },
-    { name: "FAQS", target: "Frequently Asked Questions", spine: "#ee1b1e", cap: "#7d1113", ink: "#ffffff", book: 1.05 },
-    { name: "LOGIN", href: "/login", spine: "#b9e06a", cap: "#6d8a44", ink: "#1c563c", book: 0.94 },
+    {
+      name: "HOME",
+      target: "VinHack",
+      spine: "#8f86e8",
+      cap: "#56508f",
+      ink: "#131b24",
+      book: 1,
+    },
+    {
+      name: "ABOUT",
+      target: "Who Are We",
+      spine: "#5cc4e0",
+      cap: "#2f6b7d",
+      ink: "#0f172a",
+      book: 0.86,
+    },
+    {
+      name: "PROJECTS",
+      target: "Projects",
+      spine: "#db9eef",
+      cap: "#8b5f9c",
+      ink: "#131b24",
+      book: 1.1,
+      flag: "projects",
+    },
+    {
+      name: "TRACKS",
+      target: "Tracks",
+      spine: "#b9e06a",
+      cap: "#6d8a44",
+      ink: "#1c563c",
+      book: 1.16,
+    },
+    {
+      name: "SPONSORS",
+      target: "Sponsors",
+      spine: "#8f86e8",
+      cap: "#56508f",
+      ink: "#131b24",
+      book: 0.88,
+    },
+    {
+      name: "TIMELINE",
+      target: "Timeline",
+      spine: "#ee1b1e",
+      cap: "#7d1113",
+      ink: "#131b24",
+      book: 1.02,
+    },
+    {
+      name: "RULES",
+      target: "Rules",
+      spine: "#f5a8e8",
+      cap: "#a06a97",
+      ink: "#1c563c",
+      book: 0.96,
+    },
+    {
+      name: "GUIDELINES",
+      target: "Guidelines",
+      spine: "#5cc4e0",
+      cap: "#2f6b7d",
+      ink: "#0f172a",
+      book: 1.22,
+    },
+    {
+      name: "FAQS",
+      target: "Frequently Asked Questions",
+      spine: "#ee1b1e",
+      cap: "#7d1113",
+      ink: "#ffffff",
+      book: 1.05,
+    },
+    {
+      name: "LOGIN",
+      href: "/login",
+      spine: "#b9e06a",
+      cap: "#6d8a44",
+      ink: "#1c563c",
+      book: 0.94,
+    },
   ] satisfies readonly NavItem[],
 } as const;
 
@@ -304,7 +375,8 @@ export const MEMORIES = {
    *  offering a button that would not do it. */
   tag: "SHARE YOUR MEMORY: @VINNOVATEIT #VINHACK26",
   hint: "Drag anything to move it — the line too. The corner handle turns and resizes, × takes a sticker off.",
-  empty: "Tap a sticker to put it on the card. Drag the line anywhere you like.",
+  empty:
+    "Tap a sticker to put it on the card. Drag the line anywhere you like.",
   /** Names the movable line, for a keyboard and a screen reader. */
   textLabel: "The message. Drag to move it, corner handle to turn and resize.",
 } as const;
@@ -537,7 +609,12 @@ export const SPONSORS = {
 /** One line of the schedule: what is happening, and when. */
 /** `isReview` marks a checkpoint: the receipt sets it bold and fences the run
  *  of them off with a rule above and below. */
-export type ScheduleRow = { kind: "row"; label: string; time: string; isReview?: boolean };
+export type ScheduleRow = {
+  kind: "row";
+  label: string;
+  time: string;
+  isReview?: boolean;
+};
 
 /** A review checkpoint, which spans the full width rather than sitting in the
  *  label/time columns. */
@@ -606,7 +683,7 @@ export const TIMELINE = {
 export const RULES = {
   heading: "RULES",
   items: [
-    "Teams must have 2–4 participants (no solo participation, no multiple teams).",
+    "Teams must have 3-5 participants (no solo participation, no multiple teams).",
     "Hackathon runs for 30 hours continuously.",
     "All work must be done during the event; only open-source tools/libraries allowed; any AI tools can be used.",
     "Any tech stack may be used; projects must align with at least one track.",
@@ -792,7 +869,7 @@ export const DISCORD = {
 export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
-    marquee:
+  marquee:
     " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক • વિનહેક • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ਵਿਨਹੈਕ • وِن ہیک • ବିନହ୍ୟାକ • विन्हॅक • ভিনহ্যাক • ବିନ୍‌ହ୍ୟାକ • ᱵᱤᱱᱦᱮᱠ • ",
   /**
    * The five folder tabs, in the order they stack — each a coloured band with
@@ -801,11 +878,36 @@ export const FOOTER = {
    * than links and none carries a URL, so neither layout links them.
    */
   tabs: [
-    { name: "EMAIL", band: "#74d4f0", color: "#2849cb", href: "mailto:vinnovateit@gmail.com" },
-    { name: "GITHUB", band: "#2849cb", color: "#74d4f0", href: "https://github.com/vinnovateit" },
-    { name: "INSTAGRAM", band: "#bfea88", color: "#1c563c", href: "https://instagram.com/vinnovateit" },
-    { name: "LINKEDIN", band: "#1c563c", color: "#bfea88", href: "https://www.linkedin.com/company/v-innovate-it" },
-    { name: "MEDIUM", band: "#db9eef", color: "#fa1a1d", href: "https://medium.com/@vinnovateit" },
+    {
+      name: "EMAIL",
+      band: "#74d4f0",
+      color: "#2849cb",
+      href: "mailto:vinnovateit@gmail.com",
+    },
+    {
+      name: "GITHUB",
+      band: "#2849cb",
+      color: "#74d4f0",
+      href: "https://github.com/vinnovateit",
+    },
+    {
+      name: "INSTAGRAM",
+      band: "#bfea88",
+      color: "#1c563c",
+      href: "https://instagram.com/vinnovateit",
+    },
+    {
+      name: "LINKEDIN",
+      band: "#1c563c",
+      color: "#bfea88",
+      href: "https://www.linkedin.com/company/v-innovate-it",
+    },
+    {
+      name: "MEDIUM",
+      band: "#db9eef",
+      color: "#fa1a1d",
+      href: "https://medium.com/@vinnovateit",
+    },
   ],
   /** The panel the tabs are filed into, which the closing credits sit on. */
   base: "#fa1a1d",
