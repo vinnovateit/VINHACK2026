@@ -775,8 +775,8 @@ export const SNEAK_PEEK = {
 export const FOOTER = {
   /** The wordmark in nine scripts, one marquee cycle. The trailing separator is
    *  what makes it join up when it repeats. */
-  marquee:
-    " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক • વિનહેક • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ਪੰਜਾਬੀ • وِن ہیک • ",
+    marquee:
+    " VINHACK • வின்ஹேக் • विनहैक • ভিনহ্যাক • વિનહેક • విన్‌హ్యాక్ • ವಿನ್‌ಹ್ಯಾಕ್ • വിൻഹാക്ക് • ਵਿਨਹੈਕ • وِن ہیک • ବିନହ୍ୟାକ • विन्हॅक • ভিনহ্যাক • ବିନ୍‌ହ୍ୟାକ • ᱵᱤᱱᱦᱮᱠ • ",
   /**
    * The five folder tabs, in the order they stack — each a coloured band with
    * its label in a contrasting colour off the same palette, which is the pair
