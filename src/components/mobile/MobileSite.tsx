@@ -668,28 +668,10 @@ function MobileTracks() {
       <div className="border-t border-[#fa1a1d]">
         {TRACKS.lines.map((line, i) => {
           const Tag = i === 1 ? "h2" : "p";
-<<<<<<< Updated upstream
           return (
             <div
               key={line}
               className="flex items-center gap-3 border-b border-[#fa1a1d] py-4"
-=======
-          const isRight = i === 1;
-          const delay = `${i * 0.12}s`;
-          return (
-            <div
-              key={line}
-              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4 will-change-transform"
-              style={{
-                transform: inView
-                  ? "translateX(0)"
-                  : isRight
-                    ? "translateX(100vw)"
-                    : "translateX(-100vw)",
-                opacity: inView ? 1 : 0,
-                transition: `transform 0.85s ${iosEase} ${delay}, opacity 0.4s ${iosEase} ${delay}`,
-              }}
->>>>>>> Stashed changes
             >
               <Tag className="text-[30px] leading-[1.1] text-[#fa1a1d]">
                 {line}
