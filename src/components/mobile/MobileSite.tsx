@@ -4,9 +4,13 @@ import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
 import { motion } from "framer-motion";
 
 import CameraFeed from "@/components/CameraFeed";
+import GitArt from "@/components/hero/GitArt";
+import KeyArt from "@/components/hero/KeyArt";
+import NoteArt from "@/components/hero/NoteArt";
 import QrArt, { QR_STICKER } from "@/components/hero/QrArt";
 import ScrollCue, { SCROLL_CUE } from "@/components/hero/ScrollCue";
 import SpeakerArt from "@/components/hero/SpeakerArt";
+import WordmarkArt from "@/components/hero/WordmarkArt";
 import MobileRecap from "@/components/mobile/MobileRecap";
 import MobileWhoAreWe from "@/components/mobile/MobileWhoAreWe";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
@@ -24,11 +28,11 @@ import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
 import PassTumble from "@/components/pass/PassTumble";
 import { PASS_START } from "@/components/pass/variants";
+import SiteFooter from "@/components/sections/SiteFooter";
 import { FEATURES } from "@/content/features";
 import {
   FAQS,
   type FaqCategory,
-  FOOTER,
   GUIDELINES,
   HERO,
   PASS,
@@ -88,7 +92,7 @@ export default function MobileSite() {
       <MobileGuidelines />
       <MobileFAQs />
       <MobileAbout />
-      <MobileFooter />
+      <SiteFooter />
     </div>
   );
 }
@@ -131,6 +135,7 @@ function Placed({
   scale,
   className,
   children,
+  style,
   ...rest
 }: {
   /** Top-left on the stage, in stage px. */
@@ -146,7 +151,7 @@ function Placed({
   return (
     <div
       className={`absolute ${className ?? ""}`}
-      style={{ left: x, top: y, width: w * scale, height: h * scale }}
+      style={{ left: x, top: y, width: w * scale, height: h * scale, ...style }}
       {...rest}
     >
       <div
@@ -166,7 +171,7 @@ function Spark({ x, y, size }: { x: number; y: number; size: number }) {
   return (
     <svg
       aria-hidden
-      className="deal-in absolute [--deal-delay:1.5s]"
+      className="deal-in pointer-events-none absolute [--deal-delay:1.5s]"
       style={{ left: x, top: y, width: size, height: size }}
       viewBox="0 0 24 24"
       fill="#fcfcfc"
@@ -205,10 +210,10 @@ function MobileHero() {
               entrance landed. The outer box is dealt, the inner one is tilted. */}
           <div
             aria-hidden
-            className="deal-in absolute [--deal-delay:1.05s] [--deal-s:0.86]"
+            className="deal-in pointer-events-none absolute [--deal-delay:1.05s] [--deal-s:0.86]"
             style={{ left: 18, top: 116, width: 344, height: 200 }}
           >
-            <div className="size-full rotate-[-8deg] rounded-[50%] border border-white/30" />
+            <div className="size-full pointer-events-none rotate-[-8deg] rounded-[50%] border border-white/30" />
           </div>
           <Spark x={240} y={124} size={20} />
           <Spark x={116} y={304} size={16} />
@@ -226,20 +231,12 @@ function MobileHero() {
               behind it and the sign blooms once and fades. See `.neon-*` in
               globals.css. */}
           <h1
+            aria-label="VinHack"
             className="neon-sign absolute z-10"
-            style={{ left: 32, top: 152, width: 330, height: 115.14 }}
+            style={{ left: 32, top: 152, width: 330, height: 115.14, touchAction: "manipulation" }}
+            data-hero="wordmark"
           >
-            <img
-              alt="VinHack"
-              className="neon-fill absolute inset-0 block size-full max-w-none"
-              src="/figma/vinhack-fill.svg"
-            />
-            <img
-              alt=""
-              aria-hidden
-              className="neon-tube absolute inset-0 block size-full max-w-none"
-              src="/figma/vinhack-outline.svg"
-            />
+            <WordmarkArt fillClassName="neon-fill" outlineClassName="neon-tube" fullHitArea />
           </h1>
 
           {/* The stickers, dealt in behind the sign a beat apart — each thrown
@@ -255,37 +252,10 @@ function MobileHero() {
             w={411.659}
             h={207.988}
             scale={0.5}
-            className="deal-in z-20 [--deal-delay:1.15s] [--deal-r:-6deg] [--deal-x:-44px]"
+            className="deal-in z-20 pointer-events-none [--deal-delay:1.15s] [--deal-r:-6deg] [--deal-x:-44px]"
+            data-hero="git"
           >
-            <div className="absolute top-0 left-0 flex h-[207.988px] w-[411.659px] items-center justify-center">
-              <div className="flex-none rotate-[-7.85deg]">
-                <div className="relative h-[155.601px] w-[394.094px]">
-                  <img
-                    alt=""
-                    className="absolute inset-0 size-full max-w-none object-cover"
-                    src="/figma/image205.png"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="absolute top-[21.19px] left-[25.46px] flex h-[162.336px] w-[359.724px] items-center justify-center">
-              <div className="flex-none rotate-[-7.85deg]">
-                <div className="relative h-[115.993px] w-[347.131px]">
-                  <img
-                    alt=""
-                    className="absolute inset-0 block size-full max-w-none"
-                    src="/figma/ellipse50.svg"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="absolute top-[68.06px] left-[60.48px] flex h-[67.097px] w-[290.935px] items-center justify-center">
-              <div className="-rotate-8 flex-none">
-                <p className="relative font-rotonto text-[21.35px] whitespace-nowrap text-[#bfea88]">
-                  {HERO.commits[0]}
-                </p>
-              </div>
-            </div>
+            <GitArt />
           </Placed>
 
           {/* The speaker sticker — the page's sound switch, and a real one
@@ -315,7 +285,7 @@ function MobileHero() {
             w={QR_STICKER.width}
             h={QR_STICKER.height}
             scale={0.37}
-            className="deal-in z-20 [--deal-delay:1.35s] [--deal-x:40px] [--deal-y:26px]"
+            className="deal-in z-20 pointer-events-none [--deal-delay:1.35s] [--deal-x:40px] [--deal-y:26px]"
           >
             <div className="relative size-full overflow-clip">
               <div
@@ -330,116 +300,40 @@ function MobileHero() {
           {/* The keycap. */}
           <Placed
             x={14}
-            y={278}
+            y={312}
             w={102.721}
             h={105.868}
             scale={0.6}
             className="deal-in z-20 cursor-pointer [--deal-delay:1.45s] [--deal-r:-16deg] [--deal-x:-36px]"
             data-hero="key"
+            role="button"
+            tabIndex={0}
+            aria-label="Keycap"
+            style={{ touchAction: "manipulation" }}
           >
-            <div className="absolute top-[5.07px] left-[1.47px] flex h-[100.797px] w-[101.247px] items-center justify-center">
-              <div className="flex-none rotate-[-16.21deg]">
-                <div className="relative h-[81.18px] w-[81.84px] rounded-[15.84px] border-[1.32px] border-[#74d4f0] border-solid bg-[#2b24fc] opacity-75" />
-              </div>
-            </div>
-            <div className="absolute top-[2.48px] left-[6.52px] flex h-[85.705px] w-[85.256px] items-center justify-center" data-hero="key-cap">
-              <div className="flex-none rotate-[-16.21deg]">
-                <div className="relative h-[69.3px] w-[68.64px] rounded-[15.84px] border-[1.32px] border-[#74d4f0] border-solid bg-[#2b24fc] opacity-95" />
-              </div>
-            </div>
-            <div className="absolute top-[86.26px] left-[27.44px] flex h-[9.713px] w-[2.675px] items-center justify-center">
-              <div className="flex-none rotate-[105.4deg]">
-                <div className="relative h-0 w-[10.074px]">
-                  <div className="absolute inset-[-1.32px_0_0_0]">
-                    <img alt="" className="block size-full max-w-none" src="/figma/line20.svg" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute top-[68.86px] left-[87.61px] flex h-[6.765px] w-[7.465px] items-center justify-center">
-              <div className="-scale-y-100 flex-none rotate-[42.18deg]">
-                <div className="relative h-0 w-[10.074px]">
-                  <div className="absolute inset-[-1.32px_0_0_0]">
-                    <img alt="" className="block size-full max-w-none" src="/figma/line21.svg" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute contents" data-hero="key-cap">
-              <div className="-translate-y-1/2 absolute top-[26.5px] left-[37.39px] flex h-[32.403px] w-[14.694px] items-center justify-center">
-                <div className="flex-none rotate-[-16.21deg]">
-                  <div className="relative flex flex-col justify-center font-rotonto text-[26.4px] leading-[0] whitespace-nowrap text-[#74d4f0]">
-                    <p className="leading-[normal]">:</p>
-                  </div>
-                </div>
-              </div>
-              <div className="-translate-y-1/2 absolute top-[49.95px] left-[44.21px] flex h-[32.403px] w-[14.694px] items-center justify-center">
-                <div className="flex-none rotate-[-16.21deg]">
-                  <div className="relative flex flex-col justify-center font-rotonto text-[26.4px] leading-[0] whitespace-nowrap text-[#74d4f0]">
-                    <p className="leading-[normal]">;</p>
-                  </div>
-                </div>
-              </div>
+            <div data-hero="key-press" className="size-full">
+              <KeyArt />
             </div>
           </Placed>
 
           {/* The "Register Now" note. */}
           <Placed
-            x={8}
-            y={366}
+            x={96}
+            y={278}
             w={275.16}
             h={287.765}
             scale={0.46}
-            className="deal-in z-30 [--deal-delay:1.55s] [--deal-r:-8deg] [--deal-x:-40px]"
+            className="deal-in z-30 pointer-events-none [--deal-delay:1.55s] [--deal-r:-8deg] [--deal-x:-40px]"
+            data-hero="note"
+            style={{ touchAction: "manipulation" }}
           >
-            <div className="absolute top-[153.84px] left-[35.59px] flex h-[75.214px] w-[61.123px] items-center justify-center">
-              <div className="flex-none rotate-[-19.9deg]">
-                <div className="relative h-[64.969px] w-[41.491px]">
-                  <img
-                    alt=""
-                    className="absolute inset-0 block size-full max-w-none"
-                    src="/figma/vector30.svg"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="absolute top-0 left-[0.15px] flex h-[287.712px] w-[275.017px] items-center justify-center">
-              <div className="flex-none rotate-[-20.16deg]">
-                <div className="relative h-[229.918px] w-[208.546px]">
-                  <img
-                    alt=""
-                    className="absolute inset-0 block size-full max-w-none"
-                    src="/figma/vector31.svg"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="absolute top-[89.89px] left-[68.55px] flex h-[94.214px] w-[125.248px] items-center justify-center">
-              <div className="flex-none rotate-[13.5deg]">
-                <div className="relative font-rotonto text-[28.8px] leading-[0] whitespace-nowrap text-black">
-                  <p className="mb-0 leading-[normal]">{HERO.note[0]}</p>
-                  <p className="leading-[normal]">{HERO.note[1]}</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute top-[146.14px] left-[142.82px] flex size-[34.438px] items-center justify-center">
-              <div className="flex-none rotate-[-4.55deg]">
-                <div className="relative size-[32px] rounded-[27.2px] bg-[#ff4337]" />
-              </div>
-            </div>
-            <div className="absolute top-[148.7px] left-[149.9px] flex h-[26.333px] w-[21.899px] items-center justify-center">
-              <div className="flex-none rotate-[13.5deg]">
-                <p className="relative font-rotonto text-[19.2px] whitespace-nowrap text-black">
-                  →
-                </p>
-              </div>
-            </div>
+            <NoteArt />
           </Placed>
 
           {/* The scroll cue. */}
           <Placed
-            x={130}
-            y={330}
+            x={122}
+            y={424}
             w={SCROLL_CUE.width}
             h={SCROLL_CUE.height}
             scale={0.68}
@@ -1543,91 +1437,5 @@ function MobileFAQs() {
         </div>
       )}
     </section>
-  );
-}
-
-
-/* ------------------------------------------------------------- footer */
-
-function MobileFooter() {
-  return (
-    <footer className="pt-16 overflow-x-clip">
-      {/* The five folder tabs. The collage files them into a drawer, each band
-          overlapping the last with only its lip showing; stacked, the lip is
-          the whole tab. */}
-      <div>
-        {FOOTER.tabs.map((tab) => {
-          const isExternal = tab.href.startsWith("http");
-          return (
-            <a
-              key={tab.name}
-              href={tab.href}
-              target={isExternal ? "_blank" : undefined}
-              rel={isExternal ? "noopener noreferrer" : undefined}
-              className="group -mb-[10px] flex items-center justify-between rounded-t-[18px] px-6 pt-7 pb-6 text-[24px] last:mb-0 no-underline cursor-pointer transition-transform duration-200 active:scale-[0.99]"
-              style={{ background: tab.band, color: tab.color }}
-            >
-              <span className="relative font-rotonto inline-flex items-center">
-                <span>{tab.name}</span>
-                <span
-                  aria-hidden="true"
-                  className="absolute left-0 -bottom-1 h-[2px] w-0 bg-current transition-all duration-200 group-hover:w-full group-focus-visible:w-full"
-                />
-              </span>
-              <svg
-                aria-hidden="true"
-                className="size-6 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 17L17 7M17 7H7M17 7V17" />
-              </svg>
-            </a>
-          );
-        })}
-      </div>
-
-      <div className="pt-8 pb-10" style={{ background: FOOTER.base }}>
-        <div className="overflow-clip">
-          <div
-            className="marquee"
-            style={{ "--marquee-duration": "30s" } as CSSProperties}
-          >
-            <p dir="auto" className="scripts shrink-0 text-[44px] whitespace-nowrap text-black">
-              {FOOTER.marquee}
-            </p>
-            <p aria-hidden dir="auto" className="scripts shrink-0 text-[44px] whitespace-nowrap text-black">
-              {FOOTER.marquee}
-            </p>
-          </div>
-        </div>
-
-        <div className={`${COL} ${PAD} mt-10 flex items-center justify-center gap-[8px] text-[20px] text-black`}>
-          <span>{FOOTER.madeWith[0]}</span>
-          <span>{FOOTER.madeWith[1]}</span>
-          <img
-            alt="love"
-            className="block h-[22px] w-[25px] max-w-none"
-            src="/figma/vector.svg"
-          />
-          <span>{FOOTER.madeWith[2]}</span>
-          <span>{FOOTER.madeWith[3]}</span>
-        </div>
-
-        <div className={`${COL} ${PAD} mt-8 flex items-center gap-[6px] text-[13px] text-black`}>
-          <img
-            alt=""
-            aria-hidden
-            className="block size-[12px] max-w-none shrink-0"
-            src="/figma/vector1.svg"
-          />
-          <p>{FOOTER.copyright}</p>
-        </div>
-      </div>
-    </footer>
   );
 }

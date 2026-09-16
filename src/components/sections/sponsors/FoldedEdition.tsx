@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 
 import SponsorEdition from "./SponsorEdition";
 import SealedCover from "./SealedCover";
+import SponsorSideProps from "./SponsorSideProps";
 import { SPONSOR_HEADING } from "./copy";
 import { DESKTOP } from "@/components/motion/recipes";
 import { paperUnfold } from "@/components/motion/paper";
@@ -173,6 +174,13 @@ export default function FoldedEdition() {
       stageEl.querySelectorAll<HTMLElement>("[data-cover-dressing]")
     );
     const sheet = stageEl.querySelector<HTMLElement>("[data-sheet]");
+    const propsWrap = stageEl.querySelector<HTMLElement>("[data-props-wrap]");
+    const leftProps = Array.from(
+      stageEl.querySelectorAll<HTMLElement>("[data-prop-left]")
+    );
+    const rightProps = Array.from(
+      stageEl.querySelectorAll<HTMLElement>("[data-prop-right]")
+    );
 
     const desktop = window.matchMedia(DESKTOP);
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -184,6 +192,76 @@ export default function FoldedEdition() {
     let renderedHeight = EDITION_BLOCK_HEIGHT;
     let armed = false;
     let drawn = Number.NaN;
+    type PropItem = {
+      el: HTMLElement;
+      isLeft: boolean;
+      deltaX: number;
+      deltaY: number;
+      baseRot: number;
+      spin: number;
+      stagger: number;
+      jumpHeight: number;
+    };
+
+    const LEFT_PROP_DEFAULTS = [
+      { deltaX: 705, deltaY: 160 },
+      { deltaX: 689, deltaY: 13 },
+      { deltaX: 702, deltaY: -135 },
+      { deltaX: 701, deltaY: -305 },
+    ];
+
+    const RIGHT_PROP_DEFAULTS = [
+      { deltaX: -692, deltaY: 224 },
+      { deltaX: -705, deltaY: 98 },
+      { deltaX: -717, deltaY: -95 },
+      { deltaX: -683, deltaY: -320 },
+    ];
+
+    let propItems: PropItem[] = [];
+
+    const measureProps = () => {
+      const centerX = SHEET_W / 2; // 592
+      const centerY = SHEET_H / 2; // 379.2
+
+      const allProps = [
+        ...leftProps.map((el, i) => ({ el, isLeft: true, idx: i })),
+        ...rightProps.map((el, i) => ({ el, isLeft: false, idx: i })),
+      ];
+
+      propItems = allProps.map(({ el, isLeft, idx }) => {
+        const defaults = isLeft
+          ? LEFT_PROP_DEFAULTS[idx] || { deltaX: 700, deltaY: 0 }
+          : RIGHT_PROP_DEFAULTS[idx] || { deltaX: -700, deltaY: 0 };
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+
+        let deltaX = defaults.deltaX;
+        let deltaY = defaults.deltaY;
+
+        if (w > 0 && h > 0) {
+          const targetCenterX = el.offsetLeft + w / 2;
+          const targetCenterY = el.offsetTop + h / 2;
+          deltaX = centerX - targetCenterX;
+          deltaY = centerY - targetCenterY;
+        }
+
+        const baseRot = parseFloat(el.dataset.rotate || "0");
+        const spin = isLeft ? -16 - idx * 3 : 16 + idx * 3;
+        const stagger = idx * 0.035;
+        const jumpHeight = 52 + idx * 9;
+
+        return {
+          el,
+          isLeft,
+          deltaX,
+          deltaY,
+          baseRot,
+          spin,
+          stagger,
+          jumpHeight,
+        };
+      });
+    };
 
     const measure = () => {
       if (!desktop.matches) {
@@ -215,6 +293,8 @@ export default function FoldedEdition() {
       const containerTopDoc = window.scrollY + rect.top;
       parkStart = containerTopDoc - targetTop;
       travelPx = TRAVEL_PLATE * canvasScale;
+
+      measureProps();
     };
 
     const render = (p: number) => {
@@ -240,6 +320,58 @@ export default function FoldedEdition() {
       if (sheet) {
         const covered = Math.cos((90 * swing * Math.PI) / 180) * 100;
         sheet.style.clipPath = `inset(0% 0% 0% ${covered.toFixed(3)}%)`;
+      }
+
+      // Dynamic emergence: Props jump out from the center INSIDE the newspaper as the first page opens
+      if (propsWrap) {
+        propsWrap.style.zIndex = swing < 0.35 ? "15" : "25";
+      }
+
+      if (propItems.length === 0 && (leftProps.length > 0 || rightProps.length > 0)) {
+        measureProps();
+      }
+
+      for (const item of propItems) {
+        // Natural page opening sequence:
+        // Cover hinges on the left, so the right half of the inside sheet is uncovered first.
+        // Right props burst out as right side opens (swing ~ 0.28 to 0.70)
+        // Left props burst out as cover swings past center to left (swing ~ 0.40 to 0.82)
+        const baseStart = item.isLeft ? 0.40 : 0.26;
+        const baseEnd = item.isLeft ? 0.82 : 0.68;
+        const startSwing = baseStart + item.stagger;
+        const endSwing = baseEnd + item.stagger;
+        const rawT = stage(swing, startSwing, endSwing);
+
+        if (rawT <= 0) {
+          item.el.style.transform = `translate3d(${item.deltaX.toFixed(1)}px, ${item.deltaY.toFixed(1)}px, 0) scale(0.08) rotate(${item.baseRot}deg)`;
+          item.el.style.opacity = "0";
+          item.el.style.visibility = "hidden";
+          continue;
+        }
+
+        item.el.style.visibility = "visible";
+
+        // Overshoot spring-settle (back ease-out)
+        const t1 = rawT - 1;
+        const c = 1.25;
+        const moveProgress = 1 + (c + 1) * t1 * t1 * t1 + c * t1 * t1;
+
+        // Parabolic vertical jump arc (leaps up into the air during the jump)
+        const arc = Math.sin(rawT * Math.PI);
+        const currentJumpLift = arc * item.jumpHeight;
+
+        // Scale: pops from 0.08 up to 1.12 at mid-air, then settles to 1.0
+        const scale = (0.08 + 0.92 * Math.sqrt(rawT) + 0.12 * arc).toFixed(3);
+
+        // Opacity: rapid burst fade-in
+        const opacity = smooth(Math.min(1, rawT * 2.8)).toFixed(3);
+
+        const curX = ((1 - moveProgress) * item.deltaX).toFixed(1);
+        const curY = ((1 - moveProgress) * item.deltaY - currentJumpLift).toFixed(1);
+        const curRot = (item.baseRot + (1 - rawT) * item.spin).toFixed(2);
+
+        item.el.style.transform = `translate3d(${curX}px, ${curY}px, 0) scale(${scale}) rotate(${curRot}deg)`;
+        item.el.style.opacity = opacity;
       }
 
       // One rustle, on the way in, as the cover actually gives.
@@ -465,15 +597,23 @@ export default function FoldedEdition() {
                 >
                   <div
                     data-sheet
-                    className="absolute inset-0"
+                    className="absolute inset-0 z-10 pointer-events-auto"
                     style={{ clipPath: "inset(0% 0% 0% 100%)" }}
                   >
                     <SponsorEdition />
                   </div>
 
+                  {/* Side props emerging from INSIDE the newspaper (behind front cover data-book) */}
+                  <div
+                    data-props-wrap
+                    className="pointer-events-none absolute inset-0 z-15"
+                  >
+                    <SponsorSideProps />
+                  </div>
+
                   <div
                     data-book
-                    className="absolute inset-0"
+                    className="pointer-events-none absolute inset-0 z-20"
                     style={{ transformStyle: "preserve-3d" }}
                   >
                     <div

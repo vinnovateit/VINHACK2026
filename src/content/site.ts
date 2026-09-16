@@ -460,28 +460,34 @@ export const TRACKS = {
    */
   items: [
     {
-      title: "INNOVATE FOR IMPACT",
+      title: "INDUSTRY 6.0",
       blurb:
-        "Step into the world where ideas ignite revolutions. Dream big, solve pressing problems, and build change that outlasts the weekend.",
-      tags: ["Ideation", "New ventures", "Social good"],
+        "Power the next evolution of industry. Build solutions that bring humans and intelligent systems together through human-AI collaboration, intelligent automation, personalised learning, and next-generation workspaces.",
+      tags: ["Human-AI", "Intelligent Automation", "Workspaces"],
     },
     {
-      title: "DESIGN FOR PEOPLE",
+      title: "TRUST, SAFETY & DIGITAL SECURITY",
       blurb:
-        "Interfaces that get out of the way. Make something a stranger can pick up and understand without being taught how.",
-      tags: ["UX", "Accessibility", "Product"],
+        "Build solutions that create a safer, more secure, and trustworthy world through cybersecurity, privacy, fraud prevention, digital identity, and resilient systems.",
+      tags: ["Cybersecurity", "Privacy", "Digital Identity"],
     },
     {
-      title: "BUILD WHAT LASTS",
+      title: "CLIMATETECH & RESILIENCE",
       blurb:
-        "Ship past the demo. Systems that hold up under real load, real users, and the Monday after the hackathon ends.",
-      tags: ["Infra", "Scale", "Reliability"],
+        "Build solutions for a climate-resilient future through clean energy, resource efficiency, waste management, climate adaptation, disaster resilience, and sustainable agriculture.",
+      tags: ["Clean Energy", "Sustainability", "Climate Resilience"],
     },
     {
-      title: "MAKE IT MATTER",
+      title: "ENTERTAINMENT REIMAGINED",
       blurb:
-        "Pick a problem you would still care about untimed. The best builds here answer a question somebody actually asked.",
-      tags: ["Purpose", "Community", "Real users"],
+        "Redefine how we create, experience, and engage with entertainment through gaming, immersive experiences, digital media, creator tools, interactive storytelling, music, AR/VR, and next-generation platforms.",
+      tags: ["Gaming", "AR/VR", "Digital Media"],
+    },
+    {
+      title: "WILDCARD",
+      blurb:
+        "For ideas that don't fit the mould and solutions nobody saw coming. Think beyond conventional apps and explore AI, automation, blockchain, quantum technology, smart devices, emerging technologies, or anything else you can imagine.",
+      tags: ["Emerging Tech", "Quantum", "Wildcard"],
     },
   ],
 } as const;
@@ -525,11 +531,11 @@ export const SPONSORS = {
 /* ----------------------------------------------------------- timeline */
 
 /** One line of the schedule: what is happening, and when. */
-export type ScheduleRow = { kind: "row"; label: string; time: string };
+export type ScheduleRow = { kind: "row"; label: string; time: string; isReview?: boolean };
 
 /** A review checkpoint, which spans the full width rather than sitting in the
  *  label/time columns. */
-export type ScheduleReview = { kind: "review"; label: string };
+export type ScheduleReview = { kind: "review"; label: string; time?: string };
 
 export type ScheduleEntry = ScheduleRow | ScheduleReview;
 
@@ -540,13 +546,14 @@ export type Day = {
   entries: ScheduleEntry[];
 };
 
-const row = (label: string, time: string): ScheduleRow => ({
+const row = (label: string, time: string, isReview = false): ScheduleRow => ({
   kind: "row",
   label,
   time,
+  isReview,
 });
 
-const review = (label: string): ScheduleReview => ({ kind: "review", label });
+const review = (label: string, time = ""): ScheduleReview => ({ kind: "review", label, time });
 
 export const TIMELINE = {
   heading: "Timeline",
@@ -559,28 +566,31 @@ export const TIMELINE = {
   days: [
     {
       name: "Day 1",
-      date: "18th Sept",
+      date: "18 September",
       entries: [
-        row("Check-in", "9:00 AM"),
-        row("Speaker Session", "11:30 AM"),
-        row("Lunch Break", "1:00 PM"),
-        row("Mini Event 1", "2:00 PM"),
-        review("Review 1 @ 4:00 PM"),
+        row("Participant Reporting", "1:30 PM"),
+        row("Hackathon Begins", "2:00 PM"),
+        row("Speaker Session", "4:00 PM"),
         row("Dinner Break", "7:00 PM"),
+        row("Participants Report Back to Venue", "8:30 PM – 9:00 PM"),
+        row("Jamming Session", "12:00 AM – 1:00 AM"),
+        row("Review 1 & Team Evaluations", "3:00 AM – 5:00 AM", true),
+        row("Review 1 Results Finalised & Announced", "5:00 AM – 6:00 AM", true),
+        row("Participants may leave the venue and return for Day 2", "6:00 AM onwards"),
       ],
     },
     {
       name: "Day 2",
-      date: "19th Sept",
+      date: "19 September",
       entries: [
-        review("Review 2 @ 2:00 AM"),
-        row("Break", "6:00 AM"),
-        row("Report Back at Venue", "8:00 AM"),
-        row("Final Countdown", "10:00 AM"),
-        row("Lunch Break", "1:00 PM"),
-        review("Review 3 @ 1:30 PM"),
-        row("Final Presentation", "5:00 PM"),
-        row("Closing Ceremony", "7:00 PM"),
+        row("Participants Report Back to Venue", "8:00 AM"),
+        row("Work Sprint", "8:00 AM – 1:00 PM"),
+        row("Lunch Break", "1:00 PM – 2:00 PM"),
+        row("Review 2 Begins", "2:00 PM", true),
+        row("Review 2 & Team Evaluations", "2:00 PM – 5:30 PM", true),
+        row("Review 2 Results Announced", "5:30 PM", true),
+        row("Final Review & Evaluation", "6:00 PM – 8:00 PM", true),
+        row("VinHack 6.0 Hackathon Concludes", "8:00 PM"),
       ],
     },
   ] satisfies Day[],
@@ -647,53 +657,26 @@ export const FAQS = {
       border: "border-black/30",
       questions: [
         {
-          q: "What is VinHack 2026?",
-          a: "VinHack is a premier 36-hour hackathon organized by VinnovateIT at Vellore Institute of Technology. It brings together creative thinkers, developers, and designers to build innovative prototypes for real-world challenges.",
+          q: "What is the maximum team size?",
+          a: "Each team can have 3 to 5 members. Cross-domain and cross-expertise teams are highly encouraged.",
         },
         {
-          q: "When and where does it take place?",
-          a: "VinHack 2026 takes place on September 18th–19th, 2026, hosted live at the VIT Vellore campus with hybrid participation options for select tracks.",
+          q: "What is the theme of the hackathon?",
+          a: "The theme is utilising open-source software to build impactful solutions.",
         },
         {
-          q: "Is there any registration fee?",
-          a: "No! Registration for VinHack 2026 is completely free of cost.",
+          q: "How long is the hackathon?",
+          a: "The hackathon will run for 30 hours non-stop, including time for brainstorming, coding, design, and presentations.",
         },
         {
-          q: "Who is eligible to participate?",
-          a: "Any undergraduate or postgraduate student currently enrolled in an accredited college or university is welcome to apply.",
-        },
-      ],
-    },
-    {
-      id: "logistics",
-      index: "02",
-      title: ["NEED", "TO", "KNOWS"],
-      subtitle: "logistics and requirements",
-      color: "#74d4f0",
-      textColor: "#000000",
-      border: "border-black/30",
-      questions: [
-        {
-          q: "What should I bring to the hackathon?",
-          a: "Bring your valid student ID card, government ID, laptop, chargers, extension cords, any specialized hardware you plan to use, and personal essentials for the 36-hour duration.",
-        },
-        {
-          q: "Will food and accommodation be provided?",
-          a: "Yes! Meals, snacks, midnight refreshments, and rest areas will be provided to all verified onsite attendees throughout the 36 hours.",
-        },
-        {
-          q: "What are the project submission requirements?",
-          a: "Submissions must include a working prototype demo, a pitch deck or documentation, and a public GitHub repository with code written entirely during the event.",
-        },
-        {
-          q: "Can we use existing code or pre-built projects?",
-          a: "No. All code and designs must be created during the official 36-hour hackathon window. You are free to use open-source libraries, frameworks, APIs, and AI developer tools.",
+          q: "Where will the event be held?",
+          a: "The event will take place at Anna Auditorium, VIT Vellore. The venue will provide working spaces, charging stations, and Wi-Fi to support participants throughout the event.",
         },
       ],
     },
     {
       id: "teams",
-      index: "03",
+      index: "02",
       title: ["FIND", "YOUR", "CREW"],
       subtitle: "participation + teams",
       color: "#bfea88",
@@ -701,20 +684,59 @@ export const FAQS = {
       border: "border-black/30",
       questions: [
         {
-          q: "What is the allowed team size?",
-          a: "Teams must consist of 2 to 4 members. Solo participation is not permitted to encourage collaboration.",
+          q: "Do I need to have a project idea beforehand?",
+          a: "No. You can brainstorm and decide your idea with your team during the hackathon after the theme is announced.",
         },
         {
-          q: "Can team members be from different colleges or departments?",
-          a: "Absolutely! Cross-college, cross-department, and cross-year teams are actively encouraged.",
+          q: "Can I work on a pre-existing project?",
+          a: "No. All projects must be started from scratch at the hackathon. You may use open-source libraries, frameworks, or tools, but not pre-built projects. GitHub repositories will be checked to ensure fairness.",
         },
         {
-          q: "Can I register if I don't have a team yet?",
-          a: "Yes! You can register individually and use our official Discord server's #team-formation channel or the pre-hackathon networking mixer to find teammates.",
+          q: "What if I don't have a team?",
+          a: "Don't worry! You can use the #team-formation channel on our official Discord server to connect with other participants and form a team.",
         },
         {
-          q: "Can I be part of multiple teams?",
-          a: "No, each participant can only be a registered member of one team.",
+          q: "Are mentors available to help?",
+          a: "Yes. Core members skilled in technology and design will be available to guide you throughout the hackathon.",
+        },
+        {
+          q: "Can teams have members from different colleges?",
+          a: "Yes. Mixed-college teams are welcome, and collaboration across institutions is encouraged.",
+        },
+      ],
+    },
+    {
+      id: "logistics",
+      index: "03",
+      title: ["NEED", "TO", "KNOWS"],
+      subtitle: "logistics and requirements",
+      color: "#74d4f0",
+      textColor: "#000000",
+      border: "border-black/30",
+      questions: [
+        {
+          q: "What kind of projects are expected?",
+          a: "Projects can be software or hardware-based, aligned with the theme. They should aim to solve real-world problems and will be judged on creativity, usability, technical execution, and impact.",
+        },
+        {
+          q: "Will you provide any hardware components?",
+          a: "No. Participants must bring their own hardware components if required. Basic facilities like power and Wi-Fi will be provided.",
+        },
+        {
+          q: "What should I bring with me?",
+          a: "Laptop and charger, mobile phone and accessories, any additional hardware/sensors needed for your project, extension cords, adapters, and personal essentials.",
+        },
+        {
+          q: "Is travel reimbursement provided?",
+          a: "No. Participants must cover their own travel and accommodation costs.",
+        },
+        {
+          q: "Do I need to install any tools beforehand?",
+          a: "Not mandatory, but we recommend setting up your preferred development tools and environments beforehand to save time.",
+        },
+        {
+          q: "Is internet/Wi-Fi provided?",
+          a: "Yes. Stable Wi-Fi will be available throughout the venue. However, we recommend carrying a mobile hotspot as a backup.",
         },
       ],
     },
@@ -728,20 +750,16 @@ export const FAQS = {
       border: "border-black/30",
       questions: [
         {
-          q: "Are non-VIT students allowed to participate onsite?",
-          a: "Yes! VinHack welcomes hackers from colleges and universities across the nation. Shortlisted external teams will receive an official invitation letter for college OD/leave approval.",
+          q: "Do I need to carry my college ID card?",
+          a: "Yes. A valid college ID card is mandatory for verification at check-in. Without it, entry will not be permitted.",
         },
         {
-          q: "Will travel reimbursement or accommodation be offered?",
-          a: "Accommodation on campus is arranged for external participants during the event days. Specific travel subsidies or sponsorships will be communicated to shortlisted outstation teams.",
+          q: "Will accommodation be provided?",
+          a: "No formal accommodation is provided. However, external participants are allowed to stay overnight in the hackathon hall for the duration of the event.",
         },
         {
-          q: "What documentation is required for external entry at campus gates?",
-          a: "External participants must present their original college ID card, government-issued photo ID, and the official VinHack confirmation email/pass at the security gate.",
-        },
-        {
-          q: "Can international or remote participants join online?",
-          a: "Yes, select tracks and online review slots are available for remote participants who cannot travel onsite. Communication is coordinated through our Discord server.",
+          q: "Can I join the hack physically?",
+          a: "Yes. External participants can attend the hackathon in person. Please note that you must arrange your own travel and essentials.",
         },
       ],
     },

@@ -59,10 +59,7 @@ import gsap from "gsap";
  */
 const RUBBER = 0.42;
 const THROW_SPEED = 0.9;
-const THROW_SLACK = 72;
-/** How far a sticker travels freely in one grab before it starts pulling
- *  against the give, screen px. */
-const REACH = 200;
+const THROW_SLACK = 120;
 /** How much of the tail of the gesture the release speed is read off. */
 const SAMPLE_MS = 90;
 
@@ -76,11 +73,9 @@ type Grab = {
   /** Each box's x/y before the grab, in layout px. */
   start: { x: number; y: number }[];
   /** How far the pointer may travel before the sticker starts pulling against
-   *  the give, screen px, measured once at the grab. */
+   *  the give, screen px — the section bounds. */
   limit: Box;
-  /** How far it may travel and still be *left* there — the section, and only
-   *  the section. Past `limit` but inside this is a place a sticker may be put
-   *  down; past this is where it is put back from. */
+  /** How far it may travel and still be *left* there — the section bounds. */
   keep: Box;
   /** The tail of the gesture — position and time — for reading a release
    *  speed off. Trimmed on every move, so it never grows. */
@@ -107,6 +102,8 @@ const axis = (box: HTMLElement, name: "x" | "y") => {
   const held = parseFloat(String(gsap.getProperty(box, name)));
   return Number.isFinite(held) ? held : 0;
 };
+
+let dropZIndex = 30;
 
 /**
  * Makes one sticker draggable within `bounds`. Returns its own teardown, in the
@@ -202,15 +199,8 @@ export function draggable(
       x: event.clientX,
       y: event.clientY,
       start: boxes.map((box) => ({ x: axis(box, "x"), y: axis(box, "y") })),
-      // The give starts at whichever comes first in each direction, the
-      // section's edge or `REACH`, so the haul that throws a sticker is the
-      // same one on all four of its sides however near a corner it was drawn.
-      limit: {
-        minX: Math.max(keep.minX, -REACH),
-        maxX: Math.min(keep.maxX, REACH),
-        minY: Math.max(keep.minY, -REACH),
-        maxY: Math.min(keep.maxY, REACH),
-      },
+      // Free travel anywhere across the section.
+      limit: keep,
       keep,
       trail: [{ x: event.clientX, y: event.clientY, t: event.timeStamp }],
       at: { x: 0, y: 0 },
@@ -218,6 +208,9 @@ export function draggable(
 
     target.setPointerCapture?.(event.pointerId);
     target.style.cursor = "grabbing";
+    for (const box of boxes) {
+      box.style.zIndex = "100";
+    }
     onGrab?.();
     event.preventDefault();
   };
@@ -275,7 +268,18 @@ export function draggable(
 
     grab = null;
 
-    if (Math.hypot(vx, vy) > THROW_SPEED || slack > THROW_SLACK) {
+    // A sticker can only be thrown if it was hauled OUT past the bounds of the section.
+    // Releasing or flicking inside the bounds keeps the sticker where it was put.
+    const isPastEdge = slack > 0;
+    const isMovingOutward =
+      (at.x > limit.maxX && vx > 0) ||
+      (at.x < limit.minX && vx < 0) ||
+      (at.y > limit.maxY && vy > 0) ||
+      (at.y < limit.minY && vy < 0);
+    const isFlickedOut = isPastEdge && isMovingOutward && Math.hypot(vx, vy) > THROW_SPEED;
+    const isHauledOut = slack > THROW_SLACK;
+
+    if (isFlickedOut || isHauledOut) {
       // Thrown the way it was travelling — off the pointer's own direction
       // rather than off where it happens to be, so a flick straight down does
       // not fly sideways because the sticker started near an edge.
@@ -284,12 +288,15 @@ export function draggable(
       return;
     }
 
+    dropZIndex += 1;
+    for (const box of boxes) {
+      box.style.zIndex = String(dropZIndex);
+    }
+
     // Not thrown, but possibly hanging over the edge on the rubber. Put it
-    // back inside the bounds it is allowed to live in — the section, not
-    // `REACH`: a long carry that was pulling against the give is still a place
-    // the sticker may be left, and springing it back 40px because the visitor
-    // took it further than a short drag would be taking their placement off
-    // them. Only the section is a line it may not be left over.
+    // back inside the bounds it is allowed to live in — the section:
+    // a long carry is still a place the sticker may be left, and only
+    // the section is a line it may not be left over.
     const home = {
       x: clamp(at.x, keep.minX, keep.maxX),
       y: clamp(at.y, keep.minY, keep.maxY),
@@ -313,6 +320,7 @@ export function draggable(
     // Without this a drag on a touchscreen scrolls the page instead.
     box.style.touchAction = "none";
     box.style.userSelect = "none";
+    box.style.zIndex = "25";
     box.addEventListener("pointerdown", down);
     box.addEventListener("pointermove", move);
     box.addEventListener("pointerup", up);
@@ -328,6 +336,7 @@ export function draggable(
       box.style.cursor = "";
       box.style.touchAction = "";
       box.style.userSelect = "";
+      box.style.zIndex = "";
       // A sticker thrown off the page is gone for the life of the layout, not
       // for the life of the document: this only runs when the tree is being
       // taken down or the breakpoint has swapped it for the other one, and
