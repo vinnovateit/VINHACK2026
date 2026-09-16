@@ -224,7 +224,7 @@ export default function CreateTeamDossier({
         </div>
 
         {/* Right Column: Red Dispenser & Printed Thermal Receipt (matching Homepage Timeline ReceiptPrinter) */}
-        <div className="lg:col-span-6 flex items-start justify-center relative select-none w-full min-h-[490px] sm:min-h-[510px] lg:min-h-0 py-4 pb-16 lg:pb-4">
+        <div className="lg:col-span-6 flex items-start justify-center relative select-none w-full min-h-[460px] sm:min-h-[480px] lg:min-h-0 lg:h-[430px] pt-1 lg:pt-2 pb-16 lg:pb-0">
           {/* Red Dispenser Housing (data-node-id="343:2039") */}
           <div
             className="relative bg-[#fa1a1d] rounded-[16px] w-[310px] sm:w-[335px] md:w-[350px] h-[58px] md:h-[64px] shadow-2xl z-20"
@@ -238,7 +238,7 @@ export default function CreateTeamDossier({
 
             {/* Ticket Container: feeds emerging directly out from inside the black slot */}
             <div
-              className="absolute -translate-x-1/2 left-1/2 top-[29px] md:top-[32px] w-[240px] sm:w-[260px] md:w-[272px] h-[410px] sm:h-[430px] md:h-[450px] lg:max-h-[calc(100dvh-150px)] z-10 select-none overflow-hidden"
+              className="absolute -translate-x-1/2 left-1/2 top-[28px] md:top-[30px] w-[240px] sm:w-[260px] md:w-[272px] h-[390px] sm:h-[405px] lg:h-[395px] z-10 select-none overflow-hidden"
               data-node-id="343:2041"
             >
               {/* Authentic saw-tooth perforated receipt paper sheet (matching timeline) */}
@@ -249,7 +249,7 @@ export default function CreateTeamDossier({
               />
 
               {/* Receipt Inner Content */}
-              <div className="relative h-full flex flex-col justify-between pt-4 md:pt-5 pb-6 px-4 z-10 text-black">
+              <div className="relative h-full flex flex-col justify-between pt-3.5 pb-4 px-3.5 md:pt-4 md:pb-4.5 md:px-4 z-10 text-black">
                 <div>
                   {/* Top Logo */}
                   <div className="w-[110px] md:w-[125px] h-[32px] md:h-[36px] mx-auto relative mb-1.5">
@@ -297,15 +297,15 @@ export default function CreateTeamDossier({
                 </div>
 
                 {/* Client-Side Dynamic QR Code (0ms Server CPU) */}
-                <div className="my-1 flex justify-center">
-                  <div className="p-1.5 bg-white rounded-lg border border-neutral-300 shadow-inner flex items-center justify-center">
+                <div className="my-0.5 flex justify-center">
+                  <div className="p-1 bg-white rounded-lg border border-neutral-300 shadow-inner flex items-center justify-center">
                     <ClientQrCode
                       value={
                         typeof window !== "undefined"
                           ? `${window.location.origin}/onboarding?step=join-team&code=${teamCode}`
                           : `https://vinhack.vinnovateit.com/onboarding?step=join-team&code=${teamCode}`
                       }
-                      size={82}
+                      size={76}
                     />
                   </div>
                 </div>
