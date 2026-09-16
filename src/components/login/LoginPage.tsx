@@ -6,21 +6,43 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import KeyButton from "../onboarding/KeyButton";
 
+const CardboardBoxOpeningAnimation = dynamic(
+  () => import("./CardboardBoxOpeningAnimation"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="relative w-full max-h-[calc(100dvh-100px)] aspect-[736/824] flex items-center justify-center" />
+    ),
+  }
+);
+
 export default function LoginPage() {
+  const [mounted, setMounted] = React.useState(false);
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/onboarding" });
   };
 
+  if (!mounted) {
+    return (
+      <div className="relative w-full max-w-[1440px] mx-auto h-[100dvh] max-h-[100dvh] bg-black" />
+    );
+  }
+
   return (
-    <div className="relative w-full max-w-[1440px] mx-auto min-h-screen lg:h-[100dvh] lg:max-h-[100dvh] bg-black text-white px-6 md:px-12 py-4 md:py-6 flex flex-col justify-between overflow-y-auto lg:overflow-hidden">
-      {/* Top Bar: Brand Logo & Back to Home */}
-      <div className="flex-shrink-0 flex items-center justify-between z-20 h-12 md:h-14">
-        <Link href="/" className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative block" aria-label="VinHack Home">
+    <div className="relative w-full max-w-[1440px] mx-auto h-[100dvh] max-h-[100dvh] bg-black text-white px-6 md:px-12 py-3 md:py-4 flex flex-col justify-between overflow-hidden">
+      {/* Top Bar: Brand Logo */}
+      <div className="flex-shrink-0 flex items-center justify-between z-20 h-11 md:h-13">
+        <Link href="/" className="w-[140px] md:w-[170px] h-[38px] md:h-[48px] relative block">
           <Image
             src="/figma/logo-red.svg"
             alt="VinHack"
@@ -29,24 +51,17 @@ export default function LoginPage() {
             priority
           />
         </Link>
-
-        <Link
-          href="/"
-          className="text-neutral-400 hover:text-white font-['Rotonto',sans-serif] text-xs md:text-sm flex items-center gap-2 border border-neutral-800 rounded-full px-3.5 md:px-4 py-1.5 transition hover:border-neutral-700 bg-neutral-900/50"
-        >
-          ← Back to Home
-        </Link>
       </div>
 
       {/* Main Grid: 2 Columns */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 items-center my-auto py-6 lg:py-0">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-6 xl:gap-8 items-center my-auto">
         {/* Left Column: Heading & Google Sign-In */}
-        <div className="lg:col-span-5 flex flex-col justify-center space-y-4 sm:space-y-5 md:space-y-6 z-10">
+        <div className="lg:col-span-5 flex flex-col justify-center space-y-3 sm:space-y-4 md:space-y-5 z-10">
           <p className="font-['Rotonto',sans-serif] text-neutral-400 text-[17px] sm:text-[20px] md:text-[22px] lg:text-[24px] tracking-wide">
             Build. Collaborate. Ideate.
           </p>
 
-          <div className="font-['Rotonto',sans-serif] text-[36px] sm:text-[44px] md:text-[48px] lg:text-[52px] xl:text-[60px] 2xl:text-[64px] font-normal leading-[1.05] tracking-tight select-none">
+          <div className="font-['Rotonto',sans-serif] text-[34px] sm:text-[42px] md:text-[48px] lg:text-[50px] xl:text-[58px] 2xl:text-[64px] font-normal leading-[1.05] tracking-tight select-none">
             <p className="text-[#FC2425]">GOOD IDEAS</p>
             <p className="text-[#FC2425]">START WITH</p>
             <p>
@@ -97,7 +112,7 @@ export default function LoginPage() {
           </div>
 
           {/* Login Button with Google G Icon */}
-          <div className="pt-2 sm:pt-4">
+          <div className="pt-1 sm:pt-2">
             <KeyButton
               color="blue"
               onClick={handleGoogleSignIn}
@@ -145,24 +160,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Column: Cardboard Box with Memories Illustration */}
+        {/* Right Column: 3D Animated Cardboard Box with Props Flying In */}
         <div className="lg:col-span-7 relative h-full flex items-center justify-center select-none w-full min-h-0 overflow-visible py-2">
-          <motion.div
-            className="relative w-full max-h-[calc(100dvh-130px)] aspect-[736/824] flex items-center justify-center drop-shadow-[0_25px_45px_rgba(0,0,0,0.9)]"
-            initial={{ opacity: 0, scale: 0.94, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            whileHover={{ scale: 1.025, rotate: 0.5, transition: { duration: 0.3 } }}
-          >
-            <Image
-              src="/auth.svg"
-              alt="VinHack Memories Cardboard Box"
-              width={736}
-              height={824}
-              className="w-auto h-full max-h-[calc(100dvh-130px)] max-w-full object-contain select-none pointer-events-none"
-              priority
-            />
-          </motion.div>
+          <CardboardBoxOpeningAnimation />
         </div>
       </div>
     </div>
