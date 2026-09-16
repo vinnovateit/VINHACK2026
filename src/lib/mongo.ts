@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { attachDatabasePool } from "@vercel/functions";
 import { toObjectId } from "@/lib/ids";
+import { hostelTypeOf } from "@/content/hostels";
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -223,7 +224,7 @@ export async function getParticipantByEmail(
         }
 
         const block = vit.block || "";
-        const blockType: "MH" | "LH" = block.toUpperCase().startsWith("L") ? "LH" : "MH";
+        const blockType = hostelTypeOf(block);
 
         return {
           id: vit._id.toString(),

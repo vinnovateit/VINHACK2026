@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import KeyButton from "./KeyButton";
+import { hostelBlockOptions, isValidHostelBlock, type HostelType } from "@/content/hostels";
 
 export type StudentType = "vit" | "external";
 
@@ -69,7 +70,7 @@ export default function CheckInChecklist({
 
   // VIT specific
   const [isHosteller, setIsHosteller] = useState<boolean>(initialData?.isHosteller ?? true);
-  const [blockType, setBlockType] = useState<"MH" | "LH">(initialData?.blockType ?? "MH");
+  const [blockType, setBlockType] = useState<HostelType>(initialData?.blockType ?? "MH");
   const [address, setAddress] = useState(initialData?.address ?? "");
 
   // External specific
@@ -79,7 +80,16 @@ export default function CheckInChecklist({
   );
 
   // Shared hostel info
-  const [hostelBlock, setHostelBlock] = useState(initialData?.hostelBlock ?? "");
+  // VIT hostellers pick from the block list; a value saved before the list existed has to be re-picked.
+  const [hostelBlock, setHostelBlock] = useState(() => {
+    const saved = initialData?.hostelBlock ?? "";
+    return studentType === "vit" && !isValidHostelBlock(initialData?.blockType ?? "MH", saved) ? "" : saved;
+  });
+
+  const chooseHostelType = (type: HostelType) => {
+    setBlockType(type);
+    if (!isValidHostelBlock(type, hostelBlock)) setHostelBlock("");
+  };
   const [roomNo, setRoomNo] = useState(initialData?.roomNo ?? "");
 
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
@@ -479,7 +489,7 @@ export default function CheckInChecklist({
                               type="radio"
                               name="blockType"
                               checked={blockType === "MH"}
-                              onChange={() => setBlockType("MH")}
+                              onChange={() => chooseHostelType("MH")}
                               className="size-3 accent-[#FC2425] cursor-pointer"
                             />
                             <span className="text-xs font-medium">MH (Men&apos;s)</span>
@@ -489,7 +499,7 @@ export default function CheckInChecklist({
                               type="radio"
                               name="blockType"
                               checked={blockType === "LH"}
-                              onChange={() => setBlockType("LH")}
+                              onChange={() => chooseHostelType("LH")}
                               className="size-3 accent-[#FC2425] cursor-pointer"
                             />
                             <span className="text-xs font-medium">LH (Ladies&apos;)</span>
@@ -499,19 +509,26 @@ export default function CheckInChecklist({
                         <div className="grid grid-cols-2 gap-2 pt-0.5">
                           <div>
                             <label className="block text-[10px] text-neutral-600 mb-0.5">Hostel Block</label>
-                            <input
+                            <select
                               id="checkin-hostelBlock"
-                              type="text"
                               required
                               value={hostelBlock}
                               onChange={(e) => setHostelBlock(e.target.value)}
-                              placeholder="e.g. Q Block"
                               className={`w-full bg-transparent border-b ${
                                 attemptedSubmit && !hostelBlock.trim()
                                   ? "border-red-500 bg-red-500/10"
                                   : "border-black/60 focus:border-black"
-                              } outline-none px-1 py-0.5 text-black text-xs`}
-                            />
+                              } outline-none px-0.5 py-0.5 text-xs cursor-pointer ${hostelBlock ? "text-black" : "text-neutral-500"}`}
+                            >
+                              <option value="" disabled>
+                                Select block
+                              </option>
+                              {hostelBlockOptions(blockType).map((option) => (
+                                <option key={option.value} value={option.value} className="text-black">
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
                             {attemptedSubmit && !hostelBlock.trim() && (
                               <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
                             )}

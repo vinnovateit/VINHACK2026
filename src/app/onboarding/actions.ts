@@ -17,6 +17,7 @@ import {
   TEAM_MAX_SIZE,
 } from "@/lib/mongo";
 import { cleanOptionalNumber, cleanText, FIELD_LIMITS } from "@/lib/validation";
+import { isValidHostelBlock } from "@/content/hostels";
 import { toObjectId } from "@/lib/ids";
 import { signTeamCode, verifyTeamCodeToken } from "@/lib/team-code-token";
 
@@ -76,6 +77,9 @@ export async function saveCheckInAction(data: CheckInData) {
     const phone = cleanText(data.phone, FIELD_LIMITS.phone);
     if (!name) return { success: false, error: "Please enter your name." };
     if (!phone) return { success: false, error: "Please enter your phone number." };
+    if (participant.type === "vit" && data.isHosteller && !isValidHostelBlock(data.blockType, data.hostelBlock)) {
+      return { success: false, error: "Please choose your hostel block from the list." };
+    }
 
     const saved = await saveParticipantCheckInInDb(participant as any, {
       name,
