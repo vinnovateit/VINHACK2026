@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import KeyButton from "./KeyButton";
+import DiscordIcon from "@/components/nav/DiscordIcon";
+import { DISCORD } from "@/content/site";
 
 export type TeamChoice = "create" | "join";
 
@@ -80,6 +82,30 @@ export default function TeamTypeSelector({
               SAVE AND CONTINUE
             </KeyButton>
           </div>
+
+          {/* For people who arrive without a team: point them at #team-formation on Discord. */}
+          <a
+            href={DISCORD.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex w-full max-w-[360px] items-center gap-3 border border-neutral-800 px-3.5 py-3 font-['Rotonto',sans-serif] transition hover:border-[#74d4f0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#74d4f0]"
+          >
+            <DiscordIcon className="size-6 shrink-0 text-[#74d4f0]" />
+            <span className="flex-1 min-w-0">
+              <span className="block text-[14px] sm:text-[15px] text-white leading-snug">
+                Don&apos;t have a team yet?
+              </span>
+              <span className="block text-[12px] sm:text-[13px] text-neutral-400 leading-snug">
+                Find teammates in #team-formation on our Discord.
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className="text-neutral-500 transition group-hover:text-[#74d4f0] group-hover:-translate-y-0.5"
+            >
+              ↗
+            </span>
+          </a>
         </div>
 
         {/* Right Column: Circular Stamps with increased spacing */}
