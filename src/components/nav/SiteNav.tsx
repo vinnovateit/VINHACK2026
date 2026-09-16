@@ -79,7 +79,12 @@ function scrollToSection(target: string) {
   const section = Array.from(
     document.querySelectorAll<HTMLElement>(`section[aria-label="${target}"]`),
   ).find((el) => el.getClientRects().length > 0);
-  if (!section) return;
+  if (!section) {
+    if (typeof window !== "undefined" && window.location.pathname !== "/") {
+      window.location.href = "/";
+    }
+    return;
+  }
 
   window.scrollTo({
     top: Math.max(0, section.getBoundingClientRect().top + window.scrollY),
@@ -101,7 +106,7 @@ function SpineBody({ name, index }: { name: string; index: number }) {
   );
 }
 
-export default function SiteNav() {
+export default function SiteNav({ standalone }: { standalone?: boolean } = {}) {
   const [open, setOpen] = useState(false);
   /**
    * The section a press picked, held until the drawer has let go of the page.
@@ -181,7 +186,7 @@ export default function SiteNav() {
           half of the same arrival — while the button underneath keeps the turn
           it rests at, the turn it takes under the pointer, and the one it
           swings to when the shelf is out. */}
-      <div className="nav-dock" data-hero="nav">
+      <div className={`nav-dock ${standalone ? "!opacity-100 !animate-none" : ""}`} data-hero="nav">
         <button
           ref={buttonRef}
           type="button"
