@@ -25,6 +25,7 @@ import {
   Send,
 } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
+import LiveCountdown from "@/components/dashboard/LiveCountdown";
 import {
   FIELD_LIMITS,
   PROGRESS_STATUS_OPTIONS,
@@ -147,9 +148,8 @@ export default function DashboardShell({
   const [isActionPending, startActionTransition] = useTransition();
   const squadDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Countdown state (target: Sept 19, 2026, 8:00 PM IST)
+  // Client-only values (local time formatting) render after mount to avoid hydration mismatches.
   const [mounted, setMounted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ hours: 77, minutes: 22, seconds: 59 });
 
   // Handle outside click & escape key
   useEffect(() => {
@@ -179,23 +179,8 @@ export default function DashboardShell({
     };
   }, []);
 
-  // Countdown timer logic
   useEffect(() => {
     setMounted(true);
-    const targetDate = new Date("2026-09-19T20:00:00+05:30").getTime();
-
-    const updateTimer = () => {
-      const diff = Math.max(0, targetDate - Date.now());
-      const totalSeconds = Math.floor(diff / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      setTimeLeft({ hours, minutes, seconds });
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
   }, []);
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
@@ -1356,38 +1341,7 @@ export default function DashboardShell({
                 // VINHACK LIVE
               </div>
 
-              <div className="flex items-center justify-around w-full">
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl lg:text-[55px] font-light text-white tabular-nums leading-none">
-                    {mounted ? String(timeLeft.hours).padStart(2, "0") : "77"}
-                  </span>
-                  <span className="text-xs sm:text-base lg:text-[24px] text-[#9a9898] uppercase tracking-widest mt-2 font-light">
-                    HOURS
-                  </span>
-                </div>
-
-                <span className="text-3xl sm:text-5xl text-white font-light mb-4">:</span>
-
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl lg:text-[55px] font-light text-white tabular-nums leading-none">
-                    {mounted ? String(timeLeft.minutes).padStart(2, "0") : "22"}
-                  </span>
-                  <span className="text-xs sm:text-base lg:text-[24px] text-[#9a9898] uppercase tracking-widest mt-2 font-light">
-                    MINS
-                  </span>
-                </div>
-
-                <span className="text-3xl sm:text-5xl text-white font-light mb-4">:</span>
-
-                <div className="flex flex-col items-center">
-                  <span className="text-4xl sm:text-5xl lg:text-[55px] font-light text-white tabular-nums leading-none">
-                    {mounted ? String(timeLeft.seconds).padStart(2, "0") : "59"}
-                  </span>
-                  <span className="text-xs sm:text-base lg:text-[24px] text-[#9a9898] uppercase tracking-widest mt-2 font-light">
-                    SECS
-                  </span>
-                </div>
-              </div>
+              <LiveCountdown />
             </section>
           </div>
         </div>
