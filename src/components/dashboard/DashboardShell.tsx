@@ -102,7 +102,10 @@ export default function DashboardShell({
   // Submission Form state
   const [projectTitle, setProjectTitle] = useState(team.submission?.title || "");
   const [projectDescription, setProjectDescription] = useState(team.submission?.description || "");
-  const [selectedTrack, setSelectedTrack] = useState(initialTrack || team.track || TRACK_OPTIONS[0]);
+  // Only the leader's form takes a track from /tracks (?track=); members see what the team saved.
+  const [selectedTrack, setSelectedTrack] = useState(
+    participant.isLeader ? initialTrack || team.track || TRACK_OPTIONS[0] : team.track || ""
+  );
   const [projectType, setProjectType] = useState(team.submission?.projectType || "");
   const [githubLink, setGithubLink] = useState(team.submission?.githubLink || "");
   const [figmaLink, setFigmaLink] = useState(team.submission?.figmaLink || "");
@@ -871,6 +874,11 @@ export default function DashboardShell({
                           isLeader ? "cursor-pointer focus:outline-none focus:border-[#74d4f0]" : "cursor-default opacity-85"
                         }`}
                       >
+                        {!selectedTrack && (
+                          <option value="" disabled>
+                            Not submitted yet
+                          </option>
+                        )}
                         {TRACK_OPTIONS.map((t) => (
                           <option key={t} value={t}>
                             {t}
