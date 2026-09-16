@@ -7,10 +7,14 @@ export const metadata = {
 };
 
 export default function Page() {
+  const hasGoogleCredentials = Boolean(
+    process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+  );
+
   return (
     <main className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-black">
       <Suspense fallback={<div className="h-full w-full bg-black" />}>
-        <LoginPage />
+        <LoginPage hasGoogleCredentials={hasGoogleCredentials} />
       </Suspense>
     </main>
   );

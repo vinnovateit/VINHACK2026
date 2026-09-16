@@ -3,16 +3,25 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import KeyButton from "../onboarding/KeyButton";
 import CardboardBoxOpeningAnimation from "./CardboardBoxOpeningAnimation";
 
-export default function LoginPage() {
+export default function LoginPage({
+  hasGoogleCredentials = true,
+}: {
+  hasGoogleCredentials?: boolean;
+}) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const error = searchParams.get("error");
 
   const handleGoogleSignIn = () => {
+    if (!hasGoogleCredentials) {
+      router.push("/onboarding");
+      return;
+    }
     signIn("google", { callbackUrl: "/onboarding" });
   };
 
@@ -95,6 +104,12 @@ export default function LoginPage() {
             >
               LOGIN WITH GOOGLE
             </KeyButton>
+
+            {!hasGoogleCredentials && (
+              <p className="mt-2 text-xs text-neutral-400 font-mono max-w-[390px]">
+                ℹ️ Dev mode: Local Google OAuth keys not in .env.local. Clicking will proceed directly to the onboarding team setup flow.
+              </p>
+            )}
 
             {error === "AccessDenied" && (
               <div className="mt-3 p-3 bg-red-950/80 border border-red-500/60 rounded-xl text-red-200 text-xs sm:text-sm font-['Rotonto',sans-serif] leading-relaxed max-w-[390px] shadow-lg shadow-red-950/30">
