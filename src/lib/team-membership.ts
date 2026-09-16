@@ -1,5 +1,6 @@
 import { getMongoDb, isTeamLeader, normalizeTeamCode, TEAM_MAX_SIZE } from "@/lib/mongo";
 import { ObjectId, type Db } from "mongodb";
+import { idMatchValues, toObjectId } from "@/lib/ids";
 
 type ParticipantType = "vit" | "external";
 
@@ -11,9 +12,15 @@ type Participant = {
 
 export class TeamMembershipError extends Error {}
 
-function toOid(id: string): any {
-  try { return new ObjectId(id); } catch { return id; }
+// Ids reach this module from server actions, so reject anything that isn't a real ObjectId instead
+// of letting it through into a query.
+function toOid(id: string, message = "Team not found."): ObjectId {
+  const oid = toObjectId(id);
+  if (!oid) throw new TeamMembershipError(message);
+  return oid;
 }
+
+const PARTICIPANT_NOT_FOUND = "Your participant record was not found. Please contact the organisers.";
 
 function memberCollection(type: ParticipantType) {
   return type === "vit" ? "vit_students" : "external_students";
@@ -73,7 +80,7 @@ async function settleTeamAfterDeparture(db: Db, participant: Participant, teamId
 
 async function removeParticipantFromTeam(db: Db, participant: Participant, teamId: string) {
   await db.collection(memberCollection(participant.type)).updateOne(
-    { _id: toOid(participant.id), teamId: { $in: [toOid(teamId), teamId] } },
+    { _id: toOid(participant.id, PARTICIPANT_NOT_FOUND), teamId: { $in: idMatchValues(teamId) } },
     { $set: { teamId: null, joinedAt: null, updatedAt: new Date() } }
   );
   await settleTeamAfterDeparture(db, participant, teamId);
@@ -107,7 +114,7 @@ export async function removeTeamMember({
   }
 
   const target = await db.collection(memberCollection(targetType)).findOne(
-    { _id: toOid(targetParticipantId) },
+    { _id: toOid(targetParticipantId, "That participant is not in your team.") },
     { projection: { teamId: 1, userId: 1 } }
   );
   if (!target || String(target.teamId) !== teamId) {
@@ -126,7 +133,7 @@ export async function removeTeamMember({
 
 export async function joinTeamByCode(
   participant: Participant & { currentTeamId: string | null },
-  code: string
+  code: unknown
 ) {
   const db = await getMongoDb();
   if (!db) throw new TeamMembershipError("Database unavailable.");
@@ -159,9 +166,9 @@ export async function joinTeamByCode(
 
   // Move the participant only if their team hasn't changed since we resolved them.
   const col = db.collection(memberCollection(participant.type));
-  const participantOid = toOid(participant.id);
+  const participantOid = toOid(participant.id, PARTICIPANT_NOT_FOUND);
   const previousTeamFilter = participant.currentTeamId
-    ? { teamId: { $in: [toOid(participant.currentTeamId), participant.currentTeamId] } }
+    ? { teamId: { $in: idMatchValues(participant.currentTeamId) } }
     : { $or: [{ teamId: null }, { teamId: { $exists: false } }] };
   const now = new Date();
   const moved = await col.updateOne(
@@ -218,7 +225,7 @@ export async function transferLeadership({
   }
 
   const newLeader = await db.collection(memberCollection(newLeaderType)).findOne(
-    { _id: toOid(newLeaderParticipantId) },
+    { _id: toOid(newLeaderParticipantId, "The selected participant is not in your team.") },
     { projection: { teamId: 1 } }
   );
   if (!newLeader || String(newLeader.teamId) !== teamId) {

@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MAX_SIZE, TEAM_MIN_SIZE } from "@/lib/mongo";
-import { ObjectId } from "mongodb";
+import { getMongoDb, isTeamLeader, renameTeamInDb, TEAM_MIN_SIZE } from "@/lib/mongo";
+import { toObjectId } from "@/lib/ids";
+import { assignNewTeamCode } from "@/lib/teams";
 import {
   cleanText,
   FIELD_LIMITS,
@@ -50,14 +51,6 @@ const SECTION_SAVED_MESSAGES: Record<SubmissionSection, string> = {
   links: "Links & assets saved.",
   progress: "Progress update submitted.",
 };
-
-function toObjectId(id: string): any {
-  try {
-    return new ObjectId(id);
-  } catch {
-    return id;
-  }
-}
 
 // Validates one section and returns only the submission fields that section owns, so saving one
 // section never overwrites another.
@@ -131,6 +124,7 @@ export async function saveSubmissionSectionAction(teamId: string, payload: Submi
     if (!db) return { success: false, message: "Database unavailable." };
 
     const teamOid = toObjectId(teamId);
+    if (!teamOid) return { success: false, message: "Team not found." };
 
     const teamDoc = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
     if (!teamDoc) return { success: false, message: "Team not found." };
@@ -169,103 +163,6 @@ export async function saveSubmissionSectionAction(teamId: string, payload: Submi
   } catch (error) {
     console.error("[saveSubmissionSectionAction] Unexpected error:", error);
     return { success: false, message: "An unexpected error occurred while saving." };
-  }
-}
-
-export async function fetchFullTeam(teamId: string) {
-  try {
-    const db = await getMongoDb();
-    if (!db) return null;
-
-    const teamOid = toObjectId(teamId);
-    const teamDoc = await db.collection("teams").findOne({
-      $or: [{ _id: teamOid }, { id: teamId }],
-    });
-
-    if (!teamDoc) return null;
-
-    const [vitList, extList, subDoc] = await Promise.all([
-      db.collection("vit_students").find({
-        $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
-      }).toArray(),
-      db.collection("external_students").find({
-        $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
-      }).toArray(),
-      db.collection("submissions").findOne({
-        $or: [{ teamId: teamOid }, { teamId: teamId }, { teamId: teamDoc._id }],
-      }),
-    ]);
-
-    const members = [
-      ...vitList.map((m: any) => ({
-        id: m._id.toString(),
-        name: m.name || "VIT Member",
-        email: m.email || "",
-        regNo: m.regNo || "",
-        type: "vit" as const,
-        userId: m.userId ? String(m.userId) : null,
-        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
-      })),
-      ...extList.map((m: any) => ({
-        id: m._id.toString(),
-        name: m.name || "External Member",
-        email: m.email || "",
-        regNo: m.regNo || "",
-        type: "external" as const,
-        userId: m.userId ? String(m.userId) : null,
-        isLeader: isTeamLeader(teamDoc.leaderId, { id: m._id.toString(), userId: m.userId ? String(m.userId) : null }),
-      })),
-    ];
-
-    let leaderId = teamDoc.leaderId ? String(teamDoc.leaderId) : null;
-    if (members.length > 0 && !members.some((m) => m.isLeader)) {
-      // Legacy teams can point at a users._id no member is linked to (or at nobody); promote the earliest joiner.
-      const earliest = [...vitList, ...extList].sort(
-        (a: any, b: any) =>
-          (a.joinedAt ? new Date(a.joinedAt).getTime() : Number.MAX_SAFE_INTEGER) -
-          (b.joinedAt ? new Date(b.joinedAt).getTime() : Number.MAX_SAFE_INTEGER)
-      )[0];
-      await db.collection("teams").updateOne(
-        { _id: teamDoc._id, leaderId: teamDoc.leaderId ?? null },
-        { $set: { leaderId: earliest._id, updatedAt: new Date() } }
-      );
-      leaderId = earliest._id.toString();
-      for (const m of members) m.isLeader = m.id === leaderId;
-    }
-
-    return {
-      id: teamDoc._id.toString(),
-      name: teamDoc.name || "My Team",
-      code: teamDoc.code || "VH26-000",
-      capacity: Math.min(teamDoc.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE),
-      minSize: TEAM_MIN_SIZE,
-      teamType: teamDoc.teamType || "VIT",
-      track: teamDoc.track || null,
-      leaderId,
-      leaderName: members.find((m) => m.isLeader)?.name || null,
-      members,
-      submission: subDoc
-        ? {
-            title: subDoc.title || "",
-            description: subDoc.description || "",
-            projectType: subDoc.projectType || "",
-            githubLink: subDoc.githubLink || "",
-            figmaLink: subDoc.figmaLink || "",
-            deckLink: subDoc.deckLink || "",
-            otherLinks: subDoc.otherLinks || "",
-            progressStatus: subDoc.progressStatus || "",
-            teamConfidence: subDoc.teamConfidence || "",
-            progressNote: subDoc.progressNote || "",
-            submittedAt: subDoc.submittedAt ? new Date(subDoc.submittedAt).toISOString() : null,
-            detailsUpdatedAt: subDoc.detailsUpdatedAt ? new Date(subDoc.detailsUpdatedAt).toISOString() : null,
-            linksUpdatedAt: subDoc.linksUpdatedAt ? new Date(subDoc.linksUpdatedAt).toISOString() : null,
-            progressUpdatedAt: subDoc.progressUpdatedAt ? new Date(subDoc.progressUpdatedAt).toISOString() : null,
-          }
-        : null,
-    };
-  } catch (error) {
-    console.error("[fetchFullTeam] Error fetching team:", error);
-    return null;
   }
 }
 
@@ -370,7 +267,9 @@ export async function renameTeamAction(teamId: string, teamName: string) {
     const db = await getMongoDb();
     if (!db) return { success: false, error: "Database unavailable." };
 
-    const team = await db.collection("teams").findOne({ _id: toObjectId(teamId) }, { projection: { leaderId: 1 } });
+    const teamOid = toObjectId(teamId);
+    if (!teamOid) return { success: false, error: "Team not found." };
+    const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1 } });
     if (!team) return { success: false, error: "Team not found." };
     if (!isTeamLeader(team.leaderId, participant)) {
       return { success: false, error: "Only the leader can rename the team." };
@@ -384,5 +283,35 @@ export async function renameTeamAction(teamId: string, teamName: string) {
   } catch (err) {
     console.error("[renameTeamAction] Error:", err);
     return { success: false, error: "Failed to rename team." };
+  }
+}
+
+/** Leader-only: replace the team's join code. The old code and QR stop working immediately. */
+export async function regenerateTeamCodeAction() {
+  try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !participant.teamId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const db = await getMongoDb();
+    if (!db) return { success: false, error: "Database unavailable." };
+
+    const teamOid = toObjectId(participant.teamId);
+    if (!teamOid) return { success: false, error: "Team not found." };
+    const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { leaderId: 1, code: 1 } });
+    if (!team) return { success: false, error: "Team not found." };
+    if (!isTeamLeader(team.leaderId, participant)) {
+      return { success: false, error: "Only the team leader can change the team code." };
+    }
+
+    const code = await assignNewTeamCode(db, teamOid, team.code);
+    if (!code) return { success: false, error: "Could not generate a new code. Please try again." };
+
+    revalidatePath("/dashboard");
+    return { success: true, code };
+  } catch (err) {
+    console.error("[regenerateTeamCodeAction] Error:", err);
+    return { success: false, error: "Failed to change the team code." };
   }
 }

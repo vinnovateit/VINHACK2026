@@ -19,6 +19,7 @@ import {
   UserMinus,
   UserRound,
   X,
+  RefreshCw,
   CheckCircle2,
   AlertTriangle,
   Send,
@@ -40,6 +41,7 @@ import {
   deleteTeamAction,
   leaveTeamAction,
   removeTeamMemberAction,
+  regenerateTeamCodeAction,
 } from "@/app/dashboard/actions";
 
 export interface DashboardShellProps {
@@ -66,7 +68,6 @@ export interface DashboardShellProps {
       id: string;
       name: string;
       email: string;
-      regNo: string;
       type: "vit" | "external";
       isLeader: boolean;
     }>;
@@ -140,7 +141,7 @@ export default function DashboardShell({
 
   // Squad Dropdown state
   const [squadDropdownOpen, setSquadDropdownOpen] = useState(false);
-  const [squadSubView, setSquadSubView] = useState<"kick" | "transfer" | "delete" | null>(null);
+  const [squadSubView, setSquadSubView] = useState<"kick" | "transfer" | "code" | "delete" | null>(null);
   const [leaveConfirming, setLeaveConfirming] = useState(false);
   const [selectedNewLeader, setSelectedNewLeader] = useState("");
   const [isActionPending, startActionTransition] = useTransition();
@@ -300,6 +301,20 @@ export default function DashboardShell({
         setTimeout(() => router.refresh(), 800);
       } else {
         showToast(res.error || "Failed to transfer leadership", "error");
+      }
+    });
+  };
+
+  const handleRegenerateCode = () => {
+    startActionTransition(async () => {
+      const res = await regenerateTeamCodeAction();
+      if (res.success) {
+        showToast(`New team code: ${res.code}`, "success");
+        setSquadDropdownOpen(false);
+        setSquadSubView(null);
+        router.refresh();
+      } else {
+        showToast(res.error || "Failed to change the team code", "error");
       }
     });
   };
@@ -634,6 +649,18 @@ export default function DashboardShell({
 
                           <button
                             type="button"
+                            onClick={() => setSquadSubView("code")}
+                            className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-neutral-800 text-xs transition cursor-pointer text-left text-neutral-200 hover:text-white"
+                          >
+                            <span className="flex items-center gap-2">
+                              <RefreshCw size={14} className="text-[#fdbbff]" />
+                              <span>New Team Code</span>
+                            </span>
+                            <ChevronRight size={13} className="text-neutral-500" />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => setSquadSubView("delete")}
                             className="w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-red-500/10 text-xs transition cursor-pointer text-left text-[#fa1a1d] hover:text-red-400 mt-1 pt-2 border-t border-[#666060]/40"
                           >
@@ -738,6 +765,34 @@ export default function DashboardShell({
                               </button>
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {/* Sub-view: New Team Code */}
+                      {squadSubView === "code" && (
+                        <div className="animate-[fadeIn_0.15s_ease-out]">
+                          <button
+                            type="button"
+                            onClick={() => setSquadSubView(null)}
+                            className="text-[11px] text-neutral-400 hover:text-white flex items-center gap-1 mb-2.5 cursor-pointer"
+                          >
+                            <ArrowLeft size={12} /> Back to options
+                          </button>
+                          <div className="text-xs font-medium text-white mb-1">
+                            Get a new team code
+                          </div>
+                          <p className="text-[11px] text-neutral-400 mb-3">
+                            The current code and QR stop working right away. Everyone already in the team stays in it.
+                          </p>
+                          <button
+                            type="button"
+                            className="w-full bg-[#74d4f0] text-black font-semibold text-xs py-1.5 rounded hover:bg-[#8ee0f7] disabled:opacity-40 transition cursor-pointer flex items-center justify-center gap-1.5"
+                            disabled={isActionPending}
+                            onClick={handleRegenerateCode}
+                          >
+                            <RefreshCw size={13} />
+                            {isActionPending ? "Generating..." : "Generate New Code"}
+                          </button>
                         </div>
                       )}
 

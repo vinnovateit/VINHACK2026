@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
-import { fetchFullTeam } from "./actions";
+import { fetchFullTeam } from "@/lib/teams";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 
 export const metadata = {
@@ -38,6 +38,19 @@ export default async function DashboardPage({
 
   const isLeader = team.members.some((m) => m.isLeader && m.id === participant.id);
 
+  // Send the browser only what the dashboard shows: teammates' emails are needed for the leader's
+  // "Kick member" list; nobody needs other members' registration numbers.
+  const clientTeam = {
+    ...team,
+    members: team.members.map((m) => ({
+      id: m.id,
+      name: m.name,
+      email: isLeader ? m.email : "",
+      type: m.type,
+      isLeader: m.isLeader,
+    })),
+  };
+
   return (
     <DashboardShell
       participant={{
@@ -48,7 +61,7 @@ export default async function DashboardPage({
         regNo: participant.regNo,
         isLeader,
       }}
-      team={team}
+      team={clientTeam}
       initialTrack={params?.track}
     />
   );

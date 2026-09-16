@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { resolveCurrentParticipant } from "@/app/onboarding/actions";
-import { fetchFullTeam } from "@/app/dashboard/actions";
+import { fetchFullTeam } from "@/lib/teams";
 import ProfileClient from "@/components/dashboard/ProfileClient";
 
 export const metadata = {

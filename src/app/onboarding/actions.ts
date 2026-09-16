@@ -17,11 +17,8 @@ import {
   TEAM_MAX_SIZE,
 } from "@/lib/mongo";
 import { cleanOptionalNumber, cleanText, FIELD_LIMITS } from "@/lib/validation";
-import { ObjectId } from "mongodb";
-
-function toObjectId(id: string): any {
-  try { return new ObjectId(id); } catch { return id; }
-}
+import { toObjectId } from "@/lib/ids";
+import { signTeamCode, verifyTeamCodeToken } from "@/lib/team-code-token";
 
 export type CurrentOnboardingParticipant = {
   id: string;
@@ -105,18 +102,16 @@ export async function saveCheckInAction(data: CheckInData) {
 
 export async function prepareTeamCodeAction() {
   try {
+    const participant = await resolveCurrentParticipant();
+    if (!participant || !toObjectId(participant.id)) {
+      return { success: false, teamCode: "", codeToken: "" };
+    }
+
     const code = await generateUniqueTeamCodeFromDb();
-    return {
-      success: true,
-      teamCode: code,
-    };
+    return { success: true, teamCode: code, codeToken: signTeamCode(participant.id, code) ?? "" };
   } catch (err) {
     console.error("[prepareTeamCodeAction] Error:", err);
-    const fallback = `VH26-${Date.now().toString(36).slice(-4).toUpperCase()}`;
-    return {
-      success: true,
-      teamCode: fallback,
-    };
+    return { success: false, teamCode: "", codeToken: "" };
   }
 }
 
@@ -129,9 +124,9 @@ export async function validateTeamNameAction(teamName: string) {
   }
 }
 
-export async function createTeamAction(teamName: string, customCode?: string) {
+export async function createTeamAction(teamName: string, previewCode?: string, codeToken?: string) {
   try {
-    const trimmedName = teamName.trim();
+    const trimmedName = typeof teamName === "string" ? teamName.trim() : "";
     if (!trimmedName) {
       return { success: false, error: "Please enter a team name before continuing." };
     }
@@ -144,8 +139,13 @@ export async function createTeamAction(teamName: string, customCode?: string) {
       return { success: false, error: "You are already in a team. Leave it before creating a new one." };
     }
 
-    // Use the code shown to the user if it's well-formed, otherwise generate a fresh one
-    const code = normalizeTeamCode(customCode || "") || (await generateUniqueTeamCodeFromDb());
+    // Keep the code the participant was shown only if the server issued it to them; otherwise
+    // generate a new one here. The browser can never choose its own team code.
+    const shownCode = normalizeTeamCode(previewCode);
+    const code =
+      shownCode && verifyTeamCodeToken(participant.id, shownCode, codeToken)
+        ? shownCode
+        : await generateUniqueTeamCodeFromDb();
 
     const res = await createTeamInDb({
       name: trimmedName,
@@ -154,7 +154,6 @@ export async function createTeamAction(teamName: string, customCode?: string) {
     });
 
     if (res.success && res.teamId) {
-      console.log(`[createTeamAction] Team successfully saved to MongoDB: ${trimmedName} (${code})`);
       return {
         success: true,
         teamId: res.teamId,
@@ -174,58 +173,53 @@ export async function createTeamAction(teamName: string, customCode?: string) {
 }
 
 export async function validateTeamCodeAction(code: string) {
-  if (!code.trim()) {
+  if (typeof code !== "string" || !code.trim()) {
     return { success: false, error: "Please enter a team code." };
-  }
-  const normalized = normalizeTeamCode(code);
-  if (!normalized) {
-    return { success: false, error: "Team not found. Verify the code." };
   }
 
   try {
+    // Only signed-in, registered participants may look up a team code.
+    const participant = await resolveCurrentParticipant();
+    const participantOid = toObjectId(participant?.id);
+    if (!participant || !participantOid) {
+      return { success: false, error: "Your session expired. Please sign in again." };
+    }
+
+    const normalized = normalizeTeamCode(code);
+    if (!normalized) {
+      return { success: false, error: "Team not found. Verify the code." };
+    }
+
     const db = await getMongoDb();
     if (!db) {
       return { success: false, error: "Could not connect to database to verify team code." };
     }
 
-    const [participant, team] = await Promise.all([
-      resolveCurrentParticipant(),
-      db.collection("teams").findOne(
-        { code: normalized },
-        { projection: { name: 1, teamType: 1, capacity: 1 } }
-      ),
-    ]);
-
+    const team = await db.collection("teams").findOne(
+      { code: normalized },
+      { projection: { name: 1, teamType: 1, capacity: 1 } }
+    );
     if (!team) {
       return { success: false, error: "Team not found. Verify the code." };
     }
 
     const capacity = Math.min(team.capacity || TEAM_MAX_SIZE, TEAM_MAX_SIZE);
     const memberCol = team.teamType === "VIT" ? "vit_students" : "external_students";
-    const teamOid = team._id;
 
     const [memberCount, alreadyMember] = await Promise.all([
-      db.collection(memberCol).countDocuments({ teamId: teamOid }),
-      participant
-        ? db.collection(memberCol).findOne({ teamId: teamOid, _id: toObjectId(participant.id) }, { projection: { _id: 1 } })
-        : Promise.resolve(null),
+      db.collection(memberCol).countDocuments({ teamId: team._id }),
+      db.collection(memberCol).findOne({ teamId: team._id, _id: participantOid }, { projection: { _id: 1 } }),
     ]);
 
-    if (participant) {
-      const expectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
-      if (team.teamType !== expectedType) {
-        return {
-          success: false,
-          error: `Type mismatch: ${expectedType} participants cannot join a ${team.teamType} team.`,
-        };
-      }
-      if (!alreadyMember && memberCount >= capacity) {
-        return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
-      }
-    } else {
-      if (memberCount >= capacity) {
-        return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
-      }
+    const expectedType = participant.type === "vit" ? "VIT" : "EXTERNAL";
+    if (team.teamType !== expectedType) {
+      return {
+        success: false,
+        error: `Type mismatch: ${expectedType} participants cannot join a ${team.teamType} team.`,
+      };
+    }
+    if (!alreadyMember && memberCount >= capacity) {
+      return { success: false, error: `This team is already full (${capacity}/${capacity} members).` };
     }
 
     return { success: true, teamName: team.name, memberCount, capacity };
@@ -235,10 +229,7 @@ export async function validateTeamCodeAction(code: string) {
   }
 }
 
-
 export async function joinTeamAction(code: string) {
-  const normalized = code.trim().toUpperCase();
-
   try {
     const participant = await resolveCurrentParticipant();
     if (!participant) {
@@ -252,7 +243,7 @@ export async function joinTeamAction(code: string) {
         userId: participant.userId,
         currentTeamId: participant.teamId,
       },
-      normalized
+      code
     );
 
     return { success: true, status: res.status };

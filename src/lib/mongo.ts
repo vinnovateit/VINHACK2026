@@ -1,7 +1,9 @@
+import { randomInt } from "node:crypto";
 import { MongoClient, ObjectId, type Db } from "mongodb";
 import { after } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { attachDatabasePool } from "@vercel/functions";
+import { toObjectId } from "@/lib/ids";
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -48,12 +50,39 @@ function formatError(err: unknown): string {
 export const TEAM_MIN_SIZE = 2;
 export const TEAM_MAX_SIZE = 5;
 
-const TEAM_CODE_PATTERN = /^[A-Z0-9-]{4,20}$/;
+// Team codes are the only thing that lets someone join a team, so they must not be guessable:
+// "VH26-" plus 8 characters from a 31-character alphabet (31^8 ≈ 8.5 × 10^11 combinations),
+// drawn with a cryptographically secure RNG. Ambiguous characters (0/O, 1/I/L) are excluded.
+const CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+const TEAM_CODE_RANDOM_LENGTH = 8;
+const TEAM_CODE_PATTERN = /^VH26-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/;
 
-// Team codes are stored uppercase with a unique index; returns null for anything that isn't a code.
-export function normalizeTeamCode(raw: string): string | null {
-  const code = (raw || "").trim().toUpperCase();
+/**
+ * Returns the canonical team code, or null for anything that isn't a current-format code.
+ * Older 4-character codes are rejected, so they can no longer be used to join a team.
+ */
+export function normalizeTeamCode(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const code = raw.trim().toUpperCase();
   return TEAM_CODE_PATTERN.test(code) ? code : null;
+}
+
+/** Filter for a team by id. A few very old team documents carry a string `id` instead of an ObjectId. */
+export function teamByIdFilter(teamId: string) {
+  const oid = toObjectId(teamId);
+  return oid ? { $or: [{ _id: oid }, { id: teamId }] } : { id: teamId };
+}
+
+export function isCurrentTeamCode(code: unknown): boolean {
+  return typeof code === "string" && TEAM_CODE_PATTERN.test(code);
+}
+
+function randomTeamCode(): string {
+  let randomPart = "";
+  for (let i = 0; i < TEAM_CODE_RANDOM_LENGTH; i++) {
+    randomPart += CODE_CHARS[randomInt(CODE_CHARS.length)];
+  }
+  return "VH26-" + randomPart;
 }
 
 // Most participants have no linked `users` record, so leaders are stored as the participant _id.
@@ -110,14 +139,6 @@ export async function getMongoDb(): Promise<Db | null> {
   return client.db();
 }
 
-function toObjectId(id: string): any {
-  try {
-    return new ObjectId(id);
-  } catch {
-    return id;
-  }
-}
-
 export interface MongoParticipant {
   id: string;
   name: string;
@@ -166,9 +187,7 @@ export async function getParticipantByEmail(
         let team = null;
         if (vit.teamId) {
           try {
-            team = await db.collection("teams").findOne({
-              $or: [{ _id: toObjectId(String(vit.teamId)) }, { id: String(vit.teamId) }],
-            });
+            team = await db.collection("teams").findOne(teamByIdFilter(String(vit.teamId)));
             if (!team) {
               await db.collection("vit_students").updateOne(
                 { _id: vit._id },
@@ -270,9 +289,7 @@ export async function getParticipantByEmail(
         let team = null;
         if (ext.teamId) {
           try {
-            team = await db.collection("teams").findOne({
-              $or: [{ _id: toObjectId(String(ext.teamId)) }, { id: String(ext.teamId) }],
-            });
+            team = await db.collection("teams").findOne(teamByIdFilter(String(ext.teamId)));
             if (!team) {
               await db.collection("external_students").updateOne(
                 { _id: ext._id },
@@ -383,10 +400,11 @@ export async function saveParticipantCheckInInDb(
       if (data.phone) updateFields.phone = data.phone.trim();
       if (data.year !== undefined && data.year !== null) updateFields.year = Number(data.year);
 
-      if (participant.id && !participant.id.startsWith("vit-")) {
+      const participantOid = toObjectId(participant.id);
+      if (participantOid) {
         await db
           .collection("vit_students")
-          .updateOne({ _id: toObjectId(participant.id) }, { $set: updateFields });
+          .updateOne({ _id: participantOid }, { $set: updateFields });
       } else if (participant.email) {
         await db
           .collection("vit_students")
@@ -404,10 +422,11 @@ export async function saveParticipantCheckInInDb(
       if (data.phone) updateFields.phone = data.phone.trim();
       if (data.year !== undefined && data.year !== null) updateFields.year = Number(data.year);
 
-      if (participant.id && !participant.id.startsWith("ext-")) {
+      const participantOid = toObjectId(participant.id);
+      if (participantOid) {
         await db
           .collection("external_students")
-          .updateOne({ _id: toObjectId(participant.id) }, { $set: updateFields });
+          .updateOne({ _id: participantOid }, { $set: updateFields });
       } else if (participant.email) {
         await db.collection("external_students").updateOne(
           { email: new RegExp(`^${escapeRegex(participant.email)}$`, "i") },
@@ -420,10 +439,9 @@ export async function saveParticipantCheckInInDb(
       }
     }
 
-    if (participant.userId) {
-      await db
-        .collection("users")
-        .updateOne({ _id: toObjectId(participant.userId) }, { $set: { name, updatedAt: now } });
+    const userOid = toObjectId(participant.userId);
+    if (userOid) {
+      await db.collection("users").updateOne({ _id: userOid }, { $set: { name, updatedAt: now } });
     }
 
     return true;
@@ -433,37 +451,21 @@ export async function saveParticipantCheckInInDb(
   }
 }
 
-const CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-
 export async function generateUniqueTeamCodeFromDb(): Promise<string> {
   try {
     const db = await getMongoDb();
     if (db) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        let randomPart = "";
-        for (let i = 0; i < 4; i++) {
-          randomPart += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-        }
-        const candidate = `VH26-${randomPart}`;
-
-        const existing = await db.collection("teams").findOne(
-          { code: candidate },
-          { projection: { _id: 1 } }
-        );
-
-        if (!existing) {
-          return candidate;
-        }
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const candidate = randomTeamCode();
+        const existing = await db.collection("teams").findOne({ code: candidate }, { projection: { _id: 1 } });
+        if (!existing) return candidate;
       }
     }
   } catch (err) {
-    console.warn("[MongoDB] generateUniqueTeamCodeFromDb error, using random fallback:", formatError(err));
+    console.warn("[MongoDB] generateUniqueTeamCodeFromDb error, using unchecked code:", formatError(err));
   }
-
-  const ts = Date.now().toString(36).slice(-3).toUpperCase();
-  const r1 = CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  const r2 = CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  return `VH26-${r1}${r2}${ts}`;
+  // Collisions are astronomically unlikely, and the unique index on teams.code still rejects one.
+  return randomTeamCode();
 }
 
 export function normalizeTeamName(name: string): string {
@@ -482,8 +484,9 @@ async function findConflictingTeam(db: Db, candidateName: string, excludeTeamId?
     ],
   };
 
-  if (excludeTeamId) {
-    query._id = { $ne: toObjectId(excludeTeamId) };
+  const excludeOid = toObjectId(excludeTeamId);
+  if (excludeOid) {
+    query._id = { $ne: excludeOid };
   }
 
   return await db.collection("teams").findOne(query, { projection: { _id: 1, name: 1 } });
@@ -577,10 +580,9 @@ export async function createTeamInDb(data: {
       return { success: false, error: "Your participant record was not found. Please contact the organisers." };
     }
     if (student.teamId) {
-      const currentTeam = await db.collection("teams").findOne(
-        { _id: toObjectId(String(student.teamId)) },
-        { projection: { _id: 1 } }
-      );
+      const currentTeam = await db
+        .collection("teams")
+        .findOne(teamByIdFilter(String(student.teamId)), { projection: { _id: 1 } });
       if (currentTeam) {
         return { success: false, error: "You are already in a team. Leave it before creating a new one." };
       }
@@ -660,6 +662,7 @@ export async function renameTeamInDb(
   if (!validation.valid) return { success: false, error: validation.error };
 
   const teamOid = toObjectId(teamId);
+  if (!teamOid) return { success: false, error: "Team not found." };
   const team = await db.collection("teams").findOne({ _id: teamOid }, { projection: { name: 1 } });
   if (!team) return { success: false, error: "Team not found." };
 
