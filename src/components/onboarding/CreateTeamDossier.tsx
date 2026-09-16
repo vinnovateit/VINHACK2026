@@ -118,29 +118,9 @@ export default function CreateTeamDossier({
           </div>
 
           <div className="max-w-[420px] space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block font-['Rotonto',sans-serif] text-neutral-300 text-xs sm:text-sm uppercase tracking-wider">
-                Name your team
-              </label>
-              <button
-                type="button"
-                onClick={handleRollDice}
-                disabled={isRolling}
-                className="group flex items-center gap-1.5 text-xs font-['Rotonto',sans-serif] text-[#FC2425] hover:text-[#ff4d4e] transition disabled:opacity-50 select-none cursor-pointer"
-                title="Roll a random funny tech hackathon team name"
-              >
-                <span
-                  className={`text-sm inline-block transition-transform duration-300 ${
-                    isRolling ? "animate-spin" : "group-hover:rotate-45"
-                  }`}
-                >
-                  🎲
-                </span>
-                <span className="underline decoration-dotted underline-offset-2">
-                  {isRolling ? "Rolling..." : "Roll dice"}
-                </span>
-              </button>
-            </div>
+            <label className="block font-['Rotonto',sans-serif] text-neutral-300 text-xs sm:text-sm uppercase tracking-wider">
+              Name your team
+            </label>
 
             <div className="relative flex items-center">
               <input
