@@ -251,7 +251,7 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
       >
         <Image
           className="w-[136px] h-[70px] object-contain transition-transform duration-200 hover:scale-105 active:scale-95"
-          src="/recap/hours.svg"
+          src="/recap/hours_n.svg"
           width={193}
           height={98}
           alt="30 HOURS"

@@ -210,7 +210,7 @@ export default function MobileRecap() {
           >
             <Image
               className="w-[105px] h-[54px] object-contain transition-transform duration-200 active:scale-95"
-              src="/recap/hours.svg"
+              src="/recap/hours_n.svg"
               width={193}
               height={98}
               alt="30 HOURS"
