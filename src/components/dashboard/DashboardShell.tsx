@@ -770,14 +770,14 @@ export default function DashboardShell({
 
           {/* ── CARD 3: SUBMIT FOR REVIEW (Bottom Left) ─────── */}
           <section className="bg-black border border-[#666060] p-4 sm:p-6 relative flex flex-col justify-between min-h-[240px] sm:min-h-[280px]">
-            <div className="flex items-center justify-between">
+            <div>
               <div className="text-[#fa1a1d] text-base sm:text-lg lg:text-[20px] font-light tracking-wider uppercase">
                 // SUBMIT FOR REVIEW
               </div>
               {!isLeader && (
-                <span className="text-[10px] sm:text-[11px] text-[#74d4f0] bg-[#74d4f0]/10 border border-[#74d4f0]/30 px-2.5 py-0.5 rounded-full font-light tracking-normal">
-                  View only · Leader submits
-                </span>
+                <p className="text-xs sm:text-sm lg:text-[14px] font-light text-[#9a9898] mt-1">
+                  Only your team leader can edit and submit this.
+                </p>
               )}
             </div>
 
@@ -1097,7 +1097,7 @@ export default function DashboardShell({
                   >
                     <ArrowLeft size={20} strokeWidth={2} />
                   </button>
-                  {isLeader ? (
+                  {isLeader && (
                     <button
                       type="button"
                       onClick={handleSaveSubmission}
@@ -1106,13 +1106,6 @@ export default function DashboardShell({
                     >
                       {isSaving ? "SUBMITTING..." : "SUBMIT"}
                     </button>
-                  ) : (
-                    <div
-                      className="h-[44px] px-6 rounded-full bg-neutral-900 border border-neutral-700 text-[#9a9898] font-light text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center shrink-0 cursor-not-allowed select-none"
-                      title="Only the Team Leader can submit or update project reviews"
-                    >
-                      Leader Submits
-                    </div>
                   )}
                 </>
               )}
