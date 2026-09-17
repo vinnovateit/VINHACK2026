@@ -22,10 +22,10 @@ import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
  */
 
 const SHEET_W = 1184;
-const SHEET_H = 758.4;
+const SHEET_H = 860;
 
 const HEAD_H = 72;
-const HEAD_GAP = 26;
+const HEAD_GAP = 24;
 const HEAD_INSET = 29.11;
 
 export const EDITION_BLOCK_HEIGHT = HEAD_H + HEAD_GAP + SHEET_H;
@@ -239,12 +239,17 @@ export default function FoldedEdition({
       armed = true;
 
       const availW = Math.max(300, window.innerWidth - (variant === "flow" ? 16 : 24));
+      // For the mobile flow variant, scale against a narrower reference (55% of full sheet)
+      // so the newspaper fills the phone screen at a legible size (~0.57x on 390px phones).
+      // The portal is fixed+centered, so viewport naturally clips outer edges; the centred
+      // masthead and title partner remain fully visible.
+      const flowRef = variant === "flow" ? SHEET_W * 0.55 : SHEET_W;
       const targetW = variant === "flow" ? availW : Math.min(availW, SHEET_W);
-      canvasScale = clamp(0.26, 1.0, targetW / SHEET_W);
+      canvasScale = clamp(0.26, 1.0, targetW / flowRef);
 
       if (variant === "flow") {
-        travelPx = 420;
-        container.style.height = `${travelPx + Math.round(EDITION_BLOCK_HEIGHT * canvasScale) + 60}px`;
+        travelPx = 520;
+        container.style.height = `${travelPx + Math.round(EDITION_BLOCK_HEIGHT * canvasScale) + 80}px`;
       } else {
         travelPx = Math.round(TRAVEL_PLATE * Math.max(0.7, canvasScale));
         container.style.height = `${EDITION_BLOCK_HEIGHT}px`;
@@ -496,7 +501,7 @@ export default function FoldedEdition({
         className="relative pointer-events-none"
         style={{
           width: variant === "flow" ? "100%" : SHEET_W,
-          height: variant === "flow" ? 480 + 350 : EDITION_BLOCK_HEIGHT,
+          height: variant === "flow" ? 520 + 600 : EDITION_BLOCK_HEIGHT,
           overflowAnchor: "none",
         }}
         aria-hidden

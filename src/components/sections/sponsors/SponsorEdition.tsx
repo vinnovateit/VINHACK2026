@@ -46,49 +46,49 @@ const SponsorEdition = () => {
       />
 
       {/* Main Newspaper Front Page */}
-      <div className="w-[1184px] max-w-full h-[758.4px] relative shadow-[0_20px_48px_rgba(0,_0,_0,_0.45),_0_4px_12px_rgba(0,_0,_0,_0.25),_0_16px_40px_rgba(0,0,0,0.35),0_4px_12px_rgba(0,0,0,0.2)] bg-[#ebebe9] overflow-hidden text-left text-[18px] text-black [font-family:var(--font-rotonto),_Rotonto,_sans-serif] mx-auto z-10">
+      <div className="w-[1184px] max-w-full h-[860px] relative shadow-[0_20px_48px_rgba(0,_0,_0,_0.45),_0_4px_12px_rgba(0,_0,_0,_0.25),_0_16px_40px_rgba(0,0,0,0.35),0_4px_12px_rgba(0,0,0,0.2)] bg-[#ebebe9] overflow-hidden text-left text-[18px] text-black [font-family:var(--font-rotonto),_Rotonto,_sans-serif] mx-auto z-10">
         <EditionMasthead />
 
         {/* Outer newspaper grid frame */}
         <div className="absolute top-[241.13px] left-[29.71px] [border-top:1px_solid_#000] box-border w-[1124.2px] h-[1px]" />
-        <div className="absolute top-[725.73px] left-[29.71px] [border-top:1px_solid_#000] box-border w-[1124.2px] h-[1px]" />
-        <div className="absolute top-[241.13px] left-[29.71px] [border-right:1px_solid_#000] box-border w-[1px] h-[484.6px]" />
-        <div className="absolute top-[241.13px] left-[1153.91px] [border-right:1px_solid_#000] box-border w-[1px] h-[484.6px]" />
+        <div className="absolute top-[828px] left-[29.71px] [border-top:1px_solid_#000] box-border w-[1124.2px] h-[1px]" />
+        <div className="absolute top-[241.13px] left-[29.71px] [border-right:1px_solid_#000] box-border w-[1px] h-[587px]" />
+        <div className="absolute top-[241.13px] left-[1153.91px] [border-right:1px_solid_#000] box-border w-[1px] h-[587px]" />
 
         {/* Horizontal divider between Title Sponsor and 4 Partners */}
-        <div className="absolute top-[441.13px] left-[29.71px] [border-top:1px_solid_#000] box-border w-[1124.2px] h-[1px]" />
+        <div className="absolute top-[471.13px] left-[29.71px] [border-top:1px_solid_#000] box-border w-[1124.2px] h-[1px]" />
 
         {/* Title Partner: Fateh Education */}
         <a
           href={TITLE_SPONSOR.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group absolute top-[241.13px] left-[29.71px] w-[1124.2px] h-[200px] flex flex-col items-center justify-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
+          className="group absolute top-[241.13px] left-[29.71px] w-[1124.2px] h-[230px] flex flex-col items-center justify-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
         >
-          <div className="text-[#fa1a1d] text-[19px] font-bold tracking-[0.16em] uppercase mb-2">
+          <div className="text-[#fa1a1d] text-[20px] font-bold tracking-[0.16em] uppercase mb-2.5">
             {TITLE_SPONSOR.header}
           </div>
 
-          <div className="flex items-center justify-center my-1 transition-transform duration-200 group-hover:scale-[1.02]">
+          <div className="flex items-center justify-center my-1.5 transition-transform duration-200 group-hover:scale-[1.02]">
             <Image
               src="/sponsors/fateh.webp"
               alt="Fateh Education"
-              width={380}
-              height={120}
-              className="h-[102px] w-auto object-contain"
+              width={420}
+              height={135}
+              className="h-[115px] w-auto object-contain"
               priority
             />
           </div>
 
-          <div className="mt-2 text-[16px] font-medium text-[#222] tracking-[0.03em]">
+          <div className="mt-2 text-[17px] font-medium text-[#222] tracking-[0.03em]">
             {TITLE_SPONSOR.tagline}
           </div>
         </a>
 
         {/* Vertical column dividers between the 4 Partners */}
-        <div className="absolute top-[441.13px] left-[310.76px] [border-right:1px_solid_#000] box-border w-[1px] h-[284.6px]" />
-        <div className="absolute top-[441.13px] left-[591.81px] [border-right:1px_solid_#000] box-border w-[1px] h-[284.6px]" />
-        <div className="absolute top-[441.13px] left-[872.86px] [border-right:1px_solid_#000] box-border w-[1px] h-[284.6px]" />
+        <div className="absolute top-[471.13px] left-[310.76px] [border-right:1px_solid_#000] box-border w-[1px] h-[356.87px]" />
+        <div className="absolute top-[471.13px] left-[591.81px] [border-right:1px_solid_#000] box-border w-[1px] h-[356.87px]" />
+        <div className="absolute top-[471.13px] left-[872.86px] [border-right:1px_solid_#000] box-border w-[1px] h-[356.87px]" />
 
         {/* 4 Partners below Title Partner */}
         {SUPPORTERS.slice(0, 4).map((partner, i) => (
@@ -97,11 +97,11 @@ const SponsorEdition = () => {
             href={partner.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group absolute top-[441.13px] w-[281.05px] h-[284.6px] flex flex-col items-center justify-between pt-4 pb-4 px-3 text-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
+            className="group absolute top-[471.13px] w-[281.05px] h-[356.87px] flex flex-col items-center justify-between pt-5 pb-5 px-3 text-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
             style={{ left: 29.71 + i * 281.05 }}
           >
             {/* Header */}
-            <div className="h-[36px] w-full px-2 flex items-center justify-center text-[#fa1a1d] text-[14.5px] font-bold tracking-[0.04em] uppercase leading-[1.25] text-center">
+            <div className="h-[40px] w-full px-2 flex items-center justify-center text-[#fa1a1d] text-[15px] font-bold tracking-[0.04em] uppercase leading-[1.25] text-center">
               {partner.header.includes("MUSIC STREAMING") ? (
                 <span className="inline-block font-bold">
                   OFFICIAL MUSIC
@@ -114,27 +114,27 @@ const SponsorEdition = () => {
             </div>
 
             {/* Logo */}
-            <div className="h-[116px] w-full flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.04]">
+            <div className="h-[140px] w-full flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.04]">
               {partner.name.toLowerCase().includes("abhi") ? (
                 <div className="flex items-center justify-center">
                   <Image
                     src="/sponsors/abhibus.webp"
                     alt="AbhiBus"
-                    width={200}
-                    height={55}
-                    className="h-[50px] w-auto object-contain"
+                    width={220}
+                    height={65}
+                    className="h-[58px] w-auto object-contain"
                   />
                 </div>
               ) : partner.name.toLowerCase().includes("aha") ? (
-                <div className="flex flex-col items-center justify-center gap-1.5">
+                <div className="flex flex-col items-center justify-center gap-2">
                   <Image
                     src="/sponsors/aha.webp"
                     alt="Aha Therapy"
-                    width={150}
-                    height={70}
-                    className="h-[52px] w-auto object-contain"
+                    width={165}
+                    height={80}
+                    className="h-[60px] w-auto object-contain"
                   />
-                  <div className="font-rotonto text-[14px] font-bold tracking-[0.18em] text-[#2d6a4f] uppercase leading-none">
+                  <div className="font-rotonto text-[15px] font-bold tracking-[0.18em] text-[#2d6a4f] uppercase leading-none">
                     Therapy
                   </div>
                 </div>
@@ -143,9 +143,9 @@ const SponsorEdition = () => {
                   <Image
                     src="/sponsors/jiosaavn.webp"
                     alt="JioSaavn"
-                    width={190}
-                    height={60}
-                    className="h-[52px] w-auto object-contain"
+                    width={210}
+                    height={70}
+                    className="h-[60px] w-auto object-contain"
                   />
                 </div>
               ) : (
@@ -153,17 +153,17 @@ const SponsorEdition = () => {
                   <Image
                     src="/sponsors/ola_cv.webp"
                     alt="ola.cv"
-                    width={140}
-                    height={65}
-                    className="h-[60px] w-auto object-contain"
+                    width={155}
+                    height={75}
+                    className="h-[68px] w-auto object-contain"
                   />
                 </div>
               )}
             </div>
 
             {/* Tagline */}
-            <div className="h-[48px] flex items-center justify-center px-1">
-              <p className="text-[14px] font-medium text-[#222] leading-[1.3] max-w-[245px]">
+            <div className="h-[52px] flex items-center justify-center px-1">
+              <p className="text-[14.5px] font-medium text-[#222] leading-[1.3] max-w-[245px]">
                 {partner.tagline}
               </p>
             </div>

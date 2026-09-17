@@ -124,9 +124,9 @@ export default function SiteFooter() {
           </p>
         </div>
         {/* The society's mark, filed bottom-right on the red panel. */}
-        <div className="absolute h-[53.568px] left-[1058px] top-[647px] w-[163.19px]" data-node-id="297:39" data-name="VIIT 3">
+        <a href="https://vinnovateit.com" target="_blank" rel="noopener noreferrer" className="absolute h-[53.568px] left-[1058px] top-[647px] w-[163.19px]" data-node-id="297:39" data-name="VIIT 3">
           <img alt="VinnovateIT" className="absolute block inset-0 max-w-none size-full" src="/figma/vinnovate-black.svg" />
-        </div>
+        </a>
       </footer>
 
       {/* Mobile Layout (Responsive single-column layout) */}
@@ -195,11 +195,13 @@ export default function SiteFooter() {
                 src="/figma/vector.svg"
               />
               <span className="inline-flex items-center">{FOOTER.madeWith[2]}</span>
-              <img
-                alt="VinnovateIT"
-                className="block h-[38px] sm:h-[44px] w-auto max-w-[160px] sm:max-w-[190px] object-contain shrink-0 self-center translate-y-[6px] sm:translate-y-[8px]"
-                src="/figma/vinnovate-black.svg"
-              />
+              <a href="https://vinnovateit.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+                <img
+                  alt="VinnovateIT"
+                  className="block h-[38px] sm:h-[44px] w-auto max-w-[160px] sm:max-w-[190px] object-contain shrink-0 self-center translate-y-[6px] sm:translate-y-[8px]"
+                  src="/figma/vinnovate-black.svg"
+                />
+              </a>
             </div>
 
             {/* Line 2: Copyright */}

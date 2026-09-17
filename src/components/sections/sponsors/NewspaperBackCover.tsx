@@ -20,7 +20,7 @@ export default function NewspaperBackCover() {
       </div>
 
       {/* 3-Column Newspaper Article Grid */}
-      <div className="relative z-10 my-auto grid grid-cols-3 gap-6 h-[540px] pt-4 pb-2">
+      <div className="relative z-10 my-auto grid grid-cols-3 gap-6 h-[640px] pt-5 pb-3">
         {/* Column 1: Editorial */}
         <div className="flex flex-col justify-between border-r border-black/25 pr-5">
           <div>
