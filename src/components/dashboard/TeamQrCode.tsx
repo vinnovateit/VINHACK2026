@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Check, Copy, X } from "lucide-react";
 import ClientQrCode from "@/components/onboarding/ClientQrCode";
+
+const noSubscribe = () => () => {};
 
 /**
  * The team's QR on the dashboard. It encodes the join link, so scanning it opens the join screen
@@ -12,13 +14,12 @@ import ClientQrCode from "@/components/onboarding/ClientQrCode";
  */
 export default function TeamQrCode({ code, teamName }: { code: string; teamName: string }) {
   const [open, setOpen] = useState(false);
-  const [joinUrl, setJoinUrl] = useState("");
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
-  // The link needs the page's own origin, which only exists in the browser.
-  useEffect(() => {
-    setJoinUrl(`${window.location.origin}/onboarding?step=join-team&code=${encodeURIComponent(code)}`);
-  }, [code]);
+  // The link needs the page's own origin, which only exists in the browser; on the server it's
+  // empty, so the server render and the first client render match.
+  const origin = useSyncExternalStore(noSubscribe, () => window.location.origin, () => "");
+  const joinUrl = origin ? `${origin}/onboarding?step=join-team&code=${encodeURIComponent(code)}` : "";
 
   useEffect(() => {
     if (!open) return;
@@ -86,7 +87,7 @@ export default function TeamQrCode({ code, teamName }: { code: string; teamName:
               <X size={18} />
             </button>
 
-            <p className="text-[#fa1a1d] text-sm tracking-wider uppercase">// Join {teamName}</p>
+            <p className="text-[#fa1a1d] text-sm tracking-wider uppercase">{"// Join "}{teamName}</p>
             <p className="mt-1 text-xs text-[#9a9898]">Scan to open the join screen with the code filled in.</p>
 
             <div className="mt-5 flex justify-center">
