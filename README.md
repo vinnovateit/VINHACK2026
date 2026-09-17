@@ -14,7 +14,7 @@
 <h3 align="center">VinHack 2026</h3>
 
   <p align="center">
-    The landing page for VinHack — a 36-hour hybrid hackathon by VinnovateIT at VIT.
+    The landing page for VinHack — a 30-hour hybrid hackathon by VinnovateIT at VIT.
     <br />
     <a href="https://github.com/vinnovateit/VINHACK2026"><strong>Explore the docs »</strong></a>
     <br />
