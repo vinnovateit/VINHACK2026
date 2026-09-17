@@ -41,7 +41,7 @@ export default function ClientQrCode({
     return (
       <div
         style={{ width: size, height: size }}
-        className={`bg-neutral-100 flex items-center justify-center text-[10px] font-mono text-neutral-400 ${className}`}
+        className={`bg-neutral-100 flex items-center justify-center text-[10px] font-rotonto text-neutral-400 ${className}`}
       >
         QR
       </div>

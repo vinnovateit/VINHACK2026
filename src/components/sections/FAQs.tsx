@@ -147,10 +147,7 @@ export default function FAQsSection() {
                 <div className="absolute bottom-1 left-[22px] w-[200px] h-[305px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[4px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start transition-transform duration-300 ease-out group-hover:-translate-y-9 group-hover:rotate-[-4deg] group-hover:shadow-xl">
                   {/* Header Row */}
                   <div className="pt-2.5 px-3">
-                    <div className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
-                      VINHACK 2026
-                    </div>
-                    <div className="text-center font-rotonto text-[10px] tracking-wide text-neutral-700 uppercase -mt-0.5">
+                    <div className="text-center font-rotonto text-[10px] tracking-wide text-neutral-700 uppercase">
                       {category.subtitle}
                     </div>
                   </div>
@@ -160,7 +157,7 @@ export default function FAQsSection() {
 
                   {/* Main Question */}
                   <div className="px-3 py-1.5 font-rotonto font-semibold text-[13px] leading-[1.2] text-black">
-                    {frontPaper.q}
+                    1. {frontPaper.q}
                   </div>
 
                   {/* Cyan Divider */}
@@ -314,7 +311,7 @@ export default function FAQsSection() {
                   handleClose();
                 }}
                 aria-label="Close"
-                className={`absolute -top-10 right-0 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-mono text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 hover:scale-105 active:scale-95 ${
+                className={`absolute -top-10 right-0 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-rotonto text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 hover:scale-105 active:scale-95 ${
                   isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"
                 }`}
               >
@@ -384,15 +381,8 @@ export default function FAQsSection() {
                     {/* Page Header */}
                     <div className="pt-3 px-4 sm:px-6 flex items-center justify-between border-b border-[#8cd6ee]">
                       <span className="font-rotonto text-[11px] tracking-wider text-neutral-600 uppercase">
-                        VINHACK 2026 // FAQ
+                        FAQ
                       </span>
-                      <span className="font-mono text-[11px] tracking-wider text-neutral-500 font-semibold uppercase">
-                        PAGE 0{idx + 1} / 0{total}
-                      </span>
-                    </div>
-
-                    {/* Category Title bar */}
-                    <div className="py-2 px-4 sm:px-6 bg-neutral-100/60 border-b border-[#8cd6ee] flex items-center justify-between">
                       <span className="font-rotonto text-[11px] font-bold text-neutral-800 uppercase tracking-wide">
                         {activeCategory.subtitle}
                       </span>
@@ -401,7 +391,7 @@ export default function FAQsSection() {
                     {/* Main Question Display */}
                     <div className="px-4 sm:px-6 py-4 border-b border-[#8cd6ee] bg-white">
                       <h3 className="font-rotonto font-bold text-[18px] sm:text-[22px] leading-snug text-black">
-                        {faq.q}
+                        {idx + 1}. {faq.q}
                       </h3>
                     </div>
 
@@ -432,8 +422,8 @@ export default function FAQsSection() {
                     </div>
 
                     {/* Card Footer */}
-                    <div className="px-4 sm:px-6 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[11px] font-mono text-neutral-500 bg-neutral-50">
-                      <span>VINHACK 2026 OFFICIAL FAQ</span>
+                    <div className="px-4 sm:px-6 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[11px] font-rotonto text-neutral-500 bg-neutral-50">
+                      <span>OFFICIAL FAQ</span>
                       <span className="text-black font-semibold">CLICK PAGE FOR NEXT →</span>
                     </div>
                   </div>
@@ -483,7 +473,7 @@ export default function FAQsSection() {
                 />
               ))}
             </div>
-            <p className="text-[11px] font-mono text-white/60 tracking-wider">
+            <p className="text-[11px] font-rotonto text-white/60 tracking-wider">
               CLICK PAGE FOR NEXT • CLICK EMPTY SPACE OR ESC TO EXIT
             </p>
           </div>

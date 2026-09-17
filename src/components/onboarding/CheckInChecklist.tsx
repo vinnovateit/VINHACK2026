@@ -214,7 +214,7 @@ export default function CheckInChecklist({
           </div>
 
           {(formError || submitError) && (
-            <div className="bg-red-500/15 border border-red-500/40 rounded-lg px-3 py-2 text-xs font-mono text-red-300 max-w-[360px] flex items-start gap-2">
+            <div className="bg-red-500/15 border border-red-500/40 rounded-lg px-3 py-2 text-xs font-rotonto text-red-300 max-w-[360px] flex items-start gap-2">
               <span className="text-red-400 font-bold">⚠️</span>
               <span className="leading-snug">{formError || submitError}</span>
             </div>
@@ -238,12 +238,12 @@ export default function CheckInChecklist({
         <div className="lg:col-span-7 xl:col-span-7 flex items-center justify-center relative select-none h-full min-h-0 py-2">
           {/* Back FAQ Sheet (Tilted ~9deg) */}
           <div className="absolute w-[320px] sm:w-[380px] md:w-[420px] h-[450px] md:h-[480px] max-h-[calc(100dvh-130px)] bg-[#EFEFEA] border border-black/80 rounded-sm p-5 shadow-2xl rotate-[9deg] translate-x-4 md:translate-x-8 translate-y-2 pointer-events-none hidden sm:block">
-            <div className="text-[11px] font-mono tracking-widest text-[#676767] uppercase flex justify-between border-b border-black/20 pb-2">
+            <div className="text-[11px] font-rotonto tracking-widest text-[#676767] uppercase flex justify-between border-b border-black/20 pb-2">
               <span>VINHACK 2026</span>
               <span>GENERAL INFORMATION</span>
             </div>
             <div className="mt-6 space-y-3">
-              <span className="text-[10px] font-mono tracking-wider text-[#676767] uppercase block">
+              <span className="text-[10px] font-rotonto tracking-wider text-[#676767] uppercase block">
                 FAQS
               </span>
               <h3 className="font-['Rotonto',sans-serif] text-[18px] md:text-[20px] text-black leading-snug">
@@ -275,7 +275,7 @@ export default function CheckInChecklist({
             </div>
 
             {/* Checklist Header */}
-            <div className="text-[10px] font-mono tracking-widest text-[#676767] uppercase flex justify-between border-b border-black/20 pb-1">
+            <div className="text-[10px] font-rotonto tracking-widest text-[#676767] uppercase flex justify-between border-b border-black/20 pb-1">
               <span>VINHACK 2026</span>
               <span>{studentType === "vit" ? "REGISTRATION" : "ATTENDEE"} INFO</span>
             </div>
@@ -290,7 +290,7 @@ export default function CheckInChecklist({
             <div className="space-y-2 sm:space-y-2.5 text-[12px] md:text-[13px] font-['Rotonto',sans-serif]">
               {/* Question 1: Name */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                <span className="col-span-2 text-[#676767] font-mono text-xs">Q1</span>
+                <span className="col-span-2 text-[#676767] font-rotonto text-xs">Q1</span>
                 <div className="col-span-10 space-y-0.5">
                   <label className="block text-black text-xs font-semibold">What do we call you ?</label>
                   <input
@@ -310,14 +310,14 @@ export default function CheckInChecklist({
                     } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px]`}
                   />
                   {attemptedSubmit && !name.trim() && (
-                    <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Name is required</span>
+                    <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Name is required</span>
                   )}
                 </div>
               </div>
 
               {/* Question 2: Registration Number */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                <span className="col-span-2 text-[#676767] font-mono text-xs">Q2</span>
+                <span className="col-span-2 text-[#676767] font-rotonto text-xs">Q2</span>
                 <div className="col-span-10 space-y-0.5">
                   <label className="block text-black text-xs font-semibold">Registration number</label>
                   <input
@@ -337,14 +337,14 @@ export default function CheckInChecklist({
                     } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px]`}
                   />
                   {attemptedSubmit && !regNo.trim() && (
-                    <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Registration number is required</span>
+                    <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Registration number is required</span>
                   )}
                 </div>
               </div>
 
               {/* Question 3: Phone number */}
               <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                <span className="col-span-2 text-[#676767] font-mono text-xs">Q3</span>
+                <span className="col-span-2 text-[#676767] font-rotonto text-xs">Q3</span>
                 <div className="col-span-10 space-y-0.5">
                   <label className="block text-black text-xs font-semibold">Phone number</label>
                   <input
@@ -363,7 +363,7 @@ export default function CheckInChecklist({
                     } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[15px] transition`}
                   />
                   {attemptedSubmit && (!phone.trim() || !isPhoneValid(phone)) && (
-                    <span className="text-[10px] text-red-600 font-mono block pt-0.5">
+                    <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">
                       {!phone.trim() ? "* Phone number is required" : "* Must be a valid 10-digit mobile number"}
                     </span>
                   )}
@@ -373,7 +373,7 @@ export default function CheckInChecklist({
               {/* Question 4: Hosteller (VIT) OR College Name (External) */}
               {studentType === "vit" ? (
                 <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q4</span>
+                  <span className="col-span-2 text-[#676767] font-rotonto text-xs">Q4</span>
                   <div className="col-span-10 space-y-0.5">
                     <label className="block text-black text-xs">Are you a hosteller ?</label>
                     <div className="flex items-center gap-5 pt-0.5">
@@ -402,7 +402,7 @@ export default function CheckInChecklist({
                 </div>
               ) : (
                 <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q4</span>
+                  <span className="col-span-2 text-[#676767] font-rotonto text-xs">Q4</span>
                   <div className="col-span-10 space-y-0.5">
                     <label className="block text-black text-xs">College name</label>
                     <input
@@ -419,7 +419,7 @@ export default function CheckInChecklist({
                       } outline-none px-1 py-0.5 text-black font-['Rotonto',sans-serif] text-[13px] md:text-[14px] transition`}
                     />
                     {attemptedSubmit && !collegeName.trim() && (
-                      <span className="text-[10px] text-red-600 font-mono block pt-0.5">* College name is required</span>
+                      <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* College name is required</span>
                     )}
                   </div>
                 </div>
@@ -428,7 +428,7 @@ export default function CheckInChecklist({
               {/* Question 5: Year of study (External only) */}
               {studentType === "external" && (
                 <div className="grid grid-cols-12 gap-2 items-baseline border-b border-neutral-300 pb-2">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs">Q5</span>
+                  <span className="col-span-2 text-[#676767] font-rotonto text-xs">Q5</span>
                   <div className="col-span-10 space-y-1">
                     <label className="block text-black text-xs font-semibold">Year of study</label>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
@@ -454,7 +454,7 @@ export default function CheckInChecklist({
                       ))}
                     </div>
                     {attemptedSubmit && !year && (
-                      <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Year of study is required</span>
+                      <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Year of study is required</span>
                     )}
                   </div>
                 </div>
@@ -463,7 +463,7 @@ export default function CheckInChecklist({
               {/* Question 5: Where do you live (VIT) OR Question 6: Accommodation (External) */}
               {studentType === "vit" ? (
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q5</span>
+                  <span className="col-span-2 text-[#676767] font-rotonto text-xs pt-0.5">Q5</span>
                   <div className="col-span-10 space-y-1.5">
                     <label className="block text-black text-xs">
                       {isHosteller ? "Where do you live ?" : "Residential Address (Dayscholar)"}
@@ -518,7 +518,7 @@ export default function CheckInChecklist({
                               ))}
                             </select>
                             {attemptedSubmit && !hostelBlock.trim() && (
-                              <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                              <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Required</span>
                             )}
                           </div>
                           <div>
@@ -537,7 +537,7 @@ export default function CheckInChecklist({
                               } outline-none px-1 py-0.5 text-black text-xs`}
                             />
                             {attemptedSubmit && !roomNo.trim() && (
-                              <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                              <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Required</span>
                             )}
                           </div>
                         </div>
@@ -559,7 +559,7 @@ export default function CheckInChecklist({
                           } outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition`}
                         />
                         {attemptedSubmit && !address.trim() && (
-                          <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Residential address is required</span>
+                          <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Residential address is required</span>
                         )}
                       </div>
                     )}
@@ -568,7 +568,7 @@ export default function CheckInChecklist({
               ) : (
                 /* External Accommodation */
                 <div className="grid grid-cols-12 gap-2 items-start">
-                  <span className="col-span-2 text-[#676767] font-mono text-xs pt-0.5">Q6</span>
+                  <span className="col-span-2 text-[#676767] font-rotonto text-xs pt-0.5">Q6</span>
                   <div className="col-span-10 space-y-1.5">
                     <label className="block text-black text-xs">Are you taking accommodation ?</label>
                     <div className="flex items-center gap-5">
@@ -612,7 +612,7 @@ export default function CheckInChecklist({
                             } outline-none px-1 py-0.5 text-black text-xs`}
                           />
                           {attemptedSubmit && !hostelBlock.trim() && (
-                            <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                            <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Required</span>
                           )}
                         </div>
                         <div>
@@ -631,7 +631,7 @@ export default function CheckInChecklist({
                             } outline-none px-1 py-0.5 text-black text-xs`}
                           />
                           {attemptedSubmit && !roomNo.trim() && (
-                            <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Required</span>
+                            <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Required</span>
                           )}
                         </div>
                       </div>
@@ -652,7 +652,7 @@ export default function CheckInChecklist({
                           } outline-none px-1 py-0.5 text-black text-xs md:text-[13px] transition`}
                         />
                         {attemptedSubmit && !address.trim() && (
-                          <span className="text-[10px] text-red-600 font-mono block pt-0.5">* Address / City is required</span>
+                          <span className="text-[10px] text-red-600 font-rotonto block pt-0.5">* Address / City is required</span>
                         )}
                       </div>
                     )}

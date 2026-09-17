@@ -185,13 +185,13 @@ export default function CreateTeamDossier({
             </div>
             {/* Status text */}
             {checking && (
-              <p className="text-neutral-400 text-xs font-mono">Checking availability...</p>
+              <p className="text-neutral-400 text-xs font-rotonto">Checking availability...</p>
             )}
             {!checking && nameAvailable === true && (
-              <p className="text-green-400 text-xs font-mono">✓ Team name is available</p>
+              <p className="text-green-400 text-xs font-rotonto">✓ Team name is available</p>
             )}
             {!checking && error && (
-              <p className="text-red-400 text-xs font-mono">{error}</p>
+              <p className="text-red-400 text-xs font-rotonto">{error}</p>
             )}
           </div>
 
@@ -265,7 +265,7 @@ export default function CreateTeamDossier({
                   {/* Header Title with receipt rules */}
                   <div className="receipt-rule w-full h-[1px] my-1" />
                   <div className="py-1 text-center min-h-[34px] md:min-h-[38px] flex flex-col justify-center items-center">
-                    <p className="text-[9px] md:text-[10px] font-mono tracking-widest text-[#676767] uppercase leading-none mb-0.5">
+                    <p className="text-[9px] md:text-[10px] font-rotonto tracking-widest text-[#676767] uppercase leading-none mb-0.5">
                       VinHack 2026
                     </p>
                     {teamName ? (
@@ -279,7 +279,7 @@ export default function CreateTeamDossier({
                   <div className="receipt-rule w-full h-[1px] my-1" />
 
                   {/* Date metadata */}
-                  <div className="flex justify-between items-center text-[10px] md:text-[11px] font-mono text-neutral-800 py-1">
+                  <div className="flex justify-between items-center text-[10px] md:text-[11px] font-rotonto text-neutral-800 py-1">
                     <span>Date :</span>
                     <span className="font-semibold">18th Sept</span>
                   </div>
@@ -287,7 +287,7 @@ export default function CreateTeamDossier({
 
                   {/* Shareable Team Code */}
                   <div className="text-center pt-1.5 pb-0.5">
-                    <p className="text-[9px] md:text-[10px] font-mono uppercase text-neutral-600 tracking-wider">
+                    <p className="text-[9px] md:text-[10px] font-rotonto uppercase text-neutral-600 tracking-wider">
                       Your shareable team code
                     </p>
                     <div className="font-['Rotonto',sans-serif] text-[24px] md:text-[28px] font-bold text-black tracking-widest my-0.5 select-all">
@@ -313,7 +313,7 @@ export default function CreateTeamDossier({
                 {/* Footer URL metadata */}
                 <div>
                   <div className="receipt-rule w-full h-[1px] mb-1.5" />
-                  <div className="flex justify-between text-[6.5px] md:text-[7.5px] font-mono text-neutral-600">
+                  <div className="flex justify-between text-[6.5px] md:text-[7.5px] font-rotonto text-neutral-600">
                     <span>vinhack.vinnovateit.com</span>
                     <span>vinnovateit@gmail.com</span>
                   </div>

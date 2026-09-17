@@ -836,7 +836,7 @@ export default function WhoAreWeSection({
                   <p className="font-rotonto text-black text-[23px] md:text-[25px] leading-[1.08] font-bold uppercase whitespace-pre-line">
                     {blueQuote.headline}
                   </p>
-                  <p className="font-mono text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
+                  <p className="font-rotonto text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
                     {blueQuote.subline}
                   </p>
                 </div>
@@ -853,7 +853,7 @@ export default function WhoAreWeSection({
                   <p className="font-rotonto text-black text-[24px] md:text-[26px] leading-[1.08] font-bold uppercase whitespace-pre-line">
                     {redQuote.headline}
                   </p>
-                  <p className="font-mono text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
+                  <p className="font-rotonto text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
                     {redQuote.subline}
                   </p>
                 </div>

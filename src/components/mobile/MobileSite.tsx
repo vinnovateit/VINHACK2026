@@ -1199,16 +1199,13 @@ function MobileFAQs() {
                 {/* Sheet 4 (Front Main Paper) */}
                 <div className="absolute bottom-0 left-[4%] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start">
                   <div className="pt-2 px-2.5">
-                    <div className="font-rotonto text-[8px] tracking-wider text-neutral-500 uppercase">
-                      VINHACK 2026
-                    </div>
-                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase -mt-0.5 truncate">
+                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase truncate">
                       {category.subtitle}
                     </div>
                   </div>
                   <div className="mt-1 border-t border-[#8cd6ee]" />
                   <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">
-                    {frontPaper.q}
+                    1. {frontPaper.q}
                   </div>
                   <div className="border-t border-[#8cd6ee]" />
                   <div
@@ -1326,7 +1323,7 @@ function MobileFAQs() {
                   handleClose();
                 }}
                 aria-label="Close"
-                className={`absolute -top-9 right-0 flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-mono text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 ${
+                className={`absolute -top-9 right-0 flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-rotonto text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 ${
                   isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
                 }`}
               >
@@ -1392,27 +1389,17 @@ function MobileFAQs() {
                     {/* Header */}
                     <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
                       <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
-                        VINHACK 2026 // FAQ
+                        FAQ
                       </span>
-                      <span className="font-mono text-[9.5px] text-neutral-500 font-semibold uppercase">
-                        PAGE 0{idx + 1} / 0{total}
-                      </span>
-                    </div>
-
-                    {/* Category bar */}
-                    <div className="py-1.5 px-3 bg-neutral-100/60 border-b border-[#8cd6ee] flex items-center justify-between">
                       <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
                         {activeCategory.subtitle}
-                      </span>
-                      <span className="font-mono text-[8.5px] text-neutral-500 uppercase shrink-0">
-                        {isTop ? "[TAP FOR NEXT →]" : ""}
                       </span>
                     </div>
 
                     {/* Main Question */}
                     <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
                       <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
-                        {faq.q}
+                        {idx + 1}. {faq.q}
                       </h3>
                     </div>
 
@@ -1433,7 +1420,7 @@ function MobileFAQs() {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-3 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[9.5px] font-mono text-neutral-500 bg-neutral-50">
+                    <div className="px-3 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[9.5px] font-rotonto text-neutral-500 bg-neutral-50">
                       <span>OFFICIAL FAQ</span>
                       <span className="text-black font-semibold">TAP FOR NEXT →</span>
                     </div>
@@ -1483,7 +1470,7 @@ function MobileFAQs() {
                 />
               ))}
             </div>
-            <p className="text-[9.5px] font-mono text-white/60 tracking-wider">
+            <p className="text-[9.5px] font-rotonto text-white/60 tracking-wider">
               TAP PAGE FOR NEXT • TAP OUTSIDE TO EXIT
             </p>
           </div>

@@ -156,7 +156,7 @@ export default function ProjectsSection() {
                 <span className="absolute bottom-0 right-0 size-3" />
 
                 {/* Viewfinder corner label */}
-                <div className="absolute top-2 right-2.5 flex items-center gap-1 font-mono text-[10px] tracking-wider uppercase opacity-85">
+                <div className="absolute top-2 right-2.5 flex items-center gap-1 font-rotonto text-[10px] tracking-wider uppercase opacity-85">
                   
                 </div>
               </div>

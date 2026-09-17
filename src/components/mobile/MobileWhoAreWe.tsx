@@ -27,7 +27,7 @@ export default function MobileWhoAreWe() {
         onClick={() => setRevealed(!revealed)}
         className="cursor-pointer select-none bg-[#111111] p-6 rounded-xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] relative overflow-hidden transition-colors hover:border-[#bfea88]/40"
       >
-        <div className="absolute top-0 right-0 p-2 text-[10px] font-mono text-[#bfea88]/70 uppercase tracking-wider">
+        <div className="absolute top-0 right-0 p-2 text-[10px] font-rotonto text-[#bfea88]/70 uppercase tracking-wider">
           [ TAP TO REVEAL ]
         </div>
 
@@ -47,7 +47,7 @@ export default function MobileWhoAreWe() {
               <h2 className="font-rotonto text-[#bfea88] text-[42px] leading-tight tracking-wider uppercase drop-shadow-[0_0_25px_rgba(191,234,136,0.3)]">
                 {WHO_ARE_WE.title}
               </h2>
-              <p className="font-mono text-[10px] text-white/50 tracking-widest mt-2 uppercase">
+              <p className="font-rotonto text-[10px] text-white/50 tracking-widest mt-2 uppercase">
                 TAP TO SEE WHAT DRIVES US
               </p>
             </motion.div>
@@ -79,7 +79,7 @@ export default function MobileWhoAreWe() {
         <button
           type="button"
           onClick={() => setActiveTab("cards")}
-          className={`flex-1 py-2 text-xs font-mono font-bold tracking-wider uppercase rounded-md transition-all ${
+          className={`flex-1 py-2 text-xs font-rotonto font-bold tracking-wider uppercase rounded-md transition-all ${
             activeTab === "cards"
               ? "bg-[#bfea88] text-black shadow-xs"
               : "text-white/60 hover:text-white"
@@ -90,7 +90,7 @@ export default function MobileWhoAreWe() {
         <button
           type="button"
           onClick={() => setActiveTab("photos")}
-          className={`flex-1 py-2 text-xs font-mono font-bold tracking-wider uppercase rounded-md transition-all ${
+          className={`flex-1 py-2 text-xs font-rotonto font-bold tracking-wider uppercase rounded-md transition-all ${
             activeTab === "photos"
               ? "bg-[#bfea88] text-black shadow-xs"
               : "text-white/60 hover:text-white"
@@ -116,7 +116,7 @@ export default function MobileWhoAreWe() {
               <h3 className="font-rotonto text-black text-[22px] leading-tight font-bold uppercase mb-2">
                 {greenQuote.headline}
               </h3>
-              <p className="font-mono text-[10px] text-black/75 tracking-widest uppercase font-bold">
+              <p className="font-rotonto text-[10px] text-black/75 tracking-widest uppercase font-bold">
                 {greenQuote.subline}
               </p>
             </motion.div>
@@ -133,7 +133,7 @@ export default function MobileWhoAreWe() {
               <h3 className="font-rotonto text-black text-[24px] leading-tight font-bold uppercase mb-2 whitespace-pre-line">
                 {pinkQuote.headline}
               </h3>
-              <p className="font-mono text-[10px] text-black/70 tracking-widest uppercase font-semibold">
+              <p className="font-rotonto text-[10px] text-black/70 tracking-widest uppercase font-semibold">
                 {"// ALWAYS CURIOUS"}
               </p>
             </motion.div>
@@ -151,7 +151,7 @@ export default function MobileWhoAreWe() {
                   <span className="font-rotonto text-black text-[13px] font-bold tracking-wider uppercase">
                     {vid.label}
                   </span>
-                  <span className="font-mono text-[8px] text-black/70 tracking-wide mt-0.5">
+                  <span className="font-rotonto text-[8px] text-black/70 tracking-wide mt-0.5">
                     {idx === 0 ? "REEL • 0:45" : "AFTERMOVIE"}
                   </span>
                 </div>
@@ -169,7 +169,7 @@ export default function MobileWhoAreWe() {
               <h3 className="font-rotonto text-black text-[21px] leading-tight font-bold uppercase mb-2 whitespace-pre-line">
                 {blueQuote.headline}
               </h3>
-              <p className="font-mono text-[10px] text-black/70 tracking-widest uppercase font-semibold">
+              <p className="font-rotonto text-[10px] text-black/70 tracking-widest uppercase font-semibold">
                 VIT VELLORE // EST. 2014
               </p>
             </motion.div>
@@ -185,7 +185,7 @@ export default function MobileWhoAreWe() {
               <h3 className="font-rotonto text-white text-[22px] leading-tight font-bold uppercase mb-2 whitespace-pre-line">
                 {redQuote.headline}
               </h3>
-              <p className="font-mono text-[10px] text-white/80 tracking-widest uppercase font-semibold">
+              <p className="font-rotonto text-[10px] text-white/80 tracking-widest uppercase font-semibold">
                 DIFFERENT MINDS. ONE GOAL.
               </p>
             </motion.div>
@@ -216,7 +216,7 @@ export default function MobileWhoAreWe() {
                   <span className="font-rotonto text-[9px] text-black/70 font-bold uppercase tracking-wider">
                     MEMORIES
                   </span>
-                  <span className="font-mono text-[9px] font-bold text-black/50">
+                  <span className="font-rotonto text-[9px] font-bold text-black/50">
                     {photo.number}
                   </span>
                 </div>
