@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 12834px;
+  --canvas-height: 12334px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -130,7 +130,7 @@ body {
 }
 
 .recap-extended-sections {
-  transform: translateY(496px);
+  transform: translateY(-4px);
 }
 
 .who-are-we-disabled .recap-extended-sections {

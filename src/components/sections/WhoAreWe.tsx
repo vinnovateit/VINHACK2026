@@ -22,10 +22,10 @@ const SCROLL_TRAVEL = 1100;
 
 /**
  * The room the canvas gives this section: Projects' shifted top (2496 + the
- * 496 `.recap-extended-sections` carries) less this section's own top of 1392.
+ * -4px `.recap-extended-sections` carries) less this section's own top of 1392.
  * Keep it in step with that translate.
  */
-const CANVAS_RESERVED = 1600;
+const CANVAS_RESERVED = 1100;
 
 // 2. The headline crossfade. It is a clock, not a scroll position: the two
 // lines run themselves once the stage is parked and fills the screen, so the
@@ -399,19 +399,15 @@ export default function WhoAreWeSection({
       keepOffTheWords();
 
       if (variant === "flow") {
-        travelPx = Math.max(600, Math.round(SCROLL_TRAVEL * 0.6));
+        travelPx = 480;
         // In flow the reservation only needs travel plus a compact exit buffer
-        container.style.height = `${travelPx + Math.min(240, Math.round(exit * 0.3))}px`;
+        container.style.height = `${travelPx + 40}px`;
       } else {
-        /* What the collage actually has on the canvas, and it is not this
-           section's own `height`: everything from Projects down is shifted by
-           `.recap-extended-sections` (+496px in globals.css), which puts
-           Projects at 2992 against this section's 1392 — 1600px of room. */
         const reserved = CANVAS_RESERVED;
         travelPx = clamp(
-          700,
-          Math.max(700, reserved - exit),
-          Math.max(1000, Math.round(SCROLL_TRAVEL * (rect.width / 1280 || 1))),
+          600,
+          Math.max(600, reserved - Math.round(exit * 0.4)),
+          750,
         );
       }
     };
@@ -647,7 +643,7 @@ export default function WhoAreWeSection({
         style={{
           height:
             variant === "flow"
-              ? `${Math.round(SCROLL_TRAVEL * 0.6) + 240}px`
+              ? "520px"
               : `${CANVAS_RESERVED}px`,
           overflowAnchor: "none",
         }}
