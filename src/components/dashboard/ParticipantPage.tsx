@@ -80,7 +80,7 @@ function TracksContent() {
       </div>
       {tracks.map((track, idx) => (
         <article className={`${styles.trackCard} ${styles[track.tone]}`} key={track.name}>
-          <span>0{idx + 1}</span>
+          <span>#{idx + 1}</span>
           <h2>{track.name}</h2>
           <p>{track.detail}</p>
           <Link href={`/dashboard?track=${encodeURIComponent(track.name)}`}>

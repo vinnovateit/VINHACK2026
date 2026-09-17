@@ -576,7 +576,7 @@ export function TracksCardDeck() {
           tick.style.opacity = i <= active ? "1" : "0.25";
         });
         const label = counter.querySelector<HTMLElement>("[data-tick-label]");
-        if (label) label.textContent = pad(active + 1);
+        if (label) label.textContent = `#${active + 1}`;
       }
     };
 
@@ -877,8 +877,7 @@ export function TracksCardDeck() {
                   ))}
                 </span>
                 <span className="text-[11px] tracking-[0.2em] tabular-nums">
-                  <span data-tick-label>01</span>
-                  <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
+                  <span data-tick-label>#1</span>
                 </span>
               </div>
 
@@ -946,8 +945,7 @@ export function TracksCardDeck() {
                           >
                             <div className="flex items-start justify-between">
                               <span className="font-rotonto text-[26px] tracking-[0.2em] tabular-nums">
-                                {pad(slot + 1)}
-                                <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
+                                #{slot + 1}
                               </span>
                               <TrackAsterisk size={30} />
                             </div>
@@ -987,14 +985,11 @@ export function TracksCardDeck() {
                               />
                             </div>
 
-                            <div className="flex items-end justify-between font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
-                              <span>{"label" in item ? item.label : "Track"}</span>
-                              <span
-                                className="mx-[24px] mb-[6px] h-[2px] flex-1"
-                                style={{ background: rule }}
-                              />
-                              <span>VinHack 26</span>
-                            </div>
+                            {"label" in item ? (
+                              <div className="flex items-end justify-start font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
+                                <span>{item.label}</span>
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
                       </TrackCard>

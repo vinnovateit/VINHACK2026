@@ -427,9 +427,12 @@ export default function MobileTracksDeck() {
                       className="absolute inset-0 flex flex-col justify-between p-4 opacity-0"
                       style={{ color: ink }}
                     >
-                      <span className="font-rotonto text-[8px] uppercase tracking-[0.3em]">
-                        {"label" in item ? item.label : "Track"} {pad(slot + 1)} / {pad(COUNT)}
-                      </span>
+                      <div className="flex items-center justify-between font-rotonto text-[10px] tracking-[0.2em]">
+                        <span>#{slot + 1}</span>
+                        {"label" in item ? (
+                          <span className="text-[8px] uppercase tracking-[0.25em] opacity-75">{item.label}</span>
+                        ) : null}
+                      </div>
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
                           <div
