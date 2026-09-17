@@ -15,15 +15,7 @@ import WordmarkArt from "@/components/hero/WordmarkArt";
 import MobileRecap from "@/components/mobile/MobileRecap";
 import WhoAreWeSection from "@/components/sections/WhoAreWe";
 import MobileSponsors from "@/components/mobile/MobileSponsors";
-import ReceiptPrinter from "@/components/timeline/ReceiptPrinter";
-import TimelineToggle from "@/components/timeline/TimelineToggle";
-import {
-  TimelineExploreSticker,
-  TimelinePhoto234,
-  TimelinePhoto235,
-  TimelinePhoto236,
-  TimelineVector227,
-} from "@/components/timeline/TimelineStickers";
+import TimelineSection from "@/components/sections/Timeline";
 import Piece from "@/components/mobile/Piece";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
@@ -92,7 +84,7 @@ export default function MobileSite() {
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
       <MobileSponsors />
-      <MobileTimelineSection />
+      <TimelineSection variant="flow" />
       <MobileRules />
       <MobileGuidelines />
       <MobileFAQs />
@@ -723,106 +715,6 @@ function MobileTracks() {
 }
 
 /* ----------------------------------------------------------- timeline */
-
-/**
- * One of the timeline's loose stickers.
- *
- * The collage scatters six of these round the receipt printer, stamps them down
- * as the section arrives and then lets the visitor pick them up and move them —
- * or throw them off the page. The phone gets the same thing, in the one shape a
- * column has room for: a row above the schedule and a row below it.
- *
- * The wrapper is what carries the motion, not the `Piece` inside it: `stampIn`
- * and `draggable` both write a transform, and `Piece`'s plate already has one
- * of its own for the scale. Two transforms, two boxes, and neither overwrites
- * the other.
- */
-function Loose({
-  width,
-  height,
-  max,
-  size,
-  stamp,
-  className,
-  children,
-}: {
-  width: number;
-  height: number;
-  max: number;
-  /** How wide the sticker sits in the row, in px. */
-  size: number;
-  /** Seconds after the row is reached that this one lands. */
-  stamp: number;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={`shrink-0 ${className ?? ""}`}
-      style={{ width: size }}
-      data-m-drag
-      data-m-stamp={stamp}
-    >
-      <Piece width={width} height={height} max={max}>
-        {children}
-      </Piece>
-    </div>
-  );
-}
-
-function MobileTimelineSection() {
-  return (
-    <section aria-label="Timeline" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
-      {/* The two that ride above the schedule. */}
-      <div className="mb-10 flex items-end justify-center gap-4">
-        <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
-          <TimelinePhoto235 />
-        </Loose>
-
-        <Loose width={136.85} height={134.841} max={0.9} size={108} stamp={0.12}>
-          <div className="absolute top-0 left-0 flex h-[134.841px] w-[136.85px] items-center justify-center">
-            <TimelinePhoto234 />
-          </div>
-        </Loose>
-      </div>
-
-      <h2 className="mb-10 text-[44px] text-[#fa1a1d]">{TIMELINE.heading}</h2>
-
-      <Piece width={440.363} height={646}>
-        <ReceiptPrinter className="relative" />
-      </Piece>
-
-      {/* For mobile / android, Day 1 / Day 2 toggle placed at bottom */}
-      <div className="mt-8 relative z-20">
-        <Piece width={356.4} height={63}>
-          <TimelineToggle className="relative mx-auto" />
-        </Piece>
-      </div>
-
-      {/* And the three below it. */}
-      <div className="mt-12 flex flex-wrap items-start justify-center gap-4">
-        <Loose width={185.111} height={166.791} max={0.95} size={150} stamp={0.24}>
-          <TimelineExploreSticker />
-        </Loose>
-
-        <Loose width={160.514} height={164.786} max={0.9} size={116} stamp={0.36}>
-          <div
-            className="absolute top-0 left-0 flex h-[164.786px] w-[160.514px] items-center justify-center"
-            style={{ containerType: "size" }}
-          >
-            <TimelinePhoto236 />
-          </div>
-        </Loose>
-
-        <Loose width={150.24} height={144.718} max={0.9} size={110} stamp={0.48}>
-          <div className="absolute top-0 left-0 flex h-[144.718px] w-[150.24px] items-center justify-center">
-            <TimelineVector227 />
-          </div>
-        </Loose>
-      </div>
-    </section>
-  );
-}
 
 /* -------------------------------------------------------------- rules */
 
