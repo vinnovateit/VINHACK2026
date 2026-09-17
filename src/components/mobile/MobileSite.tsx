@@ -1187,34 +1187,15 @@ function MobileFAQs() {
           }`}
           onClick={handleClose}
         >
-          {/* Deck Container with Navigation */}
-          <div className="relative flex items-center justify-center gap-3 w-full max-w-[420px]">
-            {/* Left Key Button */}
-            <div
-              className={`transition-all duration-300 shrink-0 z-40 ${
-                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-              }`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <KeyButton
-                color="blue"
-                size="compact"
-                className="w-[46px] sm:w-[52px]"
-                onClick={() => handlePrev()}
-                aria-label="Previous question"
-                title="Previous question"
-              >
-                <ChevronLeft size={20} className="stroke-[2.5]" />
-              </KeyButton>
-            </div>
-
+          {/* Deck Container */}
+          <div className="relative flex flex-col items-center justify-center w-full max-w-[320px] sm:max-w-[340px]">
             {/* === The Stack of Pages (Tap to advance) === */}
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 handleNext();
               }}
-              className={`relative w-[280px] sm:w-[320px] h-[400px] cursor-pointer ${
+              className={`relative w-full h-[400px] cursor-pointer ${
                 isOpen
                   ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   : "opacity-0 scale-[0.5] translate-y-[400px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
@@ -1353,17 +1334,48 @@ function MobileFAQs() {
               })}
             </div>
 
-            {/* Right Key Button */}
+            {/* Bottom Controls Bar (Prev Button, Pagination Dots, Next Button) */}
             <div
-              className={`transition-all duration-300 shrink-0 z-40 ${
-                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-              }`}
               onClick={(e) => e.stopPropagation()}
+              className={`mt-5 flex items-center justify-between w-full px-1 transition-all duration-300 ${
+                isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+              }`}
             >
+              {/* Left Key Button */}
               <KeyButton
                 color="blue"
                 size="compact"
-                className="w-[46px] sm:w-[52px]"
+                className="w-[50px] sm:w-[56px]"
+                onClick={() => handlePrev()}
+                aria-label="Previous question"
+                title="Previous question"
+              >
+                <ChevronLeft size={20} className="stroke-[2.5]" />
+              </KeyButton>
+
+              {/* Pagination Dots */}
+              <div className="flex items-center gap-1.5">
+                {activeCategory.questions.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCardIndex(i);
+                    }}
+                    aria-label={`Go to question ${i + 1}`}
+                    className={`h-1.5 transition-all duration-300 cursor-pointer ${
+                      i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Right Key Button */}
+              <KeyButton
+                color="blue"
+                size="compact"
+                className="w-[50px] sm:w-[56px]"
                 onClick={() => handleNext()}
                 aria-label="Next question"
                 title="Next question"
@@ -1371,34 +1383,6 @@ function MobileFAQs() {
                 <ChevronRight size={20} className="stroke-[2.5]" />
               </KeyButton>
             </div>
-          </div>
-
-          {/* Bottom Pagination */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`mt-4 flex flex-col items-center gap-1.5 transition-all duration-300 ${
-              isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <div className="flex items-center gap-1.5">
-              {activeCategory.questions.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCardIndex(i);
-                  }}
-                  aria-label={`Go to question ${i + 1}`}
-                  className={`h-1.5 transition-all duration-300 cursor-pointer ${
-                    i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-[9.5px] font-rotonto text-white/60 tracking-wider">
-              TAP PAGE FOR NEXT • TAP OUTSIDE TO EXIT
-            </p>
           </div>
         </div>
       )}

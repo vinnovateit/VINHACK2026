@@ -482,7 +482,7 @@ export default function FAQsSection() {
             </div>
           </div>
 
-          {/* Bottom Pagination Dots & Instructions */}
+          {/* Bottom Pagination Dots */}
           <div
             onClick={(e) => e.stopPropagation()}
             className={`mt-6 flex flex-col items-center gap-2 transition-all duration-300 ${
@@ -505,9 +505,6 @@ export default function FAQsSection() {
                 />
               ))}
             </div>
-            <p className="text-[11px] font-rotonto text-white/60 tracking-wider">
-              CLICK PAGE FOR NEXT • CLICK EMPTY SPACE OR ESC TO EXIT
-            </p>
           </div>
         </div>
       )}
