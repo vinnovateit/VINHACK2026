@@ -124,7 +124,7 @@ export default function SiteFooter() {
           </p>
         </div>
         {/* The society's mark, filed bottom-right on the red panel. */}
-        <div className="absolute h-[53.568px] left-[1058px] top-[670px] w-[163.19px]" data-node-id="297:39" data-name="VIIT 3">
+        <div className="absolute h-[53.568px] left-[1058px] top-[647px] w-[163.19px]" data-node-id="297:39" data-name="VIIT 3">
           <img alt="VinnovateIT" className="absolute block inset-0 max-w-none size-full" src="/figma/vinnovate-black.svg" />
         </div>
       </footer>
