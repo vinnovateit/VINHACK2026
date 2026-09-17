@@ -24,7 +24,11 @@ import { useInView } from "@/components/useInView";
  * still fits the section's 840px with the top padding on, and every column is
  * set at the size the design actually specifies.
  */
-export default function SponsorsSection() {
+export default function SponsorsSection({
+  variant = "canvas",
+}: {
+  variant?: "canvas" | "flow";
+} = {}) {
   const [sectionRef, inView] = useInView<HTMLElement>(0.15);
 
   return (
@@ -32,7 +36,11 @@ export default function SponsorsSection() {
       ref={sectionRef}
       data-in-view={inView || undefined}
       aria-label="Sponsors"
-      className="-translate-x-1/2 absolute bg-black h-[1340px] left-1/2 top-[4710px] w-[1280px] flex flex-col items-center justify-start pt-3 overflow-visible z-10"
+      className={
+        variant === "flow"
+          ? "relative w-full bg-black flex flex-col items-center justify-start overflow-visible z-10"
+          : "-translate-x-1/2 absolute bg-black h-[1340px] left-1/2 top-[4710px] w-[1280px] flex flex-col items-center justify-start pt-3 overflow-visible z-10"
+      }
       data-name="SPONSORS"
     >
       {/* The paper spells this out over the course of a scroll; a screen reader
@@ -46,10 +54,14 @@ export default function SponsorsSection() {
           rather than the sheet's height alone. The width is the sheet's own,
           which is what the edition measures its scale against. */}
       <div
-        className="relative flex w-[1184px] shrink-0 justify-center"
-        style={{ height: EDITION_BLOCK_HEIGHT }}
+        className={
+          variant === "flow"
+            ? "relative flex w-full justify-center overflow-visible"
+            : "relative flex w-[1184px] shrink-0 justify-center"
+        }
+        style={{ height: variant === "flow" ? undefined : EDITION_BLOCK_HEIGHT }}
       >
-        <FoldedEdition />
+        <FoldedEdition variant={variant} />
       </div>
     </section>
   );

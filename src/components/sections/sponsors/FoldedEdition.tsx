@@ -7,7 +7,7 @@ import SponsorEdition from "./SponsorEdition";
 import SealedCover from "./SealedCover";
 import SponsorSideProps from "./SponsorSideProps";
 import { SPONSOR_HEADING } from "./copy";
-import { DESKTOP } from "@/components/motion/recipes";
+import { DESKTOP, MOBILE } from "@/components/motion/recipes";
 import { paperUnfold } from "@/components/motion/paper";
 import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
 
@@ -96,7 +96,11 @@ function BookCover() {
 
 const emptySubscribe = () => () => {};
 
-export default function FoldedEdition() {
+export default function FoldedEdition({
+  variant = "canvas",
+}: {
+  variant?: "canvas" | "flow";
+} = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
@@ -129,7 +133,7 @@ export default function FoldedEdition() {
       stageEl.querySelectorAll<HTMLElement>("[data-prop-right]")
     );
 
-    const desktop = window.matchMedia(DESKTOP);
+    const inRange = window.matchMedia(variant === "flow" ? MOBILE : DESKTOP);
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let canvasScale = 1;
@@ -211,7 +215,7 @@ export default function FoldedEdition() {
     };
 
     const measure = () => {
-      if (!desktop.matches) {
+      if (!inRange.matches) {
         armed = false;
         portalEl.style.display = "none";
         return;
@@ -224,7 +228,16 @@ export default function FoldedEdition() {
       }
       armed = true;
 
-      canvasScale = rect.width / SHEET_W || 1;
+      if (variant === "flow") {
+        canvasScale = clamp(0.28, 0.92, (window.innerWidth - 20) / SHEET_W);
+        travelPx = 480;
+        container.style.height = `${travelPx + Math.round(window.innerHeight * 0.45)}px`;
+      } else {
+        canvasScale = rect.width / SHEET_W || 1;
+        travelPx = TRAVEL_PLATE * canvasScale;
+        container.style.height = `${EDITION_BLOCK_HEIGHT}px`;
+      }
+
       const baseScreenHeight = EDITION_BLOCK_HEIGHT * canvasScale;
       const fitScale =
         baseScreenHeight > 0
@@ -239,7 +252,6 @@ export default function FoldedEdition() {
 
       const containerTopDoc = window.scrollY + rect.top;
       parkStart = containerTopDoc - targetTop;
-      travelPx = TRAVEL_PLATE * canvasScale;
 
       measureProps();
     };
@@ -349,7 +361,7 @@ export default function FoldedEdition() {
 
     const update = (dt: number) => {
       if (!armed) {
-        if (desktop.matches) {
+        if (inRange.matches) {
           measure();
         }
         if (!armed) {
@@ -382,28 +394,43 @@ export default function FoldedEdition() {
 
       // Fixed Stage Y Translation:
       // While locked in park (parkStart <= smoothScrollY <= parkStart + travelPx):
-      // stageY is EXACTLY targetTop. The stage is 100% stationary in the viewport, pinned
-      // natively on the GPU compositor thread with ZERO bobbing and ZERO jitter!
+      // stageY is EXACTLY targetTop. Pinned on the GPU compositor with zero bobbing.
       let stageY = targetTop;
       if (smoothScrollY < parkStart) {
         stageY = targetTop + (parkStart - smoothScrollY);
       } else if (smoothScrollY > parkStart + travelPx) {
         stageY = targetTop + (parkStart + travelPx - smoothScrollY);
       } else {
-        stageY = targetTop; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
+        stageY = targetTop;
       }
 
-      // Culled when completely outside viewport
-      if (
-        stageY > window.innerHeight * 1.5 ||
-        stageY < -renderedHeight * 1.5
-      ) {
+      // Exit & entry fadeout:
+      // Smoothly fade out when scrolling beyond bounds so it never collides with adjacent sections
+      const exitDist = Math.min(300, window.innerHeight * 0.4);
+      let stageOpacity = 1;
+      if (stageY < targetTop) {
+        stageOpacity = clamp(0, 1, 1 - (targetTop - stageY) / exitDist);
+      } else if (stageY > targetTop) {
+        stageOpacity = clamp(0, 1, 1 - (stageY - targetTop) / exitDist);
+      }
+
+      // Culled when completely outside viewport or faded out
+      const culled =
+        stageOpacity <= 0.01 ||
+        stageY > window.innerHeight * 1.3 ||
+        stageY < -renderedHeight * 1.3;
+
+      if (culled) {
         if (portalEl.style.display !== "none") portalEl.style.display = "none";
       } else {
         if (portalEl.style.display !== "block") portalEl.style.display = "block";
         const transformStr = `translate3d(-50%, ${stageY.toFixed(1)}px, 0) scale(${canvasScale.toFixed(4)})`;
         if (portalEl.style.transform !== transformStr) {
           portalEl.style.transform = transformStr;
+        }
+        const opStr = stageOpacity.toFixed(3);
+        if (portalEl.style.opacity !== opStr) {
+          portalEl.style.opacity = opStr;
         }
       }
 
@@ -414,7 +441,7 @@ export default function FoldedEdition() {
 
       // Enable pointer events on newspaper links once mostly open
       const canInteract =
-        currentP > 0.85 && stageY > -100 && stageY < window.innerHeight;
+        currentP > 0.85 && stageY > -100 && stageY < window.innerHeight && stageOpacity > 0.5;
       portalEl.style.pointerEvents = canInteract ? "auto" : "none";
 
       if (Number.isNaN(drawn) || Math.abs(currentP - drawn) > 0.0004) {
@@ -445,17 +472,18 @@ export default function FoldedEdition() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayout);
-    desktop.addEventListener("change", onLayout);
+    inRange.addEventListener("change", onLayout);
     calm.addEventListener("change", onLayout);
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
-      desktop.removeEventListener("change", onLayout);
+      inRange.removeEventListener("change", onLayout);
       calm.removeEventListener("change", onLayout);
+      if (portalEl) portalEl.style.display = "none";
     };
-  }, [mounted]);
+  }, [mounted, variant]);
 
   return (
     <>
@@ -463,8 +491,8 @@ export default function FoldedEdition() {
         ref={containerRef}
         className="relative pointer-events-none"
         style={{
-          width: SHEET_W,
-          height: EDITION_BLOCK_HEIGHT,
+          width: variant === "flow" ? "100%" : SHEET_W,
+          height: variant === "flow" ? 480 + 350 : EDITION_BLOCK_HEIGHT,
           overflowAnchor: "none",
         }}
         aria-hidden

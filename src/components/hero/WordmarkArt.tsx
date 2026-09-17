@@ -8,10 +8,12 @@ export default function WordmarkArt({
   fillClassName,
   outlineClassName,
   fullHitArea,
+  preserveAspectRatio = "none",
 }: {
   fillClassName?: string;
   outlineClassName?: string;
   fullHitArea?: boolean;
+  preserveAspectRatio?: string;
 } = {}) {
   return (
     <div className="relative size-full pointer-events-none">
@@ -21,7 +23,7 @@ export default function WordmarkArt({
         data-hero="wordmark-fill"
       >
         <svg
-          preserveAspectRatio="none"
+          preserveAspectRatio={preserveAspectRatio}
           overflow="visible"
           viewBox="0 0 1023.16 357.889"
           fill="none"
@@ -33,7 +35,7 @@ export default function WordmarkArt({
 
       {/* Visual outline layer - stays stationary at (0, 0) */}
       <svg
-        preserveAspectRatio="none"
+        preserveAspectRatio={preserveAspectRatio}
         overflow="visible"
         viewBox="0 0 1023.16 357.889"
         fill="none"
@@ -46,7 +48,7 @@ export default function WordmarkArt({
 
       {/* Stationary hit area - covers resting fill + outline + shifted fill */}
       <svg
-        preserveAspectRatio="none"
+        preserveAspectRatio={preserveAspectRatio}
         overflow="visible"
         viewBox="0 0 1023.16 357.889"
         fill="none"
