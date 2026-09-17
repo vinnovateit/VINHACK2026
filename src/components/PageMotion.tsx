@@ -24,7 +24,7 @@ import { slideIn, slideOut } from "@/components/motion/pinboard";
 import { wireTimelineReceipt } from "@/components/motion/receipt";
 import { audio } from "@/components/motion/audio";
 import { toggleSnap } from "@/components/motion/machine";
-import { reveal, strikeOnce } from "@/components/motion/reveal";
+import { strikeOnce } from "@/components/motion/reveal";
 import { stampIn } from "@/components/motion/stamp";
 import { wireCursorFollower } from "@/components/motion/cursorFollower";
 
@@ -105,9 +105,6 @@ type Move = {
    *  itself when it is left out). Spends opacity, so it is outside the budget
    *  and free to sit alongside anything above. */
   strike?: { select?: string; duration?: number };
-  /** Copy pulling into focus once, staggered across whatever `select` matches.
-   *  Spends opacity and filter, so likewise outside the budget. */
-  reveal?: { select?: string; stagger?: number; duration?: number };
   /** Stamped down as the section arrives, this many seconds after the trigger
    *  position is reached. Owns rotation until it lands, so a `loop` — or a
    *  scrubbed `fold` — on the same node is held back until it has. */
@@ -161,7 +158,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
       { node: "297:329", drift: -130, loop: "sine", angle: 1.4, duration: 6, offset: 1.3 },
       { node: "297:385", drift: 40, loop: "sine", angle: 2, duration: 5 },
       { node: "297:441", settle: { rotation: -5 }, strike: { select: "h2" } },
-      { node: "297:443", drift: -40, reveal: { select: "p" } },
+      { node: "297:443", drift: -40 },
     ],
   },
   {
@@ -215,15 +212,10 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
     name: "Rules",
     moves: [
       // The sheet: read where it is drawn, then panned off the board to the
-      // right as the section goes. The rules themselves are revealed through
-      // this entry rather than getting one of their own — `reveal` selects
-      // inside the node and spends opacity, so it neither claims the box away
-      // from the pan nor competes with it. Whole block at once, because the pin
-      // is waiting on it and ten staggered bullets is a long wait.
+      // right as the section goes.
       {
         node: "343:710",
         slideOut: true,
-        reveal: { select: '[data-node-id="343:715"]', stagger: 0 },
       },
       // The pin is stamped where it is drawn and does not move again until the
       // sheet goes, which it then goes with — it is through the paper, so it
@@ -412,23 +404,14 @@ export default function PageMotion({ children }: { children: ReactNode }) {
             if (move.write) {
               handwrite(boxes, { trigger, ...move.write });
             }
-            // The two below select inside the node rather than taking its
-            // boxes, because what they animate is the words — a heading, a run
-            // of paragraphs — and those are children of whatever box the
-            // layout happens to have put around them.
+            // Strike selects inside the node rather than taking its boxes,
+            // because what it animates is the heading inside the box.
             if (move.strike) {
               const { select, ...rest } = move.strike;
               const target = select
                 ? node.querySelector<HTMLElement>(select)
                 : (boxes[0] ?? null);
               if (target) strikeOnce(target, { trigger, ...rest });
-            }
-            if (move.reveal) {
-              const { select, ...rest } = move.reveal;
-              const targets = select
-                ? Array.from(node.querySelectorAll<HTMLElement>(select))
-                : boxes;
-              reveal(targets, { trigger, ...rest });
             }
           };
 

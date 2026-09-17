@@ -859,7 +859,7 @@ function MobileRules() {
         />
         <div className="rounded-[4px] bg-[#bfea88] px-5 pt-12 pb-10">
           <h2 className="text-[38px] text-[#1c563c]">{RULES.heading}</h2>
-          <ul className="mt-6 space-y-4 text-[15px] leading-[1.5] text-[#1c563c]" data-m-reveal>
+          <ul className="mt-6 space-y-4 text-[15px] leading-[1.5] text-[#1c563c]">
             {RULES.items.map((item) => (
               <li key={item} className="ms-5 list-disc whitespace-pre-wrap">
                 {item}
