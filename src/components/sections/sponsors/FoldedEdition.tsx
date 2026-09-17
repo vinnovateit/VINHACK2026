@@ -3,6 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import NewspaperBackCover from "./NewspaperBackCover";
 import SponsorEdition from "./SponsorEdition";
 import SealedCover from "./SealedCover";
 import SponsorSideProps from "./SponsorSideProps";
@@ -12,84 +13,92 @@ import { paperUnfold } from "@/components/motion/paper";
 import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
 
 /**
- * The sponsor sheet as a cover that opens, the way a book does.
+ * The sponsor sheet as a broadsheet edition that opens naturally in physical 3D.
  *
- * The reader arrives at a closed edition — a sealed one, see `SealedCover`.
- * Scroll on and the cover lifts on a spine down its left edge and swings away
- * from the page, and the sheet under it is uncovered by the cover's own edge
- * travelling across it, leaving THE HACKSTREET JOURNAL where it has always
- * been printed.
- *
- * It is pinned with 100% compositor stability via createPortal to document.body:
- * while inside the park, stageY is constant and the GPU compositor locks it
- * securely with zero compositor delay, zero vertical bobbing, and zero jitter.
+ * When closed, the reader sees the front page cover (`SealedCover`).
+ * Scrolling smoothly lifts, arches, and turns the paper leaf across to the left,
+ * revealing the authentic reverse editorial page (`NewspaperBackCover`) in full 3D,
+ * casting a moving soft shadow across the inner broadsheet (`SponsorEdition`).
  */
 
-/** The sheet, at the size it was drawn. The cover is the same box: a book's
- *  cover is its page, not a band across the top of one. */
 const SHEET_W = 1184;
 const SHEET_H = 758.4;
 
-/** The heading band above the paper: how tall it is, and the air between it
- *  and the sheet's top edge. Both in the sheet's own units, because the two are
- *  scaled to the window as one block — the heading has to shrink with the paper
- *  or it would end up larger than the masthead it is standing next to. */
 const HEAD_H = 72;
 const HEAD_GAP = 26;
-/**
- * How far the two heading blocks are held in from the sheet's edges.
- */
 const HEAD_INSET = 29.11;
 
-/** The whole block — the heading, the gap, and the sheet. `Sponsors` reserves
- *  exactly this so the section's layout matches what is drawn in it. */
 export const EDITION_BLOCK_HEIGHT = HEAD_H + HEAD_GAP + SHEET_H;
 
-/** How much of the window's height the block is allowed at most. */
 const VIEWPORT_FIT = 0.95;
-
-/**
- * How far the cover swings, in degrees.
- * Deliberately short of 90 to keep backface visibility clean and avoid
- * sudden clipping.
- */
-const SWING = 88;
-
 const TRAVEL_PLATE = 500;
 
 /* -------------------------------------------------------------- components */
 
 /**
- * The cover, hinged on its left edge.
+ * The 3D double-sided newspaper cover.
+ * Front: SealedCover (VinHack logo + OUR SPONSORS).
+ * Back: NewspaperBackCover (Page 2 editorial).
  */
 function BookCover() {
   return (
     <div
       data-cover
-      className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+      className="absolute inset-0 select-none will-change-transform"
       style={{
         transformOrigin: "left center",
-        backfaceVisibility: "hidden",
+        transformStyle: "preserve-3d",
       }}
     >
-      <SealedCover />
-
-      {/* The spine */}
+      {/* Front Face (SealedCover) */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-[34px] bg-[linear-gradient(90deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0)_100%)]"
-      />
-
-      {/* Shading */}
-      <div
-        data-cover-shade
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-0"
+        className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
         style={{
-          background:
-            "linear-gradient(90deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.22) 45%, rgba(0,0,0,0) 100%)",
+          backfaceVisibility: "hidden",
+          transform: "rotateY(0deg)",
         }}
-      />
+      >
+        <SealedCover />
+
+        {/* Spine Crease */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 w-[36px] bg-[linear-gradient(90deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0)_100%)]"
+        />
+
+        {/* Dynamic Light Sheen on Front Convex Curve */}
+        <div
+          data-front-sheen
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0"
+          style={{
+            background:
+              "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(0,0,0,0.25) 70%, transparent 100%)",
+          }}
+        />
+      </div>
+
+      {/* Back Face (Authentic Newspaper Editorial Page 2) */}
+      <div
+        className="absolute inset-0 overflow-hidden bg-[#e5e5e0] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+        style={{
+          backfaceVisibility: "hidden",
+          transform: "rotateY(180deg)",
+        }}
+      >
+        <NewspaperBackCover />
+
+        {/* Dynamic Light Sheen on Back Convex Curve */}
+        <div
+          data-back-sheen
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0"
+          style={{
+            background:
+              "linear-gradient(255deg, transparent 20%, rgba(255,255,255,0.3) 45%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -120,11 +129,12 @@ export default function FoldedEdition({
     if (!container || !portalEl || !fit || !stageEl) return;
 
     const cover = stageEl.querySelector<HTMLElement>("[data-cover]");
-    const shade = stageEl.querySelector<HTMLElement>("[data-cover-shade]");
+    const frontSheen = stageEl.querySelector<HTMLElement>("[data-front-sheen]");
+    const backSheen = stageEl.querySelector<HTMLElement>("[data-back-sheen]");
+    const castShadow = stageEl.querySelector<HTMLElement>("[data-cast-shadow]");
     const dressing = Array.from(
       stageEl.querySelectorAll<HTMLElement>("[data-cover-dressing]")
     );
-    const sheet = stageEl.querySelector<HTMLElement>("[data-sheet]");
     const propsWrap = stageEl.querySelector<HTMLElement>("[data-props-wrap]");
     const leftProps = Array.from(
       stageEl.querySelectorAll<HTMLElement>("[data-prop-left]")
@@ -257,38 +267,47 @@ export default function FoldedEdition({
     };
 
     const render = (p: number) => {
-      const swing = stage(p, 0.0, 0.98);
+      const s = stage(p, 0.0, 0.96);
+      const easeT = smooth(s);
 
-      // Natural physical 3D page turn arc with dynamic paper curl
-      const easeArc = Math.sin((swing * Math.PI) / 2);
-      const angle = 96 * easeArc;
-      const curl = Math.sin(swing * Math.PI) * -3.6;
+      // Natural physical 3D page turn physics
+      const angle = easeT * 168; // Opens from 0 to 168 degrees
+      const liftZ = Math.sin(s * Math.PI) * 110; // Natural 3D arch lift
+      const curl = Math.sin(s * Math.PI) * -3.2; // Organic paper curvature
+      const tilt = Math.sin(s * Math.PI) * -2.4; // Diagonal peel tilt
+
+      // Smooth horizontal slide as the page clears the left side
+      const slideX = s > 0.45 ? smooth((s - 0.45) / 0.55) * -160 : 0;
+      const coverOpacity = s > 0.88 ? 1 - smooth((s - 0.88) / 0.12) : 1;
 
       if (cover) {
-        cover.style.transform = `rotateY(${-angle.toFixed(2)}deg) skewY(${curl.toFixed(2)}deg)`;
-        // Keep cover solid and physical throughout the turn, fading out only when turned past 80%
-        cover.style.opacity = (
-          1 - smooth(Math.max(0, (swing - 0.78) / 0.2))
-        ).toFixed(3);
+        cover.style.transform = `translate3d(${slideX.toFixed(1)}px, 0, ${liftZ.toFixed(1)}px) rotateY(${-angle.toFixed(2)}deg) rotateZ(${tilt.toFixed(2)}deg) skewY(${curl.toFixed(2)}deg)`;
+        cover.style.opacity = coverOpacity.toFixed(3);
       }
-      if (shade) {
-        // Crease shadow deepens as paper lifts, then smoothly softens
-        shade.style.opacity = (Math.sin(swing * Math.PI) * 0.65 + swing * 0.25).toFixed(3);
+
+      if (frontSheen) {
+        frontSheen.style.opacity = (Math.sin(Math.min(1, s * 2) * Math.PI) * 0.45).toFixed(3);
+      }
+      if (backSheen) {
+        backSheen.style.opacity = (s > 0.45 ? Math.sin(((s - 0.45) / 0.55) * Math.PI) * 0.45 : 0).toFixed(3);
+      }
+
+      if (castShadow) {
+        const shadowOp = s < 0.75 ? Math.sin(Math.min(1, s * 1.5) * Math.PI) * 0.55 : 0;
+        const shadowX = ((1 - Math.min(1, s * 1.3)) * 80).toFixed(1);
+        castShadow.style.opacity = shadowOp.toFixed(3);
+        castShadow.style.transform = `translateX(${shadowX}%)`;
       }
 
       for (const bit of dressing) {
         bit.style.opacity = (
-          1 - smooth(Math.max(0, (swing - 0.12) / 0.38))
+          1 - smooth(Math.max(0, (s - 0.12) / 0.38))
         ).toFixed(3);
       }
 
-      if (sheet) {
-        sheet.style.clipPath = "none";
-      }
-
-      // Dynamic emergence: Props jump out from the center INSIDE the newspaper as the first page opens
+      // Dynamic emergence: Props float out from INSIDE the newspaper as the page opens
       if (propsWrap) {
-        propsWrap.style.zIndex = swing < 0.35 ? "15" : "25";
+        propsWrap.style.zIndex = s < 0.35 ? "15" : "25";
       }
 
       if (propItems.length === 0 && (leftProps.length > 0 || rightProps.length > 0)) {
@@ -296,15 +315,11 @@ export default function FoldedEdition({
       }
 
       for (const item of propItems) {
-        // Natural page opening sequence:
-        // Cover hinges on the left, so the right half of the inside sheet is uncovered first.
-        // Right props burst out as right side opens (swing ~ 0.28 to 0.70)
-        // Left props burst out as cover swings past center to left (swing ~ 0.40 to 0.82)
-        const baseStart = item.isLeft ? 0.40 : 0.26;
-        const baseEnd = item.isLeft ? 0.82 : 0.68;
+        const baseStart = item.isLeft ? 0.40 : 0.22;
+        const baseEnd = item.isLeft ? 0.82 : 0.64;
         const startSwing = baseStart + item.stagger;
         const endSwing = baseEnd + item.stagger;
-        const rawT = stage(swing, startSwing, endSwing);
+        const rawT = stage(s, startSwing, endSwing);
 
         if (rawT <= 0) {
           item.el.style.transform = `translate3d(${item.deltaX.toFixed(1)}px, ${item.deltaY.toFixed(1)}px, 0) scale(0.08) rotate(${item.baseRot}deg)`;
@@ -320,7 +335,7 @@ export default function FoldedEdition({
         const c = 1.25;
         const moveProgress = 1 + (c + 1) * t1 * t1 * t1 + c * t1 * t1;
 
-        // Parabolic vertical jump arc (leaps up into the air during the jump)
+        // Parabolic vertical jump arc
         const arc = Math.sin(rawT * Math.PI);
         const currentJumpLift = arc * item.jumpHeight;
 
@@ -338,11 +353,11 @@ export default function FoldedEdition({
         item.el.style.opacity = opacity;
       }
 
-      // One rustle, on the way in, as the cover actually gives.
-      if (p > 0.18 && !soundedRef.current) {
+      // One rustle, on the way in, as the cover gives
+      if (p > 0.08 && !soundedRef.current) {
         soundedRef.current = true;
         paperUnfold();
-      } else if (p < 0.05) {
+      } else if (p < 0.04) {
         soundedRef.current = false;
       }
     };
@@ -393,8 +408,6 @@ export default function FoldedEdition({
       }
 
       // Fixed Stage Y Translation:
-      // While locked in park (parkStart <= smoothScrollY <= parkStart + travelPx):
-      // stageY is EXACTLY targetTop. Pinned on the GPU compositor with zero bobbing.
       let stageY = targetTop;
       if (smoothScrollY < parkStart) {
         stageY = targetTop + (parkStart - smoothScrollY);
@@ -405,7 +418,6 @@ export default function FoldedEdition({
       }
 
       // Exit & entry fadeout:
-      // Smoothly fade out when scrolling beyond bounds so it never collides with adjacent sections
       const exitDist = Math.min(300, window.innerHeight * 0.4);
       let stageOpacity = 1;
       if (stageY < targetTop) {
@@ -555,19 +567,28 @@ export default function FoldedEdition({
                   style={{
                     width: SHEET_W,
                     height: SHEET_H,
-                    perspective: 1900,
-                    perspectiveOrigin: "22% 50%",
+                    perspective: 2200,
+                    perspectiveOrigin: "50% 50%",
                   }}
                 >
+                  {/* Inside Newspaper Spread with dynamic cast shadow */}
                   <div
                     data-sheet
-                    className="absolute inset-0 z-10 pointer-events-auto"
-                    style={{ clipPath: "inset(0% 0% 0% 100%)" }}
+                    className="absolute inset-0 z-10 pointer-events-auto overflow-hidden"
                   >
                     <SponsorEdition />
+                    <div
+                      data-cast-shadow
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 z-30 opacity-0 transition-transform"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.55) 85%, rgba(0,0,0,0) 100%)",
+                      }}
+                    />
                   </div>
 
-                  {/* Side props emerging from INSIDE the newspaper (behind front cover data-book) */}
+                  {/* Side props emerging from INSIDE the newspaper */}
                   <div
                     data-props-wrap
                     className="pointer-events-none absolute inset-0 z-15"
@@ -583,17 +604,12 @@ export default function FoldedEdition({
                     <div
                       aria-hidden
                       data-cover-dressing
-                      className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[-9px] rotate-[0.7deg] rounded-[2px] border border-black/10 bg-[#d0d0cb] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+                      className="pointer-events-none absolute inset-0 translate-x-[5px] translate-y-[-8px] rotate-[0.6deg] rounded-[2px] border border-black/10 bg-[#d0d0cb] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
                     />
                     <div
                       aria-hidden
                       data-cover-dressing
-                      className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[9px] rotate-[-0.7deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
-                    />
-                    <div
-                      aria-hidden
-                      data-cover-dressing
-                      className="pointer-events-none absolute inset-0 shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+                      className="pointer-events-none absolute inset-0 translate-x-[5px] translate-y-[8px] rotate-[-0.6deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
                     />
                     <BookCover />
                   </div>

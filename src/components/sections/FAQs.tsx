@@ -10,13 +10,13 @@ export default function FAQsSection() {
   const [openingCardId, setOpeningCardId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [cardIndex, setCardIndex] = useState<number>(0);
-  const [slidingOut, setSlidingOut] = useState<boolean>(false);
+  const [flickState, setFlickState] = useState<{ outgoingIndex: number; phase: "out" | "return" } | null>(null);
 
   const handleOpen = (category: FaqCategory) => {
     if (openingCardId) return;
     setOpeningCardId(category.id);
     setCardIndex(0);
-    setSlidingOut(false);
+    setFlickState(null);
     setIsOpen(false);
     setActiveCategory(category);
 
@@ -32,20 +32,31 @@ export default function FAQsSection() {
     setTimeout(() => {
       setActiveCategory(null);
       setOpeningCardId(null);
+      setFlickState(null);
     }, 380);
   };
 
   const handleNext = () => {
-    if (!activeCategory || slidingOut) return;
-    setSlidingOut(true);
+    if (!activeCategory || flickState) return;
+    const currentIdx = cardIndex;
+    const nextIdx = (currentIdx + 1) % activeCategory.questions.length;
+
+    // Phase 1: Slide out to the right in front (zIndex: 50)
+    setFlickState({ outgoingIndex: currentIdx, phase: "out" });
+
     setTimeout(() => {
-      setCardIndex((prev) => (prev + 1) % activeCategory.questions.length);
-      setSlidingOut(false);
-    }, 260);
+      // Phase 2: Switch active index and slide back behind the stack (zIndex: 1)
+      setCardIndex(nextIdx);
+      setFlickState({ outgoingIndex: currentIdx, phase: "return" });
+
+      setTimeout(() => {
+        setFlickState(null);
+      }, 260);
+    }, 220);
   };
 
   const handlePrev = () => {
-    if (!activeCategory || slidingOut) return;
+    if (!activeCategory || flickState) return;
     setCardIndex((prev) => (prev - 1 + activeCategory.questions.length) % activeCategory.questions.length);
   };
 
@@ -65,7 +76,7 @@ export default function FAQsSection() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeCategory, slidingOut, isOpen]);
+  }, [activeCategory, flickState, isOpen]);
 
   return (
     <section
@@ -268,8 +279,8 @@ export default function FAQsSection() {
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
           className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 cursor-default ${
             isOpen
-              ? "bg-black/85 backdrop-blur-md opacity-100 transition-all duration-350 ease-out"
-              : "bg-black/0 backdrop-blur-none opacity-0 transition-all duration-380 ease-in"
+              ? "bg-black/90 opacity-100 transition-opacity duration-300 ease-out"
+              : "bg-black/0 opacity-0 transition-opacity duration-300 ease-in pointer-events-none"
           }`}
           onClick={handleClose}
         >
@@ -300,7 +311,7 @@ export default function FAQsSection() {
                 e.stopPropagation();
                 handleNext();
               }}
-              className={`relative w-[340px] sm:w-[480px] h-[480px] sm:h-[500px] cursor-pointer ${
+              className={`relative w-[340px] sm:w-[480px] h-[460px] sm:h-[480px] cursor-pointer ${
                 isOpen
                   ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   : "opacity-0 scale-[0.5] translate-y-[440px] sm:translate-y-[520px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
@@ -327,45 +338,69 @@ export default function FAQsSection() {
               {activeCategory.questions.map((faq, idx) => {
                 const total = activeCategory.questions.length;
                 const diff = (idx - cardIndex + total) % total;
+                const isOutgoing = flickState?.outgoingIndex === idx;
 
-                // Only render pages that are part of the visible stack depth (0, 1, 2, 3)
-                if (diff > 3) return null;
-
-                const isTop = diff === 0;
-
-                // Stack positions for each layer with dynamic flick physics
-                let transformStyle = "";
+                let transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
                 let zIndex = 10;
                 let opacity = 1;
+                let transitionStyle = "all 260ms cubic-bezier(0.2,0.9,0.3,1.15)";
 
                 if (!isOpen) {
                   transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
-                  opacity = isTop ? 1 : 0.85;
-                } else if (isTop) {
-                  zIndex = 30;
-                  opacity = slidingOut ? 0 : 1;
-                  transformStyle = slidingOut
-                    ? "translate(240px, -50px) rotate(22deg) scale(0.92)"
-                    : "translate(0px, 0px) rotate(0deg) scale(1)";
-                } else if (diff === 1) {
-                  zIndex = 20;
-                  opacity = 0.96;
-                  transformStyle = slidingOut
-                    ? "translate(0px, 0px) rotate(0deg) scale(1)"
-                    : "translate(14px, -14px) rotate(3.2deg) scale(0.97)";
-                } else if (diff === 2) {
+                  opacity = diff === 0 ? 1 : 0.85;
                   zIndex = 10;
-                  opacity = 0.88;
-                  transformStyle = slidingOut
-                    ? "translate(14px, -14px) rotate(3.2deg) scale(0.97)"
-                    : "translate(-14px, -26px) rotate(-3.5deg) scale(0.94)";
+                } else if (isOutgoing) {
+                  if (flickState.phase === "out") {
+                    transformStyle = "translate(380px, -45px) rotate(22deg) scale(0.96)";
+                    zIndex = 50; // In front while sliding out
+                    opacity = 1;
+                    transitionStyle = "transform 220ms ease-out";
+                  } else {
+                    // phase === "return" -> switch z-index to 1 (behind deck) and slide into bottom slot
+                    transformStyle = "translate(8px, -38px) rotate(5.5deg) scale(0.91)";
+                    zIndex = 1; // Behind entire stack!
+                    opacity = 1;
+                    transitionStyle = "transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
+                  }
+                } else if (flickState?.phase === "out") {
+                  if (diff === 1) {
+                    zIndex = 30;
+                    transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
+                  } else if (diff === 2) {
+                    zIndex = 20;
+                    transformStyle = "translate(14px, -14px) rotate(3.2deg) scale(0.97)";
+                  } else if (diff === 3) {
+                    zIndex = 10;
+                    transformStyle = "translate(-14px, -26px) rotate(-3.5deg) scale(0.94)";
+                  } else {
+                    zIndex = 0;
+                    opacity = 0;
+                    transformStyle = "translate(8px, -38px) rotate(5.5deg) scale(0.91)";
+                  }
                 } else {
-                  zIndex = 5;
-                  opacity = 0.76;
-                  transformStyle = slidingOut
-                    ? "translate(-14px, -26px) rotate(-3.5deg) scale(0.94)"
-                    : "translate(8px, -38px) rotate(5.5deg) scale(0.91)";
+                  // Normal resting stack
+                  if (diff === 0) {
+                    zIndex = 30;
+                    transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
+                  } else if (diff === 1) {
+                    zIndex = 20;
+                    transformStyle = "translate(14px, -14px) rotate(3.2deg) scale(0.97)";
+                  } else if (diff === 2) {
+                    zIndex = 10;
+                    transformStyle = "translate(-14px, -26px) rotate(-3.5deg) scale(0.94)";
+                  } else if (diff === 3) {
+                    zIndex = 5;
+                    transformStyle = "translate(8px, -38px) rotate(5.5deg) scale(0.91)";
+                  } else {
+                    zIndex = 0;
+                    opacity = 0;
+                    transformStyle = "translate(8px, -38px) rotate(5.5deg) scale(0.91)";
+                  }
                 }
+
+                if (diff > 3 && !isOutgoing) return null;
+
+                const isTop = diff === 0 && !flickState;
 
                 return (
                   <div
@@ -374,13 +409,9 @@ export default function FAQsSection() {
                       transform: transformStyle,
                       zIndex,
                       opacity,
-                      transitionDelay: isOpen && !slidingOut ? `${(3 - diff) * 45}ms` : "0ms",
+                      transition: transitionStyle,
                     }}
                     className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
-                      isOpen
-                        ? "transition-all duration-[260ms] ease-[cubic-bezier(0.2,0.9,0.3,1.15)]"
-                        : "transition-all duration-[200ms] ease-in"
-                    } ${
                       isTop ? "cursor-pointer hover:shadow-[0_30px_60px_rgba(0,0,0,0.6)]" : "pointer-events-none"
                     }`}
                   >
@@ -425,12 +456,6 @@ export default function FAQsSection() {
                           </p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Card Footer */}
-                    <div className="px-4 sm:px-6 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[11px] font-rotonto text-neutral-500 bg-neutral-50">
-                      <span>OFFICIAL FAQ</span>
-                      <span className="text-black font-semibold">CLICK PAGE FOR NEXT →</span>
                     </div>
                   </div>
                 );
