@@ -433,18 +433,18 @@ export default function MobileTracksDeck() {
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
                           <h3
-                            className={`font-rotonto font-bold leading-[0.96] tracking-tight ${
+                            className={`font-rotonto font-bold ${
                               item.title.length > 30
-                                ? "text-[15px]"
+                                ? "text-[15px] leading-[1.14] tracking-[0.03em]"
                                 : item.title.length > 20
-                                  ? "text-[17px]"
-                                  : "text-[21px]"
+                                  ? "text-[17px] leading-[1.08] tracking-[0.02em]"
+                                  : "text-[21px] leading-[1.04] tracking-[0.02em]"
                             }`}
                           >
                             {item.title}
                           </h3>
                           <p
-                            className={`mt-2 font-rotonto text-justify text-[10.5px] leading-[1.42] tracking-tight opacity-85 ${
+                            className={`mt-2.5 font-rotonto text-justify text-[10.5px] leading-[1.45] tracking-tight opacity-85 ${
                               item.blurb.length > 225 ? "line-clamp-7" : "line-clamp-6"
                             }`}
                           >

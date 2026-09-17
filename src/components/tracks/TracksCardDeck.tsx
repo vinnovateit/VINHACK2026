@@ -951,26 +951,26 @@ export function TracksCardDeck() {
                             </div>
 
                             <div className="-mt-[12px] flex items-start gap-[36px]">
-                              <div className="min-w-0 flex-1">
-                                <h3
-                                  className={`font-rotonto font-bold leading-[0.94] tracking-tight ${
-                                    item.title.length > 30
-                                      ? "text-[38px]"
-                                      : item.title.length > 20
-                                        ? "text-[46px]"
-                                        : "text-[60px]"
-                                  }`}
-                                >
-                                  {item.title}
-                                </h3>
-                                <p
-                                  className={`mt-[18px] font-rotonto text-justify leading-[1.5] tracking-tight opacity-90 ${
-                                    item.blurb.length > 250 ? "text-[20px]" : "text-[23px]"
-                                  }`}
-                                >
-                                  {item.blurb}
-                                </p>
-                              </div>
+                                <div className="min-w-0 flex-1">
+                                  <h3
+                                    className={`font-rotonto font-bold ${
+                                      item.title.length > 30
+                                        ? "text-[36px] leading-[1.12] tracking-[0.03em]"
+                                        : item.title.length > 20
+                                          ? "text-[44px] leading-[1.06] tracking-[0.02em]"
+                                          : "text-[58px] leading-[1.02] tracking-[0.02em]"
+                                    }`}
+                                  >
+                                    {item.title}
+                                  </h3>
+                                  <p
+                                    className={`mt-[22px] font-rotonto text-justify leading-[1.5] tracking-tight opacity-90 ${
+                                      item.blurb.length > 250 ? "text-[20px]" : "text-[23px]"
+                                    }`}
+                                  >
+                                    {item.blurb}
+                                  </p>
+                                </div>
                               <TrackVisual
                                 slot={slot}
                                 ink={ink}
