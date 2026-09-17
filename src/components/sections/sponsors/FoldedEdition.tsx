@@ -245,28 +245,33 @@ export default function FoldedEdition() {
     };
 
     const render = (p: number) => {
-      const swing = stage(p, 0.0, 0.96);
-      const angle = SWING * swing;
+      const swing = stage(p, 0.0, 0.98);
+
+      // Natural physical 3D page turn arc with dynamic paper curl
+      const easeArc = Math.sin((swing * Math.PI) / 2);
+      const angle = 96 * easeArc;
+      const curl = Math.sin(swing * Math.PI) * -3.6;
 
       if (cover) {
-        cover.style.transform = `rotateY(${-angle.toFixed(2)}deg)`;
+        cover.style.transform = `rotateY(${-angle.toFixed(2)}deg) skewY(${curl.toFixed(2)}deg)`;
+        // Keep cover solid and physical throughout the turn, fading out only when turned past 80%
         cover.style.opacity = (
-          1 - smooth(Math.max(0, (swing - 0.58) / 0.36))
+          1 - smooth(Math.max(0, (swing - 0.78) / 0.2))
         ).toFixed(3);
       }
       if (shade) {
-        shade.style.opacity = swing.toFixed(3);
+        // Crease shadow deepens as paper lifts, then smoothly softens
+        shade.style.opacity = (Math.sin(swing * Math.PI) * 0.65 + swing * 0.25).toFixed(3);
       }
 
       for (const bit of dressing) {
         bit.style.opacity = (
-          1 - smooth(Math.max(0, (swing - 0.1) / 0.35))
+          1 - smooth(Math.max(0, (swing - 0.12) / 0.38))
         ).toFixed(3);
       }
 
       if (sheet) {
-        const covered = Math.cos((90 * swing * Math.PI) / 180) * 100;
-        sheet.style.clipPath = `inset(0% 0% 0% ${covered.toFixed(3)}%)`;
+        sheet.style.clipPath = "none";
       }
 
       // Dynamic emergence: Props jump out from the center INSIDE the newspaper as the first page opens

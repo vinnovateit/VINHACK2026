@@ -283,7 +283,7 @@ export default function FAQsSection() {
               onClick={(e) => e.stopPropagation()}
             >
               <KeyButton
-                color="red"
+                color="blue"
                 size="compact"
                 className="w-[52px] sm:w-[58px]"
                 onClick={() => handlePrev()}
@@ -445,7 +445,7 @@ export default function FAQsSection() {
               onClick={(e) => e.stopPropagation()}
             >
               <KeyButton
-                color="red"
+                color="blue"
                 size="compact"
                 className="w-[52px] sm:w-[58px]"
                 onClick={() => handleNext()}

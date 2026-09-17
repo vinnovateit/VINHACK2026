@@ -1188,7 +1188,7 @@ function MobileFAQs() {
               onClick={(e) => e.stopPropagation()}
             >
               <KeyButton
-                color="red"
+                color="blue"
                 size="compact"
                 className="w-[46px] sm:w-[52px]"
                 onClick={() => handlePrev()}
@@ -1336,7 +1336,7 @@ function MobileFAQs() {
               onClick={(e) => e.stopPropagation()}
             >
               <KeyButton
-                color="red"
+                color="blue"
                 size="compact"
                 className="w-[46px] sm:w-[52px]"
                 onClick={() => handleNext()}
