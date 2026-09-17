@@ -419,6 +419,11 @@ export const WHO_ARE_WE = {
       textColor: "#000000",
     },
   ],
+  /** The team photo in the collage's "01" card. */
+  teamPhoto: {
+    src: "/about_us/vinnovateit-team.webp",
+    alt: "The VinnovateIT team outside at night",
+  },
   polaroids: [
     {
       id: "photo-1",

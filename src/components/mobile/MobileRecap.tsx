@@ -13,6 +13,7 @@ import {
 import { useInView } from "@/components/useInView";
 
 const EVENT_PHOTOS = [
+  "/about_us/vinnovateit-team.webp",
   "/about_us/220a17ad3a3ad4382bb239416e67f3f8e44d6413.webp",
   "/about_us/67637ab629928adcbde8469183aac1877a08026b.webp",
   "/about_us/924203fb63dc0f4fd3cb3bfe64c9230caf80a54e.webp",

@@ -663,16 +663,20 @@ export default function WhoAreWeSection({
                   </div>
                 </div>
 
-                {/* 5. MIDDLE-LEFT VIDEO 1 (Grey 01 Polaroid) */}
+                {/* 5. MIDDLE-LEFT POLAROID (Team photo, in the "01" slot) */}
                 <div
                   ref={(el) => registerCard("video-1", el)}
                   style={{ zIndex: CARD_CONFIGS["video-1"].z }}
                   className="absolute w-[240px] md:w-[265px] bg-[#ffffff] p-[12px] pb-[36px] shadow-[0_20px_40px_rgba(0,0,0,0.85)] will-change-transform"
                 >
-                  <div className="relative w-full aspect-[16/10] bg-[#b0b0b0] flex items-center justify-center">
-                    <span className="font-rotonto text-black text-[23px] md:text-[25px] font-bold tracking-widest uppercase">
-                      01
-                    </span>
+                  <div className="relative w-full aspect-[16/10] bg-black overflow-hidden">
+                    <Image
+                      src={WHO_ARE_WE.teamPhoto.src}
+                      alt={WHO_ARE_WE.teamPhoto.alt}
+                      fill
+                      sizes="265px"
+                      className="object-cover grayscale contrast-115"
+                    />
                   </div>
                 </div>
 
