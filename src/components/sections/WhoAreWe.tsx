@@ -34,18 +34,18 @@ const CANVAS_RESERVED = 2400;
 //
 // TEXT_DURATION is the whole run in seconds; the numbers below are fractions
 // of it, in the order they happen.
-const TEXT_DURATION = 5.2;
+const TEXT_DURATION = 3.0;
 
 const TEXT_TRANSITION = {
   // Phase 1: "WHO ARE WE ?"
-  text1FadeInStart: 0.04,    // when "WHO ARE WE ?" starts appearing
-  text1FadeInEnd: 0.20,      // when it reaches full opacity
-  text1FadeOutStart: 0.46,   // when it starts fading out (raise to hold it longer)
-  text1FadeOutEnd: 0.68,     // when it is completely gone (raise to fade slower)
+  text1FadeInStart: 0.0,     // when "WHO ARE WE ?" starts appearing
+  text1FadeInEnd: 0.14,      // when it reaches full opacity
+  text1FadeOutStart: 0.36,   // when it starts fading out (raise to hold it longer)
+  text1FadeOutEnd: 0.58,     // when it is completely gone (raise to fade slower)
 
   // Phase 2: "WE ARE VINNOVATEIT"
-  text2FadeInStart: 0.52,    // when "WE ARE VINNOVATEIT" starts appearing
-  text2FadeInEnd: 0.88,      // when it reaches full opacity
+  text2FadeInStart: 0.42,    // when "WE ARE VINNOVATEIT" starts appearing
+  text2FadeInEnd: 0.80,      // when it reaches full opacity
 };
 
 interface CardConfig {
@@ -408,8 +408,8 @@ export default function WhoAreWeSection({
 
     const render = (progress: number, textT: number) => {
       // Phase 1 (0.0 -> 0.45): Scatter outward to the exact stop positions
-      const scatterP = clamp(0, 1, progress / 0.45);
-      const easeScatter = easeOutQuad(scatterP);
+      const outward = clamp(0, 1, progress / 0.45);
+      const easeScatter = easeOutQuad(outward);
 
       // Phase 2 (0.45 -> 1.0): Gentle subtle breath (stay comfortably in place)
       let driftP = 0;
@@ -490,6 +490,40 @@ export default function WhoAreWeSection({
        than finding it already over. */
     let textSeconds = 0;
     let drawnT = Number.NaN;
+    /* The reveal is three seconds long and the park is long enough to scroll
+       through in one flick, so a fast scroller could pass the section without
+       the two lines ever handing over. So the page is held still for exactly
+       as long as the reveal takes, once: the first time the visitor arrives at
+       the section from above, the document stops at the park's start until the
+       clock has run out, then lets go and never does it again. Scrolling back
+       up through it afterwards is free.
+
+       The lock is the same one `SiteNav` uses for its drawer — `overflow:
+       hidden` on the body, with the scrollbar's width made up as padding so
+       the full-bleed collage does not jump sideways when it disappears. */
+    let holdDone = false;
+    let holding = false;
+    let approachedFromAbove = false;
+    let bodyOverflow = "";
+    let bodyPad = "";
+
+    const lockScroll = () => {
+      if (holding) return;
+      holding = true;
+      const { body } = document;
+      bodyOverflow = body.style.overflow;
+      bodyPad = body.style.paddingRight;
+      const gutter = window.innerWidth - document.documentElement.clientWidth;
+      body.style.overflow = "hidden";
+      if (gutter > 0) body.style.paddingRight = `${gutter}px`;
+    };
+
+    const unlockScroll = () => {
+      if (!holding) return;
+      holding = false;
+      document.body.style.overflow = bodyOverflow;
+      document.body.style.paddingRight = bodyPad;
+    };
     let smoothScrollY = latestScrollY;
     const scrollVel = { value: 0 };
     const pVel = { value: 0 };
@@ -529,6 +563,30 @@ export default function WhoAreWeSection({
         );
       }
 
+      /* The hold. Engaged the moment the visitor crosses into the park having
+         come down to it, released when the clock runs out — and, because a
+         flick can carry the page past `parkStart` inside a single frame, the
+         document is put back on that line rather than merely stopped where it
+         landed. */
+      if (!isReduced && !holdDone && armed) {
+        if (latestScrollY < parkStart) {
+          approachedFromAbove = true;
+        } else if (approachedFromAbove && textSeconds < TEXT_DURATION) {
+          if (!holding) {
+            window.scrollTo(0, parkStart);
+            lockScroll();
+          }
+          latestScrollY = parkStart;
+          smoothScrollY = parkStart;
+          scrollVel.value = 0;
+        }
+      }
+
+      if (holding && (isReduced || textSeconds >= TEXT_DURATION)) {
+        holdDone = true;
+        unlockScroll();
+      }
+
       // Full-Screen Pinned Stage Translation:
       let stageY = 0;
       if (smoothScrollY < parkStart) {
@@ -551,7 +609,7 @@ export default function WhoAreWeSection({
         textSeconds = 0;
       } else if (isReduced) {
         textSeconds = TEXT_DURATION;
-      } else if (stageY === 0) {
+      } else if (stageY === 0 || holding) {
         textSeconds = Math.min(TEXT_DURATION, textSeconds + dt);
       }
       const textT = TEXT_DURATION > 0 ? textSeconds / TEXT_DURATION : 1;
@@ -584,15 +642,30 @@ export default function WhoAreWeSection({
         }
       }
 
+      /* The scatter has a floor, and the floor is the clock.
+         `render` reads the first 45% of progress as the outward scatter, and
+         progress is scroll — which is zero for the whole of the hold, and zero
+         again the moment it is released, since the page is sitting exactly on
+         `parkStart`. Left at that the cards would stay in their pile through
+         the entire reveal and then collapse back into it, while the words
+         changed over behind them.
+
+         So the clock carries them out itself: by the time the headline has
+         handed over, the scatter has reached the 45% that is its stopping
+         position, and scroll only takes over once it has scrolled past that.
+         Nothing is driven twice — whichever is further along wins. */
+      const scatterFloor = 0.45 * clamp(0, 1, textT / 0.5);
+      const scatterP = Math.max(currentP, scatterFloor);
+
       if (
         Number.isNaN(drawnP) ||
-        Math.abs(currentP - drawnP) > 0.0004 ||
+        Math.abs(scatterP - drawnP) > 0.0004 ||
         Number.isNaN(drawnT) ||
         Math.abs(textT - drawnT) > 0.0004
       ) {
-        drawnP = currentP;
+        drawnP = scatterP;
         drawnT = textT;
-        render(currentP, textT);
+        render(scatterP, textT);
       }
     };
 
@@ -622,6 +695,7 @@ export default function WhoAreWeSection({
 
     return () => {
       cancelAnimationFrame(rafId);
+      unlockScroll();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       if (portalEl) portalEl.style.display = "none";
