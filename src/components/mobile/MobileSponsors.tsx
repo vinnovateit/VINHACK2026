@@ -87,13 +87,7 @@ const CARDS: { label: string; body: ReactNode }[] = [
             {SPONSOR_HEADING.tagline}
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <Rule heavy />
-          <div className="flex items-center justify-between text-[11px] font-normal uppercase tracking-wider text-[#555]">
-            <span>VOL. 26 · SPECIAL EDITION</span>
-            <span>30H ∞ BUILD</span>
-          </div>
-        </div>
+        <Rule heavy />
       </div>
     ),
   },

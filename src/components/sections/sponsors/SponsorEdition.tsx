@@ -169,13 +169,6 @@ const SponsorEdition = () => {
             </div>
           </a>
         ))}
-
-        {/* Newspaper footer strip */}
-        <div className="absolute top-[731px] left-[34px] w-[1115px] flex items-center justify-between text-[11.5px] font-normal tracking-[0.07em] text-[#555]">
-          <span>VINHACK 2026 · OFFICIAL PARTNER DIRECTORY</span>
-          <span>IDEAS × PEOPLE × IMPACT</span>
-          <span>VIT VELLORE · 30 HOURS ∞ POSSIBILITIES</span>
-        </div>
       </div>
     </div>
   );
