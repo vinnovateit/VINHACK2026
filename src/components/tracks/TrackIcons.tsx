@@ -122,12 +122,41 @@ function WildcardIcon({ size, className }: IconProps) {
   );
 }
 
+/** A heart with a pulse line through it, for the mental health sponsor track. */
+function MentalHealthIcon({ size, className }: IconProps) {
+  return (
+    <svg
+      aria-hidden
+      viewBox={`0 0 ${VB} ${VB}`}
+      width={size}
+      height={size}
+      fill="none"
+      className={`block shrink-0 ${className ?? ""}`}
+    >
+      <path
+        d="M24 41C24 41 6 30.5 6 17.5C6 11.7 10.5 7 16 7C19.4 7 22.4 8.8 24 11.5C25.6 8.8 28.6 7 32 7C37.5 7 42 11.7 42 17.5C42 30.5 24 41 24 41Z"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11 23H18L21 17L26 29L29 23H37"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export const TRACK_ICONS: ReadonlyArray<(props: IconProps) => ReactElement> = [
   IndustryIcon,
   SecurityIcon,
   ClimateIcon,
   EntertainmentIcon,
   WildcardIcon,
+  MentalHealthIcon,
 ];
 
 /**

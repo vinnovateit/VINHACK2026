@@ -7,6 +7,7 @@ export const TRACK_OPTIONS = [
   "ClimateTech & Resilience",
   "Entertainment Reimagined",
   "Wildcard",
+  "Proactive Mental Health for Students",
 ] as const;
 
 export type Track = (typeof TRACK_OPTIONS)[number];

@@ -64,6 +64,11 @@ function TracksContent() {
       detail: "For bold ideas that don't fit the mould. Explore AI, automation, blockchain, quantum technology, smart devices, and groundbreaking emerging tech.",
       tone: "blue",
     },
+    {
+      name: "Proactive Mental Health for Students",
+      detail: "Sponsor track. Build solutions that identify early signs of student stress and proactively connect them to meaningful support: early intervention, peer support, healthy routines, and human escalation.",
+      tone: "pink",
+    },
   ];
   return (
     <section className={styles.trackGrid} aria-label="Hackathon tracks">

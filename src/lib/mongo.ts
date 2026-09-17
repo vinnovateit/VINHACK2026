@@ -48,7 +48,7 @@ function formatError(err: unknown): string {
   return String(err);
 }
 
-export const TEAM_MIN_SIZE = 2;
+export const TEAM_MIN_SIZE = 3;
 export const TEAM_MAX_SIZE = 5;
 
 // Team codes are "VH26-" plus 4 characters from a 31-character alphabet (31^4 = 923,521

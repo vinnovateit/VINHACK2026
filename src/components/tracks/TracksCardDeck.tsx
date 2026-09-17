@@ -956,9 +956,11 @@ export function TracksCardDeck() {
                               <div className="min-w-0 flex-1">
                                 <h3
                                   className={`font-rotonto leading-[0.94] tracking-tight ${
-                                    item.title.length > 20
-                                      ? "text-[46px]"
-                                      : "text-[60px]"
+                                    item.title.length > 30
+                                      ? "text-[38px]"
+                                      : item.title.length > 20
+                                        ? "text-[46px]"
+                                        : "text-[60px]"
                                   }`}
                                 >
                                   {item.title}
@@ -967,7 +969,11 @@ export function TracksCardDeck() {
                                   className="my-[18px] h-[2px] w-full"
                                   style={{ background: rule }}
                                 />
-                                <p className="font-rotonto text-[23px] leading-[1.5] tracking-tight opacity-90">
+                                <p
+                                  className={`font-rotonto leading-[1.5] tracking-tight opacity-90 ${
+                                    item.blurb.length > 250 ? "text-[20px]" : "text-[23px]"
+                                  }`}
+                                >
                                   {item.blurb}
                                 </p>
                               </div>
@@ -982,7 +988,7 @@ export function TracksCardDeck() {
                             </div>
 
                             <div className="flex items-end justify-between font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
-                              <span>Track</span>
+                              <span>{"label" in item ? item.label : "Track"}</span>
                               <span
                                 className="mx-[24px] mb-[6px] h-[2px] flex-1"
                                 style={{ background: rule }}

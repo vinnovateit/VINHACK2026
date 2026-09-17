@@ -570,6 +570,14 @@ export const TRACKS = {
         "For ideas that don't fit the mould and solutions nobody saw coming. Think beyond conventional apps and explore AI, automation, blockchain, quantum technology, smart devices, emerging technologies, or anything else you can imagine.",
       tags: ["Emerging Tech", "Quantum", "Wildcard"],
     },
+    {
+      title: "PROACTIVE MENTAL HEALTH FOR STUDENTS",
+      /** Printed where the other cards say "Track". */
+      label: "Sponsor Track",
+      blurb:
+        "Build solutions that identify early signs of student stress and proactively connect them to meaningful support. Think beyond passive wellness tools and create low-friction systems for early intervention, peer support, healthy routines, and human escalation.",
+      tags: ["Mental Health", "Early Intervention", "Peer Support"],
+    },
   ],
 } as const;
 
@@ -745,7 +753,7 @@ export const FAQS = {
       questions: [
         {
           q: "What is the maximum team size?",
-          a: "Each team can have 2 to 5 members. Cross-domain and cross-expertise teams are highly encouraged.",
+          a: "Each team can have 3 to 5 members. Cross-domain and cross-expertise teams are highly encouraged.",
         },
         {
           q: "What is the theme of the hackathon?",

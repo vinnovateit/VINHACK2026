@@ -250,7 +250,7 @@ export default function CheckInChecklist({
                 What is the team size?
               </h3>
               <p className="font-['Rotonto',sans-serif] text-[14px] text-neutral-800 leading-relaxed pt-1">
-                Each team must have 2 to 5 members.
+                Each team must have 3 to 5 members.
               </p>
               <p className="font-['Rotonto',sans-serif] text-[13px] text-neutral-700 leading-relaxed">
                 Cross-domain and cross-expertise teams are highly encouraged.

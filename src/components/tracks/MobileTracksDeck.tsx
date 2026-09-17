@@ -428,7 +428,7 @@ export default function MobileTracksDeck() {
                       style={{ color: ink }}
                     >
                       <span className="font-rotonto text-[8px] uppercase tracking-[0.3em]">
-                        Track {pad(slot + 1)} / {pad(COUNT)}
+                        {"label" in item ? item.label : "Track"} {pad(slot + 1)} / {pad(COUNT)}
                       </span>
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
@@ -438,14 +438,20 @@ export default function MobileTracksDeck() {
                           />
                           <h3
                             className={`font-rotonto leading-[0.96] tracking-tight ${
-                              item.title.length > 20
-                                ? "text-[17px]"
-                                : "text-[21px]"
+                              item.title.length > 30
+                                ? "text-[15px]"
+                                : item.title.length > 20
+                                  ? "text-[17px]"
+                                  : "text-[21px]"
                             }`}
                           >
                             {item.title}
                           </h3>
-                          <p className="mt-1.5 font-rotonto text-[10.5px] leading-[1.42] tracking-tight opacity-85 line-clamp-6">
+                          <p
+                            className={`mt-1.5 font-rotonto text-[10.5px] leading-[1.42] tracking-tight opacity-85 ${
+                              item.blurb.length > 225 ? "line-clamp-7" : "line-clamp-6"
+                            }`}
+                          >
                             {item.blurb}
                           </p>
                         </div>
