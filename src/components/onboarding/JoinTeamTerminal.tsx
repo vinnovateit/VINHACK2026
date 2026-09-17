@@ -5,7 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 import { feedTick, tearRip } from "@/components/motion/machine";
 import { audio } from "@/components/motion/audio";
-import KeyButton from "./KeyButton";
+import KeyButton from "@/components/ui/KeyButton";
 
 interface JoinTeamTerminalProps {
   participantName: string;

@@ -96,7 +96,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "VinHack 2026 — VinnovateIT",
+  title: "VinHack 2026 | VinnovateIT",
   description:
     "VinHack is a 36-hour hybrid hackathon by VinnovateIT at Vellore Institute of Technology, bringing together creative minds to build impactful solutions for real-world problems.",
   // Served from public/ as static assets. As src/app/icon.svg it became a Next route handler, so

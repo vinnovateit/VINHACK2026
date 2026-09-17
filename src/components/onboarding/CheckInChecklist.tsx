@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import KeyButton from "./KeyButton";
+import KeyButton from "@/components/ui/KeyButton";
 import { hostelBlockOptions, isValidHostelBlock, type HostelType } from "@/content/hostels";
 
 export type StudentType = "vit" | "external";

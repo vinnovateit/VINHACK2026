@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import KeyButton from "./KeyButton";
+import KeyButton from "@/components/ui/KeyButton";
 import ClientQrCode from "./ClientQrCode";
 import { validateTeamNameAction } from "@/app/onboarding/actions";
 

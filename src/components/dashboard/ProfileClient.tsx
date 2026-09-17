@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { ArrowLeft, Bell, LockKeyhole, LogOut, UserRound, Check } from "lucide-react";
+import KeyButton from "@/components/ui/KeyButton";
+import DiscordIcon from "@/components/nav/DiscordIcon";
+import { DISCORD } from "@/content/site";
 import styles from "./participant-page.module.css";
 
 interface ProfileClientProps {
@@ -153,6 +156,23 @@ export default function ProfileClient({ participant, teamName }: ProfileClientPr
           </label>
 
           <p>These settings customize your VinHack 2026 participant workspace experience.</p>
+
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid #282828", display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ color: "#888", fontSize: "14px", margin: 0 }}>
+              Need help or want to connect with organizers and participants?
+            </p>
+            <KeyButton
+              href={DISCORD.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              color="blue"
+              size="compact"
+              className="w-full"
+              icon={<DiscordIcon className="size-4 shrink-0" />}
+            >
+              JOIN DISCORD
+            </KeyButton>
+          </div>
         </article>
       </section>
 

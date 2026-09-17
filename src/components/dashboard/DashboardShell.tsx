@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import TeamQrCode from "@/components/dashboard/TeamQrCode";
 import LiveCountdown from "@/components/dashboard/LiveCountdown";
+import DiscordIcon from "@/components/nav/DiscordIcon";
+import { DISCORD } from "@/content/site";
 import {
   FIELD_LIMITS,
   PROGRESS_STATUS_OPTIONS,
@@ -465,14 +467,14 @@ export default function DashboardShell({
               </Link>
 
               <a
-                href="https://discord.gg/9MjhswmSb"
+                href={DISCORD.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded text-[#5865F2] hover:text-white hover:bg-[#5865F2]/20 text-xs sm:text-sm transition font-light"
                 role="menuitem"
                 onClick={() => setProfileDropdownOpen(false)}
               >
-                <MessageCircle size={15} />
+                <DiscordIcon className="size-4 shrink-0" />
                 <span>Join Discord</span>
               </a>
 
