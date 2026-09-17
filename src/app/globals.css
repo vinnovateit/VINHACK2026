@@ -27,7 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 13034px;
+  --canvas-height: 12834px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -80,31 +80,31 @@ body {
 }
 
 .projects-disabled {
-  --canvas-height: 11622px;
+  --canvas-height: 11422px;
 }
 
 .tracks-disabled {
-  --canvas-height: 10614px;
+  --canvas-height: 10414px;
 }
 
 .projects-disabled.tracks-disabled {
-  --canvas-height: 9782px;
+  --canvas-height: 9582px;
 }
 
 .who-are-we-disabled {
-  --canvas-height: 11434px;
+  --canvas-height: 11234px;
 }
 
 .who-are-we-disabled.projects-disabled {
-  --canvas-height: 10022px;
+  --canvas-height: 9822px;
 }
 
 .who-are-we-disabled.tracks-disabled {
-  --canvas-height: 9014px;
+  --canvas-height: 8814px;
 }
 
 .who-are-we-disabled.projects-disabled.tracks-disabled {
-  --canvas-height: 8182px;
+  --canvas-height: 7982px;
 }
 
 .projects-disabled-sections {
@@ -126,7 +126,7 @@ body {
 }
 
 .sponsors-extended-sections {
-  transform: translateY(700px);
+  transform: translateY(500px);
 }
 
 .recap-extended-sections {

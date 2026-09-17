@@ -50,14 +50,12 @@ const CARD_WIDTH = 316;
 const CARD_HEIGHT = 500;
 
 /** Scroll travel per card. The wrapper is this tall once over, plus the stage. */
-const TRAVEL_PER_CARD = 380;
+const TRAVEL_PER_CARD = 220;
 /**
  * Half the stretch, either side of face-on, that a card holds square to the
  * reader before it starts folding away — as a fraction of one card's pass.
- * Larger than the tracks deck's, because these cards carry paragraphs rather
- * than a title, and a paragraph needs longer than a glance.
  */
-const DWELL = 0.42;
+const DWELL = 0.28;
 /**
  * The stage is a full window tall and sticks to the top of it, so the card it
  * centres is centred on the screen.
@@ -345,7 +343,7 @@ export default function MobileSponsors() {
           // lands just as the deck lets go — independent of viewport height,
           // which a `bottom`-relative end is not.
           end: "+=" + COUNT * TRAVEL_PER_CARD,
-          scrub: 0.4,
+          scrub: 0.2,
           onUpdate: (self) => render(self.progress * (COUNT - 1), true),
           // A refresh is a re-measure, not a turn: it must not make a noise.
           onRefresh: (self) => render(self.progress * (COUNT - 1), false),

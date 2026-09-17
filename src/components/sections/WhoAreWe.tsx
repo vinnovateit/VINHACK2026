@@ -511,29 +511,6 @@ export default function WhoAreWeSection({
        The lock is the same one `SiteNav` uses for its drawer — `overflow:
        hidden` on the body, with the scrollbar's width made up as padding so
        the full-bleed collage does not jump sideways when it disappears. */
-    let holdDone = false;
-    let holding = false;
-    let approachedFromAbove = false;
-    let bodyOverflow = "";
-    let bodyPad = "";
-
-    const lockScroll = () => {
-      if (holding) return;
-      holding = true;
-      const { body } = document;
-      bodyOverflow = body.style.overflow;
-      bodyPad = body.style.paddingRight;
-      const gutter = window.innerWidth - document.documentElement.clientWidth;
-      body.style.overflow = "hidden";
-      if (gutter > 0) body.style.paddingRight = `${gutter}px`;
-    };
-
-    const unlockScroll = () => {
-      if (!holding) return;
-      holding = false;
-      document.body.style.overflow = bodyOverflow;
-      document.body.style.paddingRight = bodyPad;
-    };
     let smoothScrollY = latestScrollY;
     const scrollVel = { value: 0 };
     const pVel = { value: 0 };
@@ -562,39 +539,15 @@ export default function WhoAreWeSection({
         smoothScrollY = currentScrollY;
         scrollVel.value = 0;
       } else {
-        // Smooth input filtering (smoothDamp)
+        // Smooth natural input filtering without artificial lag
         smoothScrollY = smoothDamp(
           smoothScrollY,
           currentScrollY,
           scrollVel,
-          0.08,
+          0.05,
           Infinity,
           dt
         );
-      }
-
-      /* The hold. Engaged the moment the visitor crosses into the park having
-         come down to it, released when the clock runs out — and, because a
-         flick can carry the page past `parkStart` inside a single frame, the
-         document is put back on that line rather than merely stopped where it
-         landed. */
-      if (!isReduced && !holdDone && armed) {
-        if (latestScrollY < parkStart) {
-          approachedFromAbove = true;
-        } else if (approachedFromAbove && textSeconds < TEXT_DURATION * HOLD_FRACTION) {
-          if (!holding) {
-            window.scrollTo(0, parkStart);
-            lockScroll();
-          }
-          latestScrollY = parkStart;
-          smoothScrollY = parkStart;
-          scrollVel.value = 0;
-        }
-      }
-
-      if (holding && (isReduced || textSeconds >= TEXT_DURATION * HOLD_FRACTION)) {
-        holdDone = true;
-        unlockScroll();
       }
 
       // Full-Screen Pinned Stage Translation:
@@ -619,7 +572,7 @@ export default function WhoAreWeSection({
         textSeconds = 0;
       } else if (isReduced) {
         textSeconds = TEXT_DURATION;
-      } else if (stageY === 0 || holding) {
+      } else if (stageY === 0) {
         textSeconds = Math.min(TEXT_DURATION, textSeconds + dt);
       }
       const textT = TEXT_DURATION > 0 ? textSeconds / TEXT_DURATION : 1;
@@ -705,7 +658,6 @@ export default function WhoAreWeSection({
 
     return () => {
       cancelAnimationFrame(rafId);
-      unlockScroll();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       if (portalEl) portalEl.style.display = "none";

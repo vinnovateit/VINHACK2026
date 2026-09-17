@@ -32,7 +32,7 @@ export default function SponsorsSection() {
       ref={sectionRef}
       data-in-view={inView || undefined}
       aria-label="Sponsors"
-      className="-translate-x-1/2 absolute bg-black h-[1540px] left-1/2 top-[4710px] w-[1280px] flex flex-col items-center justify-start pt-3 overflow-visible z-10"
+      className="-translate-x-1/2 absolute bg-black h-[1340px] left-1/2 top-[4710px] w-[1280px] flex flex-col items-center justify-start pt-3 overflow-visible z-10"
       data-name="SPONSORS"
     >
       {/* The paper spells this out over the course of a scroll; a screen reader

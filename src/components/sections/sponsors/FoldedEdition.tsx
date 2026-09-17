@@ -54,7 +54,7 @@ const VIEWPORT_FIT = 0.95;
  */
 const SWING = 88;
 
-const TRAVEL_PLATE = 700;
+const TRAVEL_PLATE = 500;
 
 /* ------------------------------------------------------------------- maths */
 
@@ -298,7 +298,7 @@ export default function FoldedEdition() {
     };
 
     const render = (p: number) => {
-      const swing = stage(p, 0.05, 0.92);
+      const swing = stage(p, 0.0, 0.96);
       const angle = SWING * swing;
 
       if (cover) {
@@ -417,13 +417,12 @@ export default function FoldedEdition() {
         smoothScrollY = currentScrollY;
         scrollVel.value = 0;
       } else {
-        // Smooth input filtering (dt-independent critically damped spring):
-        // Eliminates discrete mouse-wheel step jumps while maintaining instant responsiveness.
+        // Fast, natural input filtering without lag
         smoothScrollY = smoothDamp(
           smoothScrollY,
           currentScrollY,
           scrollVel,
-          0.08,
+          0.04,
           Infinity,
           dt
         );
@@ -459,22 +458,7 @@ export default function FoldedEdition() {
       // Cover unfolding progress:
       const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
       const targetP = stuck / travelPx;
-
-      if (!initialized) {
-        currentP = targetP;
-        initialized = true;
-      } else if (isReduced) {
-        currentP = targetP;
-        pVel.value = 0;
-      } else {
-        // Critically damped spring (SmoothDamp):
-        // Eliminates discontinuous velocity jumps from notched mouse wheels.
-        currentP = smoothDamp(currentP, targetP, pVel, 0.12, Infinity, dt);
-        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
-          currentP = targetP;
-          pVel.value = 0;
-        }
-      }
+      currentP = targetP;
 
       // Enable pointer events on newspaper links once mostly open
       const canInteract =
