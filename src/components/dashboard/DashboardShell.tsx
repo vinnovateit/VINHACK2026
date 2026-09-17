@@ -26,7 +26,7 @@ import {
   Send,
   Lock,
 } from "lucide-react";
-import ClientQrCode from "@/components/onboarding/ClientQrCode";
+import TeamQrCode from "@/components/dashboard/TeamQrCode";
 import LiveCountdown from "@/components/dashboard/LiveCountdown";
 import {
   FIELD_LIMITS,
@@ -598,19 +598,8 @@ export default function DashboardShell({
                 })}
               </div>
 
-              {/* QR Code on Right */}
-              <div
-                className="w-[63px] h-[63px] flex items-center justify-center cursor-pointer hover:scale-105 transition shrink-0"
-                onClick={copyTeamCode}
-                title="Team QR Code"
-              >
-                <ClientQrCode
-                  value={team.code}
-                  size={63}
-                  darkColor="#ffffff"
-                  lightColor="#000000"
-                />
-              </div>
+              {/* QR Code on Right: opens a larger, scannable copy with a copy-code button */}
+              <TeamQrCode code={team.code} teamName={team.name} />
             </div>
 
             {/* Manage Squad Dropdown Button */}
