@@ -104,12 +104,12 @@ function MentalHealthIcon({ size, className }: IconProps) {
 }
 
 export const TRACK_ICONS: ReadonlyArray<(props: IconProps) => ReactElement> = [
+  MentalHealthIcon,
   IndustryIcon,
   SecurityIcon,
   ClimateIcon,
   EntertainmentIcon,
   WildcardIcon,
-  MentalHealthIcon,
 ];
 
 export function TrackVisual({

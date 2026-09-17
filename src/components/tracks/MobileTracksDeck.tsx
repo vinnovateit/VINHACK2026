@@ -307,8 +307,47 @@ export default function MobileTracksDeck() {
           },
         });
 
+        const goToMobileTrack = (index: number) => {
+          const targetIdx = gsap.utils.clamp(0, COUNT - 1, index);
+          const u = targetIdx * UNIT + 1 + HOLD * 0.4;
+          const q = u / (COUNT * UNIT);
+          const targetY = st.start + q * (COUNT * TRAVEL_PER_CARD);
+          window.scrollTo({ top: targetY, behavior: "smooth" });
+        };
+
+        const onTicksClick = (e: MouseEvent) => {
+          const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-mobile-tick]");
+          if (!btn) return;
+          const idx = Number(btn.dataset.mobileTick);
+          if (!Number.isNaN(idx)) {
+            goToMobileTrack(idx);
+          }
+        };
+
+        const onKeyDown = (e: KeyboardEvent) => {
+          if (!window.matchMedia(MOBILE).matches) return;
+          const rect = wrap.getBoundingClientRect();
+          if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            const active = gsap.utils.clamp(0, COUNT - 1, Math.round(deckPosition(st.progress)));
+            goToMobileTrack(active - 1);
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            const active = gsap.utils.clamp(0, COUNT - 1, Math.round(deckPosition(st.progress)));
+            goToMobileTrack(active + 1);
+          }
+        };
+
+        const ticksEl = wrap.querySelector<HTMLElement>("[data-deck-ticks]");
+        ticksEl?.addEventListener("click", onTicksClick);
+        window.addEventListener("keydown", onKeyDown);
+
         return () => {
           ScrollTrigger.removeEventListener("refreshInit", place);
+          ticksEl?.removeEventListener("click", onTicksClick);
+          window.removeEventListener("keydown", onKeyDown);
           entryTrigger.kill();
           st.kill();
         };
@@ -479,21 +518,31 @@ export default function MobileTracksDeck() {
           })}
         </div>
 
-        {/* Which of the four is square to the reader. */}
+        {/* Which of the tracks is square to the reader. */}
         <div
-          className="absolute bottom-1 left-0 flex w-full justify-center gap-2"
+          role="tablist"
+          aria-label="Mobile track navigation"
+          className="pointer-events-auto absolute bottom-1 left-0 flex w-full justify-center gap-1"
           data-deck-ticks
         >
           {TRACKS.items.map((item, i) => (
-            <span
+            <button
               key={item.title}
-              ref={(node) => {
-                if (node) tickRefs.current.set(i, node);
-                else tickRefs.current.delete(i);
-              }}
-              className="h-px w-6 bg-[#fa1a1d]"
-              aria-hidden
-            />
+              type="button"
+              role="tab"
+              aria-label={`Go to Track ${i + 1}: ${item.title}`}
+              data-mobile-tick={i}
+              className="flex h-6 w-8 items-center justify-center p-1"
+            >
+              <span
+                ref={(node) => {
+                  if (node) tickRefs.current.set(i, node);
+                  else tickRefs.current.delete(i);
+                }}
+                className="h-[2px] w-6 bg-[#fa1a1d] transition-opacity"
+                aria-hidden
+              />
+            </button>
           ))}
         </div>
       </div>

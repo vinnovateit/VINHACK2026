@@ -575,6 +575,10 @@ export function TracksCardDeck() {
         ticks.forEach((tick, i) => {
           tick.style.opacity = i <= active ? "1" : "0.25";
         });
+        const btns = counter.querySelectorAll<HTMLElement>("[data-tick-btn]");
+        btns.forEach((btn, i) => {
+          btn.setAttribute("aria-selected", i === active ? "true" : "false");
+        });
         const label = counter.querySelector<HTMLElement>("[data-tick-label]");
         if (label) label.textContent = `#${active + 1}`;
       }
@@ -797,6 +801,39 @@ export function TracksCardDeck() {
       rafId = requestAnimationFrame(tick);
     };
 
+    const goToTrack = (index: number) => {
+      const targetIdx = clamp(0, COUNT - 1, index);
+      const u = targetIdx * UNIT + 1 + HOLD * 0.4;
+      const q = u / (COUNT * UNIT);
+      const targetY = parkStart + q * travelPx;
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+    };
+
+    const onCounterClick = (e: MouseEvent) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-tick-btn]");
+      if (!btn) return;
+      const idx = Number(btn.dataset.tickBtn);
+      if (!Number.isNaN(idx)) {
+        goToTrack(idx);
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!armed || !desktop.matches) return;
+      const scrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      if (scrollY < parkStart - 400 || scrollY > parkStart + travelPx + 400) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const active = clamp(0, COUNT - 1, Math.round(currentP));
+        goToTrack(active - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const active = clamp(0, COUNT - 1, Math.round(currentP));
+        goToTrack(active + 1);
+      }
+    };
+
     const onLayout = () => {
       measure();
       drawn = Number.NaN;
@@ -810,6 +847,8 @@ export function TracksCardDeck() {
     onLayout();
     rafId = requestAnimationFrame(tick);
 
+    counter.addEventListener("click", onCounterClick);
+    window.addEventListener("keydown", onKeyDown);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayout);
     desktop.addEventListener("change", onLayout);
@@ -817,6 +856,8 @@ export function TracksCardDeck() {
 
     return () => {
       cancelAnimationFrame(rafId);
+      counter.removeEventListener("click", onCounterClick);
+      window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       desktop.removeEventListener("change", onLayout);
@@ -862,20 +903,29 @@ export function TracksCardDeck() {
             >
               <div
                 ref={counterRef}
-                aria-hidden
-                className="absolute left-0 flex items-center gap-[9px] pl-[26px] font-rotonto text-[#fa1a1d] opacity-0"
+                role="tablist"
+                aria-label="Track navigation"
+                className="pointer-events-auto absolute left-0 flex items-center gap-[10px] pl-[26px] font-rotonto text-[#fa1a1d] opacity-0 select-none z-50"
               >
                 <span className="text-[11px] uppercase tracking-[0.42em]">Tracks</span>
-                <span className="flex items-center gap-[5px]">
+                <div className="flex items-center gap-[6px] py-2">
                   {TRACKS.items.map((item, i) => (
-                    <span
+                    <button
                       key={item.title}
-                      data-tick
-                      className="block h-[2px] w-[18px] bg-current opacity-25"
-                      style={{ opacity: i === 0 ? 1 : 0.25 }}
-                    />
+                      type="button"
+                      role="tab"
+                      aria-label={`Go to Track ${i + 1}: ${item.title}`}
+                      data-tick-btn={i}
+                      className="group relative flex h-[28px] w-[24px] items-center justify-center cursor-pointer transition-transform hover:scale-115 focus-visible:outline-none"
+                    >
+                      <span
+                        data-tick
+                        className="block h-[3px] w-[18px] rounded-full bg-current opacity-25 transition-all duration-200 group-hover:opacity-80 group-hover:h-[4px]"
+                        style={{ opacity: i === 0 ? 1 : 0.25 }}
+                      />
+                    </button>
                   ))}
-                </span>
+                </div>
                 <span className="text-[11px] tracking-[0.2em] tabular-nums">
                   <span data-tick-label>#1</span>
                 </span>

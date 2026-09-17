@@ -547,6 +547,14 @@ export const TRACKS = {
    */
   items: [
     {
+      title: "PROACTIVE MENTAL HEALTH FOR STUDENTS",
+      /** Printed where the other cards say "Track". */
+      label: "Sponsor Track",
+      blurb:
+        "Build solutions that identify early signs of student stress and proactively connect them to meaningful support. Think beyond passive wellness tools and create low-friction systems for early intervention, peer support, healthy routines, and human escalation.",
+      tags: ["Mental Health", "Early Intervention", "Peer Support"],
+    },
+    {
       title: "INDUSTRY 6.0",
       blurb:
         "Power the next evolution of industry. Build solutions that bring humans and intelligent systems together through human-AI collaboration, intelligent automation, personalised learning, and next-generation workspaces.",
@@ -575,14 +583,6 @@ export const TRACKS = {
       blurb:
         "For ideas that don't fit the mould and solutions nobody saw coming. Think beyond conventional apps and explore AI, automation, blockchain, quantum technology, smart devices, emerging technologies, or anything else you can imagine.",
       tags: ["Emerging Tech", "Quantum", "Wildcard"],
-    },
-    {
-      title: "PROACTIVE MENTAL HEALTH FOR STUDENTS",
-      /** Printed where the other cards say "Track". */
-      label: "Sponsor Track",
-      blurb:
-        "Build solutions that identify early signs of student stress and proactively connect them to meaningful support. Think beyond passive wellness tools and create low-friction systems for early intervention, peer support, healthy routines, and human escalation.",
-      tags: ["Mental Health", "Early Intervention", "Peer Support"],
     },
   ],
 } as const;
