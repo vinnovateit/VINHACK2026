@@ -129,7 +129,7 @@ export default function FAQsSection() {
                 {/* Sheet 1 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-8 left-[23px] w-[198px] h-[300px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[4px] rotate-[2.5deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-6 group-hover:rotate-[4deg]"
+                  className="absolute bottom-8 left-[23px] w-[198px] h-[300px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-[20px] rotate-[2.5deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-6 group-hover:rotate-[4deg]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.35) 15px, rgba(140, 214, 238, 0.35) 16px)",
@@ -139,7 +139,7 @@ export default function FAQsSection() {
                 {/* Sheet 2 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-4 left-[23px] w-[198px] h-[302px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[4px] rotate-[1deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-8 group-hover:rotate-[2deg]"
+                  className="absolute bottom-4 left-[23px] w-[198px] h-[302px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-[20px] rotate-[1deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-8 group-hover:rotate-[2deg]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.35) 15px, rgba(140, 214, 238, 0.35) 16px)",
@@ -149,7 +149,7 @@ export default function FAQsSection() {
                 {/* Sheet 3 */}
                 <div
                   aria-hidden="true"
-                  className="absolute bottom-3 left-[23px] w-[198px] h-[300px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[4px] rotate-[-1deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-7 group-hover:rotate-[-2deg]"
+                  className="absolute bottom-3 left-[23px] w-[198px] h-[300px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-[20px] rotate-[-1deg] origin-bottom transition-transform duration-300 ease-out group-hover:-translate-y-7 group-hover:rotate-[-2deg]"
                   style={{
                     backgroundImage:
                       "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.35) 15px, rgba(140, 214, 238, 0.35) 16px)",
@@ -157,7 +157,7 @@ export default function FAQsSection() {
                 />
 
                 {/* Sheet 4 (Front Main Paper Sheet) */}
-                <div className="absolute bottom-1 left-[22px] w-[200px] h-[305px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[4px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start transition-transform duration-300 ease-out group-hover:-translate-y-9 group-hover:rotate-[-4deg] group-hover:shadow-xl">
+                <div className="absolute bottom-1 left-[22px] w-[200px] h-[305px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-[20px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start transition-transform duration-300 ease-out group-hover:-translate-y-9 group-hover:rotate-[-4deg] group-hover:shadow-xl">
                   {/* Header Row */}
                   <div className="pt-2.5 px-3">
                     <div className="text-center font-rotonto text-[10px] tracking-wide text-neutral-700 uppercase">
@@ -420,7 +420,7 @@ export default function FAQsSection() {
                       opacity,
                       transition: transitionStyle,
                     }}
-                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
+                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 rounded-[20px] shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
                       isTop ? "cursor-pointer hover:shadow-[0_30px_60px_rgba(0,0,0,0.6)]" : "pointer-events-none"
                     }`}
                   >
