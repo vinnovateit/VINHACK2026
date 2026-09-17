@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import KeyButton from "@/components/ui/KeyButton";
 import { FAQS, type FaqCategory } from "@/content/site";
 
 export default function FAQsSection() {
@@ -273,23 +275,24 @@ export default function FAQsSection() {
         >
           {/* Interactive Stack Deck Container with Side Navigation Arrows */}
           <div className="relative flex items-center justify-center gap-6 sm:gap-10 w-full max-w-[800px]">
-            {/* Left Arrow Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-              aria-label="Previous question"
-              className={`p-3 sm:p-4 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-350 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 hover:scale-110 ${
+            {/* Left Key Button */}
+            <div
+              className={`transition-all duration-350 shrink-0 z-40 ${
                 isOpen ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-75 -translate-x-8 pointer-events-none"
               }`}
-              title="Previous question (←)"
+              onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+              <KeyButton
+                color="red"
+                size="compact"
+                className="w-[52px] sm:w-[58px]"
+                onClick={() => handlePrev()}
+                aria-label="Previous question"
+                title="Previous question (←)"
+              >
+                <ChevronLeft size={22} className="stroke-[2.5]" />
+              </KeyButton>
+            </div>
 
             {/* === The Stack of Pages (Clicking paper advances to next) === */}
             <div
@@ -303,21 +306,24 @@ export default function FAQsSection() {
                   : "opacity-0 scale-[0.5] translate-y-[440px] sm:translate-y-[520px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
               }`}
             >
-              {/* Close Button Attached Right Above Paper */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClose();
-                }}
-                aria-label="Close"
-                className={`absolute -top-10 right-0 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-rotonto text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 hover:scale-105 active:scale-95 ${
+              {/* Close Key Button Attached Right Above Paper */}
+              <div
+                className={`absolute -top-14 sm:-top-16 right-0 z-50 transition-all duration-200 ${
                   isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"
                 }`}
+                onClick={(e) => e.stopPropagation()}
               >
-                <span>CLOSE</span>
-                <span className="text-xs">✕</span>
-              </button>
+                <KeyButton
+                  color="red"
+                  size="compact"
+                  className="w-[112px] sm:w-[124px]"
+                  icon={<X size={16} className="stroke-[2.5]" />}
+                  onClick={handleClose}
+                  aria-label="Close"
+                >
+                  CLOSE
+                </KeyButton>
+              </div>
               {activeCategory.questions.map((faq, idx) => {
                 const total = activeCategory.questions.length;
                 const diff = (idx - cardIndex + total) % total;
@@ -431,23 +437,24 @@ export default function FAQsSection() {
               })}
             </div>
 
-            {/* Right Arrow Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              aria-label="Next question"
-              className={`p-3 sm:p-4 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-350 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 hover:scale-110 ${
+            {/* Right Key Button */}
+            <div
+              className={`transition-all duration-350 shrink-0 z-40 ${
                 isOpen ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-75 translate-x-8 pointer-events-none"
               }`}
-              title="Next question (→)"
+              onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+              <KeyButton
+                color="red"
+                size="compact"
+                className="w-[52px] sm:w-[58px]"
+                onClick={() => handleNext()}
+                aria-label="Next question"
+                title="Next question (→)"
+              >
+                <ChevronRight size={22} className="stroke-[2.5]" />
+              </KeyButton>
+            </div>
           </div>
 
           {/* Bottom Pagination Dots & Instructions */}

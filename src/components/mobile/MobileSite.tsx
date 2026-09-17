@@ -3,6 +3,8 @@
 import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import KeyButton from "@/components/ui/KeyButton";
 
 import CameraFeed from "@/components/CameraFeed";
 import GitArt from "@/components/hero/GitArt";
@@ -1178,22 +1180,24 @@ function MobileFAQs() {
         >
           {/* Deck Container with Navigation */}
           <div className="relative flex items-center justify-center gap-3 w-full max-w-[420px]">
-            {/* Left Arrow Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-              aria-label="Previous question"
-              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
+            {/* Left Key Button */}
+            <div
+              className={`transition-all duration-300 shrink-0 z-40 ${
                 isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
               }`}
+              onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+              <KeyButton
+                color="red"
+                size="compact"
+                className="w-[46px] sm:w-[52px]"
+                onClick={() => handlePrev()}
+                aria-label="Previous question"
+                title="Previous question"
+              >
+                <ChevronLeft size={20} className="stroke-[2.5]" />
+              </KeyButton>
+            </div>
 
             {/* === The Stack of Pages (Tap to advance) === */}
             <div
@@ -1207,21 +1211,24 @@ function MobileFAQs() {
                   : "opacity-0 scale-[0.5] translate-y-[400px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
               }`}
             >
-              {/* Close Button Attached Above Paper */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClose();
-                }}
-                aria-label="Close"
-                className={`absolute -top-9 right-0 flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-rotonto text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 ${
+              {/* Close Key Button Attached Above Paper */}
+              <div
+                className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
                   isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
                 }`}
+                onClick={(e) => e.stopPropagation()}
               >
-                <span>CLOSE</span>
-                <span className="text-xs">✕</span>
-              </button>
+                <KeyButton
+                  color="red"
+                  size="compact"
+                  className="w-[102px] sm:w-[114px]"
+                  icon={<X size={15} className="stroke-[2.5]" />}
+                  onClick={handleClose}
+                  aria-label="Close"
+                >
+                  CLOSE
+                </KeyButton>
+              </div>
 
               {activeCategory.questions.map((faq, idx) => {
                 const total = activeCategory.questions.length;
@@ -1321,22 +1328,24 @@ function MobileFAQs() {
               })}
             </div>
 
-            {/* Right Arrow Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              aria-label="Next question"
-              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
+            {/* Right Key Button */}
+            <div
+              className={`transition-all duration-300 shrink-0 z-40 ${
                 isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
               }`}
+              onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+              <KeyButton
+                color="red"
+                size="compact"
+                className="w-[46px] sm:w-[52px]"
+                onClick={() => handleNext()}
+                aria-label="Next question"
+                title="Next question"
+              >
+                <ChevronRight size={20} className="stroke-[2.5]" />
+              </KeyButton>
+            </div>
           </div>
 
           {/* Bottom Pagination */}

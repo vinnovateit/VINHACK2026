@@ -20,6 +20,9 @@ export interface KeyButtonProps {
   icon?: React.ReactNode;
   target?: string;
   rel?: string;
+  "aria-label"?: string;
+  ariaLabel?: string;
+  title?: string;
 }
 
 const colorMap: Record<
@@ -89,11 +92,15 @@ export default function KeyButton({
   icon,
   target,
   rel,
+  "aria-label": ariaLabelProp,
+  ariaLabel,
+  title,
 }: KeyButtonProps) {
   const isPressedRef = useRef(false);
   const keyRef = useRef<HTMLElement>(null);
 
   const theme = colorMap[color] || colorMap.pink;
+  const aLabel = ariaLabelProp || ariaLabel;
 
   const height = size === "compact" ? "h-[52px]" : "h-[64px]";
   const wellHeight = size === "compact" ? "h-[45px]" : "h-[56px]";
@@ -189,17 +196,19 @@ export default function KeyButton({
           size === "compact"
             ? "left-[8px] w-[calc(100%-16px)]"
             : "left-[10px] w-[calc(100%-20px)]"
-        } ${capHeight} flex items-center justify-center px-4 sm:px-5 gap-2.5 sm:gap-3 z-20 pointer-events-none`}
+        } ${capHeight} flex items-center justify-center px-2 sm:px-3 gap-1.5 sm:gap-2 z-20 pointer-events-none`}
       >
-        {icon && <span className="shrink-0 flex items-center">{icon}</span>}
-        <span
-          className={`font-['Rotonto',sans-serif] ${fontSize} font-normal ${theme.text} uppercase leading-none tracking-wide text-center`}
-          style={{
-            textShadow: `0.4px 0 0 ${theme.shadowColor}, 0 0.4px 0 ${theme.shadowColor}, -0.4px 0 0 ${theme.shadowColor}, 0 -0.4px 0 ${theme.shadowColor}`,
-          }}
-        >
-          {labelContent}
-        </span>
+        {icon && <span className="shrink-0 flex items-center justify-center">{icon}</span>}
+        {labelContent && (
+          <span
+            className={`font-['Rotonto',sans-serif] ${fontSize} font-normal ${theme.text} uppercase leading-none tracking-wide text-center flex items-center justify-center`}
+            style={{
+              textShadow: `0.4px 0 0 ${theme.shadowColor}, 0 0.4px 0 ${theme.shadowColor}, -0.4px 0 0 ${theme.shadowColor}, 0 -0.4px 0 ${theme.shadowColor}`,
+            }}
+          >
+            {labelContent}
+          </span>
+        )}
       </div>
 
       {/* Bevel edge left (frontmost z-index, slightly reduced height) */}
@@ -254,6 +263,8 @@ export default function KeyButton({
         onPointerUp={() => !disabled && animateRelease()}
         target={target}
         rel={rel}
+        aria-label={aLabel}
+        title={title}
       >
         {innerContent}
       </Link>
@@ -279,6 +290,8 @@ export default function KeyButton({
           }, 90);
         }
       }}
+      aria-label={aLabel}
+      title={title}
     >
       {innerContent}
     </div>
