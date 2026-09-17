@@ -18,14 +18,14 @@ import { DESKTOP, MOBILE } from "@/components/motion/recipes";
 
 // -------------------- TIMING & SCROLL FACTORS --------------------
 // 1. Total scroll travel in pixels (Increase to make the whole section scroll slower)
-const SCROLL_TRAVEL = 1800;
+const SCROLL_TRAVEL = 1100;
 
 /**
  * The room the canvas gives this section: Projects' shifted top (2496 + the
- * 1296 `.recap-extended-sections` carries) less this section's own top of 1392.
+ * 496 `.recap-extended-sections` carries) less this section's own top of 1392.
  * Keep it in step with that translate.
  */
-const CANVAS_RESERVED = 2400;
+const CANVAS_RESERVED = 1600;
 
 // 2. The headline crossfade. It is a clock, not a scroll position: the two
 // lines run themselves once the stage is parked and fills the screen, so the
@@ -399,21 +399,19 @@ export default function WhoAreWeSection({
       keepOffTheWords();
 
       if (variant === "flow") {
-        travelPx = Math.max(900, Math.round(SCROLL_TRAVEL * 0.7));
-        // In flow the reservation can simply be told how much room to keep.
-        container.style.height = `${travelPx + exit}px`;
+        travelPx = Math.max(600, Math.round(SCROLL_TRAVEL * 0.6));
+        // In flow the reservation only needs travel plus a compact exit buffer
+        container.style.height = `${travelPx + Math.min(240, Math.round(exit * 0.3))}px`;
       } else {
         /* What the collage actually has on the canvas, and it is not this
            section's own `height`: everything from Projects down is shifted by
-           `.recap-extended-sections` (+1296px in globals.css), which puts
-           Projects at 3792 against this section's 1392 — 2400px of room, not
-           the 2632 the placeholder is drawn at. Reserve against the real
-           number or the last screenful of the park has Projects under it. */
+           `.recap-extended-sections` (+496px in globals.css), which puts
+           Projects at 2992 against this section's 1392 — 1600px of room. */
         const reserved = CANVAS_RESERVED;
         travelPx = clamp(
-          900,
-          Math.max(900, reserved - exit),
-          Math.max(1500, Math.round(SCROLL_TRAVEL * (rect.width / 1280 || 1))),
+          700,
+          Math.max(700, reserved - exit),
+          Math.max(1000, Math.round(SCROLL_TRAVEL * (rect.width / 1280 || 1))),
         );
       }
     };
@@ -738,7 +736,7 @@ export default function WhoAreWeSection({
         style={{
           height:
             variant === "flow"
-              ? `${Math.round(SCROLL_TRAVEL * 0.7) + 520}px`
+              ? `${Math.round(SCROLL_TRAVEL * 0.6) + 240}px`
               : `${CANVAS_RESERVED}px`,
           overflowAnchor: "none",
         }}

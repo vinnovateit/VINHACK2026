@@ -192,7 +192,7 @@ const LEAN_SQUASH = 0.97;
  * card sit while the next one creeps forward behind it — reads as a slow deck
  * rather than a stopped one, which is the thing this is here to avoid.
  */
-const HOLD = 1.25;
+const HOLD = 0.5;
 /** One card's share of the scrolling: its flight, then its hold. */
 const UNIT = 1 + HOLD;
 

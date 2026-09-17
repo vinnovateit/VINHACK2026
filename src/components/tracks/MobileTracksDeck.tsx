@@ -124,14 +124,14 @@ const STAGE_MIN_TOP = 12;
 /* -------------------------------------------------------------- the timing */
 
 /** Scroll travel per card. The wrapper is this tall once over, plus the stage. */
-const TRAVEL_PER_CARD = 400;
+const TRAVEL_PER_CARD = 240;
 /**
  * The pause, as a fraction of one card's travel — the same staircase the
  * collage's deck runs on. During a hold the deck position sits on an exact
  * integer and not a single card moves, so the card in the middle is genuinely
  * stopped for the stretch you are reading it rather than merely slow.
  */
-const HOLD = 1.4;
+const HOLD = 0.5;
 const UNIT = 1 + HOLD;
 /** A last touch of settle at either end of a card's travel, so it is square to
  *  the reader for a moment before the hold proper. */

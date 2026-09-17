@@ -27,8 +27,7 @@
      its place have room to be two separate events rather than one cut. Every
      section below Rules carries its Figma top plus that 416. */
   --canvas-width: 1280px;
-  --canvas-height: 12434px;
-  --canvas-height: 14834px;
+  --canvas-height: 13034px;
 
   /* Where the hero ends and the scrolling body begins. The hero occupies
      top 0 -> 832 and every other section is laid out below it, so this is the
@@ -81,23 +80,23 @@ body {
 }
 
 .projects-disabled {
-  --canvas-height: 13422px;
+  --canvas-height: 11622px;
 }
 
 .tracks-disabled {
-  --canvas-height: 11414px;
+  --canvas-height: 10614px;
 }
 
 .projects-disabled.tracks-disabled {
-  --canvas-height: 10582px;
+  --canvas-height: 9782px;
 }
 
 .who-are-we-disabled {
-  --canvas-height: 12434px;
+  --canvas-height: 11434px;
 }
 
 .who-are-we-disabled.projects-disabled {
-  --canvas-height: 11022px;
+  --canvas-height: 10022px;
 }
 
 .who-are-we-disabled.tracks-disabled {
@@ -117,26 +116,13 @@ body {
 }
 
 /* The other half of the same switch. With tracks on, the section is drawn
-   2248px taller than the artwork on it — that surplus is the scrolling room
+   taller than the artwork on it — that surplus is the scrolling room
    `TracksCardDeck` parks over, one card per stretch of it — so everything below
-   Tracks carries the same 2248, and so does `--canvas-height` above. Sections
+   Tracks carries the surplus, and so does `--canvas-height` above. Sections
    are positioned against the fixed frame rather than stacked, so this is one
-   shift on the group instead of six edited `top` values.
-
-   The extra 400 on top of it is clear air between the two. The tracks deck
-   unparks as the section's last pixel reaches the bottom of the window, and
-   Sponsors used to start 16px below that — so the newspaper's opening began
-   while the final track card was still on screen, and the two scroll-linked
-   movements ran over each other. 400px is roughly half a window at the widths
-   this layout is used at: enough for the deck to be finished and gone before
-   the paper is asked to do anything.
-
-   Three numbers move together whenever the deck is given more room to play in:
-   this one, `--canvas-height` (and its projects-off variant), and the section's
-   own height in `sections/Tracks`. The tracks-*off* heights are untouched by
-   it — with the section gone there is no surplus to carry. */
+   shift on the group instead of six edited `top` values. */
 .tracks-extended-sections {
-  transform: translateY(2648px);
+  transform: translateY(1648px);
 }
 
 .sponsors-extended-sections {
@@ -144,7 +130,7 @@ body {
 }
 
 .recap-extended-sections {
-  transform: translateY(1296px);
+  transform: translateY(496px);
 }
 
 .who-are-we-disabled .recap-extended-sections {
