@@ -27,17 +27,25 @@ const SCROLL_TRAVEL = 1800;
  */
 const CANVAS_RESERVED = 2400;
 
-// 2. Text transition factors (values between 0.0 and 1.0 of scroll progress)
+// 2. The headline crossfade. It is a clock, not a scroll position: the two
+// lines run themselves once the stage is parked and fills the screen, so the
+// reveal plays at the same pace whether the visitor is scrolling slowly, fast,
+// or has stopped. Only the cards' scatter is still scrubbed by scroll.
+//
+// TEXT_DURATION is the whole run in seconds; the numbers below are fractions
+// of it, in the order they happen.
+const TEXT_DURATION = 5.2;
+
 const TEXT_TRANSITION = {
   // Phase 1: "WHO ARE WE ?"
-  text1FadeInStart: 0.08,    // Scroll progress when "WHO ARE WE ?" starts appearing
-  text1FadeInEnd: 0.28,      // Scroll progress when "WHO ARE WE ?" reaches full opacity
-  text1FadeOutStart: 0.44,   // Scroll progress when "WHO ARE WE ?" starts fading out (increase to make it stay longer)
-  text1FadeOutEnd: 0.70,     // Scroll progress when "WHO ARE WE ?" is completely gone (increase to fade out slower)
+  text1FadeInStart: 0.04,    // when "WHO ARE WE ?" starts appearing
+  text1FadeInEnd: 0.20,      // when it reaches full opacity
+  text1FadeOutStart: 0.46,   // when it starts fading out (raise to hold it longer)
+  text1FadeOutEnd: 0.68,     // when it is completely gone (raise to fade slower)
 
   // Phase 2: "WE ARE VINNOVATEIT"
-  text2FadeInStart: 0.20,    // Scroll progress when "WE ARE VINNOVATEIT" starts appearing
-  text2FadeInEnd: 0.90,      // Scroll progress when "WE ARE VINNOVATEIT" reaches full opacity (increase to fade in slower)
+  text2FadeInStart: 0.52,    // when "WE ARE VINNOVATEIT" starts appearing
+  text2FadeInEnd: 0.88,      // when it reaches full opacity
 };
 
 interface CardConfig {
@@ -50,15 +58,21 @@ interface CardConfig {
   z: number;  // z-index in pile
 }
 
-// Calibrated stopping coordinates matching user reference screenshot
+// Where each card stops, as a fraction of the half-screen it is measured
+// against — so the arrangement holds its shape at any size.
+//
+// They are deliberately well out: the middle of the stage is the headline's,
+// and a card parked anywhere near it printed over the words. `keepOffTheWords`
+// below is the backstop that catches whatever a particular screen still brings
+// too close; these numbers are what keep it from having to do much.
 const CARD_CONFIGS: Record<string, CardConfig> = {
   // 1. Top-Left Polaroid (Classroom)
   "photo-1": {
     x0: -180,
     y0: -80,
     r0: -3,
-    calcX1: (hw) => -hw * 0.66,
-    calcY1: (hh) => -hh * 0.58,
+    calcX1: (hw) => -hw * 0.70,
+    calcY1: (hh) => -hh * 0.66,
     r1: -4,
     z: 14,
   },
@@ -67,8 +81,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: -10,
     y0: 10,
     r0: 2,
-    calcX1: (hw) => -hw * 0.20,
-    calcY1: (hh) => -hh * 0.55,
+    calcX1: (hw) => -hw * 0.36,
+    calcY1: (hh) => -hh * 0.72,
     r1: -12,
     z: 30,
   },
@@ -77,8 +91,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: -40,
     y0: -90,
     r0: 12,
-    calcX1: (hw) => hw * 0.19,
-    calcY1: (hh) => -hh * 0.66,
+    calcX1: (hw) => hw * 0.34,
+    calcY1: (hh) => -hh * 0.74,
     r1: 4,
     z: 10,
   },
@@ -87,8 +101,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: 180,
     y0: -70,
     r0: 14,
-    calcX1: (hw) => hw * 0.65,
-    calcY1: (hh) => -hh * 0.65,
+    calcX1: (hw) => hw * 0.70,
+    calcY1: (hh) => -hh * 0.72,
     r1: 8,
     z: 12,
   },
@@ -97,8 +111,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: -150,
     y0: -15,
     r0: -11,
-    calcX1: (hw) => -hw * 0.68,
-    calcY1: (hh) => -hh * 0.08,
+    calcX1: (hw) => -hw * 0.78,
+    calcY1: (hh) => -hh * 0.10,
     r1: -8,
     z: 24,
   },
@@ -107,8 +121,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: 120,
     y0: -60,
     r0: 14,
-    calcX1: (hw) => hw * 0.67,
-    calcY1: (hh) => -hh * 0.21,
+    calcX1: (hw) => hw * 0.78,
+    calcY1: (hh) => -hh * 0.24,
     r1: 8,
     z: 22,
   },
@@ -117,8 +131,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: -170,
     y0: 90,
     r0: 36,
-    calcX1: (hw) => -hw * 0.69,
-    calcY1: (hh) => hh * 0.50,
+    calcX1: (hw) => -hw * 0.76,
+    calcY1: (hh) => hh * 0.62,
     r1: 34,
     z: 16,
   },
@@ -127,8 +141,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: -80,
     y0: 90,
     r0: -16,
-    calcX1: (hw) => -hw * 0.30,
-    calcY1: (hh) => hh * 0.66,
+    calcX1: (hw) => -hw * 0.40,
+    calcY1: (hh) => hh * 0.76,
     r1: -14,
     z: 26,
   },
@@ -137,8 +151,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: 80,
     y0: 110,
     r0: 20,
-    calcX1: (hw) => hw * 0.29,
-    calcY1: (hh) => hh * 0.67,
+    calcX1: (hw) => hw * 0.40,
+    calcY1: (hh) => hh * 0.76,
     r1: 4,
     z: 18,
   },
@@ -147,8 +161,8 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     x0: 160,
     y0: 35,
     r0: -20,
-    calcX1: (hw) => hw * 0.66,
-    calcY1: (hh) => hh * 0.32,
+    calcX1: (hw) => hw * 0.76,
+    calcY1: (hh) => hh * 0.42,
     r1: -22,
     z: 20,
   },
@@ -253,6 +267,81 @@ export default function WhoAreWeSection({
     let hw = 640;
     let hh = 400;
     let cardScale = 1;
+    /* Where each card actually stops, once it has been held off the headline.
+       Keyed by the same ids as CARD_CONFIGS; see `keepOffTheWords`. */
+    const stops = new Map<string, { x: number; y: number }>();
+
+    /**
+     * Push any card whose stop would land on the headline out until it clears
+     * it.
+     *
+     * The scatter targets are fractions of the half-screen, so they hold their
+     * arrangement at any size — but the *words* do not scale with the screen
+     * the same way, and on a narrow one the same fractions put a polaroid
+     * straight over "WE ARE VINNOVATEIT". The type is what the section is, so
+     * the cards give way: each is moved out along whichever axis needs the
+     * least to clear the words' box, and if the screen is too tight for that
+     * axis it tries the other. Nothing is layered over anything — the middle is
+     * simply left empty.
+     *
+     * Measured from the live DOM rather than assumed: the headline is set in
+     * `clamp()` and its width is the webfont's, so the only reliable number is
+     * the one the browser has.
+     */
+    const keepOffTheWords = () => {
+      stops.clear();
+
+      const words = [text1, text2];
+      let halfW = 0;
+      let halfH = 0;
+      for (const el of words) {
+        halfW = Math.max(halfW, el.offsetWidth / 2);
+        halfH = Math.max(halfH, el.offsetHeight / 2);
+      }
+      // The air the words keep around them, over and above their own box.
+      const gutterX = 44;
+      const gutterY = 34;
+
+      for (const [id, config] of Object.entries(CARD_CONFIGS)) {
+        let x = config.calcX1(hw);
+        let y = config.calcY1(hh);
+
+        const el = cardElementsRef.current.get(id);
+        if (el) {
+          const cw = (el.offsetWidth * cardScale) / 2;
+          const ch = (el.offsetHeight * cardScale) / 2;
+
+          const needX = halfW + gutterX + cw;
+          const needY = halfH + gutterY + ch;
+
+          if (Math.abs(x) < needX && Math.abs(y) < needY) {
+            // How far each axis is from clear, and what the screen allows.
+            const pushX = needX - Math.abs(x);
+            const pushY = needY - Math.abs(y);
+            const roomX = Math.max(0, hw - 6 - cw - Math.abs(x));
+            const roomY = Math.max(0, hh - 6 - ch - Math.abs(y));
+
+            const signX = x < 0 ? -1 : 1;
+            const signY = y < 0 ? -1 : 1;
+
+            if (pushX <= pushY && pushX <= roomX) {
+              x += signX * pushX;
+            } else if (pushY <= roomY) {
+              y += signY * pushY;
+            } else if (pushX <= roomX) {
+              x += signX * pushX;
+            } else {
+              // Neither axis has the room on its own. Take what each has,
+              // which at least gets the card off the middle of the words.
+              x += signX * Math.min(pushX, roomX);
+              y += signY * Math.min(pushY, roomY);
+            }
+          }
+        }
+
+        stops.set(id, { x, y });
+      }
+    };
 
     const measure = () => {
       if (!inRange.matches) {
@@ -295,6 +384,8 @@ export default function WhoAreWeSection({
          because that is when the exit is longer than the surplus. */
       const exit = window.innerHeight;
 
+      keepOffTheWords();
+
       if (variant === "flow") {
         travelPx = Math.max(900, Math.round(SCROLL_TRAVEL * 0.7));
         // In flow the reservation can simply be told how much room to keep.
@@ -315,7 +406,7 @@ export default function WhoAreWeSection({
       }
     };
 
-    const render = (progress: number) => {
+    const render = (progress: number, textT: number) => {
       // Phase 1 (0.0 -> 0.45): Scatter outward to the exact stop positions
       const scatterP = clamp(0, 1, progress / 0.45);
       const easeScatter = easeOutQuad(scatterP);
@@ -330,8 +421,9 @@ export default function WhoAreWeSection({
         const el = cardElementsRef.current.get(id);
         if (!el) continue;
 
-        const targetX = config.calcX1(hw);
-        const targetY = config.calcY1(hh);
+        const stop = stops.get(id);
+        const targetX = stop ? stop.x : config.calcX1(hw);
+        const targetY = stop ? stop.y : config.calcY1(hh);
 
         const baseX = mix(config.x0, targetX, easeScatter);
         const baseY = mix(config.y0, targetY, easeScatter);
@@ -344,7 +436,8 @@ export default function WhoAreWeSection({
         el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${r.toFixed(1)}deg) scale(${cardScale.toFixed(3)})`;
       }
 
-      // Center Text 1: "WHO ARE WE ?"
+      // Center Text 1: "WHO ARE WE ?" — driven by `textT`, the clock, not by
+      // `progress`. See TEXT_DURATION.
       let op1 = 0;
       let scale1 = 0.94;
       const {
@@ -356,16 +449,16 @@ export default function WhoAreWeSection({
         text2FadeInEnd,
       } = TEXT_TRANSITION;
 
-      if (progress >= text1FadeInStart && progress <= text1FadeOutEnd) {
-        if (progress < text1FadeInEnd) {
-          const t = (progress - text1FadeInStart) / (text1FadeInEnd - text1FadeInStart);
+      if (textT >= text1FadeInStart && textT <= text1FadeOutEnd) {
+        if (textT < text1FadeInEnd) {
+          const t = (textT - text1FadeInStart) / (text1FadeInEnd - text1FadeInStart);
           op1 = easeOutQuad(t);
           scale1 = 0.94 + op1 * 0.06;
-        } else if (progress <= text1FadeOutStart) {
+        } else if (textT <= text1FadeOutStart) {
           op1 = 1;
           scale1 = 1;
         } else {
-          const t = (progress - text1FadeOutStart) / (text1FadeOutEnd - text1FadeOutStart);
+          const t = (textT - text1FadeOutStart) / (text1FadeOutEnd - text1FadeOutStart);
           op1 = 1 - easeOutQuad(t);
           scale1 = 1 + t * 0.03;
         }
@@ -376,8 +469,8 @@ export default function WhoAreWeSection({
       // Center Text 2: "WE ARE VINNOVATEIT" + Tagline
       let op2 = 0;
       let scale2 = 0.95;
-      if (progress > text2FadeInStart) {
-        const t = clamp(0, 1, (progress - text2FadeInStart) / (text2FadeInEnd - text2FadeInStart));
+      if (textT > text2FadeInStart) {
+        const t = clamp(0, 1, (textT - text2FadeInStart) / (text2FadeInEnd - text2FadeInStart));
         op2 = easeOutQuad(t);
         scale2 = 0.95 + op2 * 0.05;
       }
@@ -391,6 +484,12 @@ export default function WhoAreWeSection({
     };
 
     let currentP = 0;
+    /* The headline clock, in seconds. It runs while the stage is parked — the
+       one moment the section is the whole screen — and is wound back when the
+       stage leaves, so returning to the section plays the reveal again rather
+       than finding it already over. */
+    let textSeconds = 0;
+    let drawnT = Number.NaN;
     let smoothScrollY = latestScrollY;
     const scrollVel = { value: 0 };
     const pVel = { value: 0 };
@@ -441,10 +540,23 @@ export default function WhoAreWeSection({
       }
 
       // Culled when completely outside viewport
-      if (
-        stageY > window.innerHeight * 1.2 ||
-        stageY < -window.innerHeight * 1.2
-      ) {
+      const culled =
+        stageY > window.innerHeight * 1.2 || stageY < -window.innerHeight * 1.2;
+
+      /* Wind the clock. Parked is the trigger — `stageY === 0` is exactly the
+         span where the stage is pinned over the whole viewport — and leaving
+         the section altogether resets it. Reduced motion gets the end state
+         with no run at all. */
+      if (culled) {
+        textSeconds = 0;
+      } else if (isReduced) {
+        textSeconds = TEXT_DURATION;
+      } else if (stageY === 0) {
+        textSeconds = Math.min(TEXT_DURATION, textSeconds + dt);
+      }
+      const textT = TEXT_DURATION > 0 ? textSeconds / TEXT_DURATION : 1;
+
+      if (culled) {
         if (portalEl.style.display !== "none") portalEl.style.display = "none";
       } else {
         if (portalEl.style.display !== "block") portalEl.style.display = "block";
@@ -472,9 +584,15 @@ export default function WhoAreWeSection({
         }
       }
 
-      if (Number.isNaN(drawnP) || Math.abs(currentP - drawnP) > 0.0004) {
+      if (
+        Number.isNaN(drawnP) ||
+        Math.abs(currentP - drawnP) > 0.0004 ||
+        Number.isNaN(drawnT) ||
+        Math.abs(textT - drawnT) > 0.0004
+      ) {
         drawnP = currentP;
-        render(currentP);
+        drawnT = textT;
+        render(currentP, textT);
       }
     };
 
@@ -490,6 +608,7 @@ export default function WhoAreWeSection({
     const onLayout = () => {
       measure();
       drawnP = Number.NaN;
+      drawnT = Number.NaN;
       initialized = false;
       lastTime = performance.now();
       update(0.016);
@@ -571,7 +690,7 @@ export default function WhoAreWeSection({
                   ref={text1Ref}
                   className="absolute transition-transform duration-75 text-center px-4 will-change-transform opacity-0"
                 >
-                  <h2 className="font-rotonto text-[#bfea88] text-[clamp(34px,10.5vw,104px)] tracking-[0.06em] leading-none whitespace-nowrap drop-shadow-[0_0_45px_rgba(191,234,136,0.45)]">
+                  <h2 className="font-rotonto text-[#bfea88] text-[clamp(30.6px,9.45vw,93.6px)] tracking-[0.06em] leading-none whitespace-nowrap drop-shadow-[0_0_45px_rgba(191,234,136,0.45)]">
                     {WHO_ARE_WE.title}
                   </h2>
                 </div>
@@ -581,13 +700,13 @@ export default function WhoAreWeSection({
                   ref={text2Ref}
                   className="absolute flex flex-col items-center justify-center text-center px-6 will-change-transform opacity-0"
                 >
-                  <span className="font-rotonto text-[#bfea88] text-[clamp(12px,3vw,22px)] tracking-[0.25em] mb-2 uppercase opacity-90">
+                  <span className="font-rotonto text-[#bfea88] text-[clamp(10.8px,2.7vw,19.8px)] tracking-[0.25em] mb-2 uppercase opacity-90">
                     {WHO_ARE_WE.reveal.eyebrow}
                   </span>
-                  <h2 className="font-rotonto text-[#bfea88] text-[clamp(28px,8.6vw,104px)] tracking-[0.04em] leading-none uppercase drop-shadow-[0_0_50px_rgba(191,234,136,0.5)] whitespace-nowrap">
+                  <h2 className="font-rotonto text-[#bfea88] text-[clamp(25.2px,7.74vw,93.6px)] tracking-[0.04em] leading-none uppercase drop-shadow-[0_0_50px_rgba(191,234,136,0.5)] whitespace-nowrap">
                     {WHO_ARE_WE.reveal.brand}
                   </h2>
-                  <p className="font-rotonto text-[#fcfcfc] text-[clamp(10px,2.6vw,18px)] tracking-[0.24em] mt-4 uppercase opacity-95">
+                  <p className="font-rotonto text-[#fcfcfc] text-[clamp(9px,2.34vw,16.2px)] tracking-[0.24em] mt-4 uppercase opacity-95">
                     {WHO_ARE_WE.reveal.tagline}
                   </p>
                 </div>
@@ -754,10 +873,30 @@ export default function WhoAreWeSection({
                   style={{ zIndex: CARD_CONFIGS["video-2"].z }}
                   className="absolute w-[240px] md:w-[265px] bg-[#ffffff] p-[12px] pb-[36px] shadow-[0_20px_40px_rgba(0,0,0,0.85)] will-change-transform"
                 >
-                  <div className="relative w-full aspect-[16/10] bg-[#b0b0b0] flex items-center justify-center">
+                  {/* The one moving thing in the collage, and it is still a
+                      polaroid: same white border, same aspect, and the same
+                      `grayscale contrast-115` the photographs carry, so it
+                      reads as one of them rather than as an embed. Muted and
+                      looping, so it plays on its own — a browser will not
+                      autoplay anything with sound — and `playsInline` so a
+                      phone runs it in the card instead of taking over the
+                      screen. The grey plate stays underneath as the poster:
+                      it is what shows while the file is still arriving, and
+                      what is left if it cannot be played at all. */}
+                  <div className="relative w-full aspect-[16/10] bg-[#b0b0b0] flex items-center justify-center overflow-hidden">
                     <span className="font-rotonto text-black text-[21px] md:text-[23px] font-bold tracking-widest uppercase">
                       VIDEO
                     </span>
+                    <video
+                      className="absolute inset-0 size-full object-cover grayscale contrast-115"
+                      src={WHO_ARE_WE.video.src}
+                      aria-label={WHO_ARE_WE.video.alt}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                    />
                   </div>
                 </div>
               </div>

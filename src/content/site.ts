@@ -450,6 +450,12 @@ export const WHO_ARE_WE = {
       number: "04",
     },
   ],
+  /** The clip in the "VIDEO" polaroid. Transcoded from the 4K HEVC original
+   *  to H.264, which is the only thing every browser plays. */
+  video: {
+    src: "/who-are-we/vinnovateit.mp4",
+    alt: "VinnovateIT, on the move",
+  },
   videos: [
     {
       id: "video-1",
