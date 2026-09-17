@@ -953,7 +953,7 @@ export function TracksCardDeck() {
                             <div className="-mt-[12px] flex items-start gap-[36px]">
                               <div className="min-w-0 flex-1">
                                 <h3
-                                  className={`font-rotonto leading-[0.94] tracking-tight ${
+                                  className={`font-rotonto font-bold leading-[0.94] tracking-tight ${
                                     item.title.length > 30
                                       ? "text-[38px]"
                                       : item.title.length > 20
@@ -963,12 +963,8 @@ export function TracksCardDeck() {
                                 >
                                   {item.title}
                                 </h3>
-                                <div
-                                  className="my-[18px] h-[2px] w-full"
-                                  style={{ background: rule }}
-                                />
                                 <p
-                                  className={`font-rotonto leading-[1.5] tracking-tight opacity-90 ${
+                                  className={`mt-[18px] font-rotonto text-justify leading-[1.5] tracking-tight opacity-90 ${
                                     item.blurb.length > 250 ? "text-[20px]" : "text-[23px]"
                                   }`}
                                 >
@@ -979,17 +975,22 @@ export function TracksCardDeck() {
                                 slot={slot}
                                 ink={ink}
                                 rule={rule}
-                                size={76}
+                                size={110}
                                 is2x
-                                className="h-[216px] w-[184px]"
+                                className="h-[220px] w-[190px]"
                               />
                             </div>
 
-                            {"label" in item ? (
-                              <div className="flex items-end justify-start font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
-                                <span>{item.label}</span>
-                              </div>
-                            ) : null}
+                            <div className="flex min-h-[38px] items-end justify-end font-rotonto">
+                              {"label" in item ? (
+                                <span
+                                  className="rounded-full px-[22px] py-[7px] text-[18px] font-bold uppercase tracking-normal shadow-sm"
+                                  style={{ background: ink, color }}
+                                >
+                                  {item.label}
+                                </span>
+                              ) : null}
+                            </div>
                           </div>
                         ) : null}
                       </TrackCard>

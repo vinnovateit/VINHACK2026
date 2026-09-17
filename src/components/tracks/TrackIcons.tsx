@@ -115,7 +115,7 @@ export const TRACK_ICONS: ReadonlyArray<(props: IconProps) => ReactElement> = [
 export function TrackVisual({
   slot,
   className = "",
-  size = 40,
+  size = 64,
 }: {
   slot: number;
   ink?: string;
@@ -130,7 +130,7 @@ export function TrackVisual({
       aria-hidden
       className={`relative flex shrink-0 items-center justify-center ${className}`}
     >
-      <Icon size={size} className="opacity-90" />
+      <Icon size={size} className="opacity-95" />
     </div>
   );
 }
