@@ -491,6 +491,7 @@ export default function WhoAreWeSection({
     let latestScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     const onScroll = () => {
       latestScrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      update(0.016);
     };
 
     let currentP = 0;
@@ -500,20 +501,6 @@ export default function WhoAreWeSection({
        than finding it already over. */
     let textSeconds = 0;
     let drawnT = Number.NaN;
-    /* The reveal is three seconds long and the park is long enough to scroll
-       through in one flick, so a fast scroller could pass the section without
-       the two lines ever handing over. So the page is held still for exactly
-       as long as the reveal takes, once: the first time the visitor arrives at
-       the section from above, the document stops at the park's start until the
-       clock has run out, then lets go and never does it again. Scrolling back
-       up through it afterwards is free.
-
-       The lock is the same one `SiteNav` uses for its drawer — `overflow:
-       hidden` on the body, with the scrollbar's width made up as padding so
-       the full-bleed collage does not jump sideways when it disappears. */
-    let smoothScrollY = latestScrollY;
-    const scrollVel = { value: 0 };
-    const pVel = { value: 0 };
     let lastTime = typeof performance !== "undefined" ? performance.now() : 0;
     let initialized = false;
 
@@ -528,34 +515,18 @@ export default function WhoAreWeSection({
         }
       }
 
-      const currentScrollY = latestScrollY;
+      const currentScrollY =
+        typeof window !== "undefined"
+          ? (window.scrollY ?? document.documentElement.scrollTop ?? latestScrollY)
+          : latestScrollY;
       const isReduced = calm.matches;
 
-      if (!initialized) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-        pVel.value = 0;
-      } else if (isReduced || Math.abs(currentScrollY - smoothScrollY) > 2000) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-      } else {
-        // Smooth natural input filtering without artificial lag
-        smoothScrollY = smoothDamp(
-          smoothScrollY,
-          currentScrollY,
-          scrollVel,
-          0.05,
-          Infinity,
-          dt
-        );
-      }
-
-      // Full-Screen Pinned Stage Translation:
+      // Full-Screen Pinned Stage Translation (Synchronous 1:1 scroll tracking with zero delay):
       let stageY = 0;
-      if (smoothScrollY < parkStart) {
-        stageY = parkStart - smoothScrollY;
-      } else if (smoothScrollY > parkStart + travelPx) {
-        stageY = (parkStart + travelPx) - smoothScrollY;
+      if (currentScrollY < parkStart) {
+        stageY = parkStart - currentScrollY;
+      } else if (currentScrollY > parkStart + travelPx) {
+        stageY = (parkStart + travelPx) - currentScrollY;
       } else {
         stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
       }
@@ -587,23 +558,11 @@ export default function WhoAreWeSection({
         }
       }
 
-      // Progress computation:
-      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
+      // Progress computation (immediate 1:1 sync with scroll):
+      const stuck = clamp(0, travelPx, currentScrollY - parkStart);
       const targetP = stuck / travelPx;
-
-      if (!initialized) {
-        currentP = targetP;
-        initialized = true;
-      } else if (isReduced) {
-        currentP = targetP;
-        pVel.value = 0;
-      } else {
-        currentP = smoothDamp(currentP, targetP, pVel, 0.12, Infinity, dt);
-        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
-          currentP = targetP;
-          pVel.value = 0;
-        }
-      }
+      currentP = targetP;
+      initialized = true;
 
       /* The scatter has a floor, and the floor is the clock.
          `render` reads the first 45% of progress as the outward scatter, and

@@ -343,7 +343,7 @@ export default function MobileSponsors() {
           // lands just as the deck lets go — independent of viewport height,
           // which a `bottom`-relative end is not.
           end: "+=" + COUNT * TRAVEL_PER_CARD,
-          scrub: 0.2,
+          scrub: true,
           onUpdate: (self) => render(self.progress * (COUNT - 1), true),
           // A refresh is a re-measure, not a turn: it must not make a noise.
           onRefresh: (self) => render(self.progress * (COUNT - 1), false),

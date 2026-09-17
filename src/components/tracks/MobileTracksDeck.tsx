@@ -274,7 +274,7 @@ export default function MobileTracksDeck() {
           // lands just as the deck lets go — independent of viewport height,
           // which a `bottom`-relative end is not.
           end: `+=${COUNT * TRAVEL_PER_CARD}`,
-          scrub: 0.4,
+          scrub: true,
           onUpdate: (self) => render(deckPosition(self.progress), self.progress),
           onRefresh: (self) => render(deckPosition(self.progress), self.progress),
         });

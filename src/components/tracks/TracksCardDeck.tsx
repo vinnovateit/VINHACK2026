@@ -685,13 +685,11 @@ export function TracksCardDeck() {
     let latestScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     const onScroll = () => {
       latestScrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      update(0.016);
     };
 
     let drawn = Number.NaN;
     let currentP = -1;
-    let smoothScrollY = latestScrollY;
-    const scrollVel = { value: 0 };
-    const pVel = { value: 0 };
     let lastTime = typeof performance !== "undefined" ? performance.now() : 0;
     let initialized = false;
 
@@ -706,33 +704,23 @@ export function TracksCardDeck() {
         }
       }
 
-      const currentScrollY = latestScrollY;
+      const currentScrollY =
+        typeof window !== "undefined"
+          ? (window.scrollY ?? document.documentElement.scrollTop ?? latestScrollY)
+          : latestScrollY;
       const isReduced = calm.matches;
 
-      if (!initialized) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-        pVel.value = 0;
-      } else if (isReduced || Math.abs(currentScrollY - smoothScrollY) > 2000) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-      } else {
-        // Smooth input filtering (dt-independent critically damped spring):
-        // Eliminates discrete mouse-wheel step jumps while maintaining instant responsiveness.
-        smoothScrollY = smoothDamp(smoothScrollY, currentScrollY, scrollVel, 0.08, Infinity, dt);
-      }
-
-      // Fixed Stage Y Translation:
-      // While locked in park (parkStart <= smoothScrollY <= parkStart + travelPx):
+      // Fixed Stage Y Translation (Synchronous 1:1 scroll tracking with zero delay):
+      // While locked in park (parkStart <= currentScrollY <= parkStart + travelPx):
       // stageY is EXACTLY 0. The stage is 100% stationary in the viewport, pinned
       // natively on the GPU compositor thread with ZERO bobbing and ZERO jitter!
-      // Before parkStart: stage enters smoothly from below (parkStart - smoothScrollY).
-      // After parkEnd: stage exits smoothly upward ((parkStart + travelPx) - smoothScrollY).
+      // Before parkStart: stage enters smoothly in lockstep (parkStart - currentScrollY).
+      // After parkEnd: stage exits smoothly in lockstep ((parkStart + travelPx) - currentScrollY).
       let stageY = 0;
-      if (smoothScrollY < parkStart) {
-        stageY = parkStart - smoothScrollY;
-      } else if (smoothScrollY > parkStart + travelPx) {
-        stageY = (parkStart + travelPx) - smoothScrollY;
+      if (currentScrollY < parkStart) {
+        stageY = parkStart - currentScrollY;
+      } else if (currentScrollY > parkStart + travelPx) {
+        stageY = (parkStart + travelPx) - currentScrollY;
       } else {
         stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
       }
@@ -751,32 +739,17 @@ export function TracksCardDeck() {
         }
       }
 
-      // Card dealing progress:
-      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
+      // Card dealing progress (immediate 1:1 sync with scroll):
+      const stuck = clamp(0, travelPx, currentScrollY - parkStart);
       const targetP = deckPosition(stuck / travelPx);
-
-      if (!initialized) {
-        currentP = targetP;
-        initialized = true;
-      } else if (isReduced) {
-        currentP = targetP;
-        pVel.value = 0;
-      } else {
-        // Critically damped spring (SmoothDamp):
-        // Eliminates the discontinuous velocity spike of simple lerp on mouse-wheel notches.
-        // Provides smooth acceleration AND deceleration (continuous velocity, zero jerk).
-        currentP = smoothDamp(currentP, targetP, pVel, 0.13, Infinity, dt);
-        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
-          currentP = targetP;
-          pVel.value = 0;
-        }
-      }
+      currentP = targetP;
+      initialized = true;
 
       // Counter fade in/out
       const enterProgress =
-        (smoothScrollY - parkStart + leadInPx / 2) / (leadInPx / 2);
+        (currentScrollY - parkStart + leadInPx / 2) / (leadInPx / 2);
       const exitProgress =
-        (parkStart + travelPx + leadInPx / 2 - smoothScrollY) / (leadInPx / 2);
+        (parkStart + travelPx + leadInPx / 2 - currentScrollY) / (leadInPx / 2);
       const shown = calm.matches
         ? 1
         : clamp(0, 1, Math.min(smooth(enterProgress), smooth(exitProgress)));
