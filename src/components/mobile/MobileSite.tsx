@@ -1190,149 +1190,162 @@ function MobileFAQs() {
           {/* Deck Container */}
           <div className="relative flex flex-col items-center justify-center w-full max-w-[320px] sm:max-w-[340px]">
             {/* === The Stack of Pages (Tap to advance) === */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              className={`relative w-full h-[400px] cursor-pointer ${
-                isOpen
-                  ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  : "opacity-0 scale-[0.5] translate-y-[400px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
-              }`}
-            >
-              {/* Close Key Button Attached Above Paper */}
-              <div
-                className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
-                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <KeyButton
-                  color="red"
-                  size="compact"
-                  className="w-[102px] sm:w-[114px]"
-                  icon={<X size={15} className="stroke-[2.5]" />}
-                  onClick={handleClose}
-                  aria-label="Close"
+            {(() => {
+              const catIdx = activeCategory ? FAQS.categories.findIndex((c) => c.id === activeCategory.id) : 0;
+              const col = catIdx % 2;
+              const row = Math.floor(catIdx / 2);
+              const mobileX = col === 0 ? -85 : 85;
+              const mobileY = row === 0 ? 220 : 380;
+
+              return (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  style={{
+                    transform: isOpen
+                      ? "translate3d(0px, 0px, 0px) scale(1) rotate(0deg)"
+                      : `translate3d(${mobileX}px, ${mobileY}px, 0px) scale(0.32) rotate(-3deg)`,
+                    opacity: isOpen ? 1 : 0,
+                    transition: "transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 380ms ease-in-out",
+                  }}
+                  className="relative w-full h-[400px] cursor-pointer"
                 >
-                  CLOSE
-                </KeyButton>
-              </div>
-
-              {activeCategory.questions.map((faq, idx) => {
-                const total = activeCategory.questions.length;
-                const diff = (idx - cardIndex + total) % total;
-                const isOutgoing = flickState?.outgoingIndex === idx;
-
-                let transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
-                let zIndex = 10;
-                let opacity = 1;
-                let transitionStyle = "all 260ms cubic-bezier(0.2,0.9,0.3,1.15)";
-
-                if (!isOpen) {
-                  transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
-                  opacity = diff === 0 ? 1 : 0.85;
-                  zIndex = 10;
-                } else if (isOutgoing) {
-                  if (flickState.phase === "out") {
-                    transformStyle = "translate(260px, -35px) rotate(18deg) scale(0.95)";
-                    zIndex = 50;
-                    opacity = 1;
-                    transitionStyle = "transform 220ms ease-out";
-                  } else {
-                    transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                    zIndex = 1;
-                    opacity = 1;
-                    transitionStyle = "transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
-                  }
-                } else if (flickState?.phase === "out") {
-                  if (diff === 1) {
-                    zIndex = 30;
-                    transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
-                  } else if (diff === 2) {
-                    zIndex = 20;
-                    transformStyle = "translate(10px, -10px) rotate(3deg) scale(0.97)";
-                  } else if (diff === 3) {
-                    zIndex = 10;
-                    transformStyle = "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
-                  } else {
-                    zIndex = 0;
-                    opacity = 0;
-                    transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                  }
-                } else {
-                  if (diff === 0) {
-                    zIndex = 30;
-                    transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
-                  } else if (diff === 1) {
-                    zIndex = 20;
-                    transformStyle = "translate(10px, -10px) rotate(3deg) scale(0.97)";
-                  } else if (diff === 2) {
-                    zIndex = 10;
-                    transformStyle = "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
-                  } else if (diff === 3) {
-                    zIndex = 5;
-                    transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                  } else {
-                    zIndex = 0;
-                    opacity = 0;
-                    transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                  }
-                }
-
-                if (diff > 3 && !isOutgoing) return null;
-                const isTop = diff === 0 && !flickState;
-
-                return (
+                  {/* Close Key Button Attached Above Paper */}
                   <div
-                    key={faq.q}
-                    style={{
-                      transform: transformStyle,
-                      zIndex,
-                      opacity,
-                      transition: transitionStyle,
-                    }}
-                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
-                      isTop ? "cursor-pointer" : "pointer-events-none"
+                    className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
+                      isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
                     }`}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {/* Header */}
-                    <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
-                      <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
-                        FAQ
-                      </span>
-                      <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
-                        {activeCategory.subtitle}
-                      </span>
-                    </div>
-
-                    {/* Main Question */}
-                    <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
-                      <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
-                        {idx + 1}. {faq.q}
-                      </h3>
-                    </div>
-
-                    {/* Answer Content */}
-                    <div
-                      className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)",
-                      }}
+                    <KeyButton
+                      color="red"
+                      size="compact"
+                      className="w-[102px] sm:w-[114px]"
+                      icon={<X size={15} className="stroke-[2.5]" />}
+                      onClick={handleClose}
+                      aria-label="Close"
                     >
-                      <div className="flex items-start gap-2">
-                        <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
-                        <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">
-                          {faq.a}
-                        </p>
-                      </div>
-                    </div>
+                      CLOSE
+                    </KeyButton>
                   </div>
-                );
-              })}
-            </div>
+
+                  {activeCategory.questions.map((faq, idx) => {
+                    const total = activeCategory.questions.length;
+                    const diff = (idx - cardIndex + total) % total;
+                    const isOutgoing = flickState?.outgoingIndex === idx;
+
+                    let transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
+                    let zIndex = 10;
+                    let opacity = 1;
+                    let transitionStyle = "all 260ms cubic-bezier(0.2,0.9,0.3,1.15)";
+
+                    if (!isOpen) {
+                      transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
+                      opacity = diff === 0 ? 1 : 0.85;
+                      zIndex = 10;
+                    } else if (isOutgoing) {
+                      if (flickState.phase === "out") {
+                        transformStyle = "translate(260px, -35px) rotate(18deg) scale(0.95)";
+                        zIndex = 50;
+                        opacity = 1;
+                        transitionStyle = "transform 220ms ease-out";
+                      } else {
+                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                        zIndex = 1;
+                        opacity = 1;
+                        transitionStyle = "transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
+                      }
+                    } else if (flickState?.phase === "out") {
+                      if (diff === 1) {
+                        zIndex = 30;
+                        transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
+                      } else if (diff === 2) {
+                        zIndex = 20;
+                        transformStyle = "translate(10px, -10px) rotate(3deg) scale(0.97)";
+                      } else if (diff === 3) {
+                        zIndex = 10;
+                        transformStyle = "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
+                      } else {
+                        zIndex = 0;
+                        opacity = 0;
+                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                      }
+                    } else {
+                      if (diff === 0) {
+                        zIndex = 30;
+                        transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
+                      } else if (diff === 1) {
+                        zIndex = 20;
+                        transformStyle = "translate(10px, -10px) rotate(3deg) scale(0.97)";
+                      } else if (diff === 2) {
+                        zIndex = 10;
+                        transformStyle = "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
+                      } else if (diff === 3) {
+                        zIndex = 5;
+                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                      } else {
+                        zIndex = 0;
+                        opacity = 0;
+                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                      }
+                    }
+
+                    if (diff > 3 && !isOutgoing) return null;
+                    const isTop = diff === 0 && !flickState;
+
+                    return (
+                      <div
+                        key={faq.q}
+                        style={{
+                          transform: transformStyle,
+                          zIndex,
+                          opacity,
+                          transition: transitionStyle,
+                        }}
+                        className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
+                          isTop ? "cursor-pointer" : "pointer-events-none"
+                        }`}
+                      >
+                        {/* Header */}
+                        <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
+                          <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
+                            FAQ
+                          </span>
+                          <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
+                            {activeCategory.subtitle}
+                          </span>
+                        </div>
+
+                        {/* Main Question */}
+                        <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
+                          <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
+                            {idx + 1}. {faq.q}
+                          </h3>
+                        </div>
+
+                        {/* Answer Content */}
+                        <div
+                          className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
+                          style={{
+                            backgroundImage:
+                              "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)",
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
+                            <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">
+                              {faq.a}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {/* Bottom Controls Bar (Prev Button, Pagination Dots, Next Button) */}
             <div

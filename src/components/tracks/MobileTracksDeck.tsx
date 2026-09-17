@@ -1,43 +1,14 @@
 "use client";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
+import { TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
-import { MOBILE } from "@/components/motion/recipes";
 import { TRACKS } from "@/content/site";
+import KeyButton from "@/components/ui/KeyButton";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-/**
- * The phone's answer to `TracksCardDeck`.
- *
- * The collage's deck holds the page still and deals cards across the whole
- * screen, which is a mouse gesture — intercepting a touch scroll to do the same
- * thing fights the one input the reader has. So this keeps the page scrolling
- * normally and lets a sticky stage do the holding: the deck stays put while its
- * (much taller) wrapper travels past, and that travel is what deals the cards.
- * Same idea, native scrolling, no hijack.
- *
- * Where it deliberately parts company with the collage is the *shape* of the
- * deal. The collage deals on the diagonal, corner to corner, because a 1280px
- * plate has width to spend and the isometric lean is the drawing's own pose. A
- * phone has no width to spend: the same diagonal on a 390px screen puts the
- * stacks half off the edge and skews the type on the card face at exactly the
- * size it is hardest to read. So the phone deals straight down a single column
- * instead — a stack at the top, one card square in the middle to be read, a
- * stack at the bottom — with no rotation and no skew anywhere in it. The only
- * things that move are `y` and `scale`, which is also the cheapest pair of
- * properties a phone can be asked to animate.
- *
- * Both stacks are real and both are stocked from the first frame, the same way
- * the collage does it: see `SLOTS`.
- */
-
-/** The stack's own colours, in the cycle the collage's deck uses. */
 const CARD_COLORS = [
   TRACK_COLORS.grey,
   TRACK_COLORS.pink,
@@ -47,504 +18,290 @@ const CARD_COLORS = [
   TRACK_COLORS.white,
 ] as const;
 
-/* -------------------------------------------------------------- the column */
-
-const CARD_WIDTH = 292;
-const CARD_HEIGHT = 206;
 const COUNT = TRACKS.items.length;
 
-/**
- * The three zones, in pixels from the middle of the stage.
- *
- * `PILE_OFFSET` is where a stack's front card sits. It is a little tighter than
- * the two half-heights added together, so the card being read overlaps the top
- * of each stack by a few pixels rather than floating in a gap between them —
- * that overlap is what makes the column read as one deck seen edge-on instead
- * of three separate objects.
- *
- * Scaled up with `CARD_WIDTH`/`CARD_HEIGHT` above, so a bigger card keeps the
- * same relation to its stacks rather than sitting deeper inside them.
- */
-const PILE_SCALE = 0.58;
-const PILE_OFFSET = 139;
-/** One card further back in a stack: straight on up (or down) and a shade
- *  smaller. No sideways step and no lean — that is the whole point of this
- *  layout, and a stack of sheets seen square on is what is left. */
-const STEP_Y = 8;
-const STEP_SHRINK = 0.04;
-
-/**
- * A small continuous sway on the cards sitting in either stack, so the piles
- * read as something the scroll is touching the whole time rather than as
- * furniture that only moves the instant a card is dealt. Driven off the
- * ScrollTrigger's own `progress` — not off `p`, which sits flat on an integer
- * for the whole of a card's `HOLD` — so it keeps going even while the deck
- * itself is parked mid-read.
- *
- * It fades to nothing as a card approaches the centre (`1 - t` below), so the
- * card actually being read never sways — only the stacks either side of it.
- */
-const STACK_DRIFT_X = 7;
-const STACK_DRIFT_CYCLES = 2.25;
-
-/** How far back either stack is drawn, and how many blanks stock each one — the
- *  far stack seeded before the deck starts, the near one padding out under the
- *  last track. Shallower than the collage's: a phone stack is ~105px tall and
- *  six visible steps of it would run off the end of the stage. */
-const PILE_DEPTH = 3;
-const SEED = 4;
-const BACKING = 4;
-
-/**
- * Every card in the deck, named by the deck position it is face-on at — the
- * same slot model `TracksCardDeck` uses, and for the same reason. Negative
- * slots are already dealt at `p === -1`, so they stock the bottom stack with no
- * special case anywhere in `render`; -1 itself is skipped because a card
- * sitting exactly on `p` is the one square to the reader, and that must be a
- * track rather than a blank.
- */
-const SLOTS: readonly number[] = [
-  ...Array.from({ length: SEED }, (_, s) => -2 - s),
-  ...Array.from({ length: COUNT + BACKING }, (_, i) => i),
-];
-
-/**
- * The stage is sized to hold all three zones and nothing more, then centred in
- * whatever height the phone has.
- *
- * The three zones reach further either side of the middle at their deepest —
- * `PILE_OFFSET`, plus `PILE_DEPTH` steps of `STEP_Y`, plus the half-height of a
- * card that far back — and this is scaled up along with `CARD_WIDTH`/
- * `CARD_HEIGHT` above so there is still clear stage past the end of each
- * stack, which is what the tick strip sits in.
- */
-const STAGE_HEIGHT = 460;
-const STAGE_MIN_TOP = 12;
-
-/* -------------------------------------------------------------- the timing */
-
-/** Scroll travel per card. The wrapper is this tall once over, plus the stage. */
-const TRAVEL_PER_CARD = 240;
-/**
- * The pause, as a fraction of one card's travel — the same staircase the
- * collage's deck runs on. During a hold the deck position sits on an exact
- * integer and not a single card moves, so the card in the middle is genuinely
- * stopped for the stretch you are reading it rather than merely slow.
- */
-const HOLD = 0.5;
-const UNIT = 1 + HOLD;
-/** A last touch of settle at either end of a card's travel, so it is square to
- *  the reader for a moment before the hold proper. */
-const DWELL = 0.08;
-
-function pad(n: number): string {
-  return String(n).padStart(2, "0");
-}
-
-/** Zero velocity at both ends, so one card's arrival joins the last one's exit. */
-function smooth(t: number): number {
-  const c = t < 0 ? 0 : t > 1 ? 1 : t;
-  return c * c * (3 - 2 * c);
-}
-
-function mix(from: number, to: number, t: number): number {
-  return from + (to - from) * t;
-}
-
-/** Where the stage parks: centred in the window, never tighter than the margin
- *  on a short phone. Read by both the sticky offset and the ScrollTrigger start,
- *  so the two cannot drift apart. */
-function stickTop(): number {
-  return Math.max(STAGE_MIN_TOP, (window.innerHeight - STAGE_HEIGHT) / 2);
-}
-
 export default function MobileTracksDeck() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const tickRefs = useRef<Map<number, HTMLSpanElement>>(new Map());
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
-      const wrap = wrapRef.current;
-      const stage = stageRef.current;
-      if (!wrap || !stage) return;
-
-      const mm = gsap.matchMedia();
-
-      /**
-       * `p` runs from -1 to COUNT-1; card `slot` is square to the reader at
-       * exactly `p === slot`. Everything is derived from `raw = p - slot`, so a
-       * card only ever knows how far past it the deck has got — still waiting
-       * in the top stack below zero, already dealt into the bottom one above —
-       * and freezing `p` freezes the whole column.
-       */
-      const render = (p: number, progress: number) => {
-        for (const slot of SLOTS) {
-          const el = cardRefs.current.get(slot);
-          if (!el) continue;
-          const content = contentRefs.current.get(slot);
-
-          const raw = p - slot;
-          const d = gsap.utils.clamp(-1, 1, raw);
-          const waiting = raw <= 0;
-          // How deep in its stack the card is sitting. The same distance either
-          // side of the card in the middle, so the stack it is leaving and the
-          // one it is joining are drawn by one rule.
-          const depth = Math.min(PILE_DEPTH, Math.max(0, Math.abs(raw) - 1));
-
-          // How far outside the dwell the card has got: 0 for the whole stretch
-          // it holds square, ramping to 1 at either end of its travel. `t` is
-          // its mirror — 1 square to the reader, 0 fully back in a stack — so
-          // one set of mixes covers arriving and leaving alike.
-          const away = Math.max(0, (Math.abs(d) - DWELL) / (1 - DWELL));
-          const t = smooth(1 - away);
-
-          // The waiting stack is above and recedes upward; the dealt stack is
-          // below and recedes downward. One sign carries both.
-          const side = waiting ? -1 : 1;
-          const restY = side * (PILE_OFFSET + depth * STEP_Y);
-          const restScale = PILE_SCALE * (1 - depth * STEP_SHRINK);
-
-          // The sway: each depth in a stack runs slightly out of phase with
-          // its neighbours, so the pile ripples rather than shifting as one
-          // rigid slab, and it is scaled by `1 - t` so it dies away exactly as
-          // the card reaches the centre.
-          const phase =
-            depth * 0.85 + (waiting ? 0 : Math.PI / 2) + slot * 0.35;
-          const sway =
-            Math.sin(progress * Math.PI * 2 * STACK_DRIFT_CYCLES + phase) *
-            STACK_DRIFT_X *
-            (1 - t);
-
-          gsap.set(el, {
-            x: sway,
-            y: mix(restY, 0, t),
-            scale: mix(restScale, 1, t),
-          });
-
-          // The card in the middle is in front of both stacks; within a stack
-          // the one nearest its turn — just dealt, or about to be — is on top.
-          const layer = String(Math.round(1000 - Math.abs(raw) * 10));
-          if (el.style.zIndex !== layer) el.style.zIndex = layer;
-
-          // The face only prints while the card is square to the reader and at
-          // full size; in a stack it is 58% scale and unreadable anyway.
-          if (content) {
-            gsap.set(content, {
-              opacity: smooth(1 - Math.min(1, away * 1.9)),
-            });
-          }
-        }
-
-        const active = gsap.utils.clamp(0, COUNT - 1, Math.round(p));
-        for (let i = 0; i < COUNT; i++) {
-          const tick = tickRefs.current.get(i);
-          if (tick) gsap.set(tick, { opacity: i === active ? 1 : 0.25 });
-        }
-      };
-
-      /**
-       * Scroll position to deck position: the staircase described at `HOLD`.
-       * The value this returns is flat — exactly `k` — for the whole of card
-       * `k`'s hold, which is what stops the column dead while it is being read.
-       */
-      const deckPosition = (q: number) => {
-        const u = gsap.utils.clamp(0, 1, q) * COUNT * UNIT;
-        const k = Math.min(COUNT - 1, Math.floor(u / UNIT));
-        const flight = Math.min(1, u - k * UNIT);
-        // The first card travels in from the stack, so the run starts one back.
-        return k - 1 + smooth(flight);
-      };
-
-      mm.add(`${MOBILE} and (prefers-reduced-motion: no-preference)`, () => {
-        // The sticky offset and the trigger's start are the same number by
-        // construction, so a phone that rotates cannot leave them disagreeing.
-        const place = () => {
-          stage.style.top = `${stickTop()}px`;
-        };
-        place();
-        ScrollTrigger.addEventListener("refreshInit", place);
-
-        const st = ScrollTrigger.create({
-          trigger: wrap,
-          start: () => `top top+=${stickTop()}`,
-          // Exactly the distance the stage can stay stuck for, so the last card
-          // lands just as the deck lets go — independent of viewport height,
-          // which a `bottom`-relative end is not.
-          end: `+=${COUNT * TRAVEL_PER_CARD}`,
-          scrub: true,
-          onUpdate: (self) => render(deckPosition(self.progress), self.progress),
-          onRefresh: (self) => render(deckPosition(self.progress), self.progress),
-        });
-        render(deckPosition(0), 0);
-
-        // The initial deal: the column sits fully composed — both stacks
-        // and the first card square in the middle — the moment `render`
-        // above lays it out, with nothing to say the reader has just
-        // scrolled onto a deck of cards rather than a static image. So the
-        // stack is dealt into that resting layout once, the first time the
-        // deck nears the viewport, rather than simply being present. Each
-        // card keeps the x/y/scale `render` already gave it — this only
-        // punches in on top of that, from GSAP's own cached last-set
-        // values, which is why `render` has to run first.
-        const dealEls = SLOTS.map((s) => cardRefs.current.get(s)).filter(
-          (node): node is HTMLDivElement => !!node,
-        );
-        const entryTrigger = ScrollTrigger.create({
-          trigger: wrap,
-          start: "top 88%",
-          once: true,
-          onEnter: () => {
-            gsap.from(dealEls, {
-              opacity: 0,
-              scale: 0,
-              duration: 0.6,
-              ease: "back.out(1.6)",
-              stagger: 0.035,
-            });
-          },
-        });
-
-        const goToMobileTrack = (index: number) => {
-          const targetIdx = gsap.utils.clamp(0, COUNT - 1, index);
-          const u = targetIdx * UNIT + 1 + HOLD * 0.4;
-          const q = u / (COUNT * UNIT);
-          const targetY = st.start + q * (COUNT * TRAVEL_PER_CARD);
-          window.scrollTo({ top: targetY, behavior: "smooth" });
-        };
-
-        const onTicksClick = (e: MouseEvent) => {
-          const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-mobile-tick]");
-          if (!btn) return;
-          const idx = Number(btn.dataset.mobileTick);
-          if (!Number.isNaN(idx)) {
-            goToMobileTrack(idx);
-          }
-        };
-
-        const onKeyDown = (e: KeyboardEvent) => {
-          if (!window.matchMedia(MOBILE).matches) return;
-          const rect = wrap.getBoundingClientRect();
-          if (rect.bottom < 0 || rect.top > window.innerHeight) return;
-
-          if (e.key === "ArrowLeft") {
-            e.preventDefault();
-            const active = gsap.utils.clamp(0, COUNT - 1, Math.round(deckPosition(st.progress)));
-            goToMobileTrack(active - 1);
-          } else if (e.key === "ArrowRight") {
-            e.preventDefault();
-            const active = gsap.utils.clamp(0, COUNT - 1, Math.round(deckPosition(st.progress)));
-            goToMobileTrack(active + 1);
-          }
-        };
-
-        const ticksEl = wrap.querySelector<HTMLElement>("[data-deck-ticks]");
-        ticksEl?.addEventListener("click", onTicksClick);
-        window.addEventListener("keydown", onKeyDown);
-
-        return () => {
-          ScrollTrigger.removeEventListener("refreshInit", place);
-          ticksEl?.removeEventListener("click", onTicksClick);
-          window.removeEventListener("keydown", onKeyDown);
-          entryTrigger.kill();
-          st.kill();
-        };
-      });
-
-      // Reduced motion gets the same four tracks as a plain column: no stacks,
-      // no travel, no sticky stage — every face square and readable at once.
-      // The blanks stocking the two stacks have nothing to say, so they go.
-      mm.add(`${MOBILE} and (prefers-reduced-motion: reduce)`, () => {
-        const rail = wrap.querySelector<HTMLElement>("[data-deck-rail]");
-        const ticks = wrap.querySelector<HTMLElement>("[data-deck-ticks]");
-        const touched: HTMLElement[] = [];
-
-        const lay = (
-          el: HTMLElement | null,
-          css: Partial<CSSStyleDeclaration>,
-        ) => {
-          if (!el) return;
-          Object.assign(el.style, css);
-          touched.push(el);
-        };
-
-        lay(wrap, { height: "auto" });
-        lay(stage, { position: "static", height: "auto", display: "block" });
-        lay(rail, { width: "auto", height: "auto" });
-        lay(ticks, { display: "none" });
-
-        for (const slot of SLOTS) {
-          const el = cardRefs.current.get(slot);
-          const content = contentRefs.current.get(slot);
-          const blank = slot < 0 || slot >= COUNT;
-          lay(el ?? null, {
-            position: "relative",
-            marginBottom: "18px",
-            display: blank ? "none" : "block",
-          });
-          if (el) gsap.set(el, { x: 0, y: 0, scale: 1, opacity: 1 });
-          if (content) gsap.set(content, { opacity: 1 });
-        }
-
-        return () => touched.forEach((el) => el.removeAttribute("style"));
-      });
-
-      return () => mm.revert();
+  const goToTrack = useCallback(
+    (index: number) => {
+      const next = (index + COUNT) % COUNT;
+      setDirection(next > activeIndex ? 1 : -1);
+      setActiveIndex(next);
     },
-    { scope: wrapRef },
+    [activeIndex]
   );
 
+  const handlePrev = useCallback(() => {
+    setDirection(-1);
+    setActiveIndex((prev) => (prev - 1 + COUNT) % COUNT);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setDirection(1);
+    setActiveIndex((prev) => (prev + 1) % COUNT);
+  }, []);
+
+  // Auto-scroll the active pill tab into view
+  useEffect(() => {
+    if (!tabsContainerRef.current) return;
+    const activeTab = tabsContainerRef.current.querySelector<HTMLElement>(
+      `[data-tab-index="${activeIndex}"]`
+    );
+    if (activeTab) {
+      activeTab.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [activeIndex]);
+
+  // Touch Swipe Handlers
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Horizontal swipe threshold
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
+      if (deltaX < 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  const currentTrack = TRACKS.items[activeIndex];
+  const currentColor = CARD_COLORS[activeIndex % CARD_COLORS.length];
+  const { ink, rule } = trackInk(currentColor);
+
+  const nextColor = CARD_COLORS[(activeIndex + 1) % CARD_COLORS.length];
+  const prevColor = CARD_COLORS[(activeIndex - 1 + CARD_COLORS.length) % CARD_COLORS.length];
+
   return (
-    <div
-      ref={wrapRef}
-      className="relative my-8 overflow-x-clip"
-      style={{ height: COUNT * TRAVEL_PER_CARD + STAGE_HEIGHT }}
-    >
-      {/* Only one card is square to the reader at a time, and only part-way
-          through a scroll, so the tracks are given plainly here and the deck
-          itself is hidden from assistive tech. */}
-      <ul className="sr-only">
-        {TRACKS.items.map((item) => (
-          <li key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.blurb}</p>
-          </li>
-        ))}
-      </ul>
-
+    <div className="relative w-full my-6 flex flex-col items-center select-none">
+      {/* 1. Horizontal Scrollable Track Category Selector Pills */}
       <div
-        ref={stageRef}
-        className="sticky flex items-center justify-center"
-        style={{ top: STAGE_MIN_TOP, height: STAGE_HEIGHT }}
-        data-deck-stage
+        ref={tabsContainerRef}
+        className="w-full flex items-center gap-1.5 overflow-x-auto pb-3 pt-1 scrollbar-none no-scrollbar px-1"
       >
-        {/* Origin at the middle of the column: the card being read sits here at
-            `y: 0`, and both stacks are written as offsets from it. */}
-        <div
-          className="relative"
-          style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
-          data-deck-rail
-        >
-          {SLOTS.map((slot) => {
-            // Slots run negative, so the cycle is taken the long way round —
-            // `-2 % 4` is `-2` in JS, which is not an index.
-            const color =
-              CARD_COLORS[
-                ((slot % CARD_COLORS.length) + CARD_COLORS.length) %
-                  CARD_COLORS.length
-              ];
-            const { ink, rule } = trackInk(color);
-            const item = slot >= 0 && slot < COUNT ? TRACKS.items[slot] : null;
+        {TRACKS.items.map((item, i) => {
+          const isActive = i === activeIndex;
+          const shortTitle = item.title.split(" ")[0];
 
-            return (
-              <div
-                key={slot}
-                ref={(node) => {
-                  if (node) cardRefs.current.set(slot, node);
-                  else cardRefs.current.delete(slot);
-                }}
-                className="absolute left-0 top-0 will-change-transform"
-                style={{ transformOrigin: "center center" }}
-                aria-hidden
-              >
-                <TrackCard
-                  color={color}
-                  // Only the cards that say something take the deeper shadow;
-                  // the blanks stocking either stack sit flatter behind them.
-                  isFront={item !== null}
-                  width={CARD_WIDTH}
-                  height={CARD_HEIGHT}
-                >
-                  {item ? (
-                    <div
-                      ref={(node) => {
-                        if (node) contentRefs.current.set(slot, node);
-                        else contentRefs.current.delete(slot);
-                      }}
-                      className="absolute inset-0 flex flex-col justify-between p-4 opacity-0"
-                      style={{ color: ink }}
-                    >
-                      <div className="flex items-center justify-between font-rotonto text-[10px] tracking-[0.2em]">
-                        <span>#{slot + 1}</span>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="min-w-0 flex-1">
-                          <h3
-                            className={`font-rotonto font-bold ${
-                              item.title.length > 30
-                                ? "text-[15px] leading-[1.14] tracking-[0.03em]"
-                                : item.title.length > 20
-                                  ? "text-[17px] leading-[1.08] tracking-[0.02em]"
-                                  : "text-[21px] leading-[1.04] tracking-[0.02em]"
-                            }`}
-                          >
-                            {item.title}
-                          </h3>
-                          <p
-                            className={`mt-2.5 font-rotonto text-justify text-[10.5px] leading-[1.45] tracking-tight opacity-85 ${
-                              item.blurb.length > 225 ? "line-clamp-7" : "line-clamp-6"
-                            }`}
-                          >
-                            {item.blurb}
-                          </p>
-                        </div>
-                        <TrackVisual
-                          slot={slot}
-                          ink={ink}
-                          rule={rule}
-                          size={56}
-                          className="mt-[10px] h-[74px] w-[64px]"
-                        />
-                      </div>
-                      {"label" in item ? (
-                        <div className="flex items-end justify-end">
-                          <span
-                            className="rounded-full px-2.5 py-0.5 font-rotonto text-[9px] font-bold uppercase tracking-normal shadow-xs"
-                            style={{ background: ink, color }}
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="h-1" />
-                      )}
-                    </div>
-                  ) : null}
-                </TrackCard>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Which of the tracks is square to the reader. */}
-        <div
-          role="tablist"
-          aria-label="Mobile track navigation"
-          className="pointer-events-auto absolute bottom-1 left-0 flex w-full justify-center gap-1"
-          data-deck-ticks
-        >
-          {TRACKS.items.map((item, i) => (
+          return (
             <button
               key={item.title}
               type="button"
-              role="tab"
-              aria-label={`Go to Track ${i + 1}: ${item.title}`}
-              data-mobile-tick={i}
-              className="flex h-6 w-8 items-center justify-center p-1"
+              data-tab-index={i}
+              onClick={() => goToTrack(i)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-rotonto text-[11px] font-bold tracking-wide transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? "bg-[#fa1a1d] text-white shadow-md scale-[1.02]"
+                  : "bg-neutral-900/90 text-neutral-400 hover:text-white border border-neutral-800"
+              }`}
             >
-              <span
-                ref={(node) => {
-                  if (node) tickRefs.current.set(i, node);
-                  else tickRefs.current.delete(i);
-                }}
-                className="h-[2px] w-6 bg-[#fa1a1d] transition-opacity"
-                aria-hidden
-              />
+              <span className={isActive ? "text-white/80" : "text-[#fa1a1d]"}>
+                0{i + 1}
+              </span>
+              <span className="truncate max-w-[130px] uppercase">
+                {item.title.length > 18 ? `${shortTitle}...` : item.title}
+              </span>
             </button>
+          );
+        })}
+      </div>
+
+      {/* 2. Tactile Track Card Stage */}
+      <div
+        className="relative w-full max-w-[390px] h-[390px] sm:h-[400px] mt-2 cursor-grab active:cursor-grabbing"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Decorative Stack Cards Behind for Tactile Physical Look */}
+        <div
+          aria-hidden
+          className="absolute inset-0 rounded-[22px] border border-black/15 shadow-md pointer-events-none transform translate-x-[6px] translate-y-[-6px] rotate-[2deg] opacity-75"
+          style={{ backgroundColor: nextColor }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 rounded-[22px] border border-black/15 shadow-md pointer-events-none transform translate-x-[-6px] translate-y-[6px] rotate-[-2deg] opacity-60"
+          style={{ backgroundColor: prevColor }}
+        />
+
+        {/* Main Animated Track Card */}
+        <AnimatePresence initial={false} mode="wait" custom={direction}>
+          <motion.div
+            key={activeIndex}
+            custom={direction}
+            initial={{
+              opacity: 0,
+              x: direction > 0 ? 60 : -60,
+              scale: 0.96,
+              rotate: direction > 0 ? 2 : -2,
+            }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              scale: 1,
+              rotate: 0,
+            }}
+            exit={{
+              opacity: 0,
+              x: direction > 0 ? -60 : 60,
+              scale: 0.96,
+              rotate: direction > 0 ? -2 : 2,
+            }}
+            transition={{
+              duration: 0.28,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="absolute inset-0 rounded-[22px] p-5 sm:p-6 flex flex-col justify-between overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-black/15"
+            style={{
+              backgroundColor: currentColor,
+              color: ink,
+            }}
+          >
+            {/* Subtle top edge specular highlight */}
+            <div className="absolute inset-x-0 top-0 h-px bg-white/30 pointer-events-none" />
+
+            {/* Top Row: Track Index, Badge & Geometric Visual */}
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col items-start gap-1">
+                <span className="font-rotonto text-[11px] tracking-widest font-bold opacity-75">
+                  #0{activeIndex + 1}
+                </span>
+                {"label" in currentTrack ? (
+                  <span
+                    className="rounded-full px-2.5 py-0.5 font-rotonto text-[9.5px] font-bold uppercase tracking-wide shadow-xs"
+                    style={{ background: ink, color: currentColor }}
+                  >
+                    {currentTrack.label}
+                  </span>
+                ) : (
+                  <span
+                    className="rounded-full px-2 py-0.5 font-rotonto text-[9px] font-bold uppercase tracking-wide border opacity-75"
+                    style={{ borderColor: rule }}
+                  >
+                    TRACK 0{activeIndex + 1}
+                  </span>
+                )}
+              </div>
+
+              {/* Signature Track Visual Icon */}
+              <div
+                className="p-2 rounded-xl"
+                style={{ backgroundColor: rule }}
+              >
+                <TrackVisual
+                  slot={activeIndex}
+                  ink={ink}
+                  rule={rule}
+                  size={36}
+                  className="size-[36px]"
+                />
+              </div>
+            </div>
+
+            {/* Middle Section: Title & Blurb */}
+            <div className="my-auto pt-1">
+              <h3 className="font-rotonto font-bold text-[19px] sm:text-[21px] leading-[1.14] tracking-tight uppercase">
+                {currentTrack.title}
+              </h3>
+
+              <div
+                className="my-2.5 w-full h-[1px]"
+                style={{ backgroundColor: rule }}
+              />
+
+              <p className="font-rotonto text-[12px] sm:text-[13px] leading-relaxed text-justify opacity-90 line-clamp-5">
+                {currentTrack.blurb}
+              </p>
+            </div>
+
+            {/* Bottom Row: Tags & Counter */}
+            <div className="pt-2 border-t flex items-center justify-between gap-2" style={{ borderColor: rule }}>
+              {/* Tags Chips */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {"tags" in currentTrack &&
+                  currentTrack.tags?.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 rounded-md font-rotonto text-[9px] font-bold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: rule,
+                        color: ink,
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+              </div>
+
+              <span className="font-rotonto text-[10px] font-bold opacity-60 shrink-0">
+                0{activeIndex + 1} / 0{COUNT}
+              </span>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* 3. Bottom Controls Bar (Prev Button, 6 Indicator Dots, Next Button) */}
+      <div className="mt-5 flex items-center justify-between w-full max-w-[390px] px-1">
+        {/* Left Prev Key Button */}
+        <KeyButton
+          color="blue"
+          size="compact"
+          className="w-[52px] sm:w-[58px]"
+          onClick={handlePrev}
+          aria-label="Previous track"
+          title="Previous track"
+        >
+          <ChevronLeft size={20} className="stroke-[2.5]" />
+        </KeyButton>
+
+        {/* 6 Track Indicator Bars */}
+        <div className="flex items-center gap-1.5">
+          {TRACKS.items.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => goToTrack(i)}
+              aria-label={`Go to track ${i + 1}`}
+              className={`h-1.5 transition-all duration-300 cursor-pointer rounded-full ${
+                i === activeIndex
+                  ? "w-7 bg-[#fa1a1d]"
+                  : "w-2 bg-white/30 hover:bg-white/60"
+              }`}
+            />
           ))}
         </div>
+
+        {/* Right Next Key Button */}
+        <KeyButton
+          color="blue"
+          size="compact"
+          className="w-[52px] sm:w-[58px]"
+          onClick={handleNext}
+          aria-label="Next track"
+          title="Next track"
+        >
+          <ChevronRight size={20} className="stroke-[2.5]" />
+        </KeyButton>
       </div>
     </div>
   );

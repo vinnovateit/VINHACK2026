@@ -306,35 +306,44 @@ export default function FAQsSection() {
             </div>
 
             {/* === The Stack of Pages (Clicking paper advances to next) === */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              className={`relative w-[340px] sm:w-[480px] h-[460px] sm:h-[480px] cursor-pointer ${
-                isOpen
-                  ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  : "opacity-0 scale-[0.5] translate-y-[440px] sm:translate-y-[520px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
-              }`}
-            >
-              {/* Close Key Button Attached Right Above Paper */}
-              <div
-                className={`absolute -top-14 sm:-top-16 right-0 z-50 transition-all duration-200 ${
-                  isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <KeyButton
-                  color="red"
-                  size="compact"
-                  className="w-[112px] sm:w-[124px]"
-                  icon={<X size={16} className="stroke-[2.5]" />}
-                  onClick={handleClose}
-                  aria-label="Close"
+            {(() => {
+              const catIdx = activeCategory ? FAQS.categories.findIndex((c) => c.id === activeCategory.id) : 0;
+              const FOLDER_X_OFFSETS = [-408, -136, 136, 408];
+              const folderX = catIdx >= 0 && catIdx < 4 ? FOLDER_X_OFFSETS[catIdx] : 0;
+
+              return (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  style={{
+                    transform: isOpen
+                      ? "translate3d(0px, 0px, 0px) scale(1) rotate(0deg)"
+                      : `translate3d(${folderX}px, 380px, 0px) scale(0.35) rotate(-3deg)`,
+                    opacity: isOpen ? 1 : 0,
+                    transition: "transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 380ms ease-in-out",
+                  }}
+                  className="relative w-[340px] sm:w-[480px] h-[460px] sm:h-[480px] cursor-pointer"
                 >
-                  CLOSE
-                </KeyButton>
-              </div>
+                  {/* Close Key Button Attached Right Above Paper */}
+                  <div
+                    className={`absolute -top-14 sm:-top-16 right-0 z-50 transition-all duration-200 ${
+                      isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"
+                    }`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <KeyButton
+                      color="red"
+                      size="compact"
+                      className="w-[112px] sm:w-[124px]"
+                      icon={<X size={16} className="stroke-[2.5]" />}
+                      onClick={handleClose}
+                      aria-label="Close"
+                    >
+                      CLOSE
+                    </KeyButton>
+                  </div>
               {activeCategory.questions.map((faq, idx) => {
                 const total = activeCategory.questions.length;
                 const diff = (idx - cardIndex + total) % total;
@@ -461,6 +470,8 @@ export default function FAQsSection() {
                 );
               })}
             </div>
+            );
+            })()}
 
             {/* Right Key Button */}
             <div
