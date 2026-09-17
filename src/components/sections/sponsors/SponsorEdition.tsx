@@ -65,7 +65,7 @@ const SponsorEdition = () => {
           rel="noopener noreferrer"
           className="group absolute top-[241.13px] left-[29.71px] w-[1124.2px] h-[200px] flex flex-col items-center justify-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
         >
-          <div className="text-[#fa1a1d] text-[18px] font-normal tracking-[0.16em] uppercase mb-2">
+          <div className="text-[#fa1a1d] text-[19px] font-bold tracking-[0.16em] uppercase mb-2">
             {TITLE_SPONSOR.header}
           </div>
 
@@ -80,7 +80,7 @@ const SponsorEdition = () => {
             />
           </div>
 
-          <div className="mt-2 text-[16px] font-normal text-[#333] tracking-[0.03em]">
+          <div className="mt-2 text-[16px] font-medium text-[#222] tracking-[0.03em]">
             {TITLE_SPONSOR.tagline}
           </div>
         </a>
@@ -101,15 +101,15 @@ const SponsorEdition = () => {
             style={{ left: 29.71 + i * 281.05 }}
           >
             {/* Header */}
-            <div className="h-[36px] w-full px-2 flex items-center justify-center text-[#fa1a1d] text-[14px] font-normal tracking-[0.03em] uppercase leading-[1.25] text-center">
+            <div className="h-[36px] w-full px-2 flex items-center justify-center text-[#fa1a1d] text-[14.5px] font-bold tracking-[0.04em] uppercase leading-[1.25] text-center">
               {partner.header.includes("MUSIC STREAMING") ? (
-                <span className="inline-block">
+                <span className="inline-block font-bold">
                   OFFICIAL MUSIC
                   <br />
                   STREAMING PARTNER
                 </span>
               ) : (
-                <span className="whitespace-nowrap">{partner.header}</span>
+                <span className="whitespace-nowrap font-bold">{partner.header}</span>
               )}
             </div>
 
@@ -134,7 +134,7 @@ const SponsorEdition = () => {
                     height={70}
                     className="h-[52px] w-auto object-contain"
                   />
-                  <div className="font-rotonto text-[14px] font-medium tracking-[0.18em] text-[#2d6a4f] uppercase leading-none">
+                  <div className="font-rotonto text-[14px] font-bold tracking-[0.18em] text-[#2d6a4f] uppercase leading-none">
                     Therapy
                   </div>
                 </div>
@@ -163,7 +163,7 @@ const SponsorEdition = () => {
 
             {/* Tagline */}
             <div className="h-[48px] flex items-center justify-center px-1">
-              <p className="text-[14px] font-normal text-[#333] leading-[1.3] max-w-[245px]">
+              <p className="text-[14px] font-medium text-[#222] leading-[1.3] max-w-[245px]">
                 {partner.tagline}
               </p>
             </div>
@@ -177,18 +177,18 @@ const SponsorEdition = () => {
 function EditionMasthead() {
   return (
     <>
-      <div className="absolute top-[31.61px] left-[32.59px] font-normal uppercase tracking-[0.04em] text-[15px]">
+      <div className="absolute top-[31.61px] left-[32.59px] font-bold uppercase tracking-[0.04em] text-[15px]">
         VOL. 26 · SPECIAL EDITION
       </div>
-      <div className="absolute top-[31.61px] right-[32.59px] font-normal text-[15px] tracking-[0.04em] uppercase">
+      <div className="absolute top-[31.61px] right-[32.59px] font-bold text-[15px] tracking-[0.04em] uppercase">
         30 HOURS ∞ POSSIBILITIES
       </div>
-      <div className="absolute top-[90px] left-0 w-full text-center text-[54px] leading-[1] font-normal [text-shadow:1.2px_0_0_#000,_0_1.2px_0_#000,_-1.2px_0_0_#000,_0_-1.2px_0_#000] tracking-[0.02em] whitespace-nowrap">
+      <div className="absolute top-[90px] left-0 w-full text-center text-[54px] leading-[1] font-bold [text-shadow:1.2px_0_0_#000,_0_1.2px_0_#000,_-1.2px_0_0_#000,_0_-1.2px_0_#000] tracking-[0.02em] whitespace-nowrap">
         <span>{`THE `}</span>
         <span className="text-[#fa1a1d]">VINHACK</span>
         <span> PARTNERS</span>
       </div>
-      <div className="absolute top-[208px] left-0 w-full text-center text-[16.5px] font-normal tracking-[0.06em] whitespace-nowrap">
+      <div className="absolute top-[208px] left-0 w-full text-center text-[16.5px] font-bold tracking-[0.06em] whitespace-nowrap">
         BUILDING BOLD IDEAS · BACKING THE BUILDERS · 30 HOURS OF CODE
       </div>
       <div className="absolute top-[70.13px] left-[29.11px] [border-top:2.2px_solid_#000] box-border w-[1125.4px] h-[2.2px]" />

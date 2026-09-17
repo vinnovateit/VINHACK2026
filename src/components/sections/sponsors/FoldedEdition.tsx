@@ -232,19 +232,21 @@ export default function FoldedEdition({
       }
 
       const rect = container.getBoundingClientRect();
-      if (rect.width === 0) {
+      if (rect.width === 0 && variant !== "flow") {
         armed = false;
         return;
       }
       armed = true;
 
+      const availW = Math.max(300, window.innerWidth - (variant === "flow" ? 16 : 24));
+      const targetW = variant === "flow" ? availW : Math.min(availW, SHEET_W);
+      canvasScale = clamp(0.26, 1.0, targetW / SHEET_W);
+
       if (variant === "flow") {
-        canvasScale = clamp(0.28, 0.92, (window.innerWidth - 20) / SHEET_W);
-        travelPx = 480;
-        container.style.height = `${travelPx + Math.round(window.innerHeight * 0.45)}px`;
+        travelPx = 420;
+        container.style.height = `${travelPx + Math.round(EDITION_BLOCK_HEIGHT * canvasScale) + 60}px`;
       } else {
-        canvasScale = rect.width / SHEET_W || 1;
-        travelPx = TRAVEL_PLATE * canvasScale;
+        travelPx = Math.round(TRAVEL_PLATE * Math.max(0.7, canvasScale));
         container.style.height = `${EDITION_BLOCK_HEIGHT}px`;
       }
 
@@ -278,7 +280,7 @@ export default function FoldedEdition({
 
       // Smooth horizontal slide as the page clears the left side
       const slideX = s > 0.45 ? smooth((s - 0.45) / 0.55) * -160 : 0;
-      const coverOpacity = s > 0.88 ? 1 - smooth((s - 0.88) / 0.12) : 1;
+      const coverOpacity = s > 0.92 ? 1 - smooth((s - 0.92) / 0.08) : 1;
 
       if (cover) {
         cover.style.transform = `translate3d(${slideX.toFixed(1)}px, 0, ${liftZ.toFixed(1)}px) rotateY(${-angle.toFixed(2)}deg) rotateZ(${tilt.toFixed(2)}deg) skewY(${curl.toFixed(2)}deg)`;
@@ -417,20 +419,11 @@ export default function FoldedEdition({
         stageY = targetTop;
       }
 
-      // Exit & entry fadeout:
-      const exitDist = Math.min(300, window.innerHeight * 0.4);
-      let stageOpacity = 1;
-      if (stageY < targetTop) {
-        stageOpacity = clamp(0, 1, 1 - (targetTop - stageY) / exitDist);
-      } else if (stageY > targetTop) {
-        stageOpacity = clamp(0, 1, 1 - (stageY - targetTop) / exitDist);
-      }
-
-      // Culled when completely outside viewport or faded out
+      // No fade in / fade out: Section remains completely solid throughout scrolling
+      // Only culled when completely off the screen bounds
       const culled =
-        stageOpacity <= 0.01 ||
-        stageY > window.innerHeight * 1.3 ||
-        stageY < -renderedHeight * 1.3;
+        stageY > window.innerHeight * 1.08 ||
+        stageY < -renderedHeight * 1.08;
 
       if (culled) {
         if (portalEl.style.display !== "none") portalEl.style.display = "none";
@@ -440,9 +433,8 @@ export default function FoldedEdition({
         if (portalEl.style.transform !== transformStr) {
           portalEl.style.transform = transformStr;
         }
-        const opStr = stageOpacity.toFixed(3);
-        if (portalEl.style.opacity !== opStr) {
-          portalEl.style.opacity = opStr;
+        if (portalEl.style.opacity !== "1") {
+          portalEl.style.opacity = "1";
         }
       }
 
@@ -453,7 +445,7 @@ export default function FoldedEdition({
 
       // Enable pointer events on newspaper links once mostly open
       const canInteract =
-        currentP > 0.85 && stageY > -100 && stageY < window.innerHeight && stageOpacity > 0.5;
+        currentP > 0.82 && stageY > -100 && stageY < window.innerHeight;
       portalEl.style.pointerEvents = canInteract ? "auto" : "none";
 
       if (Number.isNaN(drawn) || Math.abs(currentP - drawn) > 0.0004) {
@@ -540,7 +532,7 @@ export default function FoldedEdition({
                     paddingRight: HEAD_INSET,
                   }}
                 >
-                  <p className="flex items-end gap-[14px] text-[25px] font-light leading-[1.16] tracking-wide">
+                  <p className="flex items-end gap-[14px] text-[25px] font-medium leading-[1.16] tracking-wide">
                     <span>
                       {SPONSOR_HEADING.taglineLines[0]}
                       <br />
@@ -553,7 +545,7 @@ export default function FoldedEdition({
                       className="mb-[6px] block h-[22px] w-[20px] shrink-0"
                     />
                   </p>
-                  <p className="text-right text-[40px] font-normal leading-[0.88] tracking-tight">
+                  <p className="text-right text-[40px] font-bold leading-[0.88] tracking-tight">
                     {SPONSOR_HEADING.titleLines[0]}
                     <br />
                     {SPONSOR_HEADING.titleLines[1]}
