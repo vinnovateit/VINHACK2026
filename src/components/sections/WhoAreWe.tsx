@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { WHO_ARE_WE } from "@/content/site";
 import { DESKTOP, MOBILE } from "@/components/motion/recipes";
+import { clamp, mix, easeOutQuad, smoothDamp } from "@/lib/math";
 
 /**
  * The "WHO ARE WE" interactive collage section.
@@ -179,54 +180,6 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     z: 20,
   },
 };
-
-function clamp(min: number, max: number, value: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function mix(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function easeOutQuad(t: number): number {
-  return 1 - (1 - t) * (1 - t);
-}
-
-/**
- * Critically damped spring simulation (smoothDamp).
- * Eliminates mouse-wheel notch jumps and trackpad momentum stutter.
- */
-function smoothDamp(
-  current: number,
-  target: number,
-  velocityRef: { value: number },
-  smoothTime: number,
-  maxSpeed: number,
-  deltaTime: number
-): number {
-  smoothTime = Math.max(0.0001, smoothTime);
-  const omega = 2 / smoothTime;
-
-  const x = omega * deltaTime;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  let change = current - target;
-  const originalTo = target;
-
-  const maxChange = maxSpeed * smoothTime;
-  change = clamp(-maxChange, maxChange, change);
-  target = current - change;
-
-  const temp = (velocityRef.value + omega * change) * deltaTime;
-  velocityRef.value = (velocityRef.value - omega * temp) * exp;
-  let output = target + (change + temp) * exp;
-
-  if ((originalTo - current > 0) === (output > originalTo)) {
-    output = originalTo;
-    velocityRef.value = (output - originalTo) / deltaTime;
-  }
-
-  return output;
-}
 
 const emptySubscribe = () => () => {};
 

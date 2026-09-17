@@ -9,6 +9,7 @@ import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
 import { DESKTOP } from "@/components/motion/recipes";
 import { TRACKS } from "@/content/site";
+import { clamp, mix, easeOutQuad as easeOut, easeIn, arc, smooth, smoothDamp } from "@/lib/math";
 
 /**
  * Two corner piles and one card in the air between them, thrown by the page's
@@ -258,34 +259,6 @@ const COLOR_CYCLE = [
 
 /* ------------------------------------------------------------------- maths */
 
-function clamp(min: number, max: number, v: number): number {
-  return v < min ? min : v > max ? max : v;
-}
-
-function mix(from: number, to: number, t: number): number {
-  return from + (to - from) * t;
-}
-
-/** Settling: most of the speed at the start, none at the end. The card arrives
- *  and comes to rest rather than gliding the last of the way in. */
-function easeOut(t: number): number {
-  const c = 1 - t;
-  return 1 - c * c;
-}
-
-/** Winding up: none at the start, all at the end. The card hangs for a moment
- *  where it was being read and is then gone, which is the opposite shape to
- *  `easeOut` and the reason a deal does not read as a slideshow. */
-function easeIn(t: number): number {
-  return t * t * t;
-}
-
-/** Zero at both ends of a flight and 1 at its middle: the shape of everything
- *  that only happens while a card is actually in the air. */
-function arc(t: number): number {
-  return 4 * t * (1 - t);
-}
-
 /** Where the content fade starts and how wide it is, in units of `|raw|` (see
  *  `render`). `CONTENT_FLAT` is how close to square the card must already be
  *  before its face starts to print, and `CONTENT_FADE` is how much further out
@@ -300,50 +273,6 @@ function arc(t: number): number {
  *  legible and skips the washed-out middle. */
 const CONTENT_FLAT = 0.18;
 const CONTENT_FADE = 0.14;
-
-/** Zero velocity at both ends — used for opacity, which has no direction to
- *  care about. */
-function smooth(t: number): number {
-  const c = clamp(0, 1, t);
-  return c * c * (3 - 2 * c);
-}
-
-/**
- * Critically damped spring (SmoothDamp).
- * Provides continuous velocity and acceleration without overshoot or oscillation.
- * Frame-rate independent via deltaTime.
- */
-function smoothDamp(
-  current: number,
-  target: number,
-  velocityRef: { value: number },
-  smoothTime: number,
-  maxSpeed: number,
-  deltaTime: number,
-): number {
-  smoothTime = Math.max(0.0001, smoothTime);
-  const omega = 2 / smoothTime;
-
-  const x = omega * deltaTime;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  let change = current - target;
-  const originalTo = target;
-
-  const maxChange = maxSpeed * smoothTime;
-  change = clamp(-maxChange, maxChange, change);
-  target = current - change;
-
-  const temp = (velocityRef.value + omega * change) * deltaTime;
-  velocityRef.value = (velocityRef.value - omega * temp) * exp;
-  let output = target + (change + temp) * exp;
-
-  if ((originalTo - current > 0) === (output > originalTo)) {
-    output = originalTo;
-    velocityRef.value = (output - originalTo) / deltaTime;
-  }
-
-  return output;
-}
 
 /**
  * Half the width and half the height a card actually covers once it is turned,

@@ -9,6 +9,7 @@ import SponsorSideProps from "./SponsorSideProps";
 import { SPONSOR_HEADING } from "./copy";
 import { DESKTOP } from "@/components/motion/recipes";
 import { paperUnfold } from "@/components/motion/paper";
+import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
 
 /**
  * The sponsor sheet as a cover that opens, the way a book does.
@@ -55,60 +56,6 @@ const VIEWPORT_FIT = 0.95;
 const SWING = 88;
 
 const TRAVEL_PLATE = 500;
-
-/* ------------------------------------------------------------------- maths */
-
-function clamp(min: number, max: number, v: number): number {
-  return v < min ? min : v > max ? max : v;
-}
-
-/** Zero velocity at both ends, so no stage of the movement starts with a jolt. */
-function smooth(t: number): number {
-  const c = clamp(0, 1, t);
-  return c * c * (3 - 2 * c);
-}
-
-/** `p` remapped onto [from, to] and eased. */
-function stage(p: number, from: number, to: number): number {
-  return smooth((p - from) / (to - from));
-}
-
-/**
- * Critically damped spring (SmoothDamp).
- * Provides continuous velocity and acceleration without overshoot or oscillation.
- * Frame-rate independent via deltaTime.
- */
-function smoothDamp(
-  current: number,
-  target: number,
-  velocityRef: { value: number },
-  smoothTime: number,
-  maxSpeed: number,
-  deltaTime: number,
-): number {
-  smoothTime = Math.max(0.0001, smoothTime);
-  const omega = 2 / smoothTime;
-
-  const x = omega * deltaTime;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  let change = current - target;
-  const originalTo = target;
-
-  const maxChange = maxSpeed * smoothTime;
-  change = clamp(-maxChange, maxChange, change);
-  target = current - change;
-
-  const temp = (velocityRef.value + omega * change) * deltaTime;
-  velocityRef.value = (velocityRef.value - omega * temp) * exp;
-  let output = target + (change + temp) * exp;
-
-  if ((originalTo - current > 0) === (output > originalTo)) {
-    output = originalTo;
-    velocityRef.value = (output - originalTo) / deltaTime;
-  }
-
-  return output;
-}
 
 /* -------------------------------------------------------------- components */
 
