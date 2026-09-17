@@ -8,7 +8,7 @@ import { SNEAK_PEEK } from "@/content/site";
 function Column() {
   return (
     <div className="flex flex-col shrink-0 px-[40px]">
-      {Array.from({ length: 7 }, (_, i) => (
+      {Array.from({ length: 9 }, (_, i) => (
         <div key={i}>{SNEAK_PEEK.lines[i % SNEAK_PEEK.lines.length]}</div>
       ))}
     </div>

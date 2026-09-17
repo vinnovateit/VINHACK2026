@@ -369,7 +369,7 @@ function MobileAbout() {
   return (
     <section
       aria-label="About VinHack"
-      className="relative w-full overflow-clip flex flex-col items-center justify-center py-12"
+      className="relative w-full overflow-clip flex flex-col items-center justify-center pt-12 pb-6"
     >
       {/* The background layer: the same two lines, tiled and scrolling — the
           CSS `.marquee` class the footer's own row uses below, which loops by
@@ -386,7 +386,7 @@ function MobileAbout() {
         >
           {Array.from({ length: 6 }, (_, col) => (
             <div key={col} className="flex flex-col shrink-0 px-4">
-              {Array.from({ length: 12 }, (_, i) => (
+              {Array.from({ length: 14 }, (_, i) => (
                 <div key={i}>{SNEAK_PEEK.lines[i % SNEAK_PEEK.lines.length]}</div>
               ))}
             </div>

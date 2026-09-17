@@ -96,7 +96,7 @@ export default function SiteFooter() {
             );
           })}
         </div>
-        <div className="absolute content-stretch flex items-center justify-center left-[-382px] p-[10px] top-[428px]" data-marquee="footer" data-node-id="297:28">
+        <div className="absolute content-stretch flex items-center justify-center left-[-382px] p-[10px] top-[355px]" data-marquee="footer" data-node-id="297:28">
           <p className="[word-break:break-word] scripts leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" data-node-id="297:29">{FOOTER.marquee}</p>
           <p className="[word-break:break-word] scripts leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" aria-hidden>{FOOTER.marquee}</p>
         </div>
@@ -130,7 +130,7 @@ export default function SiteFooter() {
       </footer>
 
       {/* Mobile Layout (Responsive single-column layout) */}
-      <footer className="md:hidden pt-16 overflow-x-clip bg-black text-[#fcfcfc] w-full">
+      <footer className="md:hidden pt-0 overflow-x-clip bg-black text-[#fcfcfc] w-full">
         {/* Five folder tabs */}
         <div>
           {FOOTER.tabs.map((tab) => {
