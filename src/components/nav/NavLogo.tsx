@@ -43,10 +43,10 @@ export default function NavLogo({ className = "" }: { className?: string }) {
             `.nav-eye` in globals.css blinks it while the shelf is open. */}
         <circle
           className="nav-eye"
-          cx="35.1266"
+          cx="31.0"
           cy="39.0"
           r="9.40896"
-          transform="rotate(13.1675 35.1266 39.0)"
+          transform="rotate(13.1675 31.0 39.0)"
         />
       </g>
     </svg>

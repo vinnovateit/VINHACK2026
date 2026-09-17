@@ -12,11 +12,12 @@ type Status =
 /**
  * The attendee pass's "LIVE CAMERA FEED" panel, wired to the real webcam.
  *
- * The camera opens as soon as the panel mounts — `getUserMedia` fires on the
- * first render rather than waiting for a click — and the panel doubles as the
- * off switch so the camera can be released without leaving the page. Tracks
- * are stopped on unmount, including when the permission prompt resolves after
- * the component has already gone.
+ * Camera permission is not requested immediately on page load; instead, it waits
+ * until the user moves/scrolls to the camera section and the element enters the
+ * viewport (via IntersectionObserver), or when the user clicks the panel. The
+ * panel doubles as the off switch so the camera can be released without leaving
+ * the page. Tracks are stopped on unmount, including when the permission prompt
+ * resolves after the component has already gone.
  *
  * The <video> is mounted only once there is a stream to put in it. Besides
  * keeping a dead media element out of the initial HTML, this avoids a
@@ -28,9 +29,11 @@ type Status =
  * degrades to a message everywhere else.
  */
 export default function CameraFeed() {
+  const containerRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
+  const hasTriggeredRef = useRef(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   useEffect(() => {
@@ -101,22 +104,40 @@ export default function CameraFeed() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    start();
-    // Runs once on mount only — `start` is stable (empty deps) and re-running
-    // it on every render would re-request permission after the user hits stop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTriggeredRef.current) {
+          hasTriggeredRef.current = true;
+          observer.disconnect();
+          start();
+        }
+      },
+      {
+        threshold: 0.1,
+      },
+    );
+
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [start]);
 
   const live = status.kind === "live";
 
   return (
     <button
+      ref={containerRef}
       type="button"
       // The pass this panel sits in recolours on a click anywhere that is not
       // a control, so the camera's own click has to stop there. See `PassCard`.
       onClick={(event) => {
         event.stopPropagation();
+        hasTriggeredRef.current = true;
         (live ? stop : start)();
       }}
       disabled={status.kind === "starting"}

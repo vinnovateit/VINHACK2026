@@ -288,7 +288,17 @@ body {
   will-change: transform;
 }
 
-.film-marquee-track:hover {
+.film-sprocket-track {
+  display: flex;
+  width: max-content;
+  animation: film-marquee 30s linear infinite;
+  will-change: transform;
+}
+
+.film-strip-group:hover .film-marquee-track,
+.film-strip-group:hover .film-sprocket-track,
+.film-marquee-track:hover,
+.film-sprocket-track:hover {
   animation-play-state: paused;
 }
 
@@ -1630,7 +1640,7 @@ footer ::selection,
    overriding the export's `transform` attribute here costs nothing and the
    origin only has to be right for the squash. */
 .nav-eye {
-  transform-origin: 35.1266px 39px;
+  transform-origin: 31px 39px;
 }
 
 .nav-button[aria-expanded="true"] .nav-eye {

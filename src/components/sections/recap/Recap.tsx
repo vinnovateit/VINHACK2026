@@ -21,7 +21,7 @@ const EVENT_PHOTOS = [
   "/about_us/1.webp",
 ];
 
-const SPROCKET_COUNT = 65;
+const SPROCKET_COUNT = 116;
 
 // The "core memory" snake, one set = the wordmark (as individual glyphs so
 // the wave bends through the word, not just between words) followed by an
@@ -152,17 +152,28 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
 
       {/* Filmstrip Assembly - Rolls out from canister on reveal and touches right screen edge */}
       <div
-        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${inView ? "film-rollout-open" : ""
-          }`}
+        className={`film-strip-group absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${
+          inView ? "film-rollout-open" : ""
+        }`}
       >
         {/* Top Film Sprocket Holes (stretching all the way to right screen edge) */}
-        <div className="absolute top-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
-          {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
-            <div
-              key={`top-sprocket-${i}`}
-              className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
-            />
-          ))}
+        <div className="absolute top-[8px] left-[12px] right-0 overflow-hidden pointer-events-none z-10">
+          <div className="film-sprocket-track flex gap-[9px]">
+            {/* Set A */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`top-sprocket-a-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+            {/* Set B */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`top-sprocket-b-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+          </div>
         </div>
 
         {/* Infinite Photo Marquee - Seamless loop flowing from left to right */}
@@ -207,13 +218,23 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         </div>
 
         {/* Bottom Film Sprocket Holes (stretching all the way to right screen edge) */}
-        <div className="absolute bottom-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
-          {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
-            <div
-              key={`bottom-sprocket-${i}`}
-              className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
-            />
-          ))}
+        <div className="absolute bottom-[8px] left-[12px] right-0 overflow-hidden pointer-events-none z-10">
+          <div className="film-sprocket-track flex gap-[9px]">
+            {/* Set A */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`bottom-sprocket-a-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+            {/* Set B */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`bottom-sprocket-b-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+          </div>
         </div>
       </div>
 

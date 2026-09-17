@@ -14,47 +14,20 @@ export default function RecapSection() {
     const el = sectionRef.current;
     if (!el) return;
 
-    const updateInView = (next: boolean) => {
-      if (next === wasInView.current) return;
-      wasInView.current = next;
-      setInView(next);
-      if (next) {
-        playFilmRollout();
-      } else {
-        playFilmRewind();
-      }
-    };
+    let hasAnimated = false;
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const scrollingDown = currentScrollY >= lastScrollY.current;
-      lastScrollY.current = currentScrollY;
+      if (hasAnimated) return;
 
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight || document.documentElement.clientHeight;
 
-      // Check if section is completely outside of viewport
-      const isCompletelyOffScreen = rect.bottom <= 0 || rect.top >= vh;
-      if (isCompletelyOffScreen) {
-        updateInView(false);
-        return;
-      }
-
-      if (scrollingDown) {
-        // When scrolling down, roll out when top enters within 85% of viewport
-        if (rect.top < vh * 0.85 && rect.bottom > 60) {
-          updateInView(true);
-        }
-      } else {
-        // When scrolling UP (from down to up):
-        // As the section moves down towards the lower part of the viewport,
-        // roll backwards into the canister!
-        if (rect.top > vh * 0.2) {
-          updateInView(false);
-        } else if (rect.bottom > vh * 0.3) {
-          // If scrolling up from sections below into Recap
-          updateInView(true);
-        }
+      if (rect.top < vh * 0.85 && rect.bottom > 60) {
+        hasAnimated = true;
+        setInView(true);
+        playFilmRollout();
+        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", handleScroll);
       }
     };
 

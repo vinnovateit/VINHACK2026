@@ -137,15 +137,23 @@ export default function MobileRecap() {
         </div>
 
         {/* Filmstrip rolling out from canister to right edge */}
-        <div className="absolute left-[64px] right-0 top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10">
+        <div className="film-strip-group absolute left-[64px] right-0 top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10">
           {/* Top Film Sprocket Holes */}
-          <div className="absolute top-[4px] left-[6px] right-0 flex gap-[6px] overflow-hidden pointer-events-none z-10">
-            {Array.from({ length: 45 }).map((_, i) => (
-              <div
-                key={`mob-top-sprocket-${i}`}
-                className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
-              />
-            ))}
+          <div className="absolute top-[4px] left-[6px] right-0 overflow-hidden pointer-events-none z-10">
+            <div className="film-sprocket-track flex gap-[6px]">
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-top-sprocket-a-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-top-sprocket-b-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+            </div>
           </div>
 
           {/* Photo Marquee */}
@@ -171,13 +179,21 @@ export default function MobileRecap() {
           </div>
 
           {/* Bottom Film Sprocket Holes */}
-          <div className="absolute bottom-[4px] left-[6px] right-0 flex gap-[6px] overflow-hidden pointer-events-none z-10">
-            {Array.from({ length: 45 }).map((_, i) => (
-              <div
-                key={`mob-bottom-sprocket-${i}`}
-                className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
-              />
-            ))}
+          <div className="absolute bottom-[4px] left-[6px] right-0 overflow-hidden pointer-events-none z-10">
+            <div className="film-sprocket-track flex gap-[6px]">
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-bottom-sprocket-a-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-bottom-sprocket-b-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
