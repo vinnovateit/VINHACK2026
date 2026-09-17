@@ -79,7 +79,7 @@ export default function ProjectsSection() {
   return (
     <section
       aria-label="Projects"
-      className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[2496px] w-[1280px]"
+      className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[2496px] w-[1280px] z-20"
       data-node-id="297:300"
       data-name="PROJECTS"
     >

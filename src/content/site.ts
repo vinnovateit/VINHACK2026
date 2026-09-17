@@ -119,7 +119,7 @@ export type NavItem = {
  */
 export const NAV = {
   /** The eyebrow over the shelf. */
-  label: "// EXPLORE",
+  label: "EXPLORE",
   /** Names the drawer itself, once it is open. */
   title: "Site navigation",
   open: "Open the navigation shelf",
@@ -471,7 +471,7 @@ export const WHO_ARE_WE = {
 /* ----------------------------------------------------------- projects */
 
 export const PROJECTS = {
-  heading: "PROJECTS //",
+  heading: "PROJECTS",
   /** In the order the design stacks them, left to right. */
   cards: [
     {
@@ -590,7 +590,7 @@ export const TRACKS = {
 /* ------------------------------------------------------------ sponsors */
 
 export const SPONSORS = {
-  label: "SPONSORS //",
+  label: "SPONSORS",
   heading: "Our Sponsors",
   /**
    * In paint order — biggest first. The first two carry a description, the
@@ -746,7 +746,7 @@ export type FaqCategory = {
 };
 
 export const FAQS = {
-  heading: "FREQUENTLY ASKED QUESTIONS //",
+  heading: "FREQUENTLY ASKED QUESTIONS",
   categories: [
     {
       id: "general",

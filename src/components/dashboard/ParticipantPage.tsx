@@ -8,9 +8,9 @@ import styles from "./participant-page.module.css";
 type PageKind = "timeline" | "tracks" | "help";
 
 const pageCopy = {
-  timeline: { label: "// event timeline", title: "Know what happens next.", intro: "Keep your team moving through every checkpoint of VinHack 2026." },
-  tracks: { label: "// build direction", title: "Choose a problem worth solving.", intro: "Pick a direction, find your angle, and build something that lasts." },
-  help: { label: "// participant support", title: "You do not have to get stuck.", intro: "Find a quick answer or send the team a question from here." },
+  timeline: { label: "EVENT TIMELINE", title: "Know what happens next.", intro: "Keep your team moving through every checkpoint of VinHack 2026." },
+  tracks: { label: "BUILD DIRECTION", title: "Choose a problem worth solving.", intro: "Pick a direction, find your angle, and build something that lasts." },
+  help: { label: "PARTICIPANT SUPPORT", title: "You do not have to get stuck.", intro: "Find a quick answer or send the team a question from here." },
 } as const;
 
 export default function ParticipantPage({ kind }: { kind: PageKind }) {

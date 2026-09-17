@@ -353,8 +353,8 @@ export default function WhoAreWeSection({
 
       if (variant === "flow") {
         travelPx = 480;
-        // In flow the reservation only needs travel plus a compact exit buffer
-        container.style.height = `${travelPx + 40}px`;
+        // In flow the reservation needs travel plus exit fadeout distance
+        container.style.height = `${travelPx + Math.round(window.innerHeight * 0.45)}px`;
       } else {
         const reserved = CANVAS_RESERVED;
         travelPx = clamp(
@@ -480,9 +480,21 @@ export default function WhoAreWeSection({
         stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
       }
 
-      // Culled when completely outside viewport
+      // Exit & entry fade:
+      // Fade out cleanly as the section scrolls out of view so it never obscures following sections (like Projects)
+      const exitDist = Math.min(320, window.innerHeight * 0.4);
+      let stageOpacity = 1;
+      if (stageY < 0) {
+        stageOpacity = clamp(0, 1, 1 - Math.abs(stageY) / exitDist);
+      } else if (stageY > 0) {
+        stageOpacity = clamp(0, 1, 1 - stageY / exitDist);
+      }
+
+      // Culled when completely outside viewport or faded out
       const culled =
-        stageY > window.innerHeight * 1.2 || stageY < -window.innerHeight * 1.2;
+        stageOpacity <= 0.01 ||
+        stageY > window.innerHeight * 1.2 ||
+        stageY < -window.innerHeight * 1.2;
 
       /* Wind the clock. Parked is the trigger — `stageY === 0` is exactly the
          span where the stage is pinned over the whole viewport — and leaving
@@ -504,6 +516,10 @@ export default function WhoAreWeSection({
         const transformStr = `translate3d(0, ${stageY.toFixed(1)}px, 0)`;
         if (portalEl.style.transform !== transformStr) {
           portalEl.style.transform = transformStr;
+        }
+        const opStr = stageOpacity.toFixed(3);
+        if (portalEl.style.opacity !== opStr) {
+          portalEl.style.opacity = opStr;
         }
       }
 

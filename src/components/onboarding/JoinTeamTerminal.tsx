@@ -1132,7 +1132,7 @@ export default function JoinTeamTerminal({
 
               {/* Vertical Rotated Text on Left (.propertyOfVinnovateit) */}
               <div className="absolute top-[645px] left-[19px] font-light text-[13px] text-[#676767] -rotate-90 origin-top-left whitespace-nowrap tracking-wider">
-                PROPERTY OF VINNOVATEIT // 26
+                PROPERTY OF VINNOVATEIT · 26
               </div>
 
               {/* VinHack QR on Right (.frameChild9) */}

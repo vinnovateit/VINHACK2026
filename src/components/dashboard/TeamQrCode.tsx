@@ -87,7 +87,7 @@ export default function TeamQrCode({ code, teamName }: { code: string; teamName:
               <X size={18} />
             </button>
 
-            <p className="text-[#fa1a1d] text-sm tracking-wider uppercase">{"// Join "}{teamName}</p>
+            <p className="text-[#fa1a1d] text-sm tracking-wider uppercase">Join {teamName}</p>
             <p className="mt-1 text-xs text-[#9a9898]">Scan to open the join screen with the code filled in.</p>
 
             <div className="mt-5 flex justify-center">

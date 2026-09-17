@@ -70,7 +70,7 @@ export default function ProfileClient({ participant, teamName }: ProfileClientPr
       </header>
 
       <section className={styles.hero}>
-        <p className={styles.kicker}>{"// your account"}</p>
+        <p className={styles.kicker}>YOUR ACCOUNT</p>
         <h1>Make your workspace yours.</h1>
         <p className={styles.intro}>
           Keep your participant details and event preferences close at hand.
