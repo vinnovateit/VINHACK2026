@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import KeyButton from "../onboarding/KeyButton";
+import KeyButton from "@/components/ui/KeyButton";
 
 const CardboardBoxOpeningAnimation = dynamic(
   () => import("./CardboardBoxOpeningAnimation"),

@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import SiteNav from "@/components/nav/SiteNav";
+import KeyButton from "@/components/ui/KeyButton";
 
 export default function NotFound() {
   return (
@@ -65,12 +65,15 @@ export default function NotFound() {
         </p>
 
         {/* Go Back Home Action Button */}
-        <Link
-          href="/"
-          className="mt-7 md:mt-8 w-[180px] sm:w-[200px] md:w-[220px] h-[46px] sm:h-[48px] md:h-[50px] rounded-full bg-[#2849cb] hover:bg-[#1f3ba8] active:scale-95 transition-all flex items-center justify-center text-white font-rotonto font-light text-sm sm:text-base md:text-lg tracking-wide shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        >
-          Go Back Home
-        </Link>
+        <div className="mt-7 md:mt-8 flex justify-center">
+          <KeyButton
+            href="/"
+            color="blue"
+            size="compact"
+            className="w-[200px] sm:w-[220px] md:w-[240px]"
+            content="GO BACK HOME"
+          />
+        </div>
       </div>
     </main>
   );
