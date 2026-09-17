@@ -209,10 +209,7 @@ export default function ProjectsSection() {
                     <span className="font-rotonto text-[15px] leading-none tracking-tight text-black">
                       {info.displayName}
                     </span>
-                    <span
-                      className="font-rotonto text-[10px] leading-none tracking-[0.12em]"
-                      style={{ color: info.bg === "#ffffff" ? "#fa1a1d" : info.bg }}
-                    >
+                    <span className="font-rotonto text-[10px] leading-none tracking-[0.12em] text-[#fa1a1d]">
                       OPEN&nbsp;↗
                     </span>
                   </div>

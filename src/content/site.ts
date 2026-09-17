@@ -527,7 +527,7 @@ export const PROJECTS = {
       logo: "/projects/messit.svg",
       icon: "/projects/messit.svg",
       url: "https://messit.vinnovateit.com",
-      tagline: "Know what's cooking",
+      tagline: "Know what's cooking.",
       body: "VIT's go-to mess menu app, trusted by 40,000+ students.",
     },
   ],
