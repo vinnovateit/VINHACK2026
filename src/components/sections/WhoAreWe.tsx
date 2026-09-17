@@ -36,6 +36,18 @@ const CANVAS_RESERVED = 2400;
 // of it, in the order they happen.
 const TEXT_DURATION = 3.0;
 
+/**
+ * How much of that run the page is actually held still for, as a fraction.
+ *
+ * Not all of it. The hold only has to last until the handover has happened and
+ * "WE ARE VINNOVATEIT" is legible — by 0.55 the first line is gone and the
+ * second is most of the way in, and the last of the fade can finish perfectly
+ * well while the visitor is scrolling on. Holding for the whole three seconds
+ * is a second longer than the thing it is protecting actually needs, and a
+ * second is a long time to lean on a wheel that is not moving.
+ */
+const HOLD_FRACTION = 0.55;
+
 const TEXT_TRANSITION = {
   // Phase 1: "WHO ARE WE ?"
   text1FadeInStart: 0.0,     // when "WHO ARE WE ?" starts appearing
@@ -571,7 +583,7 @@ export default function WhoAreWeSection({
       if (!isReduced && !holdDone && armed) {
         if (latestScrollY < parkStart) {
           approachedFromAbove = true;
-        } else if (approachedFromAbove && textSeconds < TEXT_DURATION) {
+        } else if (approachedFromAbove && textSeconds < TEXT_DURATION * HOLD_FRACTION) {
           if (!holding) {
             window.scrollTo(0, parkStart);
             lockScroll();
@@ -582,7 +594,7 @@ export default function WhoAreWeSection({
         }
       }
 
-      if (holding && (isReduced || textSeconds >= TEXT_DURATION)) {
+      if (holding && (isReduced || textSeconds >= TEXT_DURATION * HOLD_FRACTION)) {
         holdDone = true;
         unlockScroll();
       }
