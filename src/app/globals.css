@@ -1630,7 +1630,7 @@ footer ::selection,
    overriding the export's `transform` attribute here costs nothing and the
    origin only has to be right for the squash. */
 .nav-eye {
-  transform-origin: 35.1266px 32.5686px;
+  transform-origin: 35.1266px 39px;
 }
 
 .nav-button[aria-expanded="true"] .nav-eye {

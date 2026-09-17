@@ -44,9 +44,9 @@ export default function NavLogo({ className = "" }: { className?: string }) {
         <circle
           className="nav-eye"
           cx="35.1266"
-          cy="32.5686"
+          cy="39.0"
           r="9.40896"
-          transform="rotate(13.1675 35.1266 32.5686)"
+          transform="rotate(13.1675 35.1266 39.0)"
         />
       </g>
     </svg>
