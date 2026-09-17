@@ -18,7 +18,7 @@ function isReviewEntry(entry: ScheduleEntry): boolean {
 }
 
 function Fence() {
-  return <div className="receipt-rule my-[3px] h-px w-full shrink-0" aria-hidden />;
+  return <div className="receipt-rule my-[6px] h-px w-full shrink-0" aria-hidden />;
 }
 
 function DaySheet({ index }: { index: number }) {
@@ -38,12 +38,11 @@ function DaySheet({ index }: { index: number }) {
       </p>
 
       {/* The rule the schedule hangs from. */}
-      <div className="receipt-rule -translate-x-1/2 absolute h-[1px] left-1/2 top-[297.2px] w-[294.233px]" />
+      <div className="receipt-rule absolute h-[1px] left-[33.8px] right-[33.8px] top-[297.2px]" />
 
-      {/* Centred in what is left before the footer rule, so a short day sits in
-          the middle of the paper instead of hanging off the top of it. */}
+      {/* Aligned from the top directly after the date section and divider rule. */}
       <div
-        className="absolute left-[33.8px] right-[33.8px] flex flex-col justify-center gap-[4px]"
+        className="absolute left-[33.8px] right-[33.8px] flex flex-col justify-start gap-[6px]"
         style={{ top: SHEET_TOP, height: SHEET_BOTTOM - SHEET_TOP }}
       >
         {day.entries.map((entry: ScheduleEntry, i) => {
@@ -124,11 +123,11 @@ export default function ReceiptPrinter({ className }: { className?: string }) {
           {TIMELINE.masthead}
         </p>
         <div
-          className="receipt-rule -translate-x-1/2 absolute h-[1px] left-[calc(50%+0.25px)] top-[246.84px] w-[294.233px]"
+          className="receipt-rule absolute h-[1px] left-[33.8px] right-[33.8px] top-[246.84px]"
           data-node-id="343:2083"
         />
         <div
-          className="receipt-rule -translate-x-1/2 absolute h-[1px] left-[calc(50%-2.22px)] top-[531.69px] w-[294.233px]"
+          className="receipt-rule absolute h-[1px] left-[33.8px] right-[33.8px] top-[531.69px]"
           data-node-id="343:2084"
         />
         <p
