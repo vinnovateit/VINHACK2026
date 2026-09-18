@@ -81,12 +81,40 @@ export default function FAQsSection() {
     return () => window.removeEventListener("keydown", onKey);
   }, [activeCategory, handleClose, handleNext, handlePrev]);
 
-  // Body scroll lock when open
+  // Complete scroll lock when open
   useEffect(() => {
     if (!isOpen) return;
-    const prev = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    document.body.style.touchAction = "none";
+
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target?.closest(".overflow-y-auto")) {
+        e.preventDefault();
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target?.closest(".overflow-y-auto")) {
+        if (e.cancelable) e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+      document.body.style.touchAction = prevTouchAction;
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
   }, [isOpen]);
 
   const closedTransform = origin
@@ -177,11 +205,8 @@ export default function FAQsSection() {
                   <path d="M 0 152 L 170 20 H 244 V 246 A 22 22 0 0 1 222 268 H 22 A 22 22 0 0 1 0 246 Z" stroke="#000000" strokeWidth="0.8" />
                   <line x1="14" y1="238" x2="230" y2="238" stroke="rgba(0,0,0,0.35)" strokeWidth="0.8" />
                 </svg>
-                <div className={`absolute bottom-[62px] right-[16px] font-rotonto font-light text-[34px] leading-[0.86] text-right uppercase tracking-tight transition-transform duration-300 group-hover:-translate-y-0.5 ${titleColorClass}`}>
+                <div className={`absolute bottom-[44px] right-[16px] font-rotonto font-light text-[34px] leading-[0.86] text-right uppercase tracking-tight transition-transform duration-300 group-hover:-translate-y-0.5 ${titleColorClass}`}>
                   {category.title[0]}<br />{category.title[1]}<br />{category.title[2]}
-                </div>
-                <div className={`absolute bottom-[38px] right-[16px] font-rotonto font-light text-[12.5px] text-right tracking-wide lowercase ${titleColorClass}`}>
-                  {category.subtitle}
                 </div>
               </div>
             </div>
@@ -195,7 +220,7 @@ export default function FAQsSection() {
           role="dialog"
           aria-modal="true"
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
-          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default ${
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default touch-none ${
             isOpen
               ? "bg-black/90 transition-[background-color] duration-150 ease-out"
               : "bg-black/0 transition-[background-color] duration-150 ease-in pointer-events-none"
@@ -207,6 +232,8 @@ export default function FAQsSection() {
             <div
               className={`transition-all duration-150 shrink-0 z-40 ${isOpen ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-75 -translate-x-8 pointer-events-none"}`}
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
             >
               <KeyButton color="blue" size="compact" className="w-[52px] sm:w-[58px]" onClick={handlePrev} aria-label="Previous question" title="Previous question (←)">
                 <ChevronLeft size={22} className="stroke-[2.5]" />
@@ -230,7 +257,12 @@ export default function FAQsSection() {
               {/* Close button */}
               <div
                 className={`absolute -top-14 sm:-top-16 right-0 z-50 transition-all duration-200 ${isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"}`}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClose();
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
               >
                 <KeyButton color="red" size="compact" className="w-[112px] sm:w-[124px]" icon={<X size={16} className="stroke-[2.5]" />} onClick={handleClose} aria-label="Close">
                   CLOSE

@@ -196,6 +196,35 @@ export default function KeyButton({
     }
   };
 
+  const pointerStartPos = useRef<{ x: number; y: number } | null>(null);
+  const lastTriggerTime = useRef<number>(0);
+
+  const fireClick = () => {
+    const now = Date.now();
+    if (now - lastTriggerTime.current < 250) return;
+    lastTriggerTime.current = now;
+    onClick?.();
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (disabled) return;
+    pointerStartPos.current = { x: e.clientX, y: e.clientY };
+    animatePress();
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (disabled) return;
+    animateRelease();
+    if (pointerStartPos.current && !href) {
+      const dx = Math.abs(e.clientX - pointerStartPos.current.x);
+      const dy = Math.abs(e.clientY - pointerStartPos.current.y);
+      pointerStartPos.current = null;
+      if (dx < 15 && dy < 15 && e.pointerType === "touch") {
+        fireClick();
+      }
+    }
+  };
+
   useEffect(() => {
     const handleGlobalUp = () => {
       if (isPressedRef.current) animateRelease();
@@ -213,7 +242,7 @@ export default function KeyButton({
       e.preventDefault();
       return;
     }
-    onClick?.();
+    fireClick();
   };
 
   const labelContent = content ?? children;
@@ -319,8 +348,8 @@ export default function KeyButton({
         className={sharedClasses}
         onClick={handleClick}
         tabIndex={disabled ? -1 : 0}
-        onPointerDown={() => !disabled && animatePress()}
-        onPointerUp={() => !disabled && animateRelease()}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         target={target}
         rel={rel}
         aria-label={aLabel}
@@ -338,8 +367,8 @@ export default function KeyButton({
       onClick={handleClick}
       role="button"
       tabIndex={disabled ? -1 : 0}
-      onPointerDown={() => !disabled && animatePress()}
-      onPointerUp={() => !disabled && animateRelease()}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
       onKeyDown={(e) => {
         if (!disabled && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();

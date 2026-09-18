@@ -1045,34 +1045,45 @@ function MobileFAQs() {
     return () => window.removeEventListener("keydown", onKey);
   }, [activeCategory, handleClose, handleNext, handlePrev]);
 
-  // Body scroll lock + dismiss on scroll attempt
+  // Complete scroll lock when modal is open
   useEffect(() => {
     if (!isOpen) return;
-    // Lock body scroll
-    const prev = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
 
-    // Dismiss when user tries to scroll (touchmove vertical)
-    let touchStartY = 0;
-    const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
     const onTouchMove = (e: TouchEvent) => {
-      const dy = Math.abs(e.touches[0].clientY - touchStartY);
-      if (dy > 18) handleClose();
+      const target = e.target as HTMLElement;
+      if (target?.closest(".overflow-y-auto")) {
+        return;
+      }
+      if (e.cancelable) {
+        e.preventDefault();
+      }
     };
-    // Dismiss on wheel (desktop)
-    const onWheel = () => handleClose();
 
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("wheel", onWheel, { passive: true });
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target?.closest(".overflow-y-auto")) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("touchstart", onTouchStart);
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+      document.body.style.touchAction = prevTouchAction;
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("wheel", onWheel);
     };
-  }, [isOpen, handleClose]);
+  }, [isOpen]);
 
   // Portal mount guard (SSR safe)
   const [mounted, setMounted] = useState(false);
@@ -1147,11 +1158,8 @@ function MobileFAQs() {
                   <path d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z" stroke="#000000" strokeWidth="0.8" />
                   <line x1="10" y1="202" x2="150" y2="202" stroke="rgba(0,0,0,0.35)" strokeWidth="0.8" />
                 </svg>
-                <div className="absolute bottom-[46px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
+                <div className="absolute bottom-[34px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
                   {category.title[0]}<br />{category.title[1]}<br />{category.title[2]}
-                </div>
-                <div className="absolute bottom-[28px] right-[10px] font-rotonto font-light text-[9.5px] text-right tracking-wide lowercase text-black max-w-[90%] truncate">
-                  {category.subtitle}
                 </div>
               </div>
             </div>
@@ -1165,7 +1173,7 @@ function MobileFAQs() {
           role="dialog"
           aria-modal="true"
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
-          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default ${
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default touch-none ${
             isOpen
               ? "bg-black/85 transition-[background-color] duration-150 ease-out"
               : "bg-black/0 transition-[background-color] duration-150 ease-in pointer-events-none"
@@ -1203,6 +1211,12 @@ function MobileFAQs() {
                 className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
                   isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
                 }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClose();
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
               >
                 <KeyButton
                   color="red"
