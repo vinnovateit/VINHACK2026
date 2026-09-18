@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import KeyButton from "@/components/ui/KeyButton";
@@ -1031,6 +1032,7 @@ function MobileFAQs() {
     }, 200);
   }, [activeCategory, cardIndex, flickState]);
 
+
   // Keyboard nav
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1043,6 +1045,39 @@ function MobileFAQs() {
     return () => window.removeEventListener("keydown", onKey);
   }, [activeCategory, handleClose, handleNext, handlePrev]);
 
+  // Body scroll lock + dismiss on scroll attempt
+  useEffect(() => {
+    if (!isOpen) return;
+    // Lock body scroll
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // Dismiss when user tries to scroll (touchmove vertical)
+    let touchStartY = 0;
+    const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
+    const onTouchMove = (e: TouchEvent) => {
+      const dy = Math.abs(e.touches[0].clientY - touchStartY);
+      if (dy > 18) handleClose();
+    };
+    // Dismiss on wheel (desktop)
+    const onWheel = () => handleClose();
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
+
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [isOpen, handleClose]);
+
+  // Portal mount guard (SSR safe)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Compute closed-state transform from measured origin
   const closedTransform = origin
     ? `translate3d(${origin.x.toFixed(1)}px, ${origin.y.toFixed(1)}px, 0px) scale(0.28) rotate(-3deg)`
@@ -1051,7 +1086,7 @@ function MobileFAQs() {
   return (
     <section
       aria-label="Frequently Asked Questions"
-      className={`${COL} ${PAD} overflow-x-clip pt-14 pb-20 select-none`}
+      className={`${COL} ${PAD} pt-14 pb-20 select-none`}
     >
       {/* Header */}
       <div className="border-t-[1.2px] border-[#fa1a1d] pt-4 mb-6">
@@ -1124,13 +1159,13 @@ function MobileFAQs() {
         })}
       </div>
 
-      {/* Modal */}
-      {activeCategory && (
+      {/* Modal — portalled to body so it covers full viewport */}
+      {mounted && activeCategory && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 cursor-default ${
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default ${
             isOpen
               ? "bg-black/85 transition-[background-color] duration-350 ease-out"
               : "bg-black/0 transition-[background-color] duration-300 ease-in pointer-events-none"
@@ -1284,7 +1319,7 @@ function MobileFAQs() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </section>
   );
 }
