@@ -18,19 +18,17 @@ export default function MobileSponsorSheet() {
         />
 
         <div className="relative z-10 bg-[#ebebe9] font-rotonto text-black shadow-[0_16px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.2)] overflow-hidden select-none">
-          {/* Masthead */}
+          {/* Masthead — logo + PARTNERS label */}
           <div className="px-4 pt-4 pb-0">
-            <div className="flex items-baseline justify-between text-[9px] font-bold uppercase tracking-[0.08em] mb-2">
-              <span>VOL. 26 · SPECIAL EDITION</span>
-              <span>30 HOURS ∞ POSSIBILITIES</span>
-            </div>
             <div className="border-t-[2px] border-black mb-1" />
-            <div className="text-center py-2">
-              <p className="text-[28px] sm:text-[32px] font-bold leading-none tracking-[0.02em] [text-shadow:0.8px_0_0_#000,0_0.8px_0_#000,-0.8px_0_0_#000,0_-0.8px_0_#000]">
-                THE <span className="text-[#fa1a1d]">VINHACK</span> PARTNERS
-              </p>
-              <p className="mt-1.5 text-[8.5px] font-bold tracking-[0.08em] uppercase">
-                BUILDING BOLD IDEAS · BACKING THE BUILDERS · 30 HOURS OF CODE
+            <div className="text-center py-3 flex flex-col items-center gap-2">
+              <img
+                src="/figma/vinhack-fill.svg"
+                alt="VinHack"
+                className="h-[36px] sm:h-[42px] w-auto object-contain"
+              />
+              <p className="text-[11px] font-bold tracking-[0.14em] uppercase text-black">
+                PARTNERS
               </p>
             </div>
             <div className="border-t-[2px] border-black" />
