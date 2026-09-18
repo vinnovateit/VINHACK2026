@@ -1113,7 +1113,7 @@ export default function DashboardShell({
                       htmlFor="figma-link"
                       className="text-sm sm:text-base lg:text-[18px] text-white font-light truncate"
                     >
-                      Figma Link<span className="text-[#fa1a1d] ml-0.5">*</span>
+                      Figma Link
                     </label>
                     <input
                       id="figma-link"
