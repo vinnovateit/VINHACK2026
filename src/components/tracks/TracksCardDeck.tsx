@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 const emptySubscribe = () => () => {};
 
-import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
+import { TrackAsterisk, TrackCard, TrackCardLogo, TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
 import { DESKTOP } from "@/components/motion/recipes";
 import { TRACKS } from "@/content/site";
@@ -887,7 +887,14 @@ export function TracksCardDeck() {
                               ) : null}
                             </div>
                           </div>
-                        ) : null}
+                        ) : (
+                          <div
+                            className="pointer-events-none absolute inset-0 flex items-center justify-center p-[48px]"
+                            style={{ color: ink }}
+                          >
+                            <TrackCardLogo className="w-[52%] max-w-[380px] h-auto" />
+                          </div>
+                        )}
                       </TrackCard>
                     </div>
                   );
