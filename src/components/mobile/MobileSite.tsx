@@ -1005,7 +1005,7 @@ function MobileFAQs() {
       setActiveCategory(null);
       setFlickState(null);
       setOrigin(null);
-    }, 420);
+    }, 160);
   }, [isOpen]);
 
   const handleNext = useCallback(() => {
@@ -1016,8 +1016,8 @@ function MobileFAQs() {
     setTimeout(() => {
       setCardIndex(nextIdx);
       setFlickState({ outgoingIndex: currentIdx, direction: 1, phase: "return" });
-      setTimeout(() => setFlickState(null), 260);
-    }, 200);
+      setTimeout(() => setFlickState(null), 150);
+    }, 150);
   }, [activeCategory, cardIndex, flickState]);
 
   const handlePrev = useCallback(() => {
@@ -1028,8 +1028,8 @@ function MobileFAQs() {
     setTimeout(() => {
       setCardIndex(prevIdx);
       setFlickState({ outgoingIndex: currentIdx, direction: -1, phase: "return" });
-      setTimeout(() => setFlickState(null), 260);
-    }, 200);
+      setTimeout(() => setFlickState(null), 150);
+    }, 150);
   }, [activeCategory, cardIndex, flickState]);
 
 
@@ -1167,8 +1167,8 @@ function MobileFAQs() {
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
           className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default ${
             isOpen
-              ? "bg-black/85 transition-[background-color] duration-350 ease-out"
-              : "bg-black/0 transition-[background-color] duration-300 ease-in pointer-events-none"
+              ? "bg-black/85 transition-[background-color] duration-150 ease-out"
+              : "bg-black/0 transition-[background-color] duration-150 ease-in pointer-events-none"
           }`}
           onClick={handleClose}
         >
@@ -1184,8 +1184,8 @@ function MobileFAQs() {
                   : closedTransform,
                 opacity: isOpen ? 1 : 0,
                 transition: isOpen
-                  ? "transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 280ms ease-out"
-                  : "transform 380ms cubic-bezier(0.55, 0, 1, 0.45), opacity 320ms ease-in",
+                  ? "transform 150ms cubic-bezier(0.32, 0.72, 0, 1), opacity 120ms ease-out"
+                  : "transform 150ms cubic-bezier(0.55, 0, 1, 0.45), opacity 120ms ease-in",
               }}
               className="relative w-full h-[400px]"
               // Swipe on card stack
@@ -1226,7 +1226,7 @@ function MobileFAQs() {
                 let transform = "translate(0px, 0px) rotate(0deg) scale(1)";
                 let zIndex = 10;
                 let opacity = 1;
-                let transition = "transform 260ms cubic-bezier(0.2,0.9,0.3,1.15), opacity 200ms ease";
+                let transition = "transform 150ms cubic-bezier(0.32, 0.72, 0, 1), opacity 120ms ease";
 
                 if (!isOpen) {
                   transform = "translate(0px, 0px) rotate(0deg) scale(0.96)";
@@ -1236,15 +1236,20 @@ function MobileFAQs() {
                     // Fly out left or right depending on direction
                     transform = `translate(${dir > 0 ? 280 : -280}px, -30px) rotate(${dir > 0 ? 18 : -18}deg) scale(0.92)`;
                     zIndex = 50;
-                    transition = "transform 200ms cubic-bezier(0.4, 0, 1, 1)";
+                    transition = "transform 150ms cubic-bezier(0.55, 0, 1, 0.45)";
                   } else {
                     // Return to back of stack
                     transform = "translate(6px, -28px) rotate(4deg) scale(0.91)";
                     zIndex = 1;
-                    transition = "transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
+                    transition = "transform 150ms cubic-bezier(0.32, 0.72, 0, 1)";
                   }
                 } else if (flickState?.phase === "out") {
-                  if (diff === 1) { zIndex = 30; transform = "translate(0px, 0px) rotate(0deg) scale(1)"; }
+                  if (dir < 0 && diff === 0) {
+                    // Prev: incoming top card — start from left, animate to center
+                    zIndex = 35;
+                    transform = "translate(-60px, 0px) rotate(-4deg) scale(0.96)";
+                    transition = "transform 150ms cubic-bezier(0.32, 0.72, 0, 1)";
+                  } else if (diff === 1) { zIndex = 30; transform = "translate(0px, 0px) rotate(0deg) scale(1)"; }
                   else if (diff === 2) { zIndex = 20; transform = "translate(10px, -10px) rotate(3deg) scale(0.97)"; }
                   else if (diff === 3) { zIndex = 10; transform = "translate(-10px, -20px) rotate(-3deg) scale(0.94)"; }
                   else { zIndex = 0; opacity = 0; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
@@ -1291,7 +1296,7 @@ function MobileFAQs() {
 
             {/* Bottom controls */}
             <div
-              className={`mt-5 flex items-center justify-between w-full px-1 transition-all duration-300 ${
+              className={`mt-5 flex items-center justify-between w-full px-1 transition-all duration-150 ${
                 isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
               }`}
             >
@@ -1306,7 +1311,7 @@ function MobileFAQs() {
                     type="button"
                     onClick={() => setCardIndex(i)}
                     aria-label={`Go to question ${i + 1}`}
-                    className={`h-1.5 transition-all duration-300 cursor-pointer rounded-full ${
+                    className={`h-1.5 transition-all duration-150 cursor-pointer rounded-full ${
                       i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
                     }`}
                   />
