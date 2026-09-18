@@ -73,7 +73,7 @@ export default function MobileTracksDeck() {
     <div className="relative w-full my-6 flex flex-col items-center select-none">
       {/* Card Stage */}
       <div
-        className="relative w-full max-w-[420px] h-[300px] sm:h-[320px] cursor-grab active:cursor-grabbing"
+        className="relative w-full max-w-[420px] h-[350px] sm:h-[360px] cursor-grab active:cursor-grabbing"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -94,10 +94,10 @@ export default function MobileTracksDeck() {
           <motion.div
             key={activeIndex}
             custom={direction}
-            initial={{ opacity: 0, x: direction > 0 ? 60 : -60, scale: 0.96, rotate: direction > 0 ? 2 : -2 }}
+            initial={{ opacity: 0, x: direction > 0 ? 50 : -50, scale: 0.96, rotate: direction > 0 ? 1.5 : -1.5 }}
             animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
-            exit={{ opacity: 0, x: direction > 0 ? -60 : 60, scale: 0.96, rotate: direction > 0 ? -2 : 2 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, x: direction > 0 ? -50 : 50, scale: 0.96, rotate: direction > 0 ? -1.5 : 1.5 }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 rounded-[22px] overflow-hidden shadow-[0_24px_50px_-10px_rgba(0,0,0,0.7),0_8px_18px_rgba(0,0,0,0.3),inset_0_1.5px_0_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.2),inset_0_0_0_1.2px_rgba(0,0,0,0.12)] border border-black/15 flex flex-col justify-between px-5 py-4 sm:px-6 sm:py-5"
             style={{ backgroundColor: currentColor, color: ink }}
           >
@@ -116,10 +116,10 @@ export default function MobileTracksDeck() {
             </div>
 
             {/* Middle: title + blurb + visual */}
-            <div className="flex items-start gap-3 flex-1 py-2">
+            <div className="flex items-start gap-3.5 flex-1 py-1.5 min-h-0">
               <div className="min-w-0 flex-1">
                 <h3
-                  className={`font-rotonto font-bold uppercase leading-[1.12] tracking-tight ${
+                  className={`font-rotonto font-bold uppercase leading-[1.12] tracking-tight whitespace-normal break-words ${
                     currentTrack.title.length > 30
                       ? "text-[15px]"
                       : currentTrack.title.length > 20
@@ -129,7 +129,7 @@ export default function MobileTracksDeck() {
                 >
                   {currentTrack.title}
                 </h3>
-                <p className="mt-2 font-rotonto text-[11px] sm:text-[12px] leading-relaxed opacity-90 line-clamp-4 text-justify">
+                <p className="mt-2 font-rotonto text-[11px] sm:text-[12px] leading-relaxed opacity-90 whitespace-normal break-words text-left">
                   {currentTrack.blurb}
                 </p>
               </div>
@@ -137,8 +137,8 @@ export default function MobileTracksDeck() {
                 slot={activeIndex}
                 ink={ink}
                 rule={rule}
-                size={44}
-                className="shrink-0 size-[44px] mt-0.5"
+                size={58}
+                className="shrink-0 size-[58px] sm:size-[64px] mt-0.5"
               />
             </div>
 

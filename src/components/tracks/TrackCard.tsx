@@ -157,7 +157,7 @@ export function TrackCard({
               {title}
             </h3>
             {subtitle && (
-              <p className="font-rotonto text-xs opacity-75 line-clamp-2">
+              <p className="font-rotonto text-xs opacity-75 whitespace-normal break-words">
                 {subtitle}
               </p>
             )}

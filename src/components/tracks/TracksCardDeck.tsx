@@ -870,9 +870,9 @@ export function TracksCardDeck() {
                                 slot={slot}
                                 ink={ink}
                                 rule={rule}
-                                size={110}
+                                size={135}
                                 is2x
-                                className="h-[220px] w-[190px]"
+                                className="h-[230px] w-[210px]"
                               />
                             </div>
 
