@@ -46,6 +46,19 @@ interface RecapProps {
 export const RECAP: FC<RecapProps> = ({ inView = true }) => {
   const [stampTrigger, setStampTrigger] = useState(false);
   const [hasRolledOut, setHasRolledOut] = useState(false);
+  const [rolloutDuration, setRolloutDuration] = useState(12);
+
+  useEffect(() => {
+    const updateDuration = () => {
+      const vw = typeof window !== "undefined" ? window.innerWidth : 1440;
+      const distance = Math.max(100, vw - 174 - 54);
+      const speed = 3040 / 30; // 101.33 px/s
+      setRolloutDuration(distance / speed);
+    };
+    updateDuration();
+    window.addEventListener("resize", updateDuration);
+    return () => window.removeEventListener("resize", updateDuration);
+  }, []);
 
   useEffect(() => {
     if (inView && !hasRolledOut) {
@@ -149,12 +162,20 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         className={`film-strip-group absolute top-[198px] left-[174px] h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-10 film-rollout-container ${
           hasRolledOut ? "film-deployed" : ""
         }`}
+        style={{
+          transition: hasRolledOut
+            ? `width ${rolloutDuration.toFixed(2)}s linear`
+            : undefined,
+        }}
       >
         {/* Leading 35mm Film Leader Tongue - Physical leader pulling film out */}
         <div
-          className={`absolute top-0 right-0 z-30 transition-opacity duration-500 pointer-events-none ${
-            hasRolledOut ? "opacity-0 delay-[1900ms]" : "opacity-100"
+          className={`absolute top-0 right-0 z-30 transition-opacity duration-700 pointer-events-none ${
+            hasRolledOut ? "opacity-0" : "opacity-100"
           }`}
+          style={{
+            transitionDelay: hasRolledOut ? `${Math.max(0, rolloutDuration - 0.4).toFixed(2)}s` : "0s",
+          }}
         >
           <FilmLeader />
         </div>
@@ -237,14 +258,7 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
       </div>
 
       {/* 35mm Film Roll Canister Assembly */}
-      <div
-        className="relative z-20"
-        style={{
-          transform: inView ? "translateX(0)" : "translateX(-24px)",
-          opacity: inView ? 1 : 0,
-          transition: "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.7s ease 0.1s",
-        }}
-      >
+      <div className="relative z-20">
         <FilmCanister />
       </div>
 

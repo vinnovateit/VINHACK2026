@@ -284,7 +284,9 @@ body {
 .film-strip-group:hover .film-marquee-track,
 .film-strip-group:hover .film-sprocket-track,
 .film-marquee-track:hover,
-.film-sprocket-track:hover {
+.film-sprocket-track:hover,
+.film-rollout-container:not(.film-deployed) .film-marquee-track,
+.film-rollout-container:not(.film-deployed) .film-sprocket-track {
   animation-play-state: paused;
 }
 
@@ -432,7 +434,7 @@ body {
 /* Physical 35mm Film Rollout emerging from Canister Mouth */
 .film-rollout-container {
   width: 54px;
-  transition: width 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 12s linear;
   will-change: width;
 }
 
@@ -443,7 +445,7 @@ body {
 @media (max-width: 768px) {
   .film-rollout-container {
     width: 34px;
-    transition: width 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 10s linear;
   }
 
   .film-rollout-container.film-deployed {

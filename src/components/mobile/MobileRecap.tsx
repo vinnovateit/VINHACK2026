@@ -36,6 +36,19 @@ export default function MobileRecap() {
   const [sectionRef, inView] = useInView<HTMLElement>(0.15);
   const [stampTrigger, setStampTrigger] = useState(false);
   const [hasRolledOut, setHasRolledOut] = useState(false);
+  const [rolloutDuration, setRolloutDuration] = useState(10);
+
+  useEffect(() => {
+    const updateDuration = () => {
+      const vw = typeof window !== "undefined" ? window.innerWidth : 390;
+      const distance = Math.max(80, vw - 64 - 34);
+      const speed = 835 / 30; // 27.83 px/s
+      setRolloutDuration(distance / speed);
+    };
+    updateDuration();
+    window.addEventListener("resize", updateDuration);
+    return () => window.removeEventListener("resize", updateDuration);
+  }, []);
 
   useEffect(() => {
     if (inView && !hasRolledOut) {
@@ -127,12 +140,20 @@ export default function MobileRecap() {
           className={`film-strip-group absolute left-[64px] top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10 film-rollout-container ${
             hasRolledOut ? "film-deployed" : ""
           }`}
+          style={{
+            transition: hasRolledOut
+              ? `width ${rolloutDuration.toFixed(2)}s linear`
+              : undefined,
+          }}
         >
           {/* Leading 35mm Film Leader Tongue */}
           <div
             className={`absolute top-0 right-0 z-30 transition-opacity duration-500 pointer-events-none ${
-              hasRolledOut ? "opacity-0 delay-[1600ms]" : "opacity-100"
+              hasRolledOut ? "opacity-0" : "opacity-100"
             }`}
+            style={{
+              transitionDelay: hasRolledOut ? `${Math.max(0, rolloutDuration - 0.3).toFixed(2)}s` : "0s",
+            }}
           >
             <FilmLeader isMobile />
           </div>
