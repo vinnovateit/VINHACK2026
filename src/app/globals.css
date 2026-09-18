@@ -65,6 +65,45 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Custom VinHack Angled V Cursor (#FA1A1D) — Pure CSS, Sized 32x32, Dual-Outline, Active Click State */
+@media (pointer: fine) {
+  :root,
+  body {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M2 2L26 9L21 14L11.5 11.5L14 21L9 26Z' fill='%23FA1A1D' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M2 2L26 9L21 14L11.5 11.5L14 21L9 26Z' fill='%23FA1A1D' stroke='%23000000' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") 2 2, auto;
+  }
+
+  a,
+  button,
+  [role="button"],
+  [role="switch"],
+  .cursor-pointer {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M2 2L26 9L21 14L11.5 11.5L14 21L9 26Z' fill='%23FA1A1D' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M2 2L26 9L21 14L11.5 11.5L14 21L9 26Z' fill='%23FA1A1D' stroke='%23000000' stroke-width='1.2' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23ffffff' stroke='%23000000' stroke-width='1.2'/%3E%3C/svg%3E") 2 2, pointer;
+  }
+
+  /* Click Animation: Recoil compression + bright punch dot on press */
+  :active,
+  body:active,
+  a:active,
+  button:active,
+  [role="button"]:active,
+  [role="switch"]:active,
+  .cursor-pointer:active {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M3 3L23 9.5L19 13.5L11.5 11.5L13.5 19L9.5 23Z' fill='%23FA1A1D' stroke='%23ffffff' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M3 3L23 9.5L19 13.5L11.5 11.5L13.5 19L9.5 23Z' fill='%23FA1A1D' stroke='%23000000' stroke-width='1.2' stroke-linejoin='round'/%3E%3Ccircle cx='15' cy='15' r='4.5' fill='%23BFEA88' stroke='%23000000' stroke-width='1.2'/%3E%3C/svg%3E") 3 3, pointer !important;
+  }
+
+  input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+
+  :disabled,
+  [aria-disabled="true"],
+  .cursor-not-allowed {
+    cursor: not-allowed;
+  }
+}
+
 /* Hide the scrollbars themselves across browsers. */
 * {
   scrollbar-width: none;
