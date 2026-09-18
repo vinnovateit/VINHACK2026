@@ -35,6 +35,11 @@ export default function FAQsSection() {
     requestAnimationFrame(() => requestAnimationFrame(() => setIsOpen(true)));
   }, [isOpen]);
 
+  const distance = origin ? Math.hypot(origin.x, origin.y) : 250;
+  // Distance-scaled travel duration: 150ms minimum up to ~420ms for cards travelling from far edges
+  const travelDuration = Math.round(Math.min(420, Math.max(150, 150 + distance * 0.35)));
+  const opacityDuration = Math.round(travelDuration * 0.75);
+
   const handleClose = useCallback(() => {
     if (!isOpen) return;
     setIsOpen(false);
@@ -42,8 +47,8 @@ export default function FAQsSection() {
       setActiveCategory(null);
       setFlickState(null);
       setOrigin(null);
-    }, 160);
-  }, [isOpen]);
+    }, travelDuration + 20);
+  }, [isOpen, travelDuration]);
 
   const handleNext = useCallback(() => {
     if (!activeCategory || flickState) return;
@@ -220,10 +225,11 @@ export default function FAQsSection() {
           role="dialog"
           aria-modal="true"
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
+          style={{ transitionDuration: `${travelDuration}ms` }}
           className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default touch-none ${
             isOpen
-              ? "bg-black/90 transition-[background-color] duration-150 ease-out"
-              : "bg-black/0 transition-[background-color] duration-150 ease-in pointer-events-none"
+              ? "bg-black/90 transition-[background-color] ease-out"
+              : "bg-black/0 transition-[background-color] ease-in pointer-events-none"
           }`}
           onClick={handleClose}
         >
@@ -249,8 +255,8 @@ export default function FAQsSection() {
                   : closedTransform,
                 opacity: isOpen ? 1 : 0,
                 transition: isOpen
-                  ? "transform 150ms cubic-bezier(0.32, 0.72, 0, 1), opacity 120ms ease-out"
-                  : "transform 150ms cubic-bezier(0.55, 0, 1, 0.45), opacity 120ms ease-in",
+                  ? `transform ${travelDuration}ms cubic-bezier(0.32, 0.72, 0, 1), opacity ${opacityDuration}ms ease-out`
+                  : `transform ${travelDuration}ms cubic-bezier(0.55, 0, 1, 0.45), opacity ${opacityDuration}ms ease-in`,
               }}
               className="relative w-[340px] sm:w-[480px] h-[460px] sm:h-[480px] cursor-pointer"
             >
@@ -262,7 +268,11 @@ export default function FAQsSection() {
                   handleClose();
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleClose();
+                }}
               >
                 <KeyButton color="red" size="compact" className="w-[112px] sm:w-[124px]" icon={<X size={16} className="stroke-[2.5]" />} onClick={handleClose} aria-label="Close">
                   CLOSE

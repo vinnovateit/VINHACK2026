@@ -1175,7 +1175,7 @@ function MobileFAQs() {
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
           className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default touch-none ${
             isOpen
-              ? "bg-black/85 transition-[background-color] duration-150 ease-out"
+              ? "bg-black/90 transition-[background-color] duration-150 ease-out"
               : "bg-black/0 transition-[background-color] duration-150 ease-in pointer-events-none"
           }`}
           onClick={handleClose}
@@ -1209,14 +1209,18 @@ function MobileFAQs() {
               {/* Close button above stack */}
               <div
                 className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
-                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+                  isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClose();
                 }}
                 onTouchStart={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleClose();
+                }}
               >
                 <KeyButton
                   color="red"
