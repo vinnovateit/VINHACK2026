@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -963,71 +963,90 @@ function MobileGuidelines() {
 
 function MobileFAQs() {
   const [activeCategory, setActiveCategory] = useState<FaqCategory | null>(null);
-  const [openingCardId, setOpeningCardId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [cardIndex, setCardIndex] = useState<number>(0);
-  const [flickState, setFlickState] = useState<{ outgoingIndex: number; phase: "out" | "return" } | null>(null);
+  const [flickState, setFlickState] = useState<{ outgoingIndex: number; direction: 1 | -1; phase: "out" | "return" } | null>(null);
+  // Origin of the paper stack in viewport coords (center of clicked folder card)
+  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
+  // Refs for each folder card in the grid
+  const folderRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // Touch swipe on card stack
+  const swipeTouchStartX = useRef<number | null>(null);
 
-  const handleOpen = (category: FaqCategory) => {
-    if (openingCardId) return;
-    setOpeningCardId(category.id);
+  const handleOpen = useCallback((category: FaqCategory, folderId: string) => {
+    if (isOpen) return;
+    const el = folderRefs.current.get(folderId);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      // Center of folder card in viewport
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      // Center of viewport
+      const vx = window.innerWidth / 2;
+      const vy = window.innerHeight / 2;
+      setOrigin({ x: cx - vx, y: cy - vy });
+    } else {
+      setOrigin(null);
+    }
     setCardIndex(0);
     setFlickState(null);
-    setIsOpen(false);
     setActiveCategory(category);
+    // next frame: trigger open
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsOpen(true));
+    });
+  }, [isOpen]);
 
-    setTimeout(() => {
-      setIsOpen(true);
-    }, 40);
-  };
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isOpen) return;
     setIsOpen(false);
     setTimeout(() => {
       setActiveCategory(null);
-      setOpeningCardId(null);
       setFlickState(null);
-    }, 380);
-  };
+      setOrigin(null);
+    }, 420);
+  }, [isOpen]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!activeCategory || flickState) return;
     const currentIdx = cardIndex;
     const nextIdx = (currentIdx + 1) % activeCategory.questions.length;
-
-    setFlickState({ outgoingIndex: currentIdx, phase: "out" });
-
+    setFlickState({ outgoingIndex: currentIdx, direction: 1, phase: "out" });
     setTimeout(() => {
       setCardIndex(nextIdx);
-      setFlickState({ outgoingIndex: currentIdx, phase: "return" });
+      setFlickState({ outgoingIndex: currentIdx, direction: 1, phase: "return" });
+      setTimeout(() => setFlickState(null), 260);
+    }, 200);
+  }, [activeCategory, cardIndex, flickState]);
 
-      setTimeout(() => {
-        setFlickState(null);
-      }, 260);
-    }, 220);
-  };
-
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (!activeCategory || flickState) return;
-    setCardIndex((prev) => (prev - 1 + activeCategory.questions.length) % activeCategory.questions.length);
-  };
+    const currentIdx = cardIndex;
+    const prevIdx = (currentIdx - 1 + activeCategory.questions.length) % activeCategory.questions.length;
+    setFlickState({ outgoingIndex: currentIdx, direction: -1, phase: "out" });
+    setTimeout(() => {
+      setCardIndex(prevIdx);
+      setFlickState({ outgoingIndex: currentIdx, direction: -1, phase: "return" });
+      setTimeout(() => setFlickState(null), 260);
+    }, 200);
+  }, [activeCategory, cardIndex, flickState]);
 
-  // Keyboard navigation
+  // Keyboard nav
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (!activeCategory) return;
-      if (e.key === "Escape") {
-        handleClose();
-      } else if (e.key === "ArrowRight" || e.key === " ") {
-        handleNext();
-      } else if (e.key === "ArrowLeft") {
-        handlePrev();
-      }
+      if (e.key === "Escape") handleClose();
+      else if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); handleNext(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); handlePrev(); }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeCategory, flickState, isOpen]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeCategory, handleClose, handleNext, handlePrev]);
+
+  // Compute closed-state transform from measured origin
+  const closedTransform = origin
+    ? `translate3d(${origin.x.toFixed(1)}px, ${origin.y.toFixed(1)}px, 0px) scale(0.28) rotate(-3deg)`
+    : `translate3d(0px, 60px, 0px) scale(0.28) rotate(-3deg)`;
 
   return (
     <section
@@ -1041,21 +1060,22 @@ function MobileFAQs() {
         </h2>
       </div>
 
-      {/* 2x2 Grid of Folder Cards */}
+      {/* 2×2 Grid of Folder Cards */}
       <div className="grid grid-cols-2 gap-3.5 sm:gap-4 max-w-[440px] mx-auto w-full">
         {FAQS.categories.map((category) => {
           const frontPaper = category.questions[0];
-
           return (
             <div
               key={category.id}
-              onClick={() => handleOpen(category)}
+              ref={(node) => {
+                if (node) folderRefs.current.set(category.id, node);
+                else folderRefs.current.delete(category.id);
+              }}
+              onClick={() => handleOpen(category, category.id)}
               role="button"
               tabIndex={0}
               aria-label={`${category.subtitle} FAQs`}
-              className={`group relative h-[345px] w-full cursor-pointer transition-all duration-300 ease-out active:scale-[0.96] ${
-                openingCardId === category.id ? "scale-[1.03] -translate-y-2 z-20 shadow-xl" : ""
-              }`}
+              className="group relative h-[345px] w-full cursor-pointer transition-all duration-300 ease-out active:scale-[0.96]"
             >
               {/* Back Plate */}
               <div
@@ -1063,66 +1083,23 @@ function MobileFAQs() {
                 style={{ backgroundColor: category.color }}
               />
 
-              {/* Fanned Paper Sheets Inside Pocket */}
-              <div
-                className={`absolute bottom-[20px] left-0 right-0 h-[315px] pointer-events-none transition-transform duration-300 ease-out ${
-                  openingCardId === category.id ? "-translate-y-12" : ""
-                }`}
-              >
-                {/* Sheet 1 */}
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-5 left-[6%] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-[18px] rotate-[2.5deg] origin-bottom"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
-                  }}
-                />
-
-                {/* Sheet 2 */}
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-3 left-[6%] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-[18px] rotate-[1deg] origin-bottom"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
-                  }}
-                />
-
-                {/* Sheet 3 */}
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-2.5 left-[6%] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-[18px] rotate-[-1deg] origin-bottom"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
-                  }}
-                />
-
+              {/* Fanned Paper Sheets */}
+              <div className="absolute bottom-[20px] left-0 right-0 h-[315px] pointer-events-none">
+                <div aria-hidden className="absolute bottom-5 left-[6%] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-[18px] rotate-[2.5deg] origin-bottom" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)" }} />
+                <div aria-hidden className="absolute bottom-3 left-[6%] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-[18px] rotate-[1deg] origin-bottom" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)" }} />
+                <div aria-hidden className="absolute bottom-2.5 left-[6%] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-[18px] rotate-[-1deg] origin-bottom" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)" }} />
                 {/* Sheet 4 (Front Main Paper) */}
                 <div className="absolute bottom-0 left-[4%] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-[18px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start">
                   <div className="pt-2 px-2.5">
-                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase truncate">
-                      {category.subtitle}
-                    </div>
+                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase truncate">{category.subtitle}</div>
                   </div>
                   <div className="mt-1 border-t border-[#8cd6ee]" />
-                  <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">
-                    1. {frontPaper.q}
-                  </div>
+                  <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">1. {frontPaper.q}</div>
                   <div className="border-t border-[#8cd6ee]" />
-                  <div
-                    className="flex-1 p-2"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(140, 214, 238, 0.35) 12px, rgba(140, 214, 238, 0.35) 13px)",
-                    }}
-                  >
+                  <div className="flex-1 p-2" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(140, 214, 238, 0.35) 12px, rgba(140, 214, 238, 0.35) 13px)" }}>
                     <div className="flex items-start gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-black shrink-0 mt-0.5" />
-                      <span className="font-rotonto text-[8px] leading-tight text-neutral-800 line-clamp-4">
-                        {frontPaper.a}
-                      </span>
+                      <span className="font-rotonto text-[8px] leading-tight text-neutral-800 line-clamp-4">{frontPaper.a}</span>
                     </div>
                   </div>
                 </div>
@@ -1130,41 +1107,14 @@ function MobileFAQs() {
 
               {/* Pocket Front Flap */}
               <div className="absolute bottom-0 left-0 right-0 h-[220px] pointer-events-none">
-                <svg
-                  viewBox="0 0 160 220"
-                  fill="none"
-                  className="w-full h-full block"
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
-                    fill={category.color}
-                  />
-                  <path
-                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
-                    stroke="#000000"
-                    strokeWidth="0.8"
-                  />
-                  <line
-                    x1="10"
-                    y1="202"
-                    x2="150"
-                    y2="202"
-                    stroke="rgba(0,0,0,0.35)"
-                    strokeWidth="0.8"
-                  />
+                <svg viewBox="0 0 160 220" fill="none" className="w-full h-full block" preserveAspectRatio="none">
+                  <path d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z" fill={category.color} />
+                  <path d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z" stroke="#000000" strokeWidth="0.8" />
+                  <line x1="10" y1="202" x2="150" y2="202" stroke="rgba(0,0,0,0.35)" strokeWidth="0.8" />
                 </svg>
-
-                {/* Title (Right-aligned 3-line) */}
                 <div className="absolute bottom-[46px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
-                  {category.title[0]}
-                  <br />
-                  {category.title[1]}
-                  <br />
-                  {category.title[2]}
+                  {category.title[0]}<br />{category.title[1]}<br />{category.title[2]}
                 </div>
-
-                {/* Subtitle */}
                 <div className="absolute bottom-[28px] right-[10px] font-rotonto font-light text-[9.5px] text-right tracking-wide lowercase text-black max-w-[90%] truncate">
                   {category.subtitle}
                 </div>
@@ -1174,7 +1124,7 @@ function MobileFAQs() {
         })}
       </div>
 
-      {/* Interactive Paper Stack Modal Dialog */}
+      {/* Modal */}
       {activeCategory && (
         <div
           role="dialog"
@@ -1182,217 +1132,153 @@ function MobileFAQs() {
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
           className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 cursor-default ${
             isOpen
-              ? "bg-black/90 opacity-100 transition-opacity duration-300 ease-out"
-              : "bg-black/0 opacity-0 transition-opacity duration-300 ease-in pointer-events-none"
+              ? "bg-black/85 transition-[background-color] duration-350 ease-out"
+              : "bg-black/0 transition-[background-color] duration-300 ease-in pointer-events-none"
           }`}
           onClick={handleClose}
         >
-          {/* Deck Container */}
-          <div className="relative flex flex-col items-center justify-center w-full max-w-[320px] sm:max-w-[340px]">
-            {/* === The Stack of Pages (Tap to advance) === */}
-            {(() => {
-              const catIdx = activeCategory ? FAQS.categories.findIndex((c) => c.id === activeCategory.id) : 0;
-              const col = catIdx % 2;
-              const row = Math.floor(catIdx / 2);
-              const mobileX = col === 0 ? -85 : 85;
-              const mobileY = row === 0 ? 220 : 380;
-
-              return (
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleNext();
-                  }}
-                  style={{
-                    transform: isOpen
-                      ? "translate3d(0px, 0px, 0px) scale(1) rotate(0deg)"
-                      : `translate3d(${mobileX}px, ${mobileY}px, 0px) scale(0.32) rotate(-3deg)`,
-                    opacity: isOpen ? 1 : 0,
-                    transition: "transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 380ms ease-in-out",
-                  }}
-                  className="relative w-full h-[400px] cursor-pointer"
-                >
-                  {/* Close Key Button Attached Above Paper */}
-                  <div
-                    className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
-                      isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-                    }`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <KeyButton
-                      color="red"
-                      size="compact"
-                      className="w-[102px] sm:w-[114px]"
-                      icon={<X size={15} className="stroke-[2.5]" />}
-                      onClick={handleClose}
-                      aria-label="Close"
-                    >
-                      CLOSE
-                    </KeyButton>
-                  </div>
-
-                  {activeCategory.questions.map((faq, idx) => {
-                    const total = activeCategory.questions.length;
-                    const diff = (idx - cardIndex + total) % total;
-                    const isOutgoing = flickState?.outgoingIndex === idx;
-
-                    let transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
-                    let zIndex = 10;
-                    let opacity = 1;
-                    let transitionStyle = "all 260ms cubic-bezier(0.2,0.9,0.3,1.15)";
-
-                    if (!isOpen) {
-                      transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
-                      opacity = diff === 0 ? 1 : 0.85;
-                      zIndex = 10;
-                    } else if (isOutgoing) {
-                      if (flickState.phase === "out") {
-                        transformStyle = "translate(260px, -35px) rotate(18deg) scale(0.95)";
-                        zIndex = 50;
-                        opacity = 1;
-                        transitionStyle = "transform 220ms ease-out";
-                      } else {
-                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                        zIndex = 1;
-                        opacity = 1;
-                        transitionStyle = "transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
-                      }
-                    } else if (flickState?.phase === "out") {
-                      if (diff === 1) {
-                        zIndex = 30;
-                        transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
-                      } else if (diff === 2) {
-                        zIndex = 20;
-                        transformStyle = "translate(10px, -10px) rotate(3deg) scale(0.97)";
-                      } else if (diff === 3) {
-                        zIndex = 10;
-                        transformStyle = "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
-                      } else {
-                        zIndex = 0;
-                        opacity = 0;
-                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                      }
-                    } else {
-                      if (diff === 0) {
-                        zIndex = 30;
-                        transformStyle = "translate(0px, 0px) rotate(0deg) scale(1)";
-                      } else if (diff === 1) {
-                        zIndex = 20;
-                        transformStyle = "translate(10px, -10px) rotate(3deg) scale(0.97)";
-                      } else if (diff === 2) {
-                        zIndex = 10;
-                        transformStyle = "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
-                      } else if (diff === 3) {
-                        zIndex = 5;
-                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                      } else {
-                        zIndex = 0;
-                        opacity = 0;
-                        transformStyle = "translate(6px, -30px) rotate(4deg) scale(0.91)";
-                      }
-                    }
-
-                    if (diff > 3 && !isOutgoing) return null;
-                    const isTop = diff === 0 && !flickState;
-
-                    return (
-                      <div
-                        key={faq.q}
-                        style={{
-                          transform: transformStyle,
-                          zIndex,
-                          opacity,
-                          transition: transitionStyle,
-                        }}
-                        className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 rounded-[18px] shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
-                          isTop ? "cursor-pointer" : "pointer-events-none"
-                        }`}
-                      >
-                        {/* Header */}
-                        <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
-                          <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
-                            FAQ
-                          </span>
-                          <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
-                            {activeCategory.subtitle}
-                          </span>
-                        </div>
-
-                        {/* Main Question */}
-                        <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
-                          <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
-                            {idx + 1}. {faq.q}
-                          </h3>
-                        </div>
-
-                        {/* Answer Content */}
-                        <div
-                          className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
-                          style={{
-                            backgroundImage:
-                              "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)",
-                          }}
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
-                            <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">
-                              {faq.a}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-
-            {/* Bottom Controls Bar (Prev Button, Pagination Dots, Next Button) */}
+          <div
+            className="relative flex flex-col items-center justify-center w-full max-w-[320px] sm:max-w-[340px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Paper stack — animated from measured origin */}
             <div
-              onClick={(e) => e.stopPropagation()}
+              style={{
+                transform: isOpen
+                  ? "translate3d(0px, 0px, 0px) scale(1) rotate(0deg)"
+                  : closedTransform,
+                opacity: isOpen ? 1 : 0,
+                transition: isOpen
+                  ? "transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 280ms ease-out"
+                  : "transform 380ms cubic-bezier(0.55, 0, 1, 0.45), opacity 320ms ease-in",
+              }}
+              className="relative w-full h-[400px]"
+              // Swipe on card stack
+              onTouchStart={(e) => { swipeTouchStartX.current = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                if (swipeTouchStartX.current === null) return;
+                const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
+                swipeTouchStartX.current = null;
+                if (Math.abs(dx) < 40) return;
+                if (dx < 0) handleNext(); else handlePrev();
+              }}
+            >
+              {/* Close button above stack */}
+              <div
+                className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
+                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+                }`}
+              >
+                <KeyButton
+                  color="red"
+                  size="compact"
+                  className="w-[102px] sm:w-[114px]"
+                  icon={<X size={15} className="stroke-[2.5]" />}
+                  onClick={handleClose}
+                  aria-label="Close"
+                >
+                  CLOSE
+                </KeyButton>
+              </div>
+
+              {/* Cards */}
+              {activeCategory.questions.map((faq, idx) => {
+                const total = activeCategory.questions.length;
+                const diff = (idx - cardIndex + total) % total;
+                const isOutgoing = flickState?.outgoingIndex === idx;
+                const dir = flickState?.direction ?? 1;
+
+                let transform = "translate(0px, 0px) rotate(0deg) scale(1)";
+                let zIndex = 10;
+                let opacity = 1;
+                let transition = "transform 260ms cubic-bezier(0.2,0.9,0.3,1.15), opacity 200ms ease";
+
+                if (!isOpen) {
+                  transform = "translate(0px, 0px) rotate(0deg) scale(0.96)";
+                  opacity = diff === 0 ? 1 : 0.85;
+                } else if (isOutgoing) {
+                  if (flickState!.phase === "out") {
+                    // Fly out left or right depending on direction
+                    transform = `translate(${dir > 0 ? 280 : -280}px, -30px) rotate(${dir > 0 ? 18 : -18}deg) scale(0.92)`;
+                    zIndex = 50;
+                    transition = "transform 200ms cubic-bezier(0.4, 0, 1, 1)";
+                  } else {
+                    // Return to back of stack
+                    transform = "translate(6px, -28px) rotate(4deg) scale(0.91)";
+                    zIndex = 1;
+                    transition = "transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
+                  }
+                } else if (flickState?.phase === "out") {
+                  if (diff === 1) { zIndex = 30; transform = "translate(0px, 0px) rotate(0deg) scale(1)"; }
+                  else if (diff === 2) { zIndex = 20; transform = "translate(10px, -10px) rotate(3deg) scale(0.97)"; }
+                  else if (diff === 3) { zIndex = 10; transform = "translate(-10px, -20px) rotate(-3deg) scale(0.94)"; }
+                  else { zIndex = 0; opacity = 0; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
+                } else {
+                  if (diff === 0) { zIndex = 30; transform = "translate(0px, 0px) rotate(0deg) scale(1)"; }
+                  else if (diff === 1) { zIndex = 20; transform = "translate(10px, -10px) rotate(3deg) scale(0.97)"; }
+                  else if (diff === 2) { zIndex = 10; transform = "translate(-10px, -20px) rotate(-3deg) scale(0.94)"; }
+                  else if (diff === 3) { zIndex = 5; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
+                  else { zIndex = 0; opacity = 0; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
+                }
+
+                if (diff > 3 && !isOutgoing) return null;
+                const isTop = diff === 0 && !flickState;
+
+                return (
+                  <div
+                    key={faq.q}
+                    style={{ transform, zIndex, opacity, transition }}
+                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 rounded-[18px] shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
+                      isTop ? "cursor-pointer" : "pointer-events-none"
+                    }`}
+                    onClick={isTop ? handleNext : undefined}
+                  >
+                    <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
+                      <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">FAQ</span>
+                      <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">{activeCategory.subtitle}</span>
+                    </div>
+                    <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
+                      <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">{idx + 1}. {faq.q}</h3>
+                    </div>
+                    <div
+                      className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
+                      style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)" }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
+                        <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">{faq.a}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom controls */}
+            <div
               className={`mt-5 flex items-center justify-between w-full px-1 transition-all duration-300 ${
                 isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
               }`}
             >
-              {/* Left Key Button */}
-              <KeyButton
-                color="blue"
-                size="compact"
-                className="w-[50px] sm:w-[56px]"
-                onClick={() => handlePrev()}
-                aria-label="Previous question"
-                title="Previous question"
-              >
+              <KeyButton color="blue" size="compact" className="w-[50px] sm:w-[56px]" onClick={handlePrev} aria-label="Previous question">
                 <ChevronLeft size={20} className="stroke-[2.5]" />
               </KeyButton>
 
-              {/* Pagination Dots */}
               <div className="flex items-center gap-1.5">
                 {activeCategory.questions.map((_, i) => (
                   <button
                     key={i}
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCardIndex(i);
-                    }}
+                    onClick={() => setCardIndex(i)}
                     aria-label={`Go to question ${i + 1}`}
-                    className={`h-1.5 transition-all duration-300 cursor-pointer ${
+                    className={`h-1.5 transition-all duration-300 cursor-pointer rounded-full ${
                       i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
                     }`}
                   />
                 ))}
               </div>
 
-              {/* Right Key Button */}
-              <KeyButton
-                color="blue"
-                size="compact"
-                className="w-[50px] sm:w-[56px]"
-                onClick={() => handleNext()}
-                aria-label="Next question"
-                title="Next question"
-              >
+              <KeyButton color="blue" size="compact" className="w-[50px] sm:w-[56px]" onClick={handleNext} aria-label="Next question">
                 <ChevronRight size={20} className="stroke-[2.5]" />
               </KeyButton>
             </div>
