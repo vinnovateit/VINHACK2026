@@ -86,7 +86,7 @@ export default function MobileTracksDeck() {
     <div className="relative w-full my-6 flex flex-col items-center select-none">
       {/* Card Stage */}
       <div
-        className="relative w-full max-w-[430px] h-[375px] sm:h-[390px] cursor-grab active:cursor-grabbing"
+        className="relative w-full max-w-[430px] h-[310px] sm:h-[330px] cursor-grab active:cursor-grabbing"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -153,29 +153,6 @@ export default function MobileTracksDeck() {
                 size={64}
                 className="shrink-0 size-[64px] sm:size-[72px] mt-0.5"
               />
-            </div>
-
-            {/* Bottom: tags and label badge utilizing card space properly */}
-            <div className="mt-auto pt-3 border-t border-current/20 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {"tags" in currentTrack &&
-                  currentTrack.tags?.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-md px-2 py-0.5 font-rotonto text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border border-current/25 bg-black/5 dark:bg-white/5"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-              </div>
-              {"label" in currentTrack ? (
-                <span
-                  className="ml-auto rounded-full px-3 py-1 font-rotonto text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wide shadow-sm border border-white/20 shrink-0"
-                  style={{ background: ink, color: currentColor }}
-                >
-                  {currentTrack.label}
-                </span>
-              ) : null}
             </div>
           </motion.div>
         </AnimatePresence>

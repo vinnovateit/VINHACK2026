@@ -352,9 +352,10 @@ export default function WhoAreWeSection({
       keepOffTheWords();
 
       if (variant === "flow") {
-        travelPx = 480;
-        // In flow the reservation needs travel plus exit fadeout distance
-        container.style.height = `${travelPx + Math.round(window.innerHeight * 0.45)}px`;
+        travelPx = 500;
+        // In flow the container reservation must cover the pinned travel plus the full 100vh
+        // stage exit so the portal clears the viewport completely before Projects arrives.
+        container.style.height = `${travelPx + Math.round(window.innerHeight * 1.1)}px`;
       } else {
         const reserved = CANVAS_RESERVED;
         travelPx = clamp(
@@ -604,7 +605,7 @@ export default function WhoAreWeSection({
         style={{
           height:
             variant === "flow"
-              ? "520px"
+              ? "calc(500px + 110vh)"
               : `${CANVAS_RESERVED}px`,
           overflowAnchor: "none",
         }}
