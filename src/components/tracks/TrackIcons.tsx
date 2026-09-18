@@ -116,7 +116,6 @@ export function TrackVisual({
   slot,
   className = "",
   size = 72,
-  is2x = false,
 }: {
   slot: number;
   ink?: string;
@@ -127,16 +126,10 @@ export function TrackVisual({
 }) {
   const Icon = TRACK_ICONS[((slot % TRACK_ICONS.length) + TRACK_ICONS.length) % TRACK_ICONS.length];
 
-  // Skeumorphic 3D raised bevel: crisp top-left specular highlight + bottom-right drop shadow
-  const bevelFilter = is2x
-    ? "drop-shadow(-2px -2px 0.8px rgba(255, 255, 255, 0.75)) drop-shadow(3px 3.5px 2.5px rgba(0, 0, 0, 0.55)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.25))"
-    : "drop-shadow(-1.2px -1.4px 0.5px rgba(255, 255, 255, 0.7)) drop-shadow(1.8px 2.2px 1.6px rgba(0, 0, 0, 0.55)) drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2))";
-
   return (
     <div
       aria-hidden
       className={`relative flex shrink-0 items-center justify-center ${className}`}
-      style={{ filter: bevelFilter }}
     >
       <Icon size={size} className="opacity-95" />
     </div>

@@ -28,41 +28,6 @@ export default function SealedCover() {
           {SPONSOR_HEADING.tagline}
         </p>
       </div>
-
-      {/* Outer staple crowns along the left spine binding edge */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-[8px] flex flex-col justify-between py-[120px] z-20"
-      >
-        {/* Top staple crown */}
-        <div className="relative h-[46px] w-[6px]">
-          <div className="absolute -top-[2px] left-1/2 -translate-x-1/2 h-[2px] w-[8px] bg-[#1a1a1a]/80 rounded-[0.5px]" />
-          <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-[2px] w-[8px] bg-[#1a1a1a]/80 rounded-[0.5px]" />
-          <div
-            className="h-full w-full rounded-[1px]"
-            style={{
-              background:
-                "linear-gradient(90deg, #334155 0%, #64748b 20%, #e2e8f0 45%, #ffffff 55%, #94a3b8 80%, #334155 100%)",
-              boxShadow:
-                "0 1.5px 3px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.5)",
-            }}
-          />
-        </div>
-        {/* Bottom staple crown */}
-        <div className="relative h-[46px] w-[6px]">
-          <div className="absolute -top-[2px] left-1/2 -translate-x-1/2 h-[2px] w-[8px] bg-[#1a1a1a]/80 rounded-[0.5px]" />
-          <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-[2px] w-[8px] bg-[#1a1a1a]/80 rounded-[0.5px]" />
-          <div
-            className="h-full w-full rounded-[1px]"
-            style={{
-              background:
-                "linear-gradient(90deg, #334155 0%, #64748b 20%, #e2e8f0 45%, #ffffff 55%, #94a3b8 80%, #334155 100%)",
-              boxShadow:
-                "0 1.5px 3px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.5)",
-            }}
-          />
-        </div>
-      </div>
     </div>
   );
 }
