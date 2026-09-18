@@ -480,21 +480,13 @@ export default function WhoAreWeSection({
         stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
       }
 
-      // Exit & entry fade:
-      // Fade out cleanly as the section scrolls out of view so it never obscures following sections (like Projects)
-      const exitDist = Math.min(320, window.innerHeight * 0.4);
-      let stageOpacity = 1;
-      if (stageY < 0) {
-        stageOpacity = clamp(0, 1, 1 - Math.abs(stageY) / exitDist);
-      } else if (stageY > 0) {
-        stageOpacity = clamp(0, 1, 1 - stageY / exitDist);
-      }
+      // No fade in/out — keep full opacity while in view
+      const stageOpacity = 1;
 
-      // Culled when completely outside viewport or faded out
+      // Culled when completely outside viewport
       const culled =
-        stageOpacity <= 0.01 ||
-        stageY > window.innerHeight * 1.2 ||
-        stageY < -window.innerHeight * 1.2;
+        stageY > window.innerHeight * 1.05 ||
+        stageY < -window.innerHeight * 1.05;
 
       /* Wind the clock. Parked is the trigger — `stageY === 0` is exactly the
          span where the stage is pinned over the whole viewport — and leaving

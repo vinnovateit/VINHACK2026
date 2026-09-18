@@ -92,10 +92,7 @@ export default function NewspaperBackCover() {
             </div>
 
             <div className="mt-5 p-3 bg-black/5 rounded-[2px] border border-black/15 text-center">
-              <div className="font-rotonto text-[13px] font-bold tracking-wide uppercase text-black">
-                30 HOURS ∞ POSSIBILITIES
-              </div>
-              <div className="font-sans text-[10.5px] text-black/60 uppercase tracking-widest mt-1">
+              <div className="font-sans text-[11px] font-bold text-black/70 uppercase tracking-widest">
                 VIT VELLORE · CHENNAI · WORLDWIDE
               </div>
             </div>
@@ -140,7 +137,6 @@ export default function NewspaperBackCover() {
 
           <div className="flex items-center justify-between border-t border-black/25 pt-3 text-[11px] uppercase tracking-wider text-black/60 font-medium">
             <span>VINNOVATEIT ARCHIVES</span>
-            <span className="font-rotonto text-black">VOL. 26</span>
           </div>
         </div>
       </div>

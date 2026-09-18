@@ -177,21 +177,15 @@ const SponsorEdition = () => {
 function EditionMasthead() {
   return (
     <>
-      <div className="absolute top-[31.61px] left-[32.59px] font-bold uppercase tracking-[0.04em] text-[15px]">
-        VOL. 26 · SPECIAL EDITION
-      </div>
-      <div className="absolute top-[31.61px] right-[32.59px] font-bold text-[15px] tracking-[0.04em] uppercase">
-        30 HOURS ∞ POSSIBILITIES
-      </div>
-      <div className="absolute top-[90px] left-0 w-full text-center text-[54px] leading-[1] font-bold [text-shadow:1.2px_0_0_#000,_0_1.2px_0_#000,_-1.2px_0_0_#000,_0_-1.2px_0_#000] tracking-[0.02em] whitespace-nowrap">
+      <div className="absolute top-[32px] left-[29.11px] [border-top:2.2px_solid_#000] box-border w-[1125.4px] h-[2.2px]" />
+      <div className="absolute top-[72px] left-0 w-full text-center text-[54px] leading-[1] font-bold [text-shadow:1.2px_0_0_#000,_0_1.2px_0_#000,_-1.2px_0_0_#000,_0_-1.2px_0_#000] tracking-[0.02em] whitespace-nowrap">
         <span>{`THE `}</span>
         <span className="text-[#fa1a1d]">VINHACK</span>
         <span> PARTNERS</span>
       </div>
-      <div className="absolute top-[208px] left-0 w-full text-center text-[16.5px] font-bold tracking-[0.06em] whitespace-nowrap">
+      <div className="absolute top-[152px] left-0 w-full text-center text-[16.5px] font-bold tracking-[0.06em] whitespace-nowrap">
         BUILDING BOLD IDEAS · BACKING THE BUILDERS · 30 HOURS OF CODE
       </div>
-      <div className="absolute top-[70.13px] left-[29.11px] [border-top:2.2px_solid_#000] box-border w-[1125.4px] h-[2.2px]" />
       <div className="absolute top-[199.73px] left-[29.11px] [border-top:2.2px_solid_#000] box-border w-[1125.4px] h-[2.2px]" />
     </>
   );
