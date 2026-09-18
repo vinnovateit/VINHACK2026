@@ -41,6 +41,8 @@ const TRAVEL_PLATE = 500;
  * Back: NewspaperBackCover (Page 2 editorial).
  */
 function BookCover() {
+  const halfW = SHEET_W / 2;
+
   return (
     <div
       data-cover
@@ -50,54 +52,129 @@ function BookCover() {
         transformStyle: "preserve-3d",
       }}
     >
-      {/* Front Face (SealedCover) */}
+      {/* Segment 1: Inner Leaf (Spine to 50%) */}
       <div
-        className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+        data-segment-inner
+        className="absolute inset-y-0 left-0"
         style={{
-          backfaceVisibility: "hidden",
-          transform: "rotateY(0deg)",
+          width: `${halfW + 0.5}px`,
+          transformOrigin: "left center",
+          transformStyle: "preserve-3d",
         }}
       >
-        <SealedCover />
-
-        {/* Spine Crease */}
+        {/* Inner Front Face (Left half of SealedCover) */}
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-[36px] bg-[linear-gradient(90deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0)_100%)]"
-        />
-
-        {/* Dynamic Light Sheen on Front Convex Curve */}
-        <div
-          data-front-sheen
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-0"
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
           style={{
-            background:
-              "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(0,0,0,0.25) 70%, transparent 100%)",
+            backfaceVisibility: "hidden",
+            transform: "rotateY(0deg)",
           }}
-        />
-      </div>
+        >
+          <div className="absolute top-0 left-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px` }}>
+            <SealedCover />
+          </div>
 
-      {/* Back Face (Authentic Newspaper Editorial Page 2) */}
-      <div
-        className="absolute inset-0 overflow-hidden bg-[#e5e5e0] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
-        style={{
-          backfaceVisibility: "hidden",
-          transform: "rotateY(180deg)",
-        }}
-      >
-        <NewspaperBackCover />
+          {/* Spine Crease */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 w-[36px] bg-[linear-gradient(90deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0)_100%)]"
+          />
 
-        {/* Dynamic Light Sheen on Back Convex Curve */}
+          {/* Dynamic Light Sheen on Front Convex Curve */}
+          <div
+            data-front-sheen
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0"
+            style={{
+              background:
+                "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(0,0,0,0.25) 70%, transparent 100%)",
+            }}
+          />
+        </div>
+
+        {/* Inner Back Face (Plain clean newsprint paper) */}
         <div
-          data-back-sheen
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-0"
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
           style={{
-            background:
-              "linear-gradient(255deg, transparent 20%, rgba(255,255,255,0.3) 45%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+            backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
           }}
-        />
+        >
+          <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, right: 0 }}>
+            <NewspaperBackCover />
+          </div>
+
+          {/* Dynamic Light Sheen on Back Convex Curve */}
+          <div
+            data-back-sheen
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-0"
+            style={{
+              background:
+                "linear-gradient(255deg, transparent 20%, rgba(255,255,255,0.3) 45%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+            }}
+          />
+        </div>
+
+        {/* Segment 2: Outer Leaf (50% to 100%, hinged at Inner Leaf right edge) */}
+        <div
+          data-segment-outer
+          className="absolute inset-y-0 will-change-transform"
+          style={{
+            left: `${halfW - 0.5}px`,
+            width: `${halfW + 0.5}px`,
+            transformOrigin: "left center",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          {/* Outer Front Face (Right half of SealedCover) */}
+          <div
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(0deg)",
+            }}
+          >
+            <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${halfW}px` }}>
+              <SealedCover />
+            </div>
+
+            {/* Dynamic Curl Shadow between segments */}
+            <div
+              data-curl-shadow
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 w-[48px] opacity-0"
+              style={{
+                background:
+                  "linear-gradient(90deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.06) 60%, transparent 100%)",
+              }}
+            />
+          </div>
+
+          {/* Outer Back Face (Plain clean newsprint paper) */}
+          <div
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+          >
+            <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: 0 }}>
+              <NewspaperBackCover />
+            </div>
+
+            {/* Dynamic Curl Shadow on back */}
+            <div
+              data-curl-back-shadow
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-0 w-[48px] opacity-0"
+              style={{
+                background:
+                  "linear-gradient(270deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.06) 60%, transparent 100%)",
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -129,6 +206,9 @@ export default function FoldedEdition({
     if (!container || !portalEl || !fit || !stageEl) return;
 
     const cover = stageEl.querySelector<HTMLElement>("[data-cover]");
+    const outerLeaf = stageEl.querySelector<HTMLElement>("[data-segment-outer]");
+    const curlShadow = stageEl.querySelector<HTMLElement>("[data-curl-shadow]");
+    const curlBackShadow = stageEl.querySelector<HTMLElement>("[data-curl-back-shadow]");
     const frontSheen = stageEl.querySelector<HTMLElement>("[data-front-sheen]");
     const backSheen = stageEl.querySelector<HTMLElement>("[data-back-sheen]");
     const castShadow = stageEl.querySelector<HTMLElement>("[data-cast-shadow]");
@@ -277,31 +357,53 @@ export default function FoldedEdition({
       const s = stage(p, 0.0, 0.96);
       const easeT = smooth(s);
 
-      // Natural physical 3D page turn physics
-      const angle = easeT * 168; // Opens from 0 to 168 degrees
-      const liftZ = Math.sin(s * Math.PI) * 110; // Natural 3D arch lift
-      const curl = Math.sin(s * Math.PI) * -3.2; // Organic paper curvature
-      const tilt = Math.sin(s * Math.PI) * -2.4; // Diagonal peel tilt
+      // Natural physical 3D paper page turn:
+      // Opens from 0 to 178 degrees (resting open to the left of the spine)
+      const angle = easeT * 178;
 
-      // Smooth horizontal slide as the page clears the left side
-      const slideX = s > 0.45 ? smooth((s - 0.45) / 0.55) * -160 : 0;
-      const coverOpacity = s > 0.92 ? 1 - smooth((s - 0.92) / 0.08) : 1;
+      // Parabolic vertical arch lift: paper lifts in 3D air as it travels
+      const liftZ = Math.sin(s * Math.PI) * 115;
+
+      // Diagonal peel tilt: top corner peels slightly earlier than the bottom
+      const tilt = Math.sin(s * Math.PI) * -3.2;
+
+      // Organic subtle paper flutter/wave
+      const wave = Math.sin(s * Math.PI * 2) * 1.5;
+
+      // Articulated Paper Curl:
+      // Outer leaf curls forward/inward during mid-turn (peaks at ~28deg),
+      // flexing like real flexible paper, then unrolls flat as it lands!
+      const curlAngle = -Math.sin(s * Math.PI) * 28;
 
       if (cover) {
-        cover.style.transform = `translate3d(${slideX.toFixed(1)}px, 0, ${liftZ.toFixed(1)}px) rotateY(${-angle.toFixed(2)}deg) rotateZ(${tilt.toFixed(2)}deg) skewY(${curl.toFixed(2)}deg)`;
-        cover.style.opacity = coverOpacity.toFixed(3);
+        // Anchored firmly to the spine at x: 0 (NO slideX, NO flying away!)
+        cover.style.transform = `translate3d(0, 0, ${liftZ.toFixed(1)}px) rotateY(${-angle.toFixed(2)}deg) rotateZ(${tilt.toFixed(2)}deg) skewY(${wave.toFixed(2)}deg)`;
+        // NO fade out! It stays permanently visible!
+        cover.style.opacity = "1";
+      }
+
+      if (outerLeaf) {
+        outerLeaf.style.transform = `rotateY(${curlAngle.toFixed(2)}deg)`;
+      }
+
+      const curlIntensity = Math.sin(s * Math.PI);
+      if (curlShadow) {
+        curlShadow.style.opacity = (curlIntensity * 0.45).toFixed(3);
+      }
+      if (curlBackShadow) {
+        curlBackShadow.style.opacity = (curlIntensity * 0.45).toFixed(3);
       }
 
       if (frontSheen) {
-        frontSheen.style.opacity = (Math.sin(Math.min(1, s * 2) * Math.PI) * 0.45).toFixed(3);
+        frontSheen.style.opacity = (Math.sin(Math.min(1, s * 2) * Math.PI) * 0.4).toFixed(3);
       }
       if (backSheen) {
-        backSheen.style.opacity = (s > 0.45 ? Math.sin(((s - 0.45) / 0.55) * Math.PI) * 0.45 : 0).toFixed(3);
+        backSheen.style.opacity = (s > 0.4 ? Math.sin(((s - 0.4) / 0.6) * Math.PI) * 0.4 : 0).toFixed(3);
       }
 
       if (castShadow) {
-        const shadowOp = s < 0.75 ? Math.sin(Math.min(1, s * 1.5) * Math.PI) * 0.55 : 0;
-        const shadowX = ((1 - Math.min(1, s * 1.3)) * 80).toFixed(1);
+        const shadowOp = s < 0.85 ? Math.sin(Math.min(1, s * 1.4) * Math.PI) * 0.45 : 0;
+        const shadowX = ((1 - Math.min(1, s * 1.25)) * 60).toFixed(1);
         castShadow.style.opacity = shadowOp.toFixed(3);
         castShadow.style.transform = `translateX(${shadowX}%)`;
       }
@@ -424,6 +526,11 @@ export default function FoldedEdition({
         stageY = targetTop;
       }
 
+      // Cover unfolding progress:
+      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
+      const targetP = stuck / travelPx;
+      currentP = targetP;
+
       // No fade in / fade out: Section remains completely solid throughout scrolling
       // Only culled when completely off the screen bounds
       const culled =
@@ -434,7 +541,10 @@ export default function FoldedEdition({
         if (portalEl.style.display !== "none") portalEl.style.display = "none";
       } else {
         if (portalEl.style.display !== "block") portalEl.style.display = "block";
-        const transformStr = `translate3d(-50%, ${stageY.toFixed(1)}px, 0) scale(${canvasScale.toFixed(4)})`;
+        const openS = stage(currentP, 0.0, 0.96);
+        const maxShift = Math.min(240, Math.max(0, (window.innerWidth - SHEET_W * canvasScale) / 2));
+        const shiftX = smooth(openS) * maxShift;
+        const transformStr = `translate3d(calc(-50% + ${shiftX.toFixed(1)}px), ${stageY.toFixed(1)}px, 0) scale(${canvasScale.toFixed(4)})`;
         if (portalEl.style.transform !== transformStr) {
           portalEl.style.transform = transformStr;
         }
@@ -442,11 +552,6 @@ export default function FoldedEdition({
           portalEl.style.opacity = "1";
         }
       }
-
-      // Cover unfolding progress:
-      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
-      const targetP = stuck / travelPx;
-      currentP = targetP;
 
       // Enable pointer events on newspaper links once mostly open
       const canInteract =
@@ -609,6 +714,44 @@ export default function FoldedEdition({
                       className="pointer-events-none absolute inset-0 translate-x-[5px] translate-y-[8px] rotate-[-0.6deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
                     />
                     <BookCover />
+                  </div>
+
+                  {/* Spine Staples holding Page 1 (Cover) and Page 2 (SponsorEdition) */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-y-0 left-0 z-35 flex flex-col justify-between py-[120px]"
+                  >
+                    {/* Top Staple */}
+                    <div className="relative -left-[3px] h-[46px] w-[6px]">
+                      <div className="absolute -top-[2px] left-1/2 -translate-x-1/2 h-[2.5px] w-[8px] bg-[#1a1a1a]/85 rounded-[0.5px] shadow-[0_0.5px_1px_rgba(0,0,0,0.4)]" />
+                      <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-[2.5px] w-[8px] bg-[#1a1a1a]/85 rounded-[0.5px] shadow-[0_0.5px_1px_rgba(0,0,0,0.4)]" />
+                      <div
+                        className="h-full w-full rounded-[1px]"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, #334155 0%, #64748b 20%, #e2e8f0 45%, #ffffff 55%, #94a3b8 80%, #334155 100%)",
+                          boxShadow:
+                            "0 1.5px 3px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.5)",
+                        }}
+                      />
+                      <div className="absolute -inset-x-[6px] inset-y-[2px] -z-10 rounded-[2px] bg-black/10 shadow-[inset_0_0_4px_rgba(0,0,0,0.2)]" />
+                    </div>
+
+                    {/* Bottom Staple */}
+                    <div className="relative -left-[3px] h-[46px] w-[6px]">
+                      <div className="absolute -top-[2px] left-1/2 -translate-x-1/2 h-[2.5px] w-[8px] bg-[#1a1a1a]/85 rounded-[0.5px] shadow-[0_0.5px_1px_rgba(0,0,0,0.4)]" />
+                      <div className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 h-[2.5px] w-[8px] bg-[#1a1a1a]/85 rounded-[0.5px] shadow-[0_0.5px_1px_rgba(0,0,0,0.4)]" />
+                      <div
+                        className="h-full w-full rounded-[1px]"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, #334155 0%, #64748b 20%, #e2e8f0 45%, #ffffff 55%, #94a3b8 80%, #334155 100%)",
+                          boxShadow:
+                            "0 1.5px 3px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.5)",
+                        }}
+                      />
+                      <div className="absolute -inset-x-[6px] inset-y-[2px] -z-10 rounded-[2px] bg-black/10 shadow-[inset_0_0_4px_rgba(0,0,0,0.2)]" />
+                    </div>
                   </div>
                 </div>
               </div>
