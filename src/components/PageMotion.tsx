@@ -249,9 +249,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
   {
     id: "297:3",
     name: "Footer",
-    moves: [
-      { node: "297:20", drift: -40, end: "bottom top+=45%" },
-    ],
+    moves: [],
   },
 ];
 
@@ -259,7 +257,7 @@ const SECTIONS: { id: string; name: string; moves: Move[] }[] = [
  *  `direction: ltr` is content travelling leftwards. */
 const MARQUEES = ["footer", "sneak"];
 
-const TABS = ["email", "github", "instagram", "linkedin", "medium"];
+const TABS = ["medium", "linkedin", "instagram", "github", "email"];
 
 
 export default function PageMotion({ children }: { children: ReactNode }) {
