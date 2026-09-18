@@ -3,6 +3,7 @@
 import { type FC, useEffect, useState } from "react";
 import Image from "next/image";
 import FilmCanister from "./FilmCanister";
+import FilmLeader from "./FilmLeader";
 import CollegesBadge from "./CollegesBadge";
 import BuildersCounter from "./BuildersCounter";
 import PixelSmiley from "./PixelSmiley";
@@ -44,6 +45,13 @@ interface RecapProps {
 
 export const RECAP: FC<RecapProps> = ({ inView = true }) => {
   const [stampTrigger, setStampTrigger] = useState(false);
+  const [hasRolledOut, setHasRolledOut] = useState(false);
+
+  useEffect(() => {
+    if (inView && !hasRolledOut) {
+      setHasRolledOut(true);
+    }
+  }, [inView, hasRolledOut]);
 
   useEffect(() => {
     if (!inView) return;
@@ -136,12 +144,20 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         </div>
       </div>
 
-      {/* Filmstrip Assembly - Rolls out from canister on reveal and touches right screen edge */}
+      {/* Filmstrip Assembly - Rolls out from canister on reveal led by 35mm leader tongue */}
       <div
-        className={`film-strip-group absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${
-          inView ? "film-rollout-open" : ""
+        className={`film-strip-group absolute top-[198px] left-[174px] h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-10 film-rollout-container ${
+          hasRolledOut ? "film-deployed" : ""
         }`}
       >
+        {/* Leading 35mm Film Leader Tongue - Physical leader pulling film out */}
+        <div
+          className={`absolute top-0 right-0 z-30 transition-opacity duration-500 pointer-events-none ${
+            hasRolledOut ? "opacity-0 delay-[1900ms]" : "opacity-100"
+          }`}
+        >
+          <FilmLeader />
+        </div>
         {/* Top Film Sprocket Holes (stretching all the way to right screen edge) */}
         <div className="absolute top-[8px] left-[12px] right-0 overflow-hidden pointer-events-none z-10">
           <div className="film-sprocket-track flex gap-[9px]">
@@ -222,6 +238,7 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
 
       {/* 35mm Film Roll Canister Assembly */}
       <div
+        className="relative z-20"
         style={{
           transform: inView ? "translateX(0)" : "translateX(-24px)",
           opacity: inView ? 1 : 0,

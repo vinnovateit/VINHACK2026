@@ -5,6 +5,7 @@ import Image from "next/image";
 import CollegesBadge from "@/components/sections/recap/CollegesBadge";
 import BuildersCounter from "@/components/sections/recap/BuildersCounter";
 import PixelSmiley from "@/components/sections/recap/PixelSmiley";
+import FilmLeader from "@/components/sections/recap/FilmLeader";
 import { playStampSlam } from "@/components/motion/film";
 import { useInView } from "@/components/useInView";
 
@@ -34,6 +35,13 @@ const CORE_SNAKE_STEP = CORE_SNAKE_PERIOD / CORE_SNAKE_WAVELENGTH;
 export default function MobileRecap() {
   const [sectionRef, inView] = useInView<HTMLElement>(0.15);
   const [stampTrigger, setStampTrigger] = useState(false);
+  const [hasRolledOut, setHasRolledOut] = useState(false);
+
+  useEffect(() => {
+    if (inView && !hasRolledOut) {
+      setHasRolledOut(true);
+    }
+  }, [inView, hasRolledOut]);
 
   useEffect(() => {
     if (!inView) return;
@@ -115,7 +123,19 @@ export default function MobileRecap() {
         </div>
 
         {/* Filmstrip rolling out from canister to right edge */}
-        <div className="film-strip-group absolute left-[64px] right-0 top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10">
+        <div
+          className={`film-strip-group absolute left-[64px] top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10 film-rollout-container ${
+            hasRolledOut ? "film-deployed" : ""
+          }`}
+        >
+          {/* Leading 35mm Film Leader Tongue */}
+          <div
+            className={`absolute top-0 right-0 z-30 transition-opacity duration-500 pointer-events-none ${
+              hasRolledOut ? "opacity-0 delay-[1600ms]" : "opacity-100"
+            }`}
+          >
+            <FilmLeader isMobile />
+          </div>
           {/* Top Film Sprocket Holes */}
           <div className="absolute top-[4px] left-[6px] right-0 overflow-hidden pointer-events-none z-10">
             <div className="film-sprocket-track flex gap-[6px]">
