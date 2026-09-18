@@ -13,8 +13,7 @@ import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
  * The sponsor sheet as a broadsheet edition that opens naturally in physical 3D.
  *
  * When closed, the reader sees the front page cover (`SealedCover`).
- * Scrolling turns the articulated 14-fold paper leaf smoothly across to the left,
- * flexing and bending organically like genuine newsprint,
+ * Scrolling turns the articulated 6-fold paper leaf smoothly across to the left,
  * revealing the inner broadsheet (`SponsorEdition`).
  */
 
@@ -28,78 +27,14 @@ const TRAVEL_PLATE = 500;
 
 /* -------------------------------------------------------------- components */
 
-const NUM_FOLDS = 14;
-
-function Segment({
-  index,
-  total,
-  segW,
-  overlap,
-}: {
-  index: number;
-  total: number;
-  segW: number;
-  overlap: number;
-}) {
-  if (index >= total) return null;
-  const isSpine = index === 0;
-  const isLast = index === total - 1;
-  const width = isLast ? SHEET_W - segW * (total - 1) + overlap : segW + overlap;
-
-  return (
-    <div
-      data-segment={index}
-      className={`absolute inset-y-0 ${isSpine ? "left-0" : ""} will-change-transform`}
-      style={{
-        left: isSpine ? 0 : `${segW}px`,
-        width: `${width}px`,
-        transformOrigin: "left center",
-        transformStyle: "preserve-3d",
-      }}
-    >
-      {/* Front face slice */}
-      <div
-        className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
-        style={{
-          backfaceVisibility: "hidden",
-          transform: "rotateY(0deg)",
-        }}
-      >
-        <div
-          className="absolute top-0 pointer-events-none"
-          style={{
-            width: `${SHEET_W}px`,
-            height: `${SHEET_H}px`,
-            left: `-${(segW * index).toFixed(2)}px`,
-          }}
-        >
-          <SealedCover />
-        </div>
-      </div>
-
-      {/* Back face slice (clean empty newsprint) */}
-      <div
-        className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
-        style={{
-          backfaceVisibility: "hidden",
-          transform: "rotateY(180deg)",
-        }}
-      />
-
-      {/* Next nested segment */}
-      <Segment index={index + 1} total={total} segW={segW} overlap={overlap} />
-    </div>
-  );
-}
-
 /**
- * The 3D newspaper cover articulated across 14 folds for natural, flexible paper physics.
- * Continuous wave flexion, corner peel, and diagonal curl replace rigid erect divs.
+ * The 3D newspaper cover articulated across 6 folds for a smooth paper wave flip.
  * Completely shadow-free for a clean, flat aesthetic.
  */
 function BookCover() {
-  const segW = SHEET_W / NUM_FOLDS;
-  const overlap = 1.0;
+  const NUM_FOLDS = 6;
+  const segW = SHEET_W / NUM_FOLDS; // ~197.33px
+  const overlap = 0.5;
 
   return (
     <div
@@ -110,7 +45,193 @@ function BookCover() {
         transformStyle: "preserve-3d",
       }}
     >
-      <Segment index={0} total={NUM_FOLDS} segW={segW} overlap={overlap} />
+      {/* Segment 0: Spine segment (x: 0 to 16.7%, permanently pinned to spine) */}
+      <div
+        data-segment-0
+        className="absolute inset-y-0 left-0 will-change-transform"
+        style={{
+          width: `${segW + overlap}px`,
+          transformOrigin: "left center",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {/* Segment 0 Front Face */}
+        <div
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+          style={{
+            backfaceVisibility: "hidden",
+            transform: "rotateY(0deg)",
+          }}
+        >
+          <div className="absolute top-0 left-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px` }}>
+            <SealedCover />
+          </div>
+        </div>
+
+        {/* Segment 0 Back Face */}
+        <div
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+          style={{
+            backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+        />
+
+        {/* Segment 1: Hinged to Segment 0 (x: 16.7% to 33.3%) */}
+        <div
+          data-segment-1
+          className="absolute inset-y-0 will-change-transform"
+          style={{
+            left: `${segW}px`,
+            width: `${segW + overlap}px`,
+            transformOrigin: "left center",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          <div
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(0deg)",
+            }}
+          >
+            <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW}px` }}>
+              <SealedCover />
+            </div>
+          </div>
+          <div
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+          />
+
+          {/* Segment 2: Hinged to Segment 1 (x: 33.3% to 50%) */}
+          <div
+            data-segment-2
+            className="absolute inset-y-0 will-change-transform"
+            style={{
+              left: `${segW}px`,
+              width: `${segW + overlap}px`,
+              transformOrigin: "left center",
+              transformStyle: "preserve-3d",
+            }}
+          >
+            <div
+              className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(0deg)",
+              }}
+            >
+              <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 2}px` }}>
+                <SealedCover />
+              </div>
+            </div>
+            <div
+              className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+            />
+
+            {/* Segment 3: Hinged to Segment 2 (x: 50% to 66.7%) */}
+            <div
+              data-segment-3
+              className="absolute inset-y-0 will-change-transform"
+              style={{
+                left: `${segW}px`,
+                width: `${segW + overlap}px`,
+                transformOrigin: "left center",
+                transformStyle: "preserve-3d",
+              }}
+            >
+              <div
+                className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(0deg)",
+                }}
+              >
+                <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 3}px` }}>
+                  <SealedCover />
+                </div>
+              </div>
+              <div
+                className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              />
+
+              {/* Segment 4: Hinged to Segment 3 (x: 66.7% to 83.3%) */}
+              <div
+                data-segment-4
+                className="absolute inset-y-0 will-change-transform"
+                style={{
+                  left: `${segW}px`,
+                  width: `${segW + overlap}px`,
+                  transformOrigin: "left center",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                <div
+                  className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(0deg)",
+                  }}
+                >
+                  <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 4}px` }}>
+                    <SealedCover />
+                  </div>
+                </div>
+                <div
+                  className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                  }}
+                />
+
+                {/* Segment 5: Hinged to Segment 4 (x: 83.3% to 100%, outer leaf) */}
+                <div
+                  data-segment-5
+                  className="absolute inset-y-0 will-change-transform"
+                  style={{
+                    left: `${segW}px`,
+                    width: `${SHEET_W - segW * 5 + overlap}px`,
+                    transformOrigin: "left center",
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(0deg)",
+                    }}
+                  >
+                    <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 5}px` }}>
+                      <SealedCover />
+                    </div>
+                  </div>
+                  <div
+                    className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -141,13 +262,11 @@ export default function FoldedEdition({
     if (!container || !portalEl || !fit || !stageEl) return;
 
     const cover = stageEl.querySelector<HTMLElement>("[data-cover]");
-    const segments = Array.from(
-      stageEl.querySelectorAll<HTMLElement>("[data-segment]")
-    ).sort(
-      (a, b) =>
-        Number(a.getAttribute("data-segment") || 0) -
-        Number(b.getAttribute("data-segment") || 0)
-    );
+    const seg1 = stageEl.querySelector<HTMLElement>("[data-segment-1]");
+    const seg2 = stageEl.querySelector<HTMLElement>("[data-segment-2]");
+    const seg3 = stageEl.querySelector<HTMLElement>("[data-segment-3]");
+    const seg4 = stageEl.querySelector<HTMLElement>("[data-segment-4]");
+    const seg5 = stageEl.querySelector<HTMLElement>("[data-segment-5]");
     const dressing = Array.from(
       stageEl.querySelectorAll<HTMLElement>("[data-cover-dressing]")
     );
@@ -293,48 +412,31 @@ export default function FoldedEdition({
       const s = stage(p, 0.0, 0.96);
       const easeT = smooth(s);
 
-      // Natural 3D book page flip wave physics across NUM_FOLDS folds:
+      // Natural 3D book page flip wave physics across 6 folds:
       // Page opens smoothly from 0 to 180 degrees (resting flat on the left)
-      const spineAngle = easeT * 180;
+      const angle = easeT * 180;
 
-      // Parabolic arch envelope: 0 at s=0 and s=1, peaks around s=0.5
-      const arch = Math.sin(s * Math.PI);
+      // 6-fold articulated wave flexion traveling across the leaf (zero shadows, pure flat geometry)
+      const baseWave = -Math.sin(s * Math.PI);
+      const ripple = Math.sin(s * Math.PI * 2);
 
-      // Organic diagonal peel and subtle 3D pitch:
-      // Tilts and pitches dynamically during mid-turn, completely eliminating rigid verticality
-      const coverTilt = arch * -3.5;
-      const coverPitch = arch * 1.6;
+      const curl1 = baseWave * 9 + ripple * 3;
+      const curl2 = baseWave * 11 + ripple * 5;
+      const curl3 = baseWave * 13 + ripple * 3;
+      const curl4 = baseWave * 11 - ripple * 3;
+      const curl5 = baseWave * 9 - ripple * 6;
 
       if (cover) {
-        // Spine is permanently anchored at x=0, y=0, z=0 (never detaches from 2nd page!)
-        cover.style.transform = `rotateY(${-spineAngle.toFixed(2)}deg) rotateZ(${coverTilt.toFixed(2)}deg) rotateX(${coverPitch.toFixed(2)}deg)`;
+        // Pure Y-axis rotation pinned permanently at spine (x=0, y=0, z=0) — NEVER detaches from 2nd page!
+        cover.style.transform = `rotateY(${-angle.toFixed(2)}deg)`;
         cover.style.opacity = "1";
       }
 
-      // Continuous paper flexion & traveling wave across all folds:
-      const totalHinges = segments.length - 1;
-      for (let i = 1; i < segments.length; i++) {
-        const seg = segments[i];
-        const u = i / totalHinges; // 0.08 to 1.0 (spine to outer leaf)
-
-        // Traveling wave phase across the leaf:
-        // Early flip: outer edge curls first (peels up from desk).
-        // Late flip: spine lands first, while outer edge floats and unrolls softly onto the left.
-        const phase = u * Math.PI - s * Math.PI * 1.35;
-        const waveFlex = Math.sin(phase);
-
-        // Curvature per fold:
-        // Outer segments have more flex capacity; cumulative curl reaches ~100-115deg at mid-flight.
-        const baseCurl = -arch * (6.6 + 3.8 * u);
-        const dynamicRipple = arch * waveFlex * 3.2;
-        const curl = baseCurl + dynamicRipple;
-
-        // Dynamic diagonal shear/skew along the leaf:
-        // Slants the vertical lines dynamically as the sheet bends, giving genuine paper flexibility!
-        const skew = arch * (u * -2.4 + Math.sin(u * Math.PI + s * Math.PI) * 0.7);
-
-        seg.style.transform = `rotateY(${curl.toFixed(2)}deg) skewY(${skew.toFixed(2)}deg)`;
-      }
+      if (seg1) seg1.style.transform = `rotateY(${curl1.toFixed(2)}deg)`;
+      if (seg2) seg2.style.transform = `rotateY(${curl2.toFixed(2)}deg)`;
+      if (seg3) seg3.style.transform = `rotateY(${curl3.toFixed(2)}deg)`;
+      if (seg4) seg4.style.transform = `rotateY(${curl4.toFixed(2)}deg)`;
+      if (seg5) seg5.style.transform = `rotateY(${curl5.toFixed(2)}deg)`;
 
       for (const bit of dressing) {
         bit.style.opacity = (
