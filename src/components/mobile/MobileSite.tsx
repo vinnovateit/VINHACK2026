@@ -669,49 +669,80 @@ function MobileTracks() {
   const iosEase = "cubic-bezier(0.32, 0.72, 0, 1)";
 
   return (
-    <section ref={sectionRef} aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
-      <div className="border-t border-[#fa1a1d]">
-        {TRACKS.lines.map((line, i) => {
-          const Tag = i === 1 ? "h2" : "p";
-          const isRight = i === 1;
-          const delay = `${i * 0.1}s`;
-          return (
-            <div
-              key={line}
-              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4 will-change-transform"
-              style={{
-                transform: inView
-                  ? "translateX(0)"
-                  : isRight
-                    ? "translateX(100px)"
-                    : "translateX(-100px)",
-                opacity: inView ? 1 : 0,
-                transition: `transform 0.5s ${iosEase} ${delay}, opacity 0.5s ${iosEase} ${delay}`,
-              }}
-            >
-              <Tag className="text-[30px] leading-[1.1] text-[#fa1a1d]">
-                {line}
-              </Tag>
-              <img
-                alt=""
-                aria-hidden
-                className="block size-[26px] max-w-none shrink-0"
-                src={
-                  i === 0
-                    ? "/figma/vector32.svg"
-                    : i === 1
-                      ? "/figma/group48095496.svg"
-                      : "/figma/star2.svg"
-                }
+    <section ref={sectionRef} aria-label="Tracks" className="w-full py-8 overflow-x-clip">
+      {/* Full-bleed edge-to-edge bars container */}
+      <div className="border-t border-[#fa1a1d] font-rotonto w-full mb-2">
+        {/* Line 1: solve what matters — Full bleed bar, Left-aligned */}
+        <div className="border-b border-[#fa1a1d] w-full">
+          <div
+            className="w-full px-4 sm:px-8 flex items-center justify-start gap-2.5 sm:gap-4 py-3 sm:py-4 will-change-transform"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-60px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0s, opacity 0.5s ${iosEase} 0s`,
+            }}
+          >
+            <p className="text-[21px] xs:text-[25px] sm:text-[32px] leading-none text-[#fa1a1d] uppercase shrink-0">
+              {TRACKS.lines[0]}
+            </p>
+            <svg viewBox="0 0 46 45" fill="none" className="size-[22px] xs:size-[26px] sm:size-[34px] shrink-0" aria-hidden>
+              <path
+                d="M0 22.5H46M23 0V45M2.5 14L44 31.5M44 14L2.5 31.5M7.5 6.5L39 39M14.5 1.5L32 43M32 1.5L14.5 43M39 6.5L7.5 39"
+                stroke="#FA1A1D"
+                strokeWidth="2"
               />
-            </div>
-          );
-        })}
+            </svg>
+          </div>
+        </div>
+
+        {/* Line 2: TRACKS — Full bleed bar, Right-aligned (Desktop: right offset) */}
+        <div className="border-b border-[#fa1a1d] w-full">
+          <div
+            className="w-full px-4 sm:px-8 flex items-center justify-end gap-2.5 sm:gap-4 py-3 sm:py-4 will-change-transform"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(60px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.1s, opacity 0.5s ${iosEase} 0.1s`,
+            }}
+          >
+            <h2 className="text-[21px] xs:text-[25px] sm:text-[32px] leading-none text-[#fa1a1d] uppercase shrink-0">
+              {TRACKS.lines[1]}
+            </h2>
+            <svg viewBox="0 0 60 60" fill="none" className="size-[24px] xs:size-[28px] sm:size-[38px] shrink-0" aria-hidden>
+              <circle cx="30" cy="30" r="28.5" stroke="#FA1A1D" strokeWidth="3" />
+              <path
+                d="M13.5 26L22 31M20 14.5L28.5 20M18 47.5C18 47.5 29.212 42.2348 35.5 37.5C41.5674 32.9313 50 23 50 23"
+                stroke="#FA1A1D"
+                strokeWidth="5"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Line 3: build what lasts — Full bleed bar, Center-staggered */}
+        <div className="border-b border-[#fa1a1d] w-full">
+          <div
+            className="w-full px-4 sm:px-8 flex items-center justify-center sm:justify-start sm:pl-[25%] gap-2.5 sm:gap-4 py-3 sm:py-4 will-change-transform"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-60px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.2s, opacity 0.5s ${iosEase} 0.2s`,
+            }}
+          >
+            <p className="text-[21px] xs:text-[25px] sm:text-[32px] leading-none text-[#fa1a1d] uppercase shrink-0">
+              {TRACKS.lines[2]}
+            </p>
+            <svg viewBox="0 0 40.2117 44.5" fill="none" className="w-[18px] h-[21px] xs:w-[22px] xs:h-[25px] sm:w-[28px] sm:h-[32px] shrink-0" aria-hidden>
+              <path
+                d="M20.325 19V0M23.825 21L38.825 11M23.825 24.5L38.825 33.5M20.325 26.5V44.5M17.325 24.5L1.325 33.5M17.325 21L1.325 11"
+                stroke="#FA1A1D"
+                strokeWidth="5"
+              />
+            </svg>
+          </div>
+        </div>
       </div>
 
-      {/* The deck deals its four tracks as the page scrolls past — see
-          `MobileTracksDeck`, which is the phone's answer to the collage's
-          scroll-locked deck. */}
       <MobileTracksDeck />
     </section>
   );
