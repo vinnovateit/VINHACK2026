@@ -129,7 +129,7 @@ function HelpContent() {
             href={DISCORD.href}
             target="_blank"
             rel="noopener noreferrer"
-            color="blue"
+            color="#5865f2"
             size="compact"
             className="w-full"
             icon={<DiscordIcon className="size-4 shrink-0" />}

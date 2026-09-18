@@ -18,20 +18,22 @@ export default function MobileSponsorSheet() {
         />
 
         <div className="relative z-10 bg-[#ebebe9] font-rotonto text-black shadow-[0_16px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.2)] overflow-hidden select-none">
-          {/* Masthead — logo + PARTNERS label */}
+          {/* Masthead — logo with PARTNERS at bottom right */}
           <div className="px-4 pt-4 pb-0">
             <div className="border-t-[2px] border-black mb-1" />
-            <div className="text-center py-3 flex flex-col items-center gap-2">
-              <img
-                src="/figma/vinhack-fill.svg"
-                alt="VinHack"
-                className="h-[36px] sm:h-[42px] w-auto object-contain"
-              />
-              <p className="text-[11px] font-bold tracking-[0.14em] uppercase text-black">
-                PARTNERS
-              </p>
+            <div className="py-2.5 sm:py-3 flex items-center justify-center">
+              <div className="relative inline-flex items-end">
+                <img
+                  src="/figma/vinhack-fill.svg"
+                  alt="VinHack"
+                  className="h-[50px] sm:h-[58px] w-auto object-contain block"
+                />
+                <span className="absolute -bottom-1 right-0 text-[7.5px] sm:text-[8.5px] font-bold tracking-[0.22em] uppercase text-black leading-none select-none">
+                  PARTNERS
+                </span>
+              </div>
             </div>
-            <div className="border-t-[2px] border-black" />
+            <div className="border-t-[2px] border-black mt-2" />
           </div>
 
           {/* Title Partner */}

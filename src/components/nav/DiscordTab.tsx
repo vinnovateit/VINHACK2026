@@ -95,7 +95,7 @@ export default function DiscordTab() {
           href={DISCORD.href}
           target="_blank"
           rel="noopener noreferrer"
-          color="blue"
+          color="#5865f2"
           size="compact"
           className="w-[145px] sm:w-[160px] md:w-[170px]"
           icon={<DiscordIcon className="size-4 md:size-[18px] shrink-0" />}

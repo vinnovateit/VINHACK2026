@@ -5,7 +5,15 @@ import Link from "next/link";
 import gsap from "gsap";
 import { keyDown, keyUp } from "@/components/motion/click";
 
-export type KeyColor = "pink" | "red" | "blue" | "white" | "green" | "yellow";
+export type KeyColor =
+  | "pink"
+  | "red"
+  | "blue"
+  | "white"
+  | "green"
+  | "yellow"
+  | "discord"
+  | (string & {});
 
 export interface KeyButtonProps {
   children?: React.ReactNode;
@@ -26,7 +34,7 @@ export interface KeyButtonProps {
 }
 
 const colorMap: Record<
-  KeyColor,
+  "pink" | "red" | "blue" | "white" | "green" | "yellow" | "discord",
   {
     bg: string;
     border: string;
@@ -77,7 +85,56 @@ const colorMap: Record<
     lineColor: "#FDE68A",
     shadowColor: "#92400E",
   },
+  discord: {
+    bg: "bg-[#5865F2]",
+    border: "border-[#7983F5]",
+    text: "text-white",
+    lineColor: "#7983F5",
+    shadowColor: "#3C45A5",
+  },
 };
+
+function resolveTheme(color: string) {
+  const lower = color.toLowerCase();
+  if (lower === "#5865f2" || lower === "discord") {
+    return {
+      bgClass: colorMap.discord.bg,
+      borderClass: colorMap.discord.border,
+      textClass: colorMap.discord.text,
+      lineColor: colorMap.discord.lineColor,
+      shadowColor: colorMap.discord.shadowColor,
+      wellStyle: undefined as React.CSSProperties | undefined,
+      capStyle: undefined as React.CSSProperties | undefined,
+      textStyle: undefined as React.CSSProperties | undefined,
+    };
+  }
+
+  if (color in colorMap) {
+    const p = colorMap[color as keyof typeof colorMap];
+    return {
+      bgClass: p.bg,
+      borderClass: p.border,
+      textClass: p.text,
+      lineColor: p.lineColor,
+      shadowColor: p.shadowColor,
+      wellStyle: undefined,
+      capStyle: undefined,
+      textStyle: undefined,
+    };
+  }
+
+  // Custom color code (e.g. hex, rgb, hsl)
+  return {
+    bgClass: "",
+    borderClass: "",
+    textClass: "text-white",
+    lineColor: color,
+    shadowColor: color,
+    wellStyle: { backgroundColor: color, borderColor: color },
+    capStyle: { backgroundColor: color, borderColor: color },
+    textStyle: { color: "#ffffff" },
+  };
+}
 
 export default function KeyButton({
   children,
@@ -99,7 +156,7 @@ export default function KeyButton({
   const isPressedRef = useRef(false);
   const keyRef = useRef<HTMLElement>(null);
 
-  const theme = colorMap[color] || colorMap.pink;
+  const theme = resolveTheme(color);
   const aLabel = ariaLabelProp || ariaLabel;
 
   const height = size === "compact" ? "h-[52px]" : "h-[64px]";
@@ -178,7 +235,8 @@ export default function KeyButton({
       <div
         className={`absolute ${
           size === "compact" ? "top-[5px] rounded-[12px]" : "top-[6px] rounded-[14px]"
-        } left-0 w-full ${wellHeight} ${theme.bg} border-[1.4px] ${theme.border} opacity-75 pointer-events-none`}
+        } left-0 w-full ${wellHeight} ${theme.bgClass} border-[1.4px] ${theme.borderClass} opacity-75 pointer-events-none`}
+        style={theme.wellStyle}
       />
 
       {/* Cap */}
@@ -187,7 +245,8 @@ export default function KeyButton({
           size === "compact"
             ? "left-[8px] w-[calc(100%-16px)] rounded-[10px]"
             : "left-[10px] w-[calc(100%-20px)] rounded-[12px]"
-        } ${capHeight} ${theme.bg} border-[1.4px] ${theme.border} opacity-95 pointer-events-none`}
+        } ${capHeight} ${theme.bgClass} border-[1.4px] ${theme.borderClass} opacity-95 pointer-events-none`}
+        style={theme.capStyle}
       />
 
       {/* Content */}
@@ -201,8 +260,9 @@ export default function KeyButton({
         {icon && <span className="shrink-0 flex items-center justify-center">{icon}</span>}
         {labelContent && (
           <span
-            className={`font-['Rotonto',sans-serif] ${fontSize} font-normal ${theme.text} uppercase leading-none tracking-wide text-center flex items-center justify-center`}
+            className={`font-['Rotonto',sans-serif] ${fontSize} font-normal ${theme.textClass} uppercase leading-none tracking-wide text-center flex items-center justify-center`}
             style={{
+              ...theme.textStyle,
               textShadow: `0.4px 0 0 ${theme.shadowColor}, 0 0.4px 0 ${theme.shadowColor}, -0.4px 0 0 ${theme.shadowColor}, 0 -0.4px 0 ${theme.shadowColor}`,
             }}
           >

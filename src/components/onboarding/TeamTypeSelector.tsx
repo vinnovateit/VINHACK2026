@@ -92,7 +92,7 @@ export default function TeamTypeSelector({
               href={DISCORD.href}
               target="_blank"
               rel="noopener noreferrer"
-              color="blue"
+              color="#5865f2"
               size="compact"
               className="w-full max-w-[360px]"
               icon={<DiscordIcon className="size-5 shrink-0" />}
