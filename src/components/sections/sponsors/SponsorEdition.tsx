@@ -26,11 +26,19 @@ export const STACKED_PAPER_CONFIG = {
 };
 
 /**
- * The sheet itself, at 1184 x 758.4.
- *
- * Prominent Title Partner on top, four partner columns below with clean, legible typography.
+ * The sheet itself.
+ * Desktop: 1184 x 860 landscape broadsheet.
+ * Mobile flow: 480 x 760 portrait tabloid edition with 2x2 partner grid.
  */
-const SponsorEdition = () => {
+const SponsorEdition = ({
+  variant = "canvas",
+}: {
+  variant?: "canvas" | "flow";
+} = {}) => {
+  if (variant === "flow") {
+    return <MobileSponsorEdition />;
+  }
+
   return (
     <div className="relative mx-auto w-[1184px] max-w-full select-none">
       {/* Stacked paper sheets */}
@@ -188,6 +196,178 @@ function EditionMasthead() {
       </div>
       <div className="absolute top-[199.73px] left-[29.11px] [border-top:2.2px_solid_#000] box-border w-[1125.4px] h-[2.2px]" />
     </>
+  );
+}
+
+/**
+ * Mobile portrait tabloid broadsheet (480 x 760).
+ * Prominent title sponsor and 2x2 grid for 4 partners with large, legible typography.
+ */
+function MobileSponsorEdition() {
+  return (
+    <div className="relative mx-auto w-[480px] max-w-full select-none">
+      {/* Stacked paper sheets background */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          transform: "translate(3px, -8px) rotate(2deg)",
+          backgroundColor: "#d0d0cb",
+          boxShadow: "0 8px 20px rgba(0, 0, 0, 0.22)",
+          border: "1px solid rgba(0, 0, 0, 0.12)",
+          borderRadius: "2px",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          transform: "translate(3px, 10px) rotate(-2deg)",
+          backgroundColor: "#dedede",
+          boxShadow: "0 10px 24px rgba(0, 0, 0, 0.26)",
+          border: "1px solid rgba(0, 0, 0, 0.12)",
+          borderRadius: "2px",
+        }}
+      />
+
+      {/* Main Newspaper Sheet */}
+      <div className="w-[480px] max-w-full h-[760px] relative shadow-[0_20px_48px_rgba(0,_0,_0,_0.45),_0_4px_12px_rgba(0,_0,_0,_0.25)] bg-[#ebebe9] overflow-hidden text-left text-black [font-family:var(--font-rotonto),_Rotonto,_sans-serif] mx-auto z-10">
+        {/* Mobile Masthead */}
+        <div className="absolute top-[16px] left-[16px] [border-top:2px_solid_#000] box-border w-[448px] h-[2px]" />
+        <div className="absolute top-[26px] left-0 w-full text-center text-[30px] leading-tight font-bold [text-shadow:1px_0_0_#000,_0_1px_0_#000,_-1px_0_0_#000,_0_-1px_0_#000] tracking-[0.02em] whitespace-nowrap">
+          <span>THE </span>
+          <span className="text-[#fa1a1d]">VINHACK</span>
+          <span> PARTNERS</span>
+        </div>
+        <div className="absolute top-[68px] left-0 w-full text-center text-[10.5px] font-bold tracking-[0.06em] whitespace-nowrap text-[#111]">
+          BUILDING BOLD IDEAS · BACKING THE BUILDERS · 30 HOURS OF CODE
+        </div>
+        <div className="absolute top-[92px] left-[16px] [border-top:2px_solid_#000] box-border w-[448px] h-[2px]" />
+
+        {/* Outer newspaper grid frame */}
+        <div className="absolute top-[104px] left-[16px] [border-top:1px_solid_#000] box-border w-[448px] h-[1px]" />
+        <div className="absolute top-[736px] left-[16px] [border-top:1px_solid_#000] box-border w-[448px] h-[1px]" />
+        <div className="absolute top-[104px] left-[16px] [border-right:1px_solid_#000] box-border w-[1px] h-[632px]" />
+        <div className="absolute top-[104px] left-[464px] [border-right:1px_solid_#000] box-border w-[1px] h-[632px]" />
+
+        {/* Title Partner: Fateh Education */}
+        <a
+          href={TITLE_SPONSOR.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group absolute top-[104px] left-[16px] w-[448px] h-[220px] flex flex-col items-center justify-center p-3 cursor-pointer"
+        >
+          <div className="text-[#fa1a1d] text-[16px] font-bold tracking-[0.16em] uppercase mb-1.5">
+            {TITLE_SPONSOR.header}
+          </div>
+
+          <div className="flex items-center justify-center my-1 transition-transform duration-200 group-hover:scale-[1.03]">
+            <Image
+              src="/sponsors/fateh.webp"
+              alt="Fateh Education"
+              width={340}
+              height={108}
+              className="h-[84px] w-auto object-contain"
+              priority
+            />
+          </div>
+
+          <div className="mt-1.5 text-[14px] font-medium text-[#222] tracking-[0.02em] text-center px-4">
+            {TITLE_SPONSOR.tagline}
+          </div>
+        </a>
+
+        {/* Horizontal divider between Title Sponsor and 4 Partners */}
+        <div className="absolute top-[324px] left-[16px] [border-top:1px_solid_#000] box-border w-[448px] h-[1px]" />
+
+        {/* Vertical divider down the middle of the 2x2 grid */}
+        <div className="absolute top-[324px] left-[240px] [border-right:1px_solid_#000] box-border w-[1px] h-[412px]" />
+
+        {/* Horizontal divider between Row 1 and Row 2 of partners */}
+        <div className="absolute top-[530px] left-[16px] [border-top:1px_solid_#000] box-border w-[448px] h-[1px]" />
+
+        {/* 4 Partners in 2x2 Grid */}
+        {SUPPORTERS.slice(0, 4).map((partner, i) => {
+          const col = i % 2;
+          const row = Math.floor(i / 2);
+          const left = 16 + col * 224;
+          const top = 324 + row * 206;
+
+          return (
+            <a
+              key={i}
+              href={partner.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group absolute w-[224px] h-[206px] flex flex-col items-center justify-between pt-3.5 pb-3 px-2.5 text-center cursor-pointer"
+              style={{ left, top }}
+            >
+              {/* Header */}
+              <div className="h-[34px] w-full px-1 flex items-center justify-center text-[#fa1a1d] text-[12.5px] font-bold tracking-[0.03em] uppercase leading-[1.2] text-center">
+                {partner.header.includes("MUSIC STREAMING") ? (
+                  <span className="inline-block font-bold">
+                    OFFICIAL MUSIC
+                    <br />
+                    STREAMING PARTNER
+                  </span>
+                ) : (
+                  <span className="whitespace-nowrap font-bold">{partner.header}</span>
+                )}
+              </div>
+
+              {/* Logo */}
+              <div className="h-[90px] w-full flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.04]">
+                {partner.name.toLowerCase().includes("abhi") ? (
+                  <Image
+                    src="/sponsors/abhibus.webp"
+                    alt="AbhiBus"
+                    width={180}
+                    height={54}
+                    className="h-[52px] w-auto object-contain"
+                  />
+                ) : partner.name.toLowerCase().includes("aha") ? (
+                  <div className="flex flex-col items-center justify-center gap-1.5">
+                    <Image
+                      src="/sponsors/aha.webp"
+                      alt="Aha Therapy"
+                      width={140}
+                      height={65}
+                      className="h-[50px] w-auto object-contain"
+                    />
+                    <div className="font-rotonto text-[13px] font-bold tracking-[0.18em] text-[#2d6a4f] uppercase leading-none">
+                      Therapy
+                    </div>
+                  </div>
+                ) : partner.name.toLowerCase().includes("saavn") ? (
+                  <Image
+                    src="/sponsors/jiosaavn.webp"
+                    alt="JioSaavn"
+                    width={170}
+                    height={56}
+                    className="h-[50px] w-auto object-contain"
+                  />
+                ) : (
+                  <Image
+                    src="/sponsors/ola_cv.webp"
+                    alt="ola.cv"
+                    width={130}
+                    height={62}
+                    className="h-[54px] w-auto object-contain"
+                  />
+                )}
+              </div>
+
+              {/* Tagline */}
+              <div className="h-[40px] flex items-center justify-center px-1">
+                <p className="text-[12px] font-medium text-[#222] leading-[1.25] max-w-[200px] line-clamp-2">
+                  {partner.tagline}
+                </p>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

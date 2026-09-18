@@ -17,7 +17,7 @@ import SpeakerArt from "@/components/hero/SpeakerArt";
 import WordmarkArt from "@/components/hero/WordmarkArt";
 import MobileRecap from "@/components/mobile/MobileRecap";
 import WhoAreWeSection from "@/components/sections/WhoAreWe";
-import MobileSponsorSheet from "@/components/sections/MobileSponsorSheet";
+import SponsorsSection from "@/components/sections/Sponsors";
 import TimelineSection from "@/components/sections/Timeline";
 import Piece from "@/components/mobile/Piece";
 import PassCard from "@/components/pass/PassCard";
@@ -86,7 +86,7 @@ export default function MobileSite() {
       {FEATURES.whoAreWe && <WhoAreWeSection variant="flow" />}
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
-      <MobileSponsorSheet />
+      <SponsorsSection variant="flow" />
       <TimelineSection variant="flow" />
       <MobileRules />
       <MobileGuidelines />

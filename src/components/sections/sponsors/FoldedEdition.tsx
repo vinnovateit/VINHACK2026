@@ -17,10 +17,12 @@ import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
  * revealing the inner broadsheet (`SponsorEdition`).
  */
 
-const SHEET_W = 1184;
-const SHEET_H = 860;
+const DESKTOP_SHEET_W = 1184;
+const DESKTOP_SHEET_H = 860;
+const MOBILE_SHEET_W = 480;
+const MOBILE_SHEET_H = 760;
 
-export const EDITION_BLOCK_HEIGHT = SHEET_H;
+export const EDITION_BLOCK_HEIGHT = DESKTOP_SHEET_H;
 
 const VIEWPORT_FIT = 0.95;
 const TRAVEL_PLATE = 500;
@@ -31,9 +33,17 @@ const TRAVEL_PLATE = 500;
  * The 3D newspaper cover articulated across 6 folds for a smooth paper wave flip.
  * Completely shadow-free for a clean, flat aesthetic.
  */
-function BookCover() {
+function BookCover({
+  variant = "canvas",
+  sheetW = DESKTOP_SHEET_W,
+  sheetH = DESKTOP_SHEET_H,
+}: {
+  variant?: "canvas" | "flow";
+  sheetW?: number;
+  sheetH?: number;
+}) {
   const NUM_FOLDS = 6;
-  const segW = SHEET_W / NUM_FOLDS; // ~197.33px
+  const segW = sheetW / NUM_FOLDS;
   const overlap = 0.5;
 
   return (
@@ -63,8 +73,8 @@ function BookCover() {
             transform: "rotateY(0deg)",
           }}
         >
-          <div className="absolute top-0 left-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px` }}>
-            <SealedCover />
+          <div className="absolute top-0 left-0" style={{ width: `${sheetW}px`, height: `${sheetH}px` }}>
+            <SealedCover variant={variant} />
           </div>
         </div>
 
@@ -95,8 +105,8 @@ function BookCover() {
               transform: "rotateY(0deg)",
             }}
           >
-            <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW}px` }}>
-              <SealedCover />
+            <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW}px` }}>
+              <SealedCover variant={variant} />
             </div>
           </div>
           <div
@@ -125,8 +135,8 @@ function BookCover() {
                 transform: "rotateY(0deg)",
               }}
             >
-              <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 2}px` }}>
-                <SealedCover />
+              <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 2}px` }}>
+                <SealedCover variant={variant} />
               </div>
             </div>
             <div
@@ -155,8 +165,8 @@ function BookCover() {
                   transform: "rotateY(0deg)",
                 }}
               >
-                <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 3}px` }}>
-                  <SealedCover />
+                <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 3}px` }}>
+                  <SealedCover variant={variant} />
                 </div>
               </div>
               <div
@@ -185,8 +195,8 @@ function BookCover() {
                     transform: "rotateY(0deg)",
                   }}
                 >
-                  <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 4}px` }}>
-                    <SealedCover />
+                  <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 4}px` }}>
+                    <SealedCover variant={variant} />
                   </div>
                 </div>
                 <div
@@ -203,7 +213,7 @@ function BookCover() {
                   className="absolute inset-y-0 will-change-transform"
                   style={{
                     left: `${segW}px`,
-                    width: `${SHEET_W - segW * 5 + overlap}px`,
+                    width: `${sheetW - segW * 5 + overlap}px`,
                     transformOrigin: "left center",
                     transformStyle: "preserve-3d",
                   }}
@@ -215,8 +225,8 @@ function BookCover() {
                       transform: "rotateY(0deg)",
                     }}
                   >
-                    <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 5}px` }}>
-                      <SealedCover />
+                    <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 5}px` }}>
+                      <SealedCover variant={variant} />
                     </div>
                   </div>
                   <div
@@ -248,6 +258,9 @@ export default function FoldedEdition({
   const fitRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  const sheetW = variant === "flow" ? MOBILE_SHEET_W : DESKTOP_SHEET_W;
+  const sheetH = variant === "flow" ? MOBILE_SHEET_H : DESKTOP_SHEET_H;
 
   /** Latches the rustle to one per opening, and re-arms if you scroll back up */
   const soundedRef = useRef(false);
@@ -285,7 +298,7 @@ export default function FoldedEdition({
     let targetTop = 0;
     let parkStart = 0;
     let travelPx = TRAVEL_PLATE;
-    let renderedHeight = EDITION_BLOCK_HEIGHT;
+    let renderedHeight = sheetH;
     let armed = false;
     let drawn = Number.NaN;
     type PropItem = {
@@ -316,8 +329,8 @@ export default function FoldedEdition({
     let propItems: PropItem[] = [];
 
     const measureProps = () => {
-      const centerX = SHEET_W / 2; // 592
-      const centerY = SHEET_H / 2; // 379.2
+      const centerX = sheetW / 2;
+      const centerY = sheetH / 2;
 
       const allProps = [
         ...leftProps.map((el, i) => ({ el, isLeft: true, idx: i })),
@@ -373,24 +386,19 @@ export default function FoldedEdition({
       }
       armed = true;
 
-      const availW = Math.max(300, window.innerWidth - (variant === "flow" ? 16 : 24));
-      // For the mobile flow variant, scale against a narrower reference (55% of full sheet)
-      // so the newspaper fills the phone screen at a legible size (~0.57x on 390px phones).
-      // The portal is fixed+centered, so viewport naturally clips outer edges; the centred
-      // masthead and title partner remain fully visible.
-      const flowRef = variant === "flow" ? SHEET_W * 0.55 : SHEET_W;
-      const targetW = variant === "flow" ? availW : Math.min(availW, SHEET_W);
-      canvasScale = clamp(0.26, 1.0, targetW / flowRef);
+      const availW = Math.max(280, window.innerWidth - (variant === "flow" ? 20 : 24));
+      const targetW = variant === "flow" ? availW : Math.min(availW, sheetW);
+      canvasScale = clamp(0.24, 1.0, targetW / sheetW);
 
       if (variant === "flow") {
-        travelPx = 520;
-        container.style.height = `${travelPx + Math.round(EDITION_BLOCK_HEIGHT * canvasScale) + 80}px`;
+        travelPx = 480;
+        container.style.height = `${travelPx + Math.round(sheetH * canvasScale) + 120}px`;
       } else {
         travelPx = Math.round(TRAVEL_PLATE * Math.max(0.7, canvasScale));
-        container.style.height = `${EDITION_BLOCK_HEIGHT}px`;
+        container.style.height = `${sheetH}px`;
       }
 
-      const baseScreenHeight = EDITION_BLOCK_HEIGHT * canvasScale;
+      const baseScreenHeight = sheetH * canvasScale;
       const fitScale =
         baseScreenHeight > 0
           ? Math.min(1, (window.innerHeight * VIEWPORT_FIT) / baseScreenHeight)
@@ -632,8 +640,8 @@ export default function FoldedEdition({
         ref={containerRef}
         className="relative pointer-events-none"
         style={{
-          width: variant === "flow" ? "100%" : SHEET_W,
-          height: variant === "flow" ? 520 + 600 : EDITION_BLOCK_HEIGHT,
+          width: variant === "flow" ? "100%" : sheetW,
+          height: variant === "flow" ? 480 + Math.round(sheetH * 0.77) + 120 : sheetH,
           overflowAnchor: "none",
         }}
         aria-hidden
@@ -648,7 +656,7 @@ export default function FoldedEdition({
                 position: "fixed",
                 left: "50%",
                 top: 0,
-                width: SHEET_W,
+                width: sheetW,
                 transformOrigin: "top center",
                 zIndex: 30,
                 overflowAnchor: "none",
@@ -657,15 +665,15 @@ export default function FoldedEdition({
             >
               <div
                 ref={fitRef}
-                style={{ width: SHEET_W, transformOrigin: "top center" }}
+                style={{ width: sheetW, transformOrigin: "top center" }}
               >
                 {/* 3D Stage */}
                 <div
                   ref={stageRef}
                   className="relative select-none"
                   style={{
-                    width: SHEET_W,
-                    height: SHEET_H,
+                    width: sheetW,
+                    height: sheetH,
                     perspective: 2200,
                     perspectiveOrigin: "50% 50%",
                   }}
@@ -675,13 +683,13 @@ export default function FoldedEdition({
                     data-sheet
                     className="absolute inset-0 z-10 pointer-events-auto overflow-hidden"
                   >
-                    <SponsorEdition />
+                    <SponsorEdition variant={variant} />
                   </div>
 
-                  {/* Side props emerging from INSIDE the newspaper */}
+                  {/* Side props emerging from INSIDE the newspaper (desktop only) */}
                   <div
                     data-props-wrap
-                    className="pointer-events-none absolute inset-0 z-15"
+                    className={`pointer-events-none absolute inset-0 z-15 ${variant === "flow" ? "hidden" : ""}`}
                   >
                     <SponsorSideProps />
                   </div>
@@ -701,7 +709,7 @@ export default function FoldedEdition({
                       data-cover-dressing
                       className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[8px] rotate-[-0.6deg] rounded-[2px] border border-black/10 bg-[#dedede]"
                     />
-                    <BookCover />
+                    <BookCover variant={variant} sheetW={sheetW} sheetH={sheetH} />
                   </div>
                 </div>
               </div>

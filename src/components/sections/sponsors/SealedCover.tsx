@@ -6,7 +6,33 @@ import { SPONSOR_HEADING } from "./copy";
  * Features the VinHack hero logo (unstretched with native aspect ratio)
  * and prominent "OUR SPONSORS" presentation.
  */
-export default function SealedCover() {
+export default function SealedCover({
+  variant = "canvas",
+}: {
+  variant?: "canvas" | "flow";
+} = {}) {
+  if (variant === "flow") {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-black select-none [font-family:var(--font-rotonto),_Rotonto,_sans-serif] bg-[#ebebe9]">
+        <div className="flex flex-col items-center justify-center text-center w-full max-w-[420px] py-4">
+          <div className="relative w-full max-w-[360px] aspect-[1023.16/357.889] flex items-center justify-center">
+            <WordmarkArt preserveAspectRatio="xMidYMid meet" />
+          </div>
+
+          <div className="mt-8 w-[280px] max-w-[85%] border-t-[2.4px] border-black" />
+
+          <h2 className="mt-6 font-rotonto font-normal text-[52px] leading-[0.92] tracking-tight uppercase text-[#fa1a1d] [text-shadow:1.2px_0_0_#000,_0_1.2px_0_#000,_-1.2px_0_0_#000,_0_-1.2px_0_#000]">
+            {SPONSOR_HEADING.title}
+          </h2>
+
+          <p className="mt-4 font-rotonto text-[14.5px] font-normal tracking-[0.18em] uppercase text-[#333]">
+            {SPONSOR_HEADING.tagline}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center p-[32px] text-black select-none [font-family:var(--font-rotonto),_Rotonto,_sans-serif] bg-[#ebebe9]">
       {/* Main Center Stage: VinHack Hero Logo & Our Sponsors */}
