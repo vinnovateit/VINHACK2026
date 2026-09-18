@@ -98,11 +98,14 @@ export default function MobileTracksDeck() {
             animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
             exit={{ opacity: 0, x: direction > 0 ? -60 : 60, scale: 0.96, rotate: direction > 0 ? -2 : 2 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0 rounded-[22px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-black/15 flex flex-col justify-between px-5 py-4 sm:px-6 sm:py-5"
+            className="absolute inset-0 rounded-[22px] overflow-hidden shadow-[0_24px_50px_-10px_rgba(0,0,0,0.7),0_8px_18px_rgba(0,0,0,0.3),inset_0_1.5px_0_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.2),inset_0_0_0_1.2px_rgba(0,0,0,0.12)] border border-black/15 flex flex-col justify-between px-5 py-4 sm:px-6 sm:py-5"
             style={{ backgroundColor: currentColor, color: ink }}
           >
+            {/* Skeumorphic light sheen */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/18 via-white/5 to-black/10" aria-hidden />
+
             {/* Specular top edge */}
-            <div className="absolute inset-x-0 top-0 h-px bg-white/30 pointer-events-none" />
+            <div className="absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none" />
 
             {/* Top: track number + asterisk */}
             <div className="flex items-start justify-between">
@@ -143,7 +146,7 @@ export default function MobileTracksDeck() {
             <div className="flex items-end justify-end min-h-[28px]">
               {"label" in currentTrack ? (
                 <span
-                  className="rounded-full px-3 py-0.5 font-rotonto text-[10px] font-bold uppercase tracking-wide shadow-xs"
+                  className="rounded-full px-3 py-1 font-rotonto text-[10px] font-bold uppercase tracking-wide shadow-[0_3px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] border border-white/20"
                   style={{ background: ink, color: currentColor }}
                 >
                   {currentTrack.label}

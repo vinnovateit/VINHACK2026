@@ -237,14 +237,6 @@ const KICK = 5;
 const SWEEP_END = 0.55;
 const THROW_START = 0.38;
 
-/** How far the two ghost plates pull apart at the fastest point of a flight,
- *  in the card's own units, and how much of that separation is vertical. They
- *  live inside the card's own transform, so they lean and scale with it. */
-const SEPARATION = 15;
-const SEP_TILT = 0.34;
-/** The plates themselves. Red and cyan, the deck's own two loudest inks. */
-const SEP_INKS = [TRACK_COLORS.red, TRACK_COLORS.lightBlue] as const;
-
 /* ------------------------------------------------------------------ colour */
 
 /** Grey -> Pink -> Red -> Dark Blue -> Light Blue -> White, as the deck deals. */
@@ -256,23 +248,6 @@ const COLOR_CYCLE = [
   TRACK_COLORS.lightBlue,
   TRACK_COLORS.white,
 ] as const;
-
-/* ------------------------------------------------------------------- maths */
-
-/** Where the content fade starts and how wide it is, in units of `|raw|` (see
- *  `render`). `CONTENT_FLAT` is how close to square the card must already be
- *  before its face starts to print, and `CONTENT_FADE` is how much further out
- *  it fades to nothing.
- *
- *  This used to be 0.18 and 0.4 — a fade four times wider than the flat spot,
- *  which meant the face spent most of its ramp printing over a card that was
- *  still visibly skewed and mid-air: half-opacity type on a rotated, leaning
- *  card reads as smudged rather than as a card arriving. Narrowing the fade
- *  keeps it inside the range where the pose (see `poseExtent`'s callers below,
- *  `rotate`/`skew`) is already close to flat, so the text is either off or
- *  legible and skips the washed-out middle. */
-const CONTENT_FLAT = 0.18;
-const CONTENT_FADE = 0.14;
 
 /**
  * Half the width and half the height a card actually covers once it is turned,
@@ -333,7 +308,6 @@ export function TracksCardDeck() {
   const counterRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const ghostRefs = useRef<Map<number, HTMLDivElement[]>>(new Map());
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -454,27 +428,11 @@ export function TracksCardDeck() {
           absRaw < 0.5 ? "500" : inbound ? String(300 - slot) : String(100 + slot);
         if (el.style.zIndex !== layer) el.style.zIndex = layer;
 
-        // The smear: keep subtle so it doesn't cause visual double-vision/flicker
-        const ghosts = ghostRefs.current.get(slot);
-        if (ghosts) {
-          const sep = 6 * air;
-          for (let g = 0; g < ghosts.length; g++) {
-            const dir = g === 0 ? -1 : 1;
-            ghosts[g].style.transform = `translate3d(${(sep * dir).toFixed(1)}px, ${(
-              sep *
-              SEP_TILT *
-              dir
-            ).toFixed(1)}px, 0)`;
-          }
-        }
-
-        // The face prints when the card is close to the reader.
-        const content = contentRefs.current.get(slot);
-        if (content) {
-          const shown = reduced
-            ? (absRaw < 0.5 ? 1 : 0)
-            : clamp(0, 1, 1 - smooth((absRaw - 0.28) / 0.28));
-          content.style.opacity = shown.toFixed(3);
+        // Subtle depth-based blur: pin-sharp at center, subtle blur as it recedes into depth
+        const blurAmount = reduced ? 0 : Math.min(4.5, Math.max(0, (1 - e) * 4.5));
+        const filterStr = blurAmount > 0.2 ? `blur(${blurAmount.toFixed(1)}px)` : "none";
+        if (el.style.filter !== filterStr) {
+          el.style.filter = filterStr;
         }
       }
 
@@ -863,21 +821,6 @@ export function TracksCardDeck() {
                       }}
                       aria-hidden
                     >
-                      {item
-                        ? SEP_INKS.map((sepInk, g) => (
-                            <div
-                              key={sepInk}
-                              ref={(node) => {
-                                const list = ghostRefs.current.get(slot) ?? [];
-                                if (node) list[g] = node;
-                                ghostRefs.current.set(slot, list);
-                              }}
-                              className="absolute inset-0 rounded-[32px]"
-                              style={{ background: sepInk }}
-                            />
-                          ))
-                        : null}
-
                       <TrackCard
                         color={color}
                         isFront={item !== null}
@@ -892,7 +835,7 @@ export function TracksCardDeck() {
                               if (node) contentRefs.current.set(slot, node);
                               else contentRefs.current.delete(slot);
                             }}
-                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[48px] py-[40px] opacity-0"
+                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[48px] py-[40px] opacity-100"
                             style={{ color: ink }}
                           >
                             <div className="flex items-start justify-between">
@@ -936,7 +879,7 @@ export function TracksCardDeck() {
                             <div className="flex min-h-[38px] items-end justify-end font-rotonto">
                               {"label" in item ? (
                                 <span
-                                  className="rounded-full px-[22px] py-[7px] text-[18px] font-bold uppercase tracking-normal shadow-sm"
+                                  className="rounded-full px-[22px] py-[7px] text-[18px] font-bold uppercase tracking-normal shadow-[0_4px_12px_rgba(0,0,0,0.25),inset_0_1.5px_0_rgba(255,255,255,0.4)] border border-white/20"
                                   style={{ background: ink, color }}
                                 >
                                   {item.label}

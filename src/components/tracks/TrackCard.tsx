@@ -114,18 +114,26 @@ export function TrackCard({
         width: typeof width === "number" ? `${width}px` : width,
         height: typeof height === "number" ? `${height}px` : height,
         boxShadow: is2x
-          ? isFront
-            ? "0 36px 80px -20px rgba(0, 0, 0, 0.45), 0 0 0 2px rgba(0,0,0,0.06)"
-            : "0 20px 50px -16px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(0,0,0,0.04)"
-          : isFront
-            ? "0 18px 40px -10px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0,0,0,0.06)"
-            : "0 10px 25px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0,0,0,0.04)",
+          ? "0 34px 75px -15px rgba(0, 0, 0, 0.55), 0 12px 28px -8px rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 6px rgba(0, 0, 0, 0.2), inset 0 0 0 1.5px rgba(0, 0, 0, 0.12)"
+          : "0 18px 40px -10px rgba(0, 0, 0, 0.5), 0 6px 14px -4px rgba(0, 0, 0, 0.25), inset 0 1.2px 0 rgba(255, 255, 255, 0.5), inset 0 -1.5px 3px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.12)",
         ...style,
       }}
     >
-      {/* Subtle inner top-edge highlight for tactile card feel */}
+      {/* Skeumorphic light sheen across card body */}
       <div
-        className={`absolute inset-x-0 top-0 ${is2x ? "h-[2px]" : "h-px"} bg-white/25 pointer-events-none`}
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/18 via-white/5 to-black/12"
+        aria-hidden
+      />
+
+      {/* Crisp top specular highlight */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 ${is2x ? "h-[2.5px]" : "h-[1.5px]"} bg-gradient-to-r from-transparent via-white/60 to-transparent`}
+        aria-hidden
+      />
+
+      {/* Subtle bottom edge reflection line */}
+      <div
+        className={`pointer-events-none absolute inset-x-0 bottom-0 ${is2x ? "h-[2px]" : "h-px"} bg-black/15`}
         aria-hidden
       />
 
