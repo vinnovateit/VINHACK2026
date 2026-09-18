@@ -41,7 +41,7 @@ export default function MobileSponsorSheet() {
             href={TITLE_SPONSOR.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex flex-col items-center justify-center py-6 px-4 border-b border-black transition-opacity duration-200 hover:opacity-80"
+            className="group flex flex-col items-center justify-center py-6 px-4 border-b border-black cursor-pointer"
           >
             <p className="text-[#fa1a1d] text-[9px] font-bold tracking-[0.18em] uppercase mb-3">
               {TITLE_SPONSOR.header}
@@ -69,7 +69,7 @@ export default function MobileSponsorSheet() {
                 href={partner.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group flex flex-col items-center justify-between py-5 px-3 text-center transition-opacity duration-200 hover:opacity-80 ${i % 2 === 0 ? "border-r border-black" : ""} ${i < 2 ? "border-b border-black" : ""}`}
+                className={`group flex flex-col items-center justify-between py-5 px-3 text-center cursor-pointer ${i % 2 === 0 ? "border-r border-black" : ""} ${i < 2 ? "border-b border-black" : ""}`}
               >
                 <p className="text-[#fa1a1d] text-[7.5px] font-bold tracking-[0.06em] uppercase leading-[1.3] min-h-[24px] flex items-center justify-center text-center">
                   {partner.header}

@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-
-import NewspaperBackCover from "./NewspaperBackCover";
 import SponsorEdition from "./SponsorEdition";
 import SealedCover from "./SealedCover";
 import SponsorSideProps from "./SponsorSideProps";
@@ -16,9 +14,8 @@ import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
  * The sponsor sheet as a broadsheet edition that opens naturally in physical 3D.
  *
  * When closed, the reader sees the front page cover (`SealedCover`).
- * Scrolling smoothly lifts, arches, and turns the paper leaf across to the left,
- * revealing the authentic reverse editorial page (`NewspaperBackCover`) in full 3D,
- * casting a moving soft shadow across the inner broadsheet (`SponsorEdition`).
+ * Scrolling turns the articulated 6-fold paper leaf smoothly across to the left,
+ * revealing the inner broadsheet (`SponsorEdition`).
  */
 
 const SHEET_W = 1184;
@@ -36,12 +33,12 @@ const TRAVEL_PLATE = 500;
 /* -------------------------------------------------------------- components */
 
 /**
- * The 3D double-sided newspaper cover.
- * Front: SealedCover (VinHack logo + OUR SPONSORS).
- * Back: NewspaperBackCover (Page 2 editorial).
+ * The 3D newspaper cover articulated across 6 folds for a smooth paper wave flip.
+ * Completely shadow-free for a clean, flat aesthetic.
  */
 function BookCover() {
-  const segW = SHEET_W / 3; // ~394.67px
+  const NUM_FOLDS = 6;
+  const segW = SHEET_W / NUM_FOLDS; // ~197.33px
   const overlap = 0.5;
 
   return (
@@ -53,19 +50,19 @@ function BookCover() {
         transformStyle: "preserve-3d",
       }}
     >
-      {/* Segment 0: Spine Leaf (x: 0 to 33.3%, permanently pinned to spine) */}
+      {/* Segment 0: Spine segment (x: 0 to 16.7%, permanently pinned to spine) */}
       <div
-        data-segment-spine
-        className="absolute inset-y-0 left-0"
+        data-segment-0
+        className="absolute inset-y-0 left-0 will-change-transform"
         style={{
           width: `${segW + overlap}px`,
           transformOrigin: "left center",
           transformStyle: "preserve-3d",
         }}
       >
-        {/* Spine Front Face */}
+        {/* Segment 0 Front Face */}
         <div
-          className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(0deg)",
@@ -74,63 +71,30 @@ function BookCover() {
           <div className="absolute top-0 left-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px` }}>
             <SealedCover />
           </div>
-
-          {/* Spine Crease */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 w-[36px] bg-[linear-gradient(90deg,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0)_100%)]"
-          />
-
-          {/* Dynamic Light Sheen on Front Convex Curve */}
-          <div
-            data-front-sheen
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-0"
-            style={{
-              background:
-                "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(0,0,0,0.25) 70%, transparent 100%)",
-            }}
-          />
         </div>
 
-        {/* Spine Back Face (Plain clean newsprint paper) */}
+        {/* Segment 0 Back Face */}
         <div
-          className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
-        >
-          <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, right: 0 }}>
-            <NewspaperBackCover />
-          </div>
+        />
 
-          {/* Dynamic Light Sheen on Back Convex Curve */}
-          <div
-            data-back-sheen
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-0"
-            style={{
-              background:
-                "linear-gradient(255deg, transparent 20%, rgba(255,255,255,0.3) 45%, rgba(0,0,0,0.3) 70%, transparent 100%)",
-            }}
-          />
-        </div>
-
-        {/* Segment 1: Mid Leaf (x: 33.3% to 66.7%, hinged to Segment 0) */}
+        {/* Segment 1: Hinged to Segment 0 (x: 16.7% to 33.3%) */}
         <div
-          data-segment-mid
+          data-segment-1
           className="absolute inset-y-0 will-change-transform"
           style={{
-            left: `${segW - overlap}px`,
+            left: `${segW}px`,
             width: `${segW + overlap}px`,
             transformOrigin: "left center",
             transformStyle: "preserve-3d",
           }}
         >
-          {/* Mid Front Face */}
           <div
-            className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
             style={{
               backfaceVisibility: "hidden",
               transform: "rotateY(0deg)",
@@ -139,57 +103,28 @@ function BookCover() {
             <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW}px` }}>
               <SealedCover />
             </div>
-
-            {/* Dynamic Wave Shadow on Mid Leaf */}
-            <div
-              data-wave-shadow-1
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-0"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.04) 50%, transparent 100%)",
-              }}
-            />
           </div>
-
-          {/* Mid Back Face */}
           <div
-            className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
             style={{
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
             }}
-          >
-            <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, right: `-${segW}px` }}>
-              <NewspaperBackCover />
-            </div>
+          />
 
-            {/* Dynamic Wave Back Shadow on Mid Leaf */}
-            <div
-              data-wave-back-shadow-1
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-0"
-              style={{
-                background:
-                  "linear-gradient(270deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.04) 50%, transparent 100%)",
-              }}
-            />
-          </div>
-
-          {/* Segment 2: Outer Leaf (x: 66.7% to 100%, hinged to Segment 1) */}
+          {/* Segment 2: Hinged to Segment 1 (x: 33.3% to 50%) */}
           <div
-            data-segment-outer
+            data-segment-2
             className="absolute inset-y-0 will-change-transform"
             style={{
-              left: `${segW - overlap}px`,
-              width: `${SHEET_W - segW * 2 + overlap}px`,
+              left: `${segW}px`,
+              width: `${segW + overlap}px`,
               transformOrigin: "left center",
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Outer Front Face */}
             <div
-              className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+              className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
               style={{
                 backfaceVisibility: "hidden",
                 transform: "rotateY(0deg)",
@@ -198,41 +133,106 @@ function BookCover() {
               <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 2}px` }}>
                 <SealedCover />
               </div>
-
-              {/* Dynamic Wave Shadow on Outer Leaf */}
-              <div
-                data-wave-shadow-2
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-0"
-                style={{
-                  background:
-                    "linear-gradient(90deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.06) 50%, transparent 100%)",
-                }}
-              />
             </div>
-
-            {/* Outer Back Face */}
             <div
-              className="absolute inset-0 overflow-hidden bg-[#ebebe9] shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
+              className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
               style={{
                 backfaceVisibility: "hidden",
                 transform: "rotateY(180deg)",
               }}
-            >
-              <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, right: `-${segW * 2}px` }}>
-                <NewspaperBackCover />
-              </div>
+            />
 
-              {/* Dynamic Wave Back Shadow on Outer Leaf */}
+            {/* Segment 3: Hinged to Segment 2 (x: 50% to 66.7%) */}
+            <div
+              data-segment-3
+              className="absolute inset-y-0 will-change-transform"
+              style={{
+                left: `${segW}px`,
+                width: `${segW + overlap}px`,
+                transformOrigin: "left center",
+                transformStyle: "preserve-3d",
+              }}
+            >
               <div
-                data-wave-back-shadow-2
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-0"
+                className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
                 style={{
-                  background:
-                    "linear-gradient(270deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.06) 50%, transparent 100%)",
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(0deg)",
+                }}
+              >
+                <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 3}px` }}>
+                  <SealedCover />
+                </div>
+              </div>
+              <div
+                className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
                 }}
               />
+
+              {/* Segment 4: Hinged to Segment 3 (x: 66.7% to 83.3%) */}
+              <div
+                data-segment-4
+                className="absolute inset-y-0 will-change-transform"
+                style={{
+                  left: `${segW}px`,
+                  width: `${segW + overlap}px`,
+                  transformOrigin: "left center",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                <div
+                  className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(0deg)",
+                  }}
+                >
+                  <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 4}px` }}>
+                    <SealedCover />
+                  </div>
+                </div>
+                <div
+                  className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                  }}
+                />
+
+                {/* Segment 5: Hinged to Segment 4 (x: 83.3% to 100%, outer leaf) */}
+                <div
+                  data-segment-5
+                  className="absolute inset-y-0 will-change-transform"
+                  style={{
+                    left: `${segW}px`,
+                    width: `${SHEET_W - segW * 5 + overlap}px`,
+                    transformOrigin: "left center",
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(0deg)",
+                    }}
+                  >
+                    <div className="absolute top-0" style={{ width: `${SHEET_W}px`, height: `${SHEET_H}px`, left: `-${segW * 5}px` }}>
+                      <SealedCover />
+                    </div>
+                  </div>
+                  <div
+                    className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -267,15 +267,11 @@ export default function FoldedEdition({
     if (!container || !portalEl || !fit || !stageEl) return;
 
     const cover = stageEl.querySelector<HTMLElement>("[data-cover]");
-    const midLeaf = stageEl.querySelector<HTMLElement>("[data-segment-mid]");
-    const outerLeaf = stageEl.querySelector<HTMLElement>("[data-segment-outer]");
-    const waveShadow1 = stageEl.querySelector<HTMLElement>("[data-wave-shadow-1]");
-    const waveShadow2 = stageEl.querySelector<HTMLElement>("[data-wave-shadow-2]");
-    const waveBackShadow1 = stageEl.querySelector<HTMLElement>("[data-wave-back-shadow-1]");
-    const waveBackShadow2 = stageEl.querySelector<HTMLElement>("[data-wave-back-shadow-2]");
-    const frontSheen = stageEl.querySelector<HTMLElement>("[data-front-sheen]");
-    const backSheen = stageEl.querySelector<HTMLElement>("[data-back-sheen]");
-    const castShadow = stageEl.querySelector<HTMLElement>("[data-cast-shadow]");
+    const seg1 = stageEl.querySelector<HTMLElement>("[data-segment-1]");
+    const seg2 = stageEl.querySelector<HTMLElement>("[data-segment-2]");
+    const seg3 = stageEl.querySelector<HTMLElement>("[data-segment-3]");
+    const seg4 = stageEl.querySelector<HTMLElement>("[data-segment-4]");
+    const seg5 = stageEl.querySelector<HTMLElement>("[data-segment-5]");
     const dressing = Array.from(
       stageEl.querySelectorAll<HTMLElement>("[data-cover-dressing]")
     );
@@ -421,18 +417,19 @@ export default function FoldedEdition({
       const s = stage(p, 0.0, 0.96);
       const easeT = smooth(s);
 
-      // Natural 3D book page flip wave physics:
+      // Natural 3D book page flip wave physics across 6 folds:
       // Page opens smoothly from 0 to 180 degrees (resting flat on the left)
       const angle = easeT * 180;
 
-      // S-curve wave traveling across the flipping page:
-      // Base wave arches the page forward into the flip
+      // 6-fold articulated wave flexion traveling across the leaf (zero shadows, pure flat geometry)
       const baseWave = -Math.sin(s * Math.PI);
-      // Secondary harmonic ripple creates dynamic S-curve flexion
       const ripple = Math.sin(s * Math.PI * 2);
 
-      const curl1 = baseWave * 32 + ripple * 12;
-      const curl2 = baseWave * 28 - ripple * 18;
+      const curl1 = baseWave * 9 + ripple * 3;
+      const curl2 = baseWave * 11 + ripple * 5;
+      const curl3 = baseWave * 13 + ripple * 3;
+      const curl4 = baseWave * 11 - ripple * 3;
+      const curl5 = baseWave * 9 - ripple * 6;
 
       if (cover) {
         // Pure Y-axis rotation pinned permanently at spine (x=0, y=0, z=0) — NEVER detaches from 2nd page!
@@ -440,33 +437,11 @@ export default function FoldedEdition({
         cover.style.opacity = "1";
       }
 
-      if (midLeaf) {
-        midLeaf.style.transform = `rotateY(${curl1.toFixed(2)}deg)`;
-      }
-
-      if (outerLeaf) {
-        outerLeaf.style.transform = `rotateY(${curl2.toFixed(2)}deg)`;
-      }
-
-      const waveIntensity = Math.sin(s * Math.PI);
-      if (waveShadow1) waveShadow1.style.opacity = (waveIntensity * 0.35).toFixed(3);
-      if (waveShadow2) waveShadow2.style.opacity = (waveIntensity * 0.45).toFixed(3);
-      if (waveBackShadow1) waveBackShadow1.style.opacity = (waveIntensity * 0.35).toFixed(3);
-      if (waveBackShadow2) waveBackShadow2.style.opacity = (waveIntensity * 0.45).toFixed(3);
-
-      if (frontSheen) {
-        frontSheen.style.opacity = (Math.sin(Math.min(1, s * 2) * Math.PI) * 0.4).toFixed(3);
-      }
-      if (backSheen) {
-        backSheen.style.opacity = (s > 0.4 ? Math.sin(((s - 0.4) / 0.6) * Math.PI) * 0.4 : 0).toFixed(3);
-      }
-
-      if (castShadow) {
-        const shadowOp = s < 0.85 ? Math.sin(Math.min(1, s * 1.4) * Math.PI) * 0.45 : 0;
-        const shadowX = ((1 - Math.min(1, s * 1.25)) * 60).toFixed(1);
-        castShadow.style.opacity = shadowOp.toFixed(3);
-        castShadow.style.transform = `translateX(${shadowX}%)`;
-      }
+      if (seg1) seg1.style.transform = `rotateY(${curl1.toFixed(2)}deg)`;
+      if (seg2) seg2.style.transform = `rotateY(${curl2.toFixed(2)}deg)`;
+      if (seg3) seg3.style.transform = `rotateY(${curl3.toFixed(2)}deg)`;
+      if (seg4) seg4.style.transform = `rotateY(${curl4.toFixed(2)}deg)`;
+      if (seg5) seg5.style.transform = `rotateY(${curl5.toFixed(2)}deg)`;
 
       for (const bit of dressing) {
         bit.style.opacity = (
@@ -730,21 +705,12 @@ export default function FoldedEdition({
                     perspectiveOrigin: "50% 50%",
                   }}
                 >
-                  {/* Inside Newspaper Spread with dynamic cast shadow */}
+                  {/* Inside Newspaper Spread */}
                   <div
                     data-sheet
                     className="absolute inset-0 z-10 pointer-events-auto overflow-hidden"
                   >
                     <SponsorEdition />
-                    <div
-                      data-cast-shadow
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 z-30 opacity-0 transition-transform"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.55) 85%, rgba(0,0,0,0) 100%)",
-                      }}
-                    />
                   </div>
 
                   {/* Side props emerging from INSIDE the newspaper */}
@@ -763,12 +729,12 @@ export default function FoldedEdition({
                     <div
                       aria-hidden
                       data-cover-dressing
-                      className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[-8px] rotate-[0.6deg] rounded-[2px] border border-black/10 bg-[#d0d0cb] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+                      className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[-8px] rotate-[0.6deg] rounded-[2px] border border-black/10 bg-[#d0d0cb]"
                     />
                     <div
                       aria-hidden
                       data-cover-dressing
-                      className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[8px] rotate-[-0.6deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
+                      className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[8px] rotate-[-0.6deg] rounded-[2px] border border-black/10 bg-[#dedede]"
                     />
                     <BookCover />
                   </div>

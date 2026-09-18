@@ -13,6 +13,8 @@ export type KeyColor =
   | "green"
   | "yellow"
   | "discord"
+  | "grey"
+  | "gray"
   | (string & {});
 
 export interface KeyButtonProps {
@@ -34,7 +36,7 @@ export interface KeyButtonProps {
 }
 
 const colorMap: Record<
-  "pink" | "red" | "blue" | "white" | "green" | "yellow" | "discord",
+  "pink" | "red" | "blue" | "white" | "green" | "yellow" | "discord" | "grey" | "gray",
   {
     bg: string;
     border: string;
@@ -91,6 +93,20 @@ const colorMap: Record<
     text: "text-white",
     lineColor: "#7983F5",
     shadowColor: "#3C45A5",
+  },
+  grey: {
+    bg: "bg-[#3a3a3c]",
+    border: "border-[#545458]",
+    text: "text-[#8e8e93]",
+    lineColor: "#545458",
+    shadowColor: "#2c2c2e",
+  },
+  gray: {
+    bg: "bg-[#3a3a3c]",
+    border: "border-[#545458]",
+    text: "text-[#8e8e93]",
+    lineColor: "#545458",
+    shadowColor: "#2c2c2e",
   },
 };
 
@@ -337,7 +353,7 @@ export default function KeyButton({
   );
 
   const sharedClasses = `relative ${height} shrink-0 select-none transition-opacity duration-150 will-change-transform inline-block ${
-    disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+    disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"
   } ${className || "w-[340px]"}`;
 
   if (href) {

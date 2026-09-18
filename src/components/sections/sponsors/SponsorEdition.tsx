@@ -63,7 +63,7 @@ const SponsorEdition = () => {
           href={TITLE_SPONSOR.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="group absolute top-[241.13px] left-[29.71px] w-[1124.2px] h-[230px] flex flex-col items-center justify-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
+          className="group absolute top-[241.13px] left-[29.71px] w-[1124.2px] h-[230px] flex flex-col items-center justify-center cursor-pointer"
         >
           <div className="text-[#fa1a1d] text-[20px] font-bold tracking-[0.16em] uppercase mb-2.5">
             {TITLE_SPONSOR.header}
@@ -97,7 +97,7 @@ const SponsorEdition = () => {
             href={partner.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group absolute top-[471.13px] w-[281.05px] h-[356.87px] flex flex-col items-center justify-between pt-5 pb-5 px-3 text-center cursor-pointer transition-opacity duration-200 hover:opacity-85"
+            className="group absolute top-[471.13px] w-[281.05px] h-[356.87px] flex flex-col items-center justify-between pt-5 pb-5 px-3 text-center cursor-pointer"
             style={{ left: 29.71 + i * 281.05 }}
           >
             {/* Header */}

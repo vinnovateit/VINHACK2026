@@ -26,9 +26,13 @@ export default function MobileTracksDeck() {
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
+  const isFirst = activeIndex === 0;
+  const isLast = activeIndex === COUNT - 1;
+
   const goToTrack = useCallback(
     (index: number) => {
-      const next = (index + COUNT) % COUNT;
+      const next = Math.max(0, Math.min(COUNT - 1, index));
+      if (next === activeIndex) return;
       setDirection(next > activeIndex ? 1 : -1);
       setActiveIndex(next);
     },
@@ -36,13 +40,19 @@ export default function MobileTracksDeck() {
   );
 
   const handlePrev = useCallback(() => {
-    setDirection(-1);
-    setActiveIndex((prev) => (prev - 1 + COUNT) % COUNT);
+    setActiveIndex((prev) => {
+      if (prev <= 0) return prev;
+      setDirection(-1);
+      return prev - 1;
+    });
   }, []);
 
   const handleNext = useCallback(() => {
-    setDirection(1);
-    setActiveIndex((prev) => (prev + 1) % COUNT);
+    setActiveIndex((prev) => {
+      if (prev >= COUNT - 1) return prev;
+      setDirection(1);
+      return prev + 1;
+    });
   }, []);
 
   // Touch swipe
@@ -56,8 +66,11 @@ export default function MobileTracksDeck() {
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4) {
-      if (deltaX < 0) handleNext();
-      else handlePrev();
+      if (deltaX < 0) {
+        if (!isLast) handleNext();
+      } else {
+        if (!isFirst) handlePrev();
+      }
     }
     touchStartX.current = null;
     touchStartY.current = null;
@@ -73,7 +86,7 @@ export default function MobileTracksDeck() {
     <div className="relative w-full my-6 flex flex-col items-center select-none">
       {/* Card Stage */}
       <div
-        className="relative w-full max-w-[420px] h-[350px] sm:h-[360px] cursor-grab active:cursor-grabbing"
+        className="relative w-full max-w-[430px] h-[375px] sm:h-[390px] cursor-grab active:cursor-grabbing"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -98,7 +111,7 @@ export default function MobileTracksDeck() {
             animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
             exit={{ opacity: 0, x: direction > 0 ? -50 : 50, scale: 0.96, rotate: direction > 0 ? -1.5 : 1.5 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0 rounded-[22px] overflow-hidden shadow-[0_24px_50px_-10px_rgba(0,0,0,0.7),0_8px_18px_rgba(0,0,0,0.3),inset_0_1.5px_0_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.2),inset_0_0_0_1.2px_rgba(0,0,0,0.12)] border border-black/15 flex flex-col justify-between px-5 py-4 sm:px-6 sm:py-5"
+            className="absolute inset-0 rounded-[22px] overflow-hidden shadow-[0_24px_50px_-10px_rgba(0,0,0,0.7),0_8px_18px_rgba(0,0,0,0.3),inset_0_1.5px_0_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.2),inset_0_0_0_1.2px_rgba(0,0,0,0.12)] border border-black/15 flex flex-col justify-between p-5 sm:p-6"
             style={{ backgroundColor: currentColor, color: ink }}
           >
             {/* Skeumorphic light sheen */}
@@ -109,27 +122,27 @@ export default function MobileTracksDeck() {
 
             {/* Top: track number + asterisk */}
             <div className="flex items-start justify-between">
-              <span className="font-rotonto text-[13px] tracking-[0.2em] tabular-nums">
+              <span className="font-rotonto text-[14px] sm:text-[15px] font-bold tracking-[0.2em] tabular-nums">
                 #{activeIndex + 1}
               </span>
-              <TrackAsterisk size={18} />
+              <TrackAsterisk size={20} />
             </div>
 
             {/* Middle: title + blurb + visual */}
-            <div className="flex items-start gap-3.5 flex-1 py-1.5 min-h-0">
+            <div className="flex items-start gap-3.5 sm:gap-4 flex-1 pt-2 pb-1 min-h-0">
               <div className="min-w-0 flex-1">
                 <h3
                   className={`font-rotonto font-bold uppercase leading-[1.12] tracking-tight whitespace-normal break-words ${
                     currentTrack.title.length > 30
-                      ? "text-[15px]"
+                      ? "text-[18px] sm:text-[20px]"
                       : currentTrack.title.length > 20
-                        ? "text-[17px]"
-                        : "text-[20px]"
+                        ? "text-[21px] sm:text-[23px]"
+                        : "text-[26px] sm:text-[28px]"
                   }`}
                 >
                   {currentTrack.title}
                 </h3>
-                <p className="mt-2 font-rotonto text-[11px] sm:text-[12px] leading-relaxed opacity-90 whitespace-normal break-words text-left">
+                <p className="mt-2.5 font-rotonto text-[13px] sm:text-[14px] leading-[1.5] opacity-90 whitespace-normal break-words text-left">
                   {currentTrack.blurb}
                 </p>
               </div>
@@ -137,16 +150,27 @@ export default function MobileTracksDeck() {
                 slot={activeIndex}
                 ink={ink}
                 rule={rule}
-                size={58}
-                className="shrink-0 size-[58px] sm:size-[64px] mt-0.5"
+                size={64}
+                className="shrink-0 size-[64px] sm:size-[72px] mt-0.5"
               />
             </div>
 
-            {/* Bottom: label badge only (if present) */}
-            <div className="flex items-end justify-end min-h-[28px]">
+            {/* Bottom: tags and label badge utilizing card space properly */}
+            <div className="mt-auto pt-3 border-t border-current/20 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {"tags" in currentTrack &&
+                  currentTrack.tags?.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md px-2 py-0.5 font-rotonto text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border border-current/25 bg-black/5 dark:bg-white/5"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+              </div>
               {"label" in currentTrack ? (
                 <span
-                  className="rounded-full px-3 py-1 font-rotonto text-[10px] font-bold uppercase tracking-wide shadow-[0_3px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.4)] border border-white/20"
+                  className="ml-auto rounded-full px-3 py-1 font-rotonto text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wide shadow-sm border border-white/20 shrink-0"
                   style={{ background: ink, color: currentColor }}
                 >
                   {currentTrack.label}
@@ -158,9 +182,10 @@ export default function MobileTracksDeck() {
       </div>
 
       {/* Controls: prev dots next */}
-      <div className="mt-5 flex items-center justify-between w-full max-w-[420px] px-1">
+      <div className="mt-5 flex items-center justify-between w-full max-w-[430px] px-1">
         <KeyButton
-          color="blue"
+          color={isFirst ? "grey" : "blue"}
+          disabled={isFirst}
           size="compact"
           className="w-[52px] sm:w-[58px]"
           onClick={handlePrev}
@@ -184,7 +209,8 @@ export default function MobileTracksDeck() {
         </div>
 
         <KeyButton
-          color="blue"
+          color={isLast ? "grey" : "blue"}
+          disabled={isLast}
           size="compact"
           className="w-[52px] sm:w-[58px]"
           onClick={handleNext}
