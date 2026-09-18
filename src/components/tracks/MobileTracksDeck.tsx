@@ -86,7 +86,7 @@ export default function MobileTracksDeck() {
     <div className="relative w-full my-6 flex flex-col items-center select-none">
       {/* Card Stage */}
       <div
-        className="relative w-full max-w-[430px] h-[310px] sm:h-[330px] cursor-grab active:cursor-grabbing"
+        className="relative w-full max-w-[430px] h-[320px] sm:h-[340px] cursor-grab active:cursor-grabbing"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -142,7 +142,7 @@ export default function MobileTracksDeck() {
                 >
                   {currentTrack.title}
                 </h3>
-                <p className="mt-2.5 font-rotonto text-[13px] sm:text-[14px] leading-[1.5] opacity-90 whitespace-normal break-words text-left">
+                <p className="mt-2 font-rotonto text-[12.5px] sm:text-[13.5px] leading-[1.45] opacity-90 whitespace-normal break-words text-left">
                   {currentTrack.blurb}
                 </p>
               </div>
@@ -150,9 +150,21 @@ export default function MobileTracksDeck() {
                 slot={activeIndex}
                 ink={ink}
                 rule={rule}
-                size={64}
-                className="shrink-0 size-[64px] sm:size-[72px] mt-0.5"
+                size={44}
+                className="shrink-0 size-[44px] sm:size-[50px] mt-0.5"
               />
+            </div>
+
+            {/* Bottom: sponsor track tag */}
+            <div className="flex items-end justify-end min-h-[26px] pt-1">
+              {"label" in currentTrack && currentTrack.label ? (
+                <span
+                  className="rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 font-rotonto text-[11px] sm:text-[12px] font-bold uppercase tracking-wide shrink-0"
+                  style={{ background: ink, color: currentColor }}
+                >
+                  {currentTrack.label}
+                </span>
+              ) : null}
             </div>
           </motion.div>
         </AnimatePresence>

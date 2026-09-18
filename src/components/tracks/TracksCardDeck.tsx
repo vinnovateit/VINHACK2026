@@ -879,7 +879,7 @@ export function TracksCardDeck() {
                             <div className="flex min-h-[38px] items-end justify-end font-rotonto">
                               {"label" in item ? (
                                 <span
-                                  className="rounded-full px-[22px] py-[7px] text-[18px] font-bold uppercase tracking-normal shadow-[0_4px_12px_rgba(0,0,0,0.25),inset_0_1.5px_0_rgba(255,255,255,0.4)] border border-white/20"
+                                  className="rounded-full px-[20px] py-[6px] text-[18px] font-bold uppercase tracking-normal"
                                   style={{ background: ink, color }}
                                 >
                                   {item.label}
