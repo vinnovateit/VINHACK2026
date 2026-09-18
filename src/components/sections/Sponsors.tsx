@@ -11,18 +11,11 @@ import { useInView } from "@/components/useInView";
  *
  * All that is here is the frame: the section's place on the canvas, and the
  * heading given plainly for anything that is not going to watch an animation.
- * The heading as it is *drawn* — red on the black, standfirst left, title
- * right — belongs to `FoldedEdition`, because it is held on screen with the
- * paper and fitted to the window with it rather than scrolling past above it.
+ * The paper is held on screen and fitted to the window with it.
  *
- * The sheet is printed at the size it was drawn. It used to be fitted into a
- * 1006px column at 0.85, which took the broadsheet's 14px newsprint down to
- * 12px and left the three text columns and the four-supporter rail fighting
- * over boxes that were never redrawn for it — the sheet is a fixed layout, so
- * shrinking the paper shrinks the type without giving any of it more room. At
- * 1:1 the 1184 x 758.4 sheet still clears the 1280 plate on both sides and
- * still fits the section's 840px with the top padding on, and every column is
- * set at the size the design actually specifies.
+ * The sheet is printed at the size it was drawn (1184 x 860). At 1:1 the sheet
+ * clears the 1280 plate on both sides and every column is set at the size the
+ * design specifies.
  */
 export default function SponsorsSection({
   variant = "canvas",
