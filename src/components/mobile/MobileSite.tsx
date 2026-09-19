@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect, type CSSProperties, type ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import KeyButton from "@/components/ui/KeyButton";
 
 import CameraFeed from "@/components/CameraFeed";
 import GitArt from "@/components/hero/GitArt";
@@ -14,16 +17,8 @@ import SpeakerArt from "@/components/hero/SpeakerArt";
 import WordmarkArt from "@/components/hero/WordmarkArt";
 import MobileRecap from "@/components/mobile/MobileRecap";
 import WhoAreWeSection from "@/components/sections/WhoAreWe";
-import MobileSponsors from "@/components/mobile/MobileSponsors";
-import ReceiptPrinter from "@/components/timeline/ReceiptPrinter";
-import TimelineToggle from "@/components/timeline/TimelineToggle";
-import {
-  TimelineExploreSticker,
-  TimelinePhoto234,
-  TimelinePhoto235,
-  TimelinePhoto236,
-  TimelineVector227,
-} from "@/components/timeline/TimelineStickers";
+import SponsorsSection from "@/components/sections/Sponsors";
+import TimelineSection from "@/components/sections/Timeline";
 import Piece from "@/components/mobile/Piece";
 import PassCard from "@/components/pass/PassCard";
 import ShutterButton from "@/components/pass/ShutterButton";
@@ -91,8 +86,8 @@ export default function MobileSite() {
       {FEATURES.whoAreWe && <WhoAreWeSection variant="flow" />}
       {FEATURES.projects && <MobileProjects />}
       <MobileTracks />
-      <MobileSponsors />
-      <MobileTimelineSection />
+      <SponsorsSection variant="flow" />
+      <TimelineSection variant="flow" />
       <MobileRules />
       <MobileGuidelines />
       <MobileFAQs />
@@ -369,7 +364,7 @@ function MobileAbout() {
   return (
     <section
       aria-label="About VinHack"
-      className="relative w-full overflow-clip flex flex-col items-center justify-center py-12"
+      className="relative w-full overflow-clip flex flex-col items-center justify-center pt-12 pb-6"
     >
       {/* The background layer: the same two lines, tiled and scrolling — the
           CSS `.marquee` class the footer's own row uses below, which loops by
@@ -386,7 +381,7 @@ function MobileAbout() {
         >
           {Array.from({ length: 6 }, (_, col) => (
             <div key={col} className="flex flex-col shrink-0 px-4">
-              {Array.from({ length: 12 }, (_, i) => (
+              {Array.from({ length: 14 }, (_, i) => (
                 <div key={i}>{SNEAK_PEEK.lines[i % SNEAK_PEEK.lines.length]}</div>
               ))}
             </div>
@@ -674,155 +669,86 @@ function MobileTracks() {
   const iosEase = "cubic-bezier(0.32, 0.72, 0, 1)";
 
   return (
-    <section ref={sectionRef} aria-label="Tracks" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
-      <div className="border-t border-[#fa1a1d]">
-        {TRACKS.lines.map((line, i) => {
-          const Tag = i === 1 ? "h2" : "p";
-          const isRight = i === 1;
-          const delay = `${i * 0.1}s`;
-          return (
-            <div
-              key={line}
-              className="flex items-center gap-3 border-b border-[#fa1a1d] py-4 will-change-transform"
-              style={{
-                transform: inView
-                  ? "translateX(0)"
-                  : isRight
-                    ? "translateX(100px)"
-                    : "translateX(-100px)",
-                opacity: inView ? 1 : 0,
-                transition: `transform 0.5s ${iosEase} ${delay}, opacity 0.5s ${iosEase} ${delay}`,
-              }}
-            >
-              <Tag className="text-[30px] leading-[1.1] text-[#fa1a1d]">
-                {line}
-              </Tag>
-              <img
-                alt=""
-                aria-hidden
-                className="block size-[26px] max-w-none shrink-0"
-                src={
-                  i === 0
-                    ? "/figma/vector32.svg"
-                    : i === 1
-                      ? "/figma/group48095496.svg"
-                      : "/figma/star2.svg"
-                }
+    <section ref={sectionRef} aria-label="Tracks" className="w-full py-8 overflow-x-clip">
+      {/* Full-bleed edge-to-edge bars container */}
+      <div className="border-t border-[#fa1a1d] font-rotonto w-full mb-2">
+        {/* Line 1: solve what matters — Full bleed bar, Left-aligned */}
+        <div className="border-b border-[#fa1a1d] w-full">
+          <div
+            className="w-full px-4 sm:px-8 flex items-center justify-start gap-2.5 sm:gap-4 py-3 sm:py-4 will-change-transform"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-60px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0s, opacity 0.5s ${iosEase} 0s`,
+            }}
+          >
+            <p className="text-[21px] xs:text-[25px] sm:text-[32px] leading-none text-[#fa1a1d] uppercase shrink-0">
+              {TRACKS.lines[0]}
+            </p>
+            <svg viewBox="0 0 46 45" fill="none" className="size-[22px] xs:size-[26px] sm:size-[34px] shrink-0" aria-hidden>
+              <path
+                d="M0 22.5H46M23 0V45M2.5 14L44 31.5M44 14L2.5 31.5M7.5 6.5L39 39M14.5 1.5L32 43M32 1.5L14.5 43M39 6.5L7.5 39"
+                stroke="#FA1A1D"
+                strokeWidth="2"
               />
-            </div>
-          );
-        })}
+            </svg>
+          </div>
+        </div>
+
+        {/* Line 2: TRACKS — Full bleed bar, Right-aligned (Desktop: right offset) */}
+        <div className="border-b border-[#fa1a1d] w-full">
+          <div
+            className="w-full px-4 sm:px-8 flex items-center justify-end gap-2.5 sm:gap-4 py-3 sm:py-4 will-change-transform"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(60px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.1s, opacity 0.5s ${iosEase} 0.1s`,
+            }}
+          >
+            <h2 className="text-[21px] xs:text-[25px] sm:text-[32px] leading-none text-[#fa1a1d] uppercase shrink-0">
+              {TRACKS.lines[1]}
+            </h2>
+            <svg viewBox="0 0 60 60" fill="none" className="size-[24px] xs:size-[28px] sm:size-[38px] shrink-0" aria-hidden>
+              <circle cx="30" cy="30" r="28.5" stroke="#FA1A1D" strokeWidth="3" />
+              <path
+                d="M13.5 26L22 31M20 14.5L28.5 20M18 47.5C18 47.5 29.212 42.2348 35.5 37.5C41.5674 32.9313 50 23 50 23"
+                stroke="#FA1A1D"
+                strokeWidth="5"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Line 3: build what lasts — Full bleed bar, Center-staggered */}
+        <div className="border-b border-[#fa1a1d] w-full">
+          <div
+            className="w-full px-4 sm:px-8 flex items-center justify-center sm:justify-start sm:pl-[25%] gap-2.5 sm:gap-4 py-3 sm:py-4 will-change-transform"
+            style={{
+              transform: inView ? "translateX(0)" : "translateX(-60px)",
+              opacity: inView ? 1 : 0,
+              transition: `transform 0.5s ${iosEase} 0.2s, opacity 0.5s ${iosEase} 0.2s`,
+            }}
+          >
+            <p className="text-[21px] xs:text-[25px] sm:text-[32px] leading-none text-[#fa1a1d] uppercase shrink-0">
+              {TRACKS.lines[2]}
+            </p>
+            <svg viewBox="0 0 40.2117 44.5" fill="none" className="w-[18px] h-[21px] xs:w-[22px] xs:h-[25px] sm:w-[28px] sm:h-[32px] shrink-0" aria-hidden>
+              <path
+                d="M20.325 19V0M23.825 21L38.825 11M23.825 24.5L38.825 33.5M20.325 26.5V44.5M17.325 24.5L1.325 33.5M17.325 21L1.325 11"
+                stroke="#FA1A1D"
+                strokeWidth="5"
+              />
+            </svg>
+          </div>
+        </div>
       </div>
 
-      {/* The deck deals its four tracks as the page scrolls past — see
-          `MobileTracksDeck`, which is the phone's answer to the collage's
-          scroll-locked deck. */}
       <MobileTracksDeck />
     </section>
   );
 }
 
 /* ----------------------------------------------------------- timeline */
-
-/**
- * One of the timeline's loose stickers.
- *
- * The collage scatters six of these round the receipt printer, stamps them down
- * as the section arrives and then lets the visitor pick them up and move them —
- * or throw them off the page. The phone gets the same thing, in the one shape a
- * column has room for: a row above the schedule and a row below it.
- *
- * The wrapper is what carries the motion, not the `Piece` inside it: `stampIn`
- * and `draggable` both write a transform, and `Piece`'s plate already has one
- * of its own for the scale. Two transforms, two boxes, and neither overwrites
- * the other.
- */
-function Loose({
-  width,
-  height,
-  max,
-  size,
-  stamp,
-  className,
-  children,
-}: {
-  width: number;
-  height: number;
-  max: number;
-  /** How wide the sticker sits in the row, in px. */
-  size: number;
-  /** Seconds after the row is reached that this one lands. */
-  stamp: number;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={`shrink-0 ${className ?? ""}`}
-      style={{ width: size }}
-      data-m-drag
-      data-m-stamp={stamp}
-    >
-      <Piece width={width} height={height} max={max}>
-        {children}
-      </Piece>
-    </div>
-  );
-}
-
-function MobileTimelineSection() {
-  return (
-    <section aria-label="Timeline" className={`${COL} ${PAD} py-16 overflow-x-clip`}>
-      {/* The two that ride above the schedule. */}
-      <div className="mb-10 flex items-end justify-center gap-4">
-        <Loose width={204.814} height={147} max={0.8} size={140} stamp={0}>
-          <TimelinePhoto235 />
-        </Loose>
-
-        <Loose width={136.85} height={134.841} max={0.9} size={108} stamp={0.12}>
-          <div className="absolute top-0 left-0 flex h-[134.841px] w-[136.85px] items-center justify-center">
-            <TimelinePhoto234 />
-          </div>
-        </Loose>
-      </div>
-
-      <h2 className="mb-10 text-[44px] text-[#fa1a1d]">{TIMELINE.heading}</h2>
-
-      <Piece width={440.363} height={646}>
-        <ReceiptPrinter className="relative" />
-      </Piece>
-
-      {/* For mobile / android, Day 1 / Day 2 toggle placed at bottom */}
-      <div className="mt-8 relative z-20">
-        <Piece width={356.4} height={63}>
-          <TimelineToggle className="relative mx-auto" />
-        </Piece>
-      </div>
-
-      {/* And the three below it. */}
-      <div className="mt-12 flex flex-wrap items-start justify-center gap-4">
-        <Loose width={185.111} height={166.791} max={0.95} size={150} stamp={0.24}>
-          <TimelineExploreSticker />
-        </Loose>
-
-        <Loose width={160.514} height={164.786} max={0.9} size={116} stamp={0.36}>
-          <div
-            className="absolute top-0 left-0 flex h-[164.786px] w-[160.514px] items-center justify-center"
-            style={{ containerType: "size" }}
-          >
-            <TimelinePhoto236 />
-          </div>
-        </Loose>
-
-        <Loose width={150.24} height={144.718} max={0.9} size={110} stamp={0.48}>
-          <div className="absolute top-0 left-0 flex h-[144.718px] w-[150.24px] items-center justify-center">
-            <TimelineVector227 />
-          </div>
-        </Loose>
-      </div>
-    </section>
-  );
-}
 
 /* -------------------------------------------------------------- rules */
 
@@ -859,7 +785,7 @@ function MobileRules() {
         />
         <div className="rounded-[4px] bg-[#bfea88] px-5 pt-12 pb-10">
           <h2 className="text-[38px] text-[#1c563c]">{RULES.heading}</h2>
-          <ul className="mt-6 space-y-4 text-[15px] leading-[1.5] text-[#1c563c]" data-m-reveal>
+          <ul className="mt-6 space-y-4 text-[15px] leading-[1.5] text-[#1c563c]">
             {RULES.items.map((item) => (
               <li key={item} className="ms-5 list-disc whitespace-pre-wrap">
                 {item}
@@ -1069,67 +995,140 @@ function MobileGuidelines() {
 
 function MobileFAQs() {
   const [activeCategory, setActiveCategory] = useState<FaqCategory | null>(null);
-  const [openingCardId, setOpeningCardId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [cardIndex, setCardIndex] = useState<number>(0);
-  const [slidingOut, setSlidingOut] = useState<boolean>(false);
+  const [flickState, setFlickState] = useState<{ outgoingIndex: number; direction: 1 | -1; phase: "out" | "return" } | null>(null);
+  // Origin of the paper stack in viewport coords (center of clicked folder card)
+  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
+  // Refs for each folder card in the grid
+  const folderRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // Touch swipe on card stack
+  const swipeTouchStartX = useRef<number | null>(null);
 
-  const handleOpen = (category: FaqCategory) => {
-    if (openingCardId) return;
-    setOpeningCardId(category.id);
+  const handleOpen = useCallback((category: FaqCategory, folderId: string) => {
+    if (isOpen) return;
+    const el = folderRefs.current.get(folderId);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      // Center of folder card in viewport
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      // Center of viewport
+      const vx = window.innerWidth / 2;
+      const vy = window.innerHeight / 2;
+      setOrigin({ x: cx - vx, y: cy - vy });
+    } else {
+      setOrigin(null);
+    }
     setCardIndex(0);
-    setSlidingOut(false);
-    setIsOpen(false);
+    setFlickState(null);
     setActiveCategory(category);
+    // next frame: trigger open
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsOpen(true));
+    });
+  }, [isOpen]);
 
-    setTimeout(() => {
-      setIsOpen(true);
-    }, 40);
-  };
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isOpen) return;
     setIsOpen(false);
     setTimeout(() => {
       setActiveCategory(null);
-      setOpeningCardId(null);
-    }, 380);
-  };
+      setFlickState(null);
+      setOrigin(null);
+    }, 160);
+  }, [isOpen]);
 
-  const handleNext = () => {
-    if (!activeCategory || slidingOut) return;
-    setSlidingOut(true);
+  const handleNext = useCallback(() => {
+    if (!activeCategory || flickState) return;
+    const currentIdx = cardIndex;
+    const nextIdx = (currentIdx + 1) % activeCategory.questions.length;
+    setFlickState({ outgoingIndex: currentIdx, direction: 1, phase: "out" });
     setTimeout(() => {
-      setCardIndex((prev) => (prev + 1) % activeCategory.questions.length);
-      setSlidingOut(false);
-    }, 260);
-  };
+      setCardIndex(nextIdx);
+      setFlickState({ outgoingIndex: currentIdx, direction: 1, phase: "return" });
+      setTimeout(() => setFlickState(null), 150);
+    }, 150);
+  }, [activeCategory, cardIndex, flickState]);
 
-  const handlePrev = () => {
-    if (!activeCategory || slidingOut) return;
-    setCardIndex((prev) => (prev - 1 + activeCategory.questions.length) % activeCategory.questions.length);
-  };
+  const handlePrev = useCallback(() => {
+    if (!activeCategory || flickState) return;
+    const currentIdx = cardIndex;
+    const prevIdx = (currentIdx - 1 + activeCategory.questions.length) % activeCategory.questions.length;
+    setFlickState({ outgoingIndex: currentIdx, direction: -1, phase: "out" });
+    setTimeout(() => {
+      setCardIndex(prevIdx);
+      setFlickState({ outgoingIndex: currentIdx, direction: -1, phase: "return" });
+      setTimeout(() => setFlickState(null), 150);
+    }, 150);
+  }, [activeCategory, cardIndex, flickState]);
 
-  // Keyboard navigation
+
+  // Keyboard nav
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (!activeCategory) return;
-      if (e.key === "Escape") {
-        handleClose();
-      } else if (e.key === "ArrowRight" || e.key === " ") {
-        handleNext();
-      } else if (e.key === "ArrowLeft") {
-        handlePrev();
+      if (e.key === "Escape") handleClose();
+      else if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); handleNext(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); handlePrev(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeCategory, handleClose, handleNext, handlePrev]);
+
+  // Complete scroll lock when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    const onTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target?.closest(".overflow-y-auto")) {
+        return;
+      }
+      if (e.cancelable) {
+        e.preventDefault();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeCategory, slidingOut, isOpen]);
+
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target?.closest(".overflow-y-auto")) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+      document.body.style.touchAction = prevTouchAction;
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [isOpen]);
+
+  // Portal mount guard (SSR safe)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Compute closed-state transform from measured origin
+  const closedTransform = origin
+    ? `translate3d(${origin.x.toFixed(1)}px, ${origin.y.toFixed(1)}px, 0px) scale(0.28) rotate(-3deg)`
+    : `translate3d(0px, 60px, 0px) scale(0.28) rotate(-3deg)`;
 
   return (
     <section
       aria-label="Frequently Asked Questions"
-      className={`${COL} ${PAD} overflow-x-clip pt-14 pb-20 select-none`}
+      className={`${COL} ${PAD} pt-14 pb-20 select-none`}
     >
       {/* Header */}
       <div className="border-t-[1.2px] border-[#fa1a1d] pt-4 mb-6">
@@ -1138,21 +1137,22 @@ function MobileFAQs() {
         </h2>
       </div>
 
-      {/* 2x2 Grid of Folder Cards */}
+      {/* 2×2 Grid of Folder Cards */}
       <div className="grid grid-cols-2 gap-3.5 sm:gap-4 max-w-[440px] mx-auto w-full">
         {FAQS.categories.map((category) => {
           const frontPaper = category.questions[0];
-
           return (
             <div
               key={category.id}
-              onClick={() => handleOpen(category)}
+              ref={(node) => {
+                if (node) folderRefs.current.set(category.id, node);
+                else folderRefs.current.delete(category.id);
+              }}
+              onClick={() => handleOpen(category, category.id)}
               role="button"
               tabIndex={0}
               aria-label={`${category.subtitle} FAQs`}
-              className={`group relative h-[345px] w-full cursor-pointer transition-all duration-300 ease-out active:scale-[0.96] ${
-                openingCardId === category.id ? "scale-[1.03] -translate-y-2 z-20 shadow-xl" : ""
-              }`}
+              className="group relative h-[345px] w-full cursor-pointer transition-all duration-300 ease-out active:scale-[0.96]"
             >
               {/* Back Plate */}
               <div
@@ -1160,69 +1160,23 @@ function MobileFAQs() {
                 style={{ backgroundColor: category.color }}
               />
 
-              {/* Fanned Paper Sheets Inside Pocket */}
-              <div
-                className={`absolute bottom-[20px] left-0 right-0 h-[315px] pointer-events-none transition-transform duration-300 ease-out ${
-                  openingCardId === category.id ? "-translate-y-12" : ""
-                }`}
-              >
-                {/* Sheet 1 */}
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-5 left-[6%] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[2.5deg] origin-bottom"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
-                  }}
-                />
-
-                {/* Sheet 2 */}
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-3 left-[6%] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-t-[3px] rotate-[1deg] origin-bottom"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
-                  }}
-                />
-
-                {/* Sheet 3 */}
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-2.5 left-[6%] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-t-[3px] rotate-[-1deg] origin-bottom"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)",
-                  }}
-                />
-
+              {/* Fanned Paper Sheets */}
+              <div className="absolute bottom-[20px] left-0 right-0 h-[315px] pointer-events-none">
+                <div aria-hidden className="absolute bottom-5 left-[6%] w-[88%] h-[250px] bg-[#f5f6f3] border border-neutral-300/80 shadow-sm rounded-[18px] rotate-[2.5deg] origin-bottom" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)" }} />
+                <div aria-hidden className="absolute bottom-3 left-[6%] w-[88%] h-[252px] bg-[#f8f9f6] border border-neutral-300/90 shadow-sm rounded-[18px] rotate-[1deg] origin-bottom" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)" }} />
+                <div aria-hidden className="absolute bottom-2.5 left-[6%] w-[88%] h-[250px] bg-[#f8f9f6] border border-neutral-300/80 shadow-sm rounded-[18px] rotate-[-1deg] origin-bottom" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 13px, rgba(140, 214, 238, 0.35) 13px, rgba(140, 214, 238, 0.35) 14px)" }} />
                 {/* Sheet 4 (Front Main Paper) */}
-                <div className="absolute bottom-0 left-[4%] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-t-[3px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start">
+                <div className="absolute bottom-0 left-[4%] w-[92%] h-[255px] bg-[#fdfdfb] border border-neutral-300/95 shadow-md rounded-[18px] rotate-[-2.5deg] origin-bottom overflow-hidden flex flex-col justify-start">
                   <div className="pt-2 px-2.5">
-                    <div className="font-rotonto text-[8px] tracking-wider text-neutral-500 uppercase">
-                      VINHACK 2026
-                    </div>
-                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase -mt-0.5 truncate">
-                      {category.subtitle}
-                    </div>
+                    <div className="font-rotonto text-[8.5px] text-neutral-700 uppercase truncate">{category.subtitle}</div>
                   </div>
                   <div className="mt-1 border-t border-[#8cd6ee]" />
-                  <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">
-                    {frontPaper.q}
-                  </div>
+                  <div className="px-2.5 py-1.5 font-rotonto font-semibold text-[10.5px] leading-[1.25] text-black line-clamp-3">1. {frontPaper.q}</div>
                   <div className="border-t border-[#8cd6ee]" />
-                  <div
-                    className="flex-1 p-2"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(140, 214, 238, 0.35) 12px, rgba(140, 214, 238, 0.35) 13px)",
-                    }}
-                  >
+                  <div className="flex-1 p-2" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 12px, rgba(140, 214, 238, 0.35) 12px, rgba(140, 214, 238, 0.35) 13px)" }}>
                     <div className="flex items-start gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-black shrink-0 mt-0.5" />
-                      <span className="font-rotonto text-[8px] leading-tight text-neutral-800 line-clamp-4">
-                        {frontPaper.a}
-                      </span>
+                      <span className="font-rotonto text-[8px] leading-tight text-neutral-800 line-clamp-4">{frontPaper.a}</span>
                     </div>
                   </div>
                 </div>
@@ -1230,43 +1184,13 @@ function MobileFAQs() {
 
               {/* Pocket Front Flap */}
               <div className="absolute bottom-0 left-0 right-0 h-[220px] pointer-events-none">
-                <svg
-                  viewBox="0 0 160 220"
-                  fill="none"
-                  className="w-full h-full block"
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
-                    fill={category.color}
-                  />
-                  <path
-                    d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z"
-                    stroke="#000000"
-                    strokeWidth="0.8"
-                  />
-                  <line
-                    x1="10"
-                    y1="202"
-                    x2="150"
-                    y2="202"
-                    stroke="rgba(0,0,0,0.35)"
-                    strokeWidth="0.8"
-                  />
+                <svg viewBox="0 0 160 220" fill="none" className="w-full h-full block" preserveAspectRatio="none">
+                  <path d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z" fill={category.color} />
+                  <path d="M 0 126 L 112 16 H 160 V 202 A 18 18 0 0 1 142 220 H 18 A 18 18 0 0 1 0 202 Z" stroke="#000000" strokeWidth="0.8" />
+                  <line x1="10" y1="202" x2="150" y2="202" stroke="rgba(0,0,0,0.35)" strokeWidth="0.8" />
                 </svg>
-
-                {/* Title (Right-aligned 3-line) */}
-                <div className="absolute bottom-[46px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
-                  {category.title[0]}
-                  <br />
-                  {category.title[1]}
-                  <br />
-                  {category.title[2]}
-                </div>
-
-                {/* Subtitle */}
-                <div className="absolute bottom-[28px] right-[10px] font-rotonto font-light text-[9.5px] text-right tracking-wide lowercase text-black max-w-[90%] truncate">
-                  {category.subtitle}
+                <div className="absolute bottom-[34px] right-[10px] font-rotonto font-light text-[24px] leading-[0.86] text-right uppercase tracking-tight text-black">
+                  {category.title[0]}<br />{category.title[1]}<br />{category.title[2]}
                 </div>
               </div>
             </div>
@@ -1274,221 +1198,182 @@ function MobileFAQs() {
         })}
       </div>
 
-      {/* Interactive Paper Stack Modal Dialog */}
-      {activeCategory && (
+      {/* Modal — portalled to body so it covers full viewport */}
+      {mounted && activeCategory && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label={`${activeCategory.subtitle} Frequently Asked Questions`}
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 cursor-default ${
+          className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center p-4 cursor-default touch-none ${
             isOpen
-              ? "bg-black/85 backdrop-blur-md opacity-100 transition-all duration-350 ease-out"
-              : "bg-black/0 backdrop-blur-none opacity-0 transition-all duration-380 ease-in"
+              ? "bg-black/90 transition-[background-color] duration-150 ease-out"
+              : "bg-black/0 transition-[background-color] duration-150 ease-in pointer-events-none"
           }`}
           onClick={handleClose}
         >
-          {/* Deck Container with Navigation */}
-          <div className="relative flex items-center justify-center gap-3 w-full max-w-[420px]">
-            {/* Left Arrow Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-              aria-label="Previous question"
-              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
-                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            {/* === The Stack of Pages (Tap to advance) === */}
+          <div
+            className="relative flex flex-col items-center justify-center w-full max-w-[320px] sm:max-w-[340px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Paper stack — animated from measured origin */}
             <div
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
+              style={{
+                transform: isOpen
+                  ? "translate3d(0px, 0px, 0px) scale(1) rotate(0deg)"
+                  : closedTransform,
+                opacity: isOpen ? 1 : 0,
+                transition: isOpen
+                  ? "transform 150ms cubic-bezier(0.32, 0.72, 0, 1), opacity 120ms ease-out"
+                  : "transform 150ms cubic-bezier(0.55, 0, 1, 0.45), opacity 120ms ease-in",
               }}
-              className={`relative w-[280px] sm:w-[320px] h-[430px] cursor-pointer ${
-                isOpen
-                  ? "opacity-100 scale-100 translate-y-0 rotate-0 transition-all duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  : "opacity-0 scale-[0.5] translate-y-[400px] rotate-[-5deg] transition-all duration-[380ms] ease-[cubic-bezier(0.45,0,0.55,1)]"
-              }`}
+              className="relative w-full h-[400px]"
+              // Swipe on card stack
+              onTouchStart={(e) => { swipeTouchStartX.current = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                if (swipeTouchStartX.current === null) return;
+                const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
+                swipeTouchStartX.current = null;
+                if (Math.abs(dx) < 40) return;
+                if (dx < 0) handleNext(); else handlePrev();
+              }}
             >
-              {/* Close Button Attached Above Paper */}
-              <button
-                type="button"
+              {/* Close button above stack */}
+              <div
+                className={`absolute -top-14 right-0 z-50 transition-all duration-200 ${
+                  isOpen ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-75 -translate-y-3 pointer-events-none"
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClose();
                 }}
-                aria-label="Close"
-                className={`absolute -top-9 right-0 flex items-center gap-1 px-3 py-1 rounded-full bg-white/15 hover:bg-white/30 text-white border border-white/25 font-mono text-[11px] tracking-wider transition-all duration-200 cursor-pointer backdrop-blur-md shadow-md z-50 ${
-                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
-                }`}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleClose();
+                }}
               >
-                <span>CLOSE</span>
-                <span className="text-xs">✕</span>
-              </button>
+                <KeyButton
+                  color="red"
+                  size="compact"
+                  className="w-[102px] sm:w-[114px]"
+                  icon={<X size={15} className="stroke-[2.5]" />}
+                  onClick={handleClose}
+                  aria-label="Close"
+                >
+                  CLOSE
+                </KeyButton>
+              </div>
 
+              {/* Cards */}
               {activeCategory.questions.map((faq, idx) => {
                 const total = activeCategory.questions.length;
                 const diff = (idx - cardIndex + total) % total;
+                const isOutgoing = flickState?.outgoingIndex === idx;
+                const dir = flickState?.direction ?? 1;
 
-                if (diff > 3) return null;
-                const isTop = diff === 0;
-
-                let transformStyle = "";
+                let transform = "translate(0px, 0px) rotate(0deg) scale(1)";
                 let zIndex = 10;
                 let opacity = 1;
+                let transition = "transform 150ms cubic-bezier(0.32, 0.72, 0, 1), opacity 120ms ease";
 
                 if (!isOpen) {
-                  transformStyle = "translate(0px, 0px) rotate(0deg) scale(0.96)";
-                  opacity = isTop ? 1 : 0.85;
-                } else if (isTop) {
-                  zIndex = 30;
-                  opacity = slidingOut ? 0 : 1;
-                  transformStyle = slidingOut
-                    ? "translate(180px, -40px) rotate(20deg) scale(0.92)"
-                    : "translate(0px, 0px) rotate(0deg) scale(1)";
-                } else if (diff === 1) {
-                  zIndex = 20;
-                  opacity = 0.96;
-                  transformStyle = slidingOut
-                    ? "translate(0px, 0px) rotate(0deg) scale(1)"
-                    : "translate(10px, -10px) rotate(3deg) scale(0.97)";
-                } else if (diff === 2) {
-                  zIndex = 10;
-                  opacity = 0.88;
-                  transformStyle = slidingOut
-                    ? "translate(10px, -10px) rotate(3deg) scale(0.97)"
-                    : "translate(-10px, -20px) rotate(-3deg) scale(0.94)";
+                  transform = "translate(0px, 0px) rotate(0deg) scale(0.96)";
+                  opacity = diff === 0 ? 1 : 0.85;
+                } else if (isOutgoing) {
+                  if (flickState!.phase === "out") {
+                    // Fly out left or right depending on direction
+                    transform = `translate(${dir > 0 ? 280 : -280}px, -30px) rotate(${dir > 0 ? 18 : -18}deg) scale(0.92)`;
+                    zIndex = 50;
+                    transition = "transform 150ms cubic-bezier(0.55, 0, 1, 0.45)";
+                  } else {
+                    // Return to back of stack
+                    transform = "translate(6px, -28px) rotate(4deg) scale(0.91)";
+                    zIndex = 1;
+                    transition = "transform 150ms cubic-bezier(0.32, 0.72, 0, 1)";
+                  }
+                } else if (flickState?.phase === "out") {
+                  if (dir < 0 && diff === 0) {
+                    // Prev: incoming top card — start from left, animate to center
+                    zIndex = 35;
+                    transform = "translate(-60px, 0px) rotate(-4deg) scale(0.96)";
+                    transition = "transform 150ms cubic-bezier(0.32, 0.72, 0, 1)";
+                  } else if (diff === 1) { zIndex = 30; transform = "translate(0px, 0px) rotate(0deg) scale(1)"; }
+                  else if (diff === 2) { zIndex = 20; transform = "translate(10px, -10px) rotate(3deg) scale(0.97)"; }
+                  else if (diff === 3) { zIndex = 10; transform = "translate(-10px, -20px) rotate(-3deg) scale(0.94)"; }
+                  else { zIndex = 0; opacity = 0; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
                 } else {
-                  zIndex = 5;
-                  opacity = 0.76;
-                  transformStyle = slidingOut
-                    ? "translate(-10px, -20px) rotate(-3deg) scale(0.94)"
-                    : "translate(6px, -30px) rotate(4deg) scale(0.91)";
+                  if (diff === 0) { zIndex = 30; transform = "translate(0px, 0px) rotate(0deg) scale(1)"; }
+                  else if (diff === 1) { zIndex = 20; transform = "translate(10px, -10px) rotate(3deg) scale(0.97)"; }
+                  else if (diff === 2) { zIndex = 10; transform = "translate(-10px, -20px) rotate(-3deg) scale(0.94)"; }
+                  else if (diff === 3) { zIndex = 5; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
+                  else { zIndex = 0; opacity = 0; transform = "translate(6px, -28px) rotate(4deg) scale(0.91)"; }
                 }
+
+                if (diff > 3 && !isOutgoing) return null;
+                const isTop = diff === 0 && !flickState;
 
                 return (
                   <div
                     key={faq.q}
-                    style={{
-                      transform: transformStyle,
-                      zIndex,
-                      opacity,
-                      transitionDelay: isOpen && !slidingOut ? `${(3 - diff) * 45}ms` : "0ms",
-                    }}
-                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
-                      isOpen
-                        ? "transition-all duration-[260ms] ease-[cubic-bezier(0.2,0.9,0.3,1.15)]"
-                        : "transition-all duration-[200ms] ease-in"
-                    } ${isTop ? "cursor-pointer" : "pointer-events-none"}`}
+                    style={{ transform, zIndex, opacity, transition }}
+                    className={`absolute inset-0 bg-[#fdfdfb] border border-neutral-400 rounded-[18px] shadow-2xl overflow-hidden flex flex-col justify-start select-none ${
+                      isTop ? "cursor-pointer" : "pointer-events-none"
+                    }`}
+                    onClick={isTop ? handleNext : undefined}
                   >
-                    {/* Header */}
                     <div className="pt-2.5 px-3 flex items-center justify-between border-b border-[#8cd6ee]">
-                      <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">
-                        VINHACK 2026 // FAQ
-                      </span>
-                      <span className="font-mono text-[9.5px] text-neutral-500 font-semibold uppercase">
-                        PAGE 0{idx + 1} / 0{total}
-                      </span>
+                      <span className="font-rotonto text-[9.5px] tracking-wider text-neutral-600 uppercase">FAQ</span>
+                      <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">{activeCategory.subtitle}</span>
                     </div>
-
-                    {/* Category bar */}
-                    <div className="py-1.5 px-3 bg-neutral-100/60 border-b border-[#8cd6ee] flex items-center justify-between">
-                      <span className="font-rotonto text-[10px] font-bold text-neutral-800 uppercase tracking-wide truncate">
-                        {activeCategory.subtitle}
-                      </span>
-                      <span className="font-mono text-[8.5px] text-neutral-500 uppercase shrink-0">
-                        {isTop ? "[TAP FOR NEXT →]" : ""}
-                      </span>
-                    </div>
-
-                    {/* Main Question */}
                     <div className="px-3 py-3 border-b border-[#8cd6ee] bg-white">
-                      <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">
-                        {faq.q}
-                      </h3>
+                      <h3 className="font-rotonto font-bold text-[15px] leading-snug text-black">{idx + 1}. {faq.q}</h3>
                     </div>
-
-                    {/* Answer Content */}
                     <div
                       className="flex-1 p-3 flex flex-col justify-start overflow-y-auto"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)",
-                      }}
+                      style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(140, 214, 238, 0.32) 15px, rgba(140, 214, 238, 0.32) 16px)" }}
                     >
                       <div className="flex items-start gap-2">
                         <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-1" />
-                        <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">
-                          {faq.a}
-                        </p>
+                        <p className="font-rotonto text-[12.5px] leading-relaxed text-black font-medium">{faq.a}</p>
                       </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="px-3 py-2 border-t border-[#8cd6ee] flex items-center justify-between text-[9.5px] font-mono text-neutral-500 bg-neutral-50">
-                      <span>OFFICIAL FAQ</span>
-                      <span className="text-black font-semibold">TAP FOR NEXT →</span>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Right Arrow Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              aria-label="Next question"
-              className={`p-2.5 rounded-full bg-white/10 hover:bg-white/25 active:scale-90 text-white border border-white/20 transition-all duration-300 cursor-pointer shadow-xl backdrop-blur-sm shrink-0 z-40 ${
-                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+            {/* Bottom controls */}
+            <div
+              className={`mt-5 flex items-center justify-between w-full px-1 transition-all duration-150 ${
+                isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
               }`}
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
+              <KeyButton color="blue" size="compact" className="w-[50px] sm:w-[56px]" onClick={handlePrev} aria-label="Previous question">
+                <ChevronLeft size={20} className="stroke-[2.5]" />
+              </KeyButton>
 
-          {/* Bottom Pagination */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`mt-4 flex flex-col items-center gap-1.5 transition-all duration-300 ${
-              isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <div className="flex items-center gap-1.5">
-              {activeCategory.questions.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCardIndex(i);
-                  }}
-                  aria-label={`Go to question ${i + 1}`}
-                  className={`h-1.5 transition-all duration-300 cursor-pointer ${
-                    i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
-                  }`}
-                />
-              ))}
+              <div className="flex items-center gap-1.5">
+                {activeCategory.questions.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setCardIndex(i)}
+                    aria-label={`Go to question ${i + 1}`}
+                    className={`h-1.5 transition-all duration-150 cursor-pointer rounded-full ${
+                      i === cardIndex ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <KeyButton color="blue" size="compact" className="w-[50px] sm:w-[56px]" onClick={handleNext} aria-label="Next question">
+                <ChevronRight size={20} className="stroke-[2.5]" />
+              </KeyButton>
             </div>
-            <p className="text-[9.5px] font-mono text-white/60 tracking-wider">
-              TAP PAGE FOR NEXT • TAP OUTSIDE TO EXIT
-            </p>
           </div>
         </div>
-      )}
+      , document.body)}
     </section>
   );
 }

@@ -147,17 +147,17 @@ export default function SponsorSideProps() {
 
           {/* Badge Content */}
           <div className="relative z-10 flex flex-col items-center">
-            <span className="text-[8.5px] font-mono font-semibold tracking-[0.14em] text-[#38bdf8] uppercase">
+            <span className="text-[10px] font-rotonto font-semibold tracking-[0.14em] text-[#38bdf8] uppercase">
               VINHACK &apos;26
             </span>
-            <div className="my-0.5 font-rotonto text-[13px] font-bold tracking-[0.04em] leading-[1.1] text-white">
+            <div className="my-0.5 font-rotonto text-[13.5px] font-bold tracking-[0.04em] leading-[1.1] text-white">
               SOLVE
               <br />
               WHAT
               <br />
               <span className="text-[#a5b4fc]">MATTERS</span>
             </div>
-            <span className="text-[8px] font-mono text-white/70 tracking-widest">
+            <span className="text-[9.5px] font-rotonto text-white/70 tracking-widest">
               ✦ 30H ✦
             </span>
           </div>
@@ -233,7 +233,7 @@ export default function SponsorSideProps() {
           className="absolute -top-[6px] left-1/2 h-[12px] w-[38px] -translate-x-1/2 rounded-[1px] bg-white/40"
           style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }}
         />
-        <div className="text-center font-mono text-[10px] font-semibold tracking-[0.04em] text-[#18181b] leading-[1.35] uppercase">
+        <div className="text-center font-rotonto text-[11.5px] font-semibold tracking-[0.04em] text-[#18181b] leading-[1.35] uppercase">
           THANK YOU FOR
           <br />
           BELIEVING IN

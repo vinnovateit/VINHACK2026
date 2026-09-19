@@ -5,7 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 import { feedTick, tearRip } from "@/components/motion/machine";
 import { audio } from "@/components/motion/audio";
-import KeyButton from "./KeyButton";
+import KeyButton from "@/components/ui/KeyButton";
 
 interface JoinTeamTerminalProps {
   participantName: string;
@@ -510,7 +510,7 @@ export default function JoinTeamTerminal({
                 ) : stage === "validated" || stage === "joined" ? (
                   /* Stage 2 & 3: Validated Code Box */
                   <div className="absolute top-[58px] left-[21.9px] w-[278px] h-[41px] rounded-[8px] border border-[#83ee91] flex items-center justify-center bg-black/50 shadow-inner">
-                    <span className="font-mono text-[#83ee91] text-[18px] tracking-widest uppercase font-medium">
+                    <span className="font-rotonto text-[#83ee91] text-[18px] tracking-widest uppercase font-medium">
                       {getFormattedCode(code || "VH26-3515")}
                     </span>
                   </div>
@@ -520,7 +520,7 @@ export default function JoinTeamTerminal({
                     onClick={() => printerInputRef.current?.focus()}
                     className="absolute top-[58px] left-[21.9px] rounded-[8px] border-[0.8px] border-[#83ee91]/70 box-border w-[278px] h-[41px] flex items-center justify-center px-3 bg-black/50 cursor-pointer hover:border-[#83ee91] transition"
                   >
-                    <span className="font-mono text-[#83ee91] text-[13px] tracking-widest uppercase font-light select-none">
+                    <span className="font-rotonto text-[#83ee91] text-[13px] tracking-widest uppercase font-light select-none">
                       {code.trim() ? `CODE: ${code.trim()}` : "AWAITING ACCESS CODE"}
                     </span>
                   </div>
@@ -528,9 +528,9 @@ export default function JoinTeamTerminal({
 
                 {/* Bottom line: Cursor prompt / status */}
                 <div className="absolute bottom-[12px] left-[22px] flex items-center">
-                  <span className="text-[#83ee91] font-mono text-[13px] select-none">&gt;_</span>
+                  <span className="text-[#83ee91] font-rotonto text-[13px] select-none">&gt;_</span>
                   {feedback && (
-                    <span className="ml-2 font-mono text-[11px] text-red-400 font-light">
+                    <span className="ml-2 font-rotonto text-[11px] text-red-400 font-light">
                       {feedback}
                     </span>
                   )}
@@ -717,7 +717,7 @@ export default function JoinTeamTerminal({
                         justifyContent: "space-between",
                         alignItems: "center",
                         fontSize: "6.5px",
-                        fontFamily: "monospace",
+                        fontFamily: "'Rotonto', sans-serif",
                         color: "#4a4a4a",
                         letterSpacing: "-0.02em",
                       }}
@@ -796,7 +796,7 @@ export default function JoinTeamTerminal({
                         justifyContent: "space-between",
                         alignItems: "center",
                         fontSize: "6.5px",
-                        fontFamily: "monospace",
+                        fontFamily: "'Rotonto', sans-serif",
                         color: "#4a4a4a",
                         letterSpacing: "-0.02em",
                       }}
@@ -916,7 +916,7 @@ export default function JoinTeamTerminal({
                         justifyContent: "space-between",
                         alignItems: "center",
                         fontSize: "6.5px",
-                        fontFamily: "monospace",
+                        fontFamily: "'Rotonto', sans-serif",
                         color: "#4a4a4a",
                         letterSpacing: "-0.02em",
                       }}
@@ -1112,7 +1112,7 @@ export default function JoinTeamTerminal({
                         justifyContent: "space-between",
                         alignItems: "center",
                         fontSize: "6.5px",
-                        fontFamily: "monospace",
+                        fontFamily: "'Rotonto', sans-serif",
                         color: "#4a4a4a",
                         letterSpacing: "-0.02em",
                       }}
@@ -1132,7 +1132,7 @@ export default function JoinTeamTerminal({
 
               {/* Vertical Rotated Text on Left (.propertyOfVinnovateit) */}
               <div className="absolute top-[645px] left-[19px] font-light text-[13px] text-[#676767] -rotate-90 origin-top-left whitespace-nowrap tracking-wider">
-                PROPERTY OF VINNOVATEIT // 26
+                PROPERTY OF VINNOVATEIT · 26
               </div>
 
               {/* VinHack QR on Right (.frameChild9) */}

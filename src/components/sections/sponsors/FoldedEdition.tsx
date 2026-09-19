@@ -2,159 +2,265 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-
 import SponsorEdition from "./SponsorEdition";
 import SealedCover from "./SealedCover";
 import SponsorSideProps from "./SponsorSideProps";
-import { SPONSOR_HEADING } from "./copy";
-import { DESKTOP } from "@/components/motion/recipes";
+import { DESKTOP, MOBILE } from "@/components/motion/recipes";
 import { paperUnfold } from "@/components/motion/paper";
+import { clamp, smooth, stage, smoothDamp } from "@/lib/math";
 
 /**
- * The sponsor sheet as a cover that opens, the way a book does.
+ * The sponsor sheet as a broadsheet edition that opens naturally in physical 3D.
  *
- * The reader arrives at a closed edition — a sealed one, see `SealedCover`.
- * Scroll on and the cover lifts on a spine down its left edge and swings away
- * from the page, and the sheet under it is uncovered by the cover's own edge
- * travelling across it, leaving THE HACKSTREET JOURNAL where it has always
- * been printed.
- *
- * It is pinned with 100% compositor stability via createPortal to document.body:
- * while inside the park, stageY is constant and the GPU compositor locks it
- * securely with zero compositor delay, zero vertical bobbing, and zero jitter.
+ * When closed, the reader sees the front page cover (`SealedCover`).
+ * Scrolling turns the articulated 6-fold paper leaf smoothly across to the left,
+ * revealing the inner broadsheet (`SponsorEdition`).
  */
 
-/** The sheet, at the size it was drawn. The cover is the same box: a book's
- *  cover is its page, not a band across the top of one. */
-const SHEET_W = 1184;
-const SHEET_H = 758.4;
+const DESKTOP_SHEET_W = 1184;
+const DESKTOP_SHEET_H = 860;
+const MOBILE_SHEET_W = 480;
+const MOBILE_SHEET_H = 760;
 
-/** The heading band above the paper: how tall it is, and the air between it
- *  and the sheet's top edge. Both in the sheet's own units, because the two are
- *  scaled to the window as one block — the heading has to shrink with the paper
- *  or it would end up larger than the masthead it is standing next to. */
-const HEAD_H = 72;
-const HEAD_GAP = 26;
-/**
- * How far the two heading blocks are held in from the sheet's edges.
- */
-const HEAD_INSET = 29.11;
+export const EDITION_BLOCK_HEIGHT = DESKTOP_SHEET_H;
 
-/** The whole block — the heading, the gap, and the sheet. `Sponsors` reserves
- *  exactly this so the section's layout matches what is drawn in it. */
-export const EDITION_BLOCK_HEIGHT = HEAD_H + HEAD_GAP + SHEET_H;
-
-/** How much of the window's height the block is allowed at most. */
 const VIEWPORT_FIT = 0.95;
-
-/**
- * How far the cover swings, in degrees.
- * Deliberately short of 90 to keep backface visibility clean and avoid
- * sudden clipping.
- */
-const SWING = 88;
-
-const TRAVEL_PLATE = 700;
-
-/* ------------------------------------------------------------------- maths */
-
-function clamp(min: number, max: number, v: number): number {
-  return v < min ? min : v > max ? max : v;
-}
-
-/** Zero velocity at both ends, so no stage of the movement starts with a jolt. */
-function smooth(t: number): number {
-  const c = clamp(0, 1, t);
-  return c * c * (3 - 2 * c);
-}
-
-/** `p` remapped onto [from, to] and eased. */
-function stage(p: number, from: number, to: number): number {
-  return smooth((p - from) / (to - from));
-}
-
-/**
- * Critically damped spring (SmoothDamp).
- * Provides continuous velocity and acceleration without overshoot or oscillation.
- * Frame-rate independent via deltaTime.
- */
-function smoothDamp(
-  current: number,
-  target: number,
-  velocityRef: { value: number },
-  smoothTime: number,
-  maxSpeed: number,
-  deltaTime: number,
-): number {
-  smoothTime = Math.max(0.0001, smoothTime);
-  const omega = 2 / smoothTime;
-
-  const x = omega * deltaTime;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  let change = current - target;
-  const originalTo = target;
-
-  const maxChange = maxSpeed * smoothTime;
-  change = clamp(-maxChange, maxChange, change);
-  target = current - change;
-
-  const temp = (velocityRef.value + omega * change) * deltaTime;
-  velocityRef.value = (velocityRef.value - omega * temp) * exp;
-  let output = target + (change + temp) * exp;
-
-  if ((originalTo - current > 0) === (output > originalTo)) {
-    output = originalTo;
-    velocityRef.value = (output - originalTo) / deltaTime;
-  }
-
-  return output;
-}
+const TRAVEL_PLATE = 500;
 
 /* -------------------------------------------------------------- components */
 
 /**
- * The cover, hinged on its left edge.
+ * The 3D newspaper cover articulated across 6 folds for a smooth paper wave flip.
+ * Completely shadow-free for a clean, flat aesthetic.
  */
-function BookCover() {
+function BookCover({
+  variant = "canvas",
+  sheetW = DESKTOP_SHEET_W,
+  sheetH = DESKTOP_SHEET_H,
+}: {
+  variant?: "canvas" | "flow";
+  sheetW?: number;
+  sheetH?: number;
+}) {
+  const NUM_FOLDS = 6;
+  const segW = sheetW / NUM_FOLDS;
+  const overlap = 0.5;
+
   return (
     <div
       data-cover
-      className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+      className="absolute inset-0 select-none will-change-transform"
       style={{
         transformOrigin: "left center",
-        backfaceVisibility: "hidden",
+        transformStyle: "preserve-3d",
       }}
     >
-      <SealedCover />
-
-      {/* The spine */}
+      {/* Segment 0: Spine segment (x: 0 to 16.7%, permanently pinned to spine) */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-[34px] bg-[linear-gradient(90deg,rgba(0,0,0,0.34)_0%,rgba(0,0,0,0.08)_45%,rgba(0,0,0,0)_100%)]"
-      />
-
-      {/* Shading */}
-      <div
-        data-cover-shade
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-0"
+        data-segment-0
+        className="absolute inset-y-0 left-0 will-change-transform"
         style={{
-          background:
-            "linear-gradient(90deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.22) 45%, rgba(0,0,0,0) 100%)",
+          width: `${segW + overlap}px`,
+          transformOrigin: "left center",
+          transformStyle: "preserve-3d",
         }}
-      />
+      >
+        {/* Segment 0 Front Face */}
+        <div
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+          style={{
+            backfaceVisibility: "hidden",
+            transform: "rotateY(0deg)",
+          }}
+        >
+          <div className="absolute top-0 left-0" style={{ width: `${sheetW}px`, height: `${sheetH}px` }}>
+            <SealedCover variant={variant} />
+          </div>
+        </div>
+
+        {/* Segment 0 Back Face */}
+        <div
+          className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+          style={{
+            backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+        />
+
+        {/* Segment 1: Hinged to Segment 0 (x: 16.7% to 33.3%) */}
+        <div
+          data-segment-1
+          className="absolute inset-y-0 will-change-transform"
+          style={{
+            left: `${segW}px`,
+            width: `${segW + overlap}px`,
+            transformOrigin: "left center",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          <div
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(0deg)",
+            }}
+          >
+            <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW}px` }}>
+              <SealedCover variant={variant} />
+            </div>
+          </div>
+          <div
+            className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+            style={{
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+          />
+
+          {/* Segment 2: Hinged to Segment 1 (x: 33.3% to 50%) */}
+          <div
+            data-segment-2
+            className="absolute inset-y-0 will-change-transform"
+            style={{
+              left: `${segW}px`,
+              width: `${segW + overlap}px`,
+              transformOrigin: "left center",
+              transformStyle: "preserve-3d",
+            }}
+          >
+            <div
+              className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(0deg)",
+              }}
+            >
+              <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 2}px` }}>
+                <SealedCover variant={variant} />
+              </div>
+            </div>
+            <div
+              className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+            />
+
+            {/* Segment 3: Hinged to Segment 2 (x: 50% to 66.7%) */}
+            <div
+              data-segment-3
+              className="absolute inset-y-0 will-change-transform"
+              style={{
+                left: `${segW}px`,
+                width: `${segW + overlap}px`,
+                transformOrigin: "left center",
+                transformStyle: "preserve-3d",
+              }}
+            >
+              <div
+                className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(0deg)",
+                }}
+              >
+                <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 3}px` }}>
+                  <SealedCover variant={variant} />
+                </div>
+              </div>
+              <div
+                className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              />
+
+              {/* Segment 4: Hinged to Segment 3 (x: 66.7% to 83.3%) */}
+              <div
+                data-segment-4
+                className="absolute inset-y-0 will-change-transform"
+                style={{
+                  left: `${segW}px`,
+                  width: `${segW + overlap}px`,
+                  transformOrigin: "left center",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                <div
+                  className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(0deg)",
+                  }}
+                >
+                  <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 4}px` }}>
+                    <SealedCover variant={variant} />
+                  </div>
+                </div>
+                <div
+                  className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                  }}
+                />
+
+                {/* Segment 5: Hinged to Segment 4 (x: 83.3% to 100%, outer leaf) */}
+                <div
+                  data-segment-5
+                  className="absolute inset-y-0 will-change-transform"
+                  style={{
+                    left: `${segW}px`,
+                    width: `${sheetW - segW * 5 + overlap}px`,
+                    transformOrigin: "left center",
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(0deg)",
+                    }}
+                  >
+                    <div className="absolute top-0" style={{ width: `${sheetW}px`, height: `${sheetH}px`, left: `-${segW * 5}px` }}>
+                      <SealedCover variant={variant} />
+                    </div>
+                  </div>
+                  <div
+                    className="absolute inset-0 overflow-hidden bg-[#ebebe9]"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 const emptySubscribe = () => () => {};
 
-export default function FoldedEdition() {
+export default function FoldedEdition({
+  variant = "canvas",
+}: {
+  variant?: "canvas" | "flow";
+} = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const fitRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  const sheetW = variant === "flow" ? MOBILE_SHEET_W : DESKTOP_SHEET_W;
+  const sheetH = variant === "flow" ? MOBILE_SHEET_H : DESKTOP_SHEET_H;
 
   /** Latches the rustle to one per opening, and re-arms if you scroll back up */
   const soundedRef = useRef(false);
@@ -169,11 +275,14 @@ export default function FoldedEdition() {
     if (!container || !portalEl || !fit || !stageEl) return;
 
     const cover = stageEl.querySelector<HTMLElement>("[data-cover]");
-    const shade = stageEl.querySelector<HTMLElement>("[data-cover-shade]");
+    const seg1 = stageEl.querySelector<HTMLElement>("[data-segment-1]");
+    const seg2 = stageEl.querySelector<HTMLElement>("[data-segment-2]");
+    const seg3 = stageEl.querySelector<HTMLElement>("[data-segment-3]");
+    const seg4 = stageEl.querySelector<HTMLElement>("[data-segment-4]");
+    const seg5 = stageEl.querySelector<HTMLElement>("[data-segment-5]");
     const dressing = Array.from(
       stageEl.querySelectorAll<HTMLElement>("[data-cover-dressing]")
     );
-    const sheet = stageEl.querySelector<HTMLElement>("[data-sheet]");
     const propsWrap = stageEl.querySelector<HTMLElement>("[data-props-wrap]");
     const leftProps = Array.from(
       stageEl.querySelectorAll<HTMLElement>("[data-prop-left]")
@@ -182,14 +291,14 @@ export default function FoldedEdition() {
       stageEl.querySelectorAll<HTMLElement>("[data-prop-right]")
     );
 
-    const desktop = window.matchMedia(DESKTOP);
+    const inRange = window.matchMedia(variant === "flow" ? MOBILE : DESKTOP);
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     let canvasScale = 1;
     let targetTop = 0;
     let parkStart = 0;
     let travelPx = TRAVEL_PLATE;
-    let renderedHeight = EDITION_BLOCK_HEIGHT;
+    let renderedHeight = sheetH;
     let armed = false;
     let drawn = Number.NaN;
     type PropItem = {
@@ -220,8 +329,8 @@ export default function FoldedEdition() {
     let propItems: PropItem[] = [];
 
     const measureProps = () => {
-      const centerX = SHEET_W / 2; // 592
-      const centerY = SHEET_H / 2; // 379.2
+      const centerX = sheetW / 2;
+      const centerY = sheetH / 2;
 
       const allProps = [
         ...leftProps.map((el, i) => ({ el, isLeft: true, idx: i })),
@@ -264,21 +373,32 @@ export default function FoldedEdition() {
     };
 
     const measure = () => {
-      if (!desktop.matches) {
+      if (!inRange.matches) {
         armed = false;
         portalEl.style.display = "none";
         return;
       }
 
       const rect = container.getBoundingClientRect();
-      if (rect.width === 0) {
+      if (rect.width === 0 && variant !== "flow") {
         armed = false;
         return;
       }
       armed = true;
 
-      canvasScale = rect.width / SHEET_W || 1;
-      const baseScreenHeight = EDITION_BLOCK_HEIGHT * canvasScale;
+      const availW = Math.max(280, window.innerWidth - (variant === "flow" ? 20 : 24));
+      const targetW = variant === "flow" ? availW : Math.min(availW, sheetW);
+      canvasScale = clamp(0.24, 1.0, targetW / sheetW);
+
+      if (variant === "flow") {
+        travelPx = 480;
+        container.style.height = `${travelPx + Math.round(sheetH * canvasScale) + 120}px`;
+      } else {
+        travelPx = Math.round(TRAVEL_PLATE * Math.max(0.7, canvasScale));
+        container.style.height = `${sheetH}px`;
+      }
+
+      const baseScreenHeight = sheetH * canvasScale;
       const fitScale =
         baseScreenHeight > 0
           ? Math.min(1, (window.innerHeight * VIEWPORT_FIT) / baseScreenHeight)
@@ -292,39 +412,49 @@ export default function FoldedEdition() {
 
       const containerTopDoc = window.scrollY + rect.top;
       parkStart = containerTopDoc - targetTop;
-      travelPx = TRAVEL_PLATE * canvasScale;
 
       measureProps();
     };
 
     const render = (p: number) => {
-      const swing = stage(p, 0.05, 0.92);
-      const angle = SWING * swing;
+      const s = stage(p, 0.0, 0.96);
+      const easeT = smooth(s);
+
+      // Natural 3D book page flip wave physics across 6 folds:
+      // Page opens smoothly from 0 to 180 degrees (resting flat on the left)
+      const angle = easeT * 180;
+
+      // 6-fold articulated wave flexion traveling across the leaf (zero shadows, pure flat geometry)
+      const baseWave = -Math.sin(s * Math.PI);
+      const ripple = Math.sin(s * Math.PI * 2);
+
+      const curl1 = baseWave * 9 + ripple * 3;
+      const curl2 = baseWave * 11 + ripple * 5;
+      const curl3 = baseWave * 13 + ripple * 3;
+      const curl4 = baseWave * 11 - ripple * 3;
+      const curl5 = baseWave * 9 - ripple * 6;
 
       if (cover) {
+        // Pure Y-axis rotation pinned permanently at spine (x=0, y=0, z=0) — NEVER detaches from 2nd page!
         cover.style.transform = `rotateY(${-angle.toFixed(2)}deg)`;
-        cover.style.opacity = (
-          1 - smooth(Math.max(0, (swing - 0.58) / 0.36))
-        ).toFixed(3);
+        cover.style.opacity = "1";
       }
-      if (shade) {
-        shade.style.opacity = swing.toFixed(3);
-      }
+
+      if (seg1) seg1.style.transform = `rotateY(${curl1.toFixed(2)}deg)`;
+      if (seg2) seg2.style.transform = `rotateY(${curl2.toFixed(2)}deg)`;
+      if (seg3) seg3.style.transform = `rotateY(${curl3.toFixed(2)}deg)`;
+      if (seg4) seg4.style.transform = `rotateY(${curl4.toFixed(2)}deg)`;
+      if (seg5) seg5.style.transform = `rotateY(${curl5.toFixed(2)}deg)`;
 
       for (const bit of dressing) {
         bit.style.opacity = (
-          1 - smooth(Math.max(0, (swing - 0.1) / 0.35))
+          1 - smooth(Math.max(0, (s - 0.12) / 0.38))
         ).toFixed(3);
       }
 
-      if (sheet) {
-        const covered = Math.cos((90 * swing * Math.PI) / 180) * 100;
-        sheet.style.clipPath = `inset(0% 0% 0% ${covered.toFixed(3)}%)`;
-      }
-
-      // Dynamic emergence: Props jump out from the center INSIDE the newspaper as the first page opens
+      // Dynamic emergence: Props float out from INSIDE the newspaper as the page opens
       if (propsWrap) {
-        propsWrap.style.zIndex = swing < 0.35 ? "15" : "25";
+        propsWrap.style.zIndex = s < 0.35 ? "15" : "25";
       }
 
       if (propItems.length === 0 && (leftProps.length > 0 || rightProps.length > 0)) {
@@ -332,15 +462,11 @@ export default function FoldedEdition() {
       }
 
       for (const item of propItems) {
-        // Natural page opening sequence:
-        // Cover hinges on the left, so the right half of the inside sheet is uncovered first.
-        // Right props burst out as right side opens (swing ~ 0.28 to 0.70)
-        // Left props burst out as cover swings past center to left (swing ~ 0.40 to 0.82)
-        const baseStart = item.isLeft ? 0.40 : 0.26;
-        const baseEnd = item.isLeft ? 0.82 : 0.68;
+        const baseStart = item.isLeft ? 0.40 : 0.22;
+        const baseEnd = item.isLeft ? 0.82 : 0.64;
         const startSwing = baseStart + item.stagger;
         const endSwing = baseEnd + item.stagger;
-        const rawT = stage(swing, startSwing, endSwing);
+        const rawT = stage(s, startSwing, endSwing);
 
         if (rawT <= 0) {
           item.el.style.transform = `translate3d(${item.deltaX.toFixed(1)}px, ${item.deltaY.toFixed(1)}px, 0) scale(0.08) rotate(${item.baseRot}deg)`;
@@ -356,7 +482,7 @@ export default function FoldedEdition() {
         const c = 1.25;
         const moveProgress = 1 + (c + 1) * t1 * t1 * t1 + c * t1 * t1;
 
-        // Parabolic vertical jump arc (leaps up into the air during the jump)
+        // Parabolic vertical jump arc
         const arc = Math.sin(rawT * Math.PI);
         const currentJumpLift = arc * item.jumpHeight;
 
@@ -374,11 +500,11 @@ export default function FoldedEdition() {
         item.el.style.opacity = opacity;
       }
 
-      // One rustle, on the way in, as the cover actually gives.
-      if (p > 0.18 && !soundedRef.current) {
+      // One rustle, on the way in, as the cover gives
+      if (p > 0.08 && !soundedRef.current) {
         soundedRef.current = true;
         paperUnfold();
-      } else if (p < 0.05) {
+      } else if (p < 0.04) {
         soundedRef.current = false;
       }
     };
@@ -397,7 +523,7 @@ export default function FoldedEdition() {
 
     const update = (dt: number) => {
       if (!armed) {
-        if (desktop.matches) {
+        if (inRange.matches) {
           measure();
         }
         if (!armed) {
@@ -417,36 +543,39 @@ export default function FoldedEdition() {
         smoothScrollY = currentScrollY;
         scrollVel.value = 0;
       } else {
-        // Smooth input filtering (dt-independent critically damped spring):
-        // Eliminates discrete mouse-wheel step jumps while maintaining instant responsiveness.
+        // Fast, natural input filtering without lag
         smoothScrollY = smoothDamp(
           smoothScrollY,
           currentScrollY,
           scrollVel,
-          0.08,
+          0.04,
           Infinity,
           dt
         );
       }
 
       // Fixed Stage Y Translation:
-      // While locked in park (parkStart <= smoothScrollY <= parkStart + travelPx):
-      // stageY is EXACTLY targetTop. The stage is 100% stationary in the viewport, pinned
-      // natively on the GPU compositor thread with ZERO bobbing and ZERO jitter!
       let stageY = targetTop;
       if (smoothScrollY < parkStart) {
         stageY = targetTop + (parkStart - smoothScrollY);
       } else if (smoothScrollY > parkStart + travelPx) {
         stageY = targetTop + (parkStart + travelPx - smoothScrollY);
       } else {
-        stageY = targetTop; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
+        stageY = targetTop;
       }
 
-      // Culled when completely outside viewport
-      if (
-        stageY > window.innerHeight * 1.5 ||
-        stageY < -renderedHeight * 1.5
-      ) {
+      // Cover unfolding progress:
+      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
+      const targetP = stuck / travelPx;
+      currentP = targetP;
+
+      // No fade in / fade out: Section remains completely solid throughout scrolling
+      // Only culled when completely off the screen bounds
+      const culled =
+        stageY > window.innerHeight * 1.08 ||
+        stageY < -renderedHeight * 1.08;
+
+      if (culled) {
         if (portalEl.style.display !== "none") portalEl.style.display = "none";
       } else {
         if (portalEl.style.display !== "block") portalEl.style.display = "block";
@@ -454,31 +583,14 @@ export default function FoldedEdition() {
         if (portalEl.style.transform !== transformStr) {
           portalEl.style.transform = transformStr;
         }
-      }
-
-      // Cover unfolding progress:
-      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
-      const targetP = stuck / travelPx;
-
-      if (!initialized) {
-        currentP = targetP;
-        initialized = true;
-      } else if (isReduced) {
-        currentP = targetP;
-        pVel.value = 0;
-      } else {
-        // Critically damped spring (SmoothDamp):
-        // Eliminates discontinuous velocity jumps from notched mouse wheels.
-        currentP = smoothDamp(currentP, targetP, pVel, 0.12, Infinity, dt);
-        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
-          currentP = targetP;
-          pVel.value = 0;
+        if (portalEl.style.opacity !== "1") {
+          portalEl.style.opacity = "1";
         }
       }
 
       // Enable pointer events on newspaper links once mostly open
       const canInteract =
-        currentP > 0.85 && stageY > -100 && stageY < window.innerHeight;
+        currentP > 0.82 && stageY > -100 && stageY < window.innerHeight;
       portalEl.style.pointerEvents = canInteract ? "auto" : "none";
 
       if (Number.isNaN(drawn) || Math.abs(currentP - drawn) > 0.0004) {
@@ -509,17 +621,18 @@ export default function FoldedEdition() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayout);
-    desktop.addEventListener("change", onLayout);
+    inRange.addEventListener("change", onLayout);
     calm.addEventListener("change", onLayout);
 
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
-      desktop.removeEventListener("change", onLayout);
+      inRange.removeEventListener("change", onLayout);
       calm.removeEventListener("change", onLayout);
+      if (portalEl) portalEl.style.display = "none";
     };
-  }, [mounted]);
+  }, [mounted, variant]);
 
   return (
     <>
@@ -527,8 +640,8 @@ export default function FoldedEdition() {
         ref={containerRef}
         className="relative pointer-events-none"
         style={{
-          width: SHEET_W,
-          height: EDITION_BLOCK_HEIGHT,
+          width: variant === "flow" ? "100%" : sheetW,
+          height: variant === "flow" ? 480 + Math.round(sheetH * 0.77) + 120 : sheetH,
           overflowAnchor: "none",
         }}
         aria-hidden
@@ -543,7 +656,7 @@ export default function FoldedEdition() {
                 position: "fixed",
                 left: "50%",
                 top: 0,
-                width: SHEET_W,
+                width: sheetW,
                 transformOrigin: "top center",
                 zIndex: 30,
                 overflowAnchor: "none",
@@ -552,61 +665,31 @@ export default function FoldedEdition() {
             >
               <div
                 ref={fitRef}
-                style={{ width: SHEET_W, transformOrigin: "top center" }}
+                style={{ width: sheetW, transformOrigin: "top center" }}
               >
-                {/* Heading band */}
-                <div
-                  className="flex items-start justify-between font-rotonto text-[#fa1a1d]"
-                  style={{
-                    height: HEAD_H,
-                    marginBottom: HEAD_GAP,
-                    paddingLeft: HEAD_INSET,
-                    paddingRight: HEAD_INSET,
-                  }}
-                >
-                  <p className="flex items-end gap-[14px] text-[25px] font-light leading-[1.16] tracking-wide">
-                    <span>
-                      {SPONSOR_HEADING.taglineLines[0]}
-                      <br />
-                      {SPONSOR_HEADING.taglineLines[1]}
-                    </span>
-                    <img
-                      alt=""
-                      aria-hidden
-                      src="/figma/star2.svg"
-                      className="mb-[6px] block h-[22px] w-[20px] shrink-0"
-                    />
-                  </p>
-                  <p className="text-right text-[40px] font-normal leading-[0.88] tracking-tight">
-                    {SPONSOR_HEADING.titleLines[0]}
-                    <br />
-                    {SPONSOR_HEADING.titleLines[1]}
-                  </p>
-                </div>
-
                 {/* 3D Stage */}
                 <div
                   ref={stageRef}
                   className="relative select-none"
                   style={{
-                    width: SHEET_W,
-                    height: SHEET_H,
-                    perspective: 1900,
-                    perspectiveOrigin: "22% 50%",
+                    width: sheetW,
+                    height: sheetH,
+                    perspective: 2200,
+                    perspectiveOrigin: "50% 50%",
                   }}
                 >
+                  {/* Inside Newspaper Spread */}
                   <div
                     data-sheet
-                    className="absolute inset-0 z-10 pointer-events-auto"
-                    style={{ clipPath: "inset(0% 0% 0% 100%)" }}
+                    className="absolute inset-0 z-10 pointer-events-auto overflow-hidden"
                   >
-                    <SponsorEdition />
+                    <SponsorEdition variant={variant} />
                   </div>
 
-                  {/* Side props emerging from INSIDE the newspaper (behind front cover data-book) */}
+                  {/* Side props emerging from INSIDE the newspaper (desktop only) */}
                   <div
                     data-props-wrap
-                    className="pointer-events-none absolute inset-0 z-15"
+                    className={`pointer-events-none absolute inset-0 z-15 ${variant === "flow" ? "hidden" : ""}`}
                   >
                     <SponsorSideProps />
                   </div>
@@ -619,19 +702,14 @@ export default function FoldedEdition() {
                     <div
                       aria-hidden
                       data-cover-dressing
-                      className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[-9px] rotate-[0.7deg] rounded-[2px] border border-black/10 bg-[#d0d0cb] shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
+                      className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[-8px] rotate-[0.6deg] rounded-[2px] border border-black/10 bg-[#d0d0cb]"
                     />
                     <div
                       aria-hidden
                       data-cover-dressing
-                      className="pointer-events-none absolute inset-0 translate-x-[6px] translate-y-[9px] rotate-[-0.7deg] rounded-[2px] border border-black/10 bg-[#dedede] shadow-[0_14px_34px_rgba(0,0,0,0.26)]"
+                      className="pointer-events-none absolute inset-0 translate-x-0 translate-y-[8px] rotate-[-0.6deg] rounded-[2px] border border-black/10 bg-[#dedede]"
                     />
-                    <div
-                      aria-hidden
-                      data-cover-dressing
-                      className="pointer-events-none absolute inset-0 shadow-[0_20px_48px_rgba(0,0,0,0.45),0_4px_12px_rgba(0,0,0,0.25)]"
-                    />
-                    <BookCover />
+                    <BookCover variant={variant} sheetW={sheetW} sheetH={sheetH} />
                   </div>
                 </div>
               </div>

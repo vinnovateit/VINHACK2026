@@ -79,7 +79,7 @@ export default function ProjectsSection() {
   return (
     <section
       aria-label="Projects"
-      className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[2496px] w-[1280px]"
+      className="-translate-x-1/2 absolute bg-black h-[832px] left-1/2 overflow-clip top-[2496px] w-[1280px] z-20"
       data-node-id="297:300"
       data-name="PROJECTS"
     >
@@ -156,7 +156,7 @@ export default function ProjectsSection() {
                 <span className="absolute bottom-0 right-0 size-3" />
 
                 {/* Viewfinder corner label */}
-                <div className="absolute top-2 right-2.5 flex items-center gap-1 font-mono text-[10px] tracking-wider uppercase opacity-85">
+                <div className="absolute top-2 right-2.5 flex items-center gap-1 font-rotonto text-[10px] tracking-wider uppercase opacity-85">
                   
                 </div>
               </div>
@@ -209,10 +209,7 @@ export default function ProjectsSection() {
                     <span className="font-rotonto text-[15px] leading-none tracking-tight text-black">
                       {info.displayName}
                     </span>
-                    <span
-                      className="font-rotonto text-[10px] leading-none tracking-[0.12em]"
-                      style={{ color: info.bg === "#ffffff" ? "#fa1a1d" : info.bg }}
-                    >
+                    <span className="font-rotonto text-[10px] leading-none tracking-[0.12em] text-[#fa1a1d]">
                       OPEN&nbsp;↗
                     </span>
                   </div>

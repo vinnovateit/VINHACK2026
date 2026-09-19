@@ -5,10 +5,11 @@ import { createPortal } from "react-dom";
 
 const emptySubscribe = () => () => {};
 
-import { TrackAsterisk, TrackCard, TRACK_COLORS, trackInk } from "./TrackCard";
+import { TrackAsterisk, TrackCard, TrackCardLogo, TRACK_COLORS, trackInk } from "./TrackCard";
 import { TrackVisual } from "./TrackIcons";
 import { DESKTOP } from "@/components/motion/recipes";
 import { TRACKS } from "@/content/site";
+import { clamp, mix, easeOutQuad as easeOut, easeIn, arc, smooth, smoothDamp } from "@/lib/math";
 
 /**
  * Two corner piles and one card in the air between them, thrown by the page's
@@ -192,7 +193,7 @@ const LEAN_SQUASH = 0.97;
  * card sit while the next one creeps forward behind it — reads as a slow deck
  * rather than a stopped one, which is the thing this is here to avoid.
  */
-const HOLD = 1.25;
+const HOLD = 0.5;
 /** One card's share of the scrolling: its flight, then its hold. */
 const UNIT = 1 + HOLD;
 
@@ -236,14 +237,6 @@ const KICK = 5;
 const SWEEP_END = 0.55;
 const THROW_START = 0.38;
 
-/** How far the two ghost plates pull apart at the fastest point of a flight,
- *  in the card's own units, and how much of that separation is vertical. They
- *  live inside the card's own transform, so they lean and scale with it. */
-const SEPARATION = 15;
-const SEP_TILT = 0.34;
-/** The plates themselves. Red and cyan, the deck's own two loudest inks. */
-const SEP_INKS = [TRACK_COLORS.red, TRACK_COLORS.lightBlue] as const;
-
 /* ------------------------------------------------------------------ colour */
 
 /** Grey -> Pink -> Red -> Dark Blue -> Light Blue -> White, as the deck deals. */
@@ -255,95 +248,6 @@ const COLOR_CYCLE = [
   TRACK_COLORS.lightBlue,
   TRACK_COLORS.white,
 ] as const;
-
-/* ------------------------------------------------------------------- maths */
-
-function clamp(min: number, max: number, v: number): number {
-  return v < min ? min : v > max ? max : v;
-}
-
-function mix(from: number, to: number, t: number): number {
-  return from + (to - from) * t;
-}
-
-/** Settling: most of the speed at the start, none at the end. The card arrives
- *  and comes to rest rather than gliding the last of the way in. */
-function easeOut(t: number): number {
-  const c = 1 - t;
-  return 1 - c * c;
-}
-
-/** Winding up: none at the start, all at the end. The card hangs for a moment
- *  where it was being read and is then gone, which is the opposite shape to
- *  `easeOut` and the reason a deal does not read as a slideshow. */
-function easeIn(t: number): number {
-  return t * t * t;
-}
-
-/** Zero at both ends of a flight and 1 at its middle: the shape of everything
- *  that only happens while a card is actually in the air. */
-function arc(t: number): number {
-  return 4 * t * (1 - t);
-}
-
-/** Where the content fade starts and how wide it is, in units of `|raw|` (see
- *  `render`). `CONTENT_FLAT` is how close to square the card must already be
- *  before its face starts to print, and `CONTENT_FADE` is how much further out
- *  it fades to nothing.
- *
- *  This used to be 0.18 and 0.4 — a fade four times wider than the flat spot,
- *  which meant the face spent most of its ramp printing over a card that was
- *  still visibly skewed and mid-air: half-opacity type on a rotated, leaning
- *  card reads as smudged rather than as a card arriving. Narrowing the fade
- *  keeps it inside the range where the pose (see `poseExtent`'s callers below,
- *  `rotate`/`skew`) is already close to flat, so the text is either off or
- *  legible and skips the washed-out middle. */
-const CONTENT_FLAT = 0.18;
-const CONTENT_FADE = 0.14;
-
-/** Zero velocity at both ends — used for opacity, which has no direction to
- *  care about. */
-function smooth(t: number): number {
-  const c = clamp(0, 1, t);
-  return c * c * (3 - 2 * c);
-}
-
-/**
- * Critically damped spring (SmoothDamp).
- * Provides continuous velocity and acceleration without overshoot or oscillation.
- * Frame-rate independent via deltaTime.
- */
-function smoothDamp(
-  current: number,
-  target: number,
-  velocityRef: { value: number },
-  smoothTime: number,
-  maxSpeed: number,
-  deltaTime: number,
-): number {
-  smoothTime = Math.max(0.0001, smoothTime);
-  const omega = 2 / smoothTime;
-
-  const x = omega * deltaTime;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  let change = current - target;
-  const originalTo = target;
-
-  const maxChange = maxSpeed * smoothTime;
-  change = clamp(-maxChange, maxChange, change);
-  target = current - change;
-
-  const temp = (velocityRef.value + omega * change) * deltaTime;
-  velocityRef.value = (velocityRef.value - omega * temp) * exp;
-  let output = target + (change + temp) * exp;
-
-  if ((originalTo - current > 0) === (output > originalTo)) {
-    output = originalTo;
-    velocityRef.value = (output - originalTo) / deltaTime;
-  }
-
-  return output;
-}
 
 /**
  * Half the width and half the height a card actually covers once it is turned,
@@ -404,7 +308,6 @@ export function TracksCardDeck() {
   const counterRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const contentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const ghostRefs = useRef<Map<number, HTMLDivElement[]>>(new Map());
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -525,27 +428,11 @@ export function TracksCardDeck() {
           absRaw < 0.5 ? "500" : inbound ? String(300 - slot) : String(100 + slot);
         if (el.style.zIndex !== layer) el.style.zIndex = layer;
 
-        // The smear: keep subtle so it doesn't cause visual double-vision/flicker
-        const ghosts = ghostRefs.current.get(slot);
-        if (ghosts) {
-          const sep = 6 * air;
-          for (let g = 0; g < ghosts.length; g++) {
-            const dir = g === 0 ? -1 : 1;
-            ghosts[g].style.transform = `translate3d(${(sep * dir).toFixed(1)}px, ${(
-              sep *
-              SEP_TILT *
-              dir
-            ).toFixed(1)}px, 0)`;
-          }
-        }
-
-        // The face prints when the card is close to the reader.
-        const content = contentRefs.current.get(slot);
-        if (content) {
-          const shown = reduced
-            ? (absRaw < 0.5 ? 1 : 0)
-            : clamp(0, 1, 1 - smooth((absRaw - 0.28) / 0.28));
-          content.style.opacity = shown.toFixed(3);
+        // Subtle depth-based blur: pin-sharp at center, subtle blur as it recedes into depth
+        const blurAmount = reduced ? 0 : Math.min(4.5, Math.max(0, (1 - e) * 4.5));
+        const filterStr = blurAmount > 0.2 ? `blur(${blurAmount.toFixed(1)}px)` : "none";
+        if (el.style.filter !== filterStr) {
+          el.style.filter = filterStr;
         }
       }
 
@@ -575,8 +462,12 @@ export function TracksCardDeck() {
         ticks.forEach((tick, i) => {
           tick.style.opacity = i <= active ? "1" : "0.25";
         });
+        const btns = counter.querySelectorAll<HTMLElement>("[data-tick-btn]");
+        btns.forEach((btn, i) => {
+          btn.setAttribute("aria-selected", i === active ? "true" : "false");
+        });
         const label = counter.querySelector<HTMLElement>("[data-tick-label]");
-        if (label) label.textContent = pad(active + 1);
+        if (label) label.textContent = `#${active + 1}`;
       }
     };
 
@@ -681,13 +572,11 @@ export function TracksCardDeck() {
     let latestScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     const onScroll = () => {
       latestScrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      update(0.016);
     };
 
     let drawn = Number.NaN;
     let currentP = -1;
-    let smoothScrollY = latestScrollY;
-    const scrollVel = { value: 0 };
-    const pVel = { value: 0 };
     let lastTime = typeof performance !== "undefined" ? performance.now() : 0;
     let initialized = false;
 
@@ -702,33 +591,23 @@ export function TracksCardDeck() {
         }
       }
 
-      const currentScrollY = latestScrollY;
+      const currentScrollY =
+        typeof window !== "undefined"
+          ? (window.scrollY ?? document.documentElement.scrollTop ?? latestScrollY)
+          : latestScrollY;
       const isReduced = calm.matches;
 
-      if (!initialized) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-        pVel.value = 0;
-      } else if (isReduced || Math.abs(currentScrollY - smoothScrollY) > 2000) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-      } else {
-        // Smooth input filtering (dt-independent critically damped spring):
-        // Eliminates discrete mouse-wheel step jumps while maintaining instant responsiveness.
-        smoothScrollY = smoothDamp(smoothScrollY, currentScrollY, scrollVel, 0.08, Infinity, dt);
-      }
-
-      // Fixed Stage Y Translation:
-      // While locked in park (parkStart <= smoothScrollY <= parkStart + travelPx):
+      // Fixed Stage Y Translation (Synchronous 1:1 scroll tracking with zero delay):
+      // While locked in park (parkStart <= currentScrollY <= parkStart + travelPx):
       // stageY is EXACTLY 0. The stage is 100% stationary in the viewport, pinned
       // natively on the GPU compositor thread with ZERO bobbing and ZERO jitter!
-      // Before parkStart: stage enters smoothly from below (parkStart - smoothScrollY).
-      // After parkEnd: stage exits smoothly upward ((parkStart + travelPx) - smoothScrollY).
+      // Before parkStart: stage enters smoothly in lockstep (parkStart - currentScrollY).
+      // After parkEnd: stage exits smoothly in lockstep ((parkStart + travelPx) - currentScrollY).
       let stageY = 0;
-      if (smoothScrollY < parkStart) {
-        stageY = parkStart - smoothScrollY;
-      } else if (smoothScrollY > parkStart + travelPx) {
-        stageY = (parkStart + travelPx) - smoothScrollY;
+      if (currentScrollY < parkStart) {
+        stageY = parkStart - currentScrollY;
+      } else if (currentScrollY > parkStart + travelPx) {
+        stageY = (parkStart + travelPx) - currentScrollY;
       } else {
         stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
       }
@@ -747,32 +626,17 @@ export function TracksCardDeck() {
         }
       }
 
-      // Card dealing progress:
-      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
+      // Card dealing progress (immediate 1:1 sync with scroll):
+      const stuck = clamp(0, travelPx, currentScrollY - parkStart);
       const targetP = deckPosition(stuck / travelPx);
-
-      if (!initialized) {
-        currentP = targetP;
-        initialized = true;
-      } else if (isReduced) {
-        currentP = targetP;
-        pVel.value = 0;
-      } else {
-        // Critically damped spring (SmoothDamp):
-        // Eliminates the discontinuous velocity spike of simple lerp on mouse-wheel notches.
-        // Provides smooth acceleration AND deceleration (continuous velocity, zero jerk).
-        currentP = smoothDamp(currentP, targetP, pVel, 0.13, Infinity, dt);
-        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
-          currentP = targetP;
-          pVel.value = 0;
-        }
-      }
+      currentP = targetP;
+      initialized = true;
 
       // Counter fade in/out
       const enterProgress =
-        (smoothScrollY - parkStart + leadInPx / 2) / (leadInPx / 2);
+        (currentScrollY - parkStart + leadInPx / 2) / (leadInPx / 2);
       const exitProgress =
-        (parkStart + travelPx + leadInPx / 2 - smoothScrollY) / (leadInPx / 2);
+        (parkStart + travelPx + leadInPx / 2 - currentScrollY) / (leadInPx / 2);
       const shown = calm.matches
         ? 1
         : clamp(0, 1, Math.min(smooth(enterProgress), smooth(exitProgress)));
@@ -797,6 +661,39 @@ export function TracksCardDeck() {
       rafId = requestAnimationFrame(tick);
     };
 
+    const goToTrack = (index: number) => {
+      const targetIdx = clamp(0, COUNT - 1, index);
+      const u = targetIdx * UNIT + 1 + HOLD * 0.4;
+      const q = u / (COUNT * UNIT);
+      const targetY = parkStart + q * travelPx;
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+    };
+
+    const onCounterClick = (e: MouseEvent) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-tick-btn]");
+      if (!btn) return;
+      const idx = Number(btn.dataset.tickBtn);
+      if (!Number.isNaN(idx)) {
+        goToTrack(idx);
+      }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!armed || !desktop.matches) return;
+      const scrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      if (scrollY < parkStart - 400 || scrollY > parkStart + travelPx + 400) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const active = clamp(0, COUNT - 1, Math.round(currentP));
+        goToTrack(active - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const active = clamp(0, COUNT - 1, Math.round(currentP));
+        goToTrack(active + 1);
+      }
+    };
+
     const onLayout = () => {
       measure();
       drawn = Number.NaN;
@@ -810,6 +707,8 @@ export function TracksCardDeck() {
     onLayout();
     rafId = requestAnimationFrame(tick);
 
+    counter.addEventListener("click", onCounterClick);
+    window.addEventListener("keydown", onKeyDown);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onLayout);
     desktop.addEventListener("change", onLayout);
@@ -817,6 +716,8 @@ export function TracksCardDeck() {
 
     return () => {
       cancelAnimationFrame(rafId);
+      counter.removeEventListener("click", onCounterClick);
+      window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       desktop.removeEventListener("change", onLayout);
@@ -862,23 +763,31 @@ export function TracksCardDeck() {
             >
               <div
                 ref={counterRef}
-                aria-hidden
-                className="absolute left-0 flex items-center gap-[9px] pl-[26px] font-rotonto text-[#fa1a1d] opacity-0"
+                role="tablist"
+                aria-label="Track navigation"
+                className="pointer-events-auto absolute left-0 flex items-center gap-[10px] pl-[26px] font-rotonto text-[#fa1a1d] opacity-0 select-none z-50"
               >
                 <span className="text-[11px] uppercase tracking-[0.42em]">Tracks</span>
-                <span className="flex items-center gap-[5px]">
+                <div className="flex items-center gap-[6px] py-2">
                   {TRACKS.items.map((item, i) => (
-                    <span
+                    <button
                       key={item.title}
-                      data-tick
-                      className="block h-[2px] w-[18px] bg-current opacity-25"
-                      style={{ opacity: i === 0 ? 1 : 0.25 }}
-                    />
+                      type="button"
+                      role="tab"
+                      aria-label={`Go to Track ${i + 1}: ${item.title}`}
+                      data-tick-btn={i}
+                      className="group relative flex h-[28px] w-[24px] items-center justify-center cursor-pointer transition-transform hover:scale-115 focus-visible:outline-none"
+                    >
+                      <span
+                        data-tick
+                        className="block h-[3px] w-[18px] rounded-full bg-current opacity-25 transition-all duration-200 group-hover:opacity-80 group-hover:h-[4px]"
+                        style={{ opacity: i === 0 ? 1 : 0.25 }}
+                      />
+                    </button>
                   ))}
-                </span>
+                </div>
                 <span className="text-[11px] tracking-[0.2em] tabular-nums">
-                  <span data-tick-label>01</span>
-                  <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
+                  <span data-tick-label>#1</span>
                 </span>
               </div>
 
@@ -912,21 +821,6 @@ export function TracksCardDeck() {
                       }}
                       aria-hidden
                     >
-                      {item
-                        ? SEP_INKS.map((sepInk, g) => (
-                            <div
-                              key={sepInk}
-                              ref={(node) => {
-                                const list = ghostRefs.current.get(slot) ?? [];
-                                if (node) list[g] = node;
-                                ghostRefs.current.set(slot, list);
-                              }}
-                              className="absolute inset-0 rounded-[32px]"
-                              style={{ background: sepInk }}
-                            />
-                          ))
-                        : null}
-
                       <TrackCard
                         color={color}
                         isFront={item !== null}
@@ -941,62 +835,66 @@ export function TracksCardDeck() {
                               if (node) contentRefs.current.set(slot, node);
                               else contentRefs.current.delete(slot);
                             }}
-                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[48px] py-[40px] opacity-0"
+                            className="pointer-events-none absolute inset-0 flex flex-col justify-between px-[48px] py-[40px] opacity-100"
                             style={{ color: ink }}
                           >
                             <div className="flex items-start justify-between">
                               <span className="font-rotonto text-[26px] tracking-[0.2em] tabular-nums">
-                                {pad(slot + 1)}
-                                <span className="opacity-50">{` / ${pad(COUNT)}`}</span>
+                                #{slot + 1}
                               </span>
                               <TrackAsterisk size={30} />
                             </div>
 
                             <div className="-mt-[12px] flex items-start gap-[36px]">
-                              <div className="min-w-0 flex-1">
-                                <h3
-                                  className={`font-rotonto leading-[0.94] tracking-tight ${
-                                    item.title.length > 30
-                                      ? "text-[38px]"
-                                      : item.title.length > 20
-                                        ? "text-[46px]"
-                                        : "text-[60px]"
-                                  }`}
-                                >
-                                  {item.title}
-                                </h3>
-                                <div
-                                  className="my-[18px] h-[2px] w-full"
-                                  style={{ background: rule }}
-                                />
-                                <p
-                                  className={`font-rotonto leading-[1.5] tracking-tight opacity-90 ${
-                                    item.blurb.length > 250 ? "text-[20px]" : "text-[23px]"
-                                  }`}
-                                >
-                                  {item.blurb}
-                                </p>
-                              </div>
+                                <div className="min-w-0 flex-1">
+                                  <h3
+                                    className={`font-rotonto font-bold ${
+                                      item.title.length > 30
+                                        ? "text-[36px] leading-[1.12] tracking-[0.03em]"
+                                        : item.title.length > 20
+                                          ? "text-[44px] leading-[1.06] tracking-[0.02em]"
+                                          : "text-[58px] leading-[1.02] tracking-[0.02em]"
+                                    }`}
+                                  >
+                                    {item.title}
+                                  </h3>
+                                  <p
+                                    className={`mt-[22px] font-rotonto text-justify leading-[1.5] tracking-tight opacity-90 ${
+                                      item.blurb.length > 250 ? "text-[20px]" : "text-[23px]"
+                                    }`}
+                                  >
+                                    {item.blurb}
+                                  </p>
+                                </div>
                               <TrackVisual
                                 slot={slot}
                                 ink={ink}
                                 rule={rule}
-                                size={76}
+                                size={135}
                                 is2x
-                                className="h-[216px] w-[184px]"
+                                className="h-[230px] w-[210px]"
                               />
                             </div>
 
-                            <div className="flex items-end justify-between font-rotonto text-[16px] uppercase tracking-[0.36em] opacity-55">
-                              <span>{"label" in item ? item.label : "Track"}</span>
-                              <span
-                                className="mx-[24px] mb-[6px] h-[2px] flex-1"
-                                style={{ background: rule }}
-                              />
-                              <span>VinHack 26</span>
+                            <div className="flex min-h-[38px] items-end justify-end font-rotonto">
+                              {"label" in item ? (
+                                <span
+                                  className="rounded-full px-[20px] py-[6px] text-[18px] font-bold uppercase tracking-normal"
+                                  style={{ background: ink, color }}
+                                >
+                                  {item.label}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
-                        ) : null}
+                        ) : (
+                          <div
+                            className="pointer-events-none absolute inset-0 flex items-center justify-center p-[48px]"
+                            style={{ color: ink }}
+                          >
+                            <TrackCardLogo className="w-[52%] max-w-[380px] h-auto" />
+                          </div>
+                        )}
                       </TrackCard>
                     </div>
                   );

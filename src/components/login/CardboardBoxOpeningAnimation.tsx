@@ -5,35 +5,24 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 export default function CardboardBoxOpeningAnimation() {
-  const [animationKey, setAnimationKey] = useState(0);
   const [isOpened, setIsOpened] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    setIsOpened(false);
     const timer = setTimeout(() => {
       setIsOpened(true);
     }, 800);
     return () => clearTimeout(timer);
-  }, [animationKey]);
-
-  const handleReplay = () => {
-    setIsOpened(false);
-    setAnimationKey((prev) => prev + 1);
-  };
+  }, []);
 
   return (
     <div
-      id="cardboard-box-replay"
-      className="relative w-full h-full flex flex-col items-center justify-center select-none group cursor-pointer"
-      onClick={handleReplay}
+      className="relative w-full h-full flex flex-col items-center justify-center select-none group cursor-default"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      title="Click to replay box opening animation"
     >
       {/* 3D Box & Props Viewport Frame */}
       <motion.div
-        key={animationKey}
         className="relative w-full max-h-[calc(100dvh-100px)] aspect-[736/824] flex items-center justify-center drop-shadow-[0_25px_45px_rgba(0,0,0,0.9)]"
         style={{ perspective: 1200, transformStyle: "preserve-3d" }}
         animate={{

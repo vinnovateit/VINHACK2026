@@ -3,10 +3,11 @@
 import { type FC, useEffect, useState } from "react";
 import Image from "next/image";
 import FilmCanister from "./FilmCanister";
+import FilmLeader from "./FilmLeader";
 import CollegesBadge from "./CollegesBadge";
 import BuildersCounter from "./BuildersCounter";
 import PixelSmiley from "./PixelSmiley";
-import { playStampSlam, playPhotoClick, playSmileyChirp } from "@/components/motion/film";
+import { playStampSlam } from "@/components/motion/film";
 
 const EVENT_PHOTOS = [
   "/about_us/vinnovateit-team.webp",
@@ -21,7 +22,7 @@ const EVENT_PHOTOS = [
   "/about_us/1.webp",
 ];
 
-const SPROCKET_COUNT = 65;
+const SPROCKET_COUNT = 116;
 
 // The "core memory" snake, one set = the wordmark (as individual glyphs so
 // the wave bends through the word, not just between words) followed by an
@@ -44,6 +45,26 @@ interface RecapProps {
 
 export const RECAP: FC<RecapProps> = ({ inView = true }) => {
   const [stampTrigger, setStampTrigger] = useState(false);
+  const [hasRolledOut, setHasRolledOut] = useState(false);
+  const [rolloutDuration, setRolloutDuration] = useState(12);
+
+  useEffect(() => {
+    const updateDuration = () => {
+      const vw = typeof window !== "undefined" ? window.innerWidth : 1440;
+      const distance = Math.max(100, vw - 174 - 54);
+      const speed = 3040 / 30; // 101.33 px/s
+      setRolloutDuration(distance / speed);
+    };
+    updateDuration();
+    window.addEventListener("resize", updateDuration);
+    return () => window.removeEventListener("resize", updateDuration);
+  }, []);
+
+  useEffect(() => {
+    if (inView && !hasRolledOut) {
+      setHasRolledOut(true);
+    }
+  }, [inView, hasRolledOut]);
 
   useEffect(() => {
     if (!inView) return;
@@ -57,21 +78,11 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
     };
   }, [inView]);
 
-  const handleRestamp = () => {
-    setStampTrigger(false);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setStampTrigger(true);
-        playStampSlam();
-      });
-    });
-  };
-
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none font-rotonto">
       {/* 1. 15+ Colleges Badge (Top-Left) with Animated Circle Draw */}
       <div
-        className="absolute top-[122px] left-[200px] z-20 w-[130px] h-[95px] -rotate-6 transition-transform duration-300 hover:scale-105 hover:rotate-0"
+        className="absolute top-[122px] left-[200px] z-20 w-[130px] h-[95px] -rotate-6"
         style={{
           transform: inView ? "translateY(0)" : "translateY(-18px)",
           opacity: inView ? 1 : 0,
@@ -110,24 +121,22 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
       <div className="absolute top-[100px] right-[24px] z-20 flex items-center gap-[6px]">
         {/* Dynamic LED Pixel Smiley flying in from corner */}
         <div
-          className="w-[74px] h-[74px] cursor-pointer"
+          className="w-[74px] h-[74px]"
           style={{
             transform: inView
               ? "translate(0, 0) scale(1)"
               : "translate(80px, -60px) scale(0)",
             transition: "transform 1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s",
           }}
-          onClick={playSmileyChirp}
-          title="Click to hear smiley chime!"
         >
           <div className="w-full h-full animate-[spin_20s_linear_infinite]">
             <PixelSmiley />
           </div>
         </div>
 
-        {/* 99+ Projects Built Ticket with rubber stamp effect */}
+        {/* 99+ Projects Built Ticket */}
         <div
-          className="w-[135px] h-[88px] -rotate-6 transition-all duration-500 hover:scale-105 hover:rotate-0 cursor-pointer"
+          className="w-[135px] h-[88px] -rotate-6"
           style={{
             transform: inView
               ? "scale(1) rotate(-6deg)"
@@ -136,8 +145,6 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
             transition:
               "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2) 0.4s, opacity 0.35s ease 0.4s",
           }}
-          onClick={playPhotoClick}
-          title="Click ticket"
         >
           <Image
             className="w-full h-full object-contain"
@@ -150,19 +157,46 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         </div>
       </div>
 
-      {/* Filmstrip Assembly - Rolls out from canister on reveal and touches right screen edge */}
+      {/* Filmstrip Assembly - Rolls out from canister on reveal led by 35mm leader tongue */}
       <div
-        className={`absolute top-[198px] left-[174px] right-0 h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-0 film-rollout ${inView ? "film-rollout-open" : ""
-          }`}
+        className={`film-strip-group absolute top-[198px] left-[174px] h-[238px] border-y-[2.5px] border-[#313131] bg-black overflow-hidden z-10 film-rollout-container ${
+          hasRolledOut ? "film-deployed" : ""
+        }`}
+        style={{
+          transition: hasRolledOut
+            ? `width ${rolloutDuration.toFixed(2)}s linear`
+            : undefined,
+        }}
       >
+        {/* Leading 35mm Film Leader Tongue - Physical leader pulling film out */}
+        <div
+          className={`absolute top-0 right-0 z-30 transition-opacity duration-700 pointer-events-none ${
+            hasRolledOut ? "opacity-0" : "opacity-100"
+          }`}
+          style={{
+            transitionDelay: hasRolledOut ? `${Math.max(0, rolloutDuration - 0.4).toFixed(2)}s` : "0s",
+          }}
+        >
+          <FilmLeader />
+        </div>
         {/* Top Film Sprocket Holes (stretching all the way to right screen edge) */}
-        <div className="absolute top-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
-          {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
-            <div
-              key={`top-sprocket-${i}`}
-              className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
-            />
-          ))}
+        <div className="absolute top-[8px] left-[12px] right-0 overflow-hidden pointer-events-none z-10">
+          <div className="film-sprocket-track flex gap-[9px]">
+            {/* Set A */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`top-sprocket-a-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+            {/* Set B */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`top-sprocket-b-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+          </div>
         </div>
 
         {/* Infinite Photo Marquee - Seamless loop flowing from left to right */}
@@ -172,12 +206,10 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
             {EVENT_PHOTOS.map((src, i) => (
               <div
                 key={`photo-a-${i}`}
-                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative cursor-pointer"
-                onClick={playPhotoClick}
-                title="Click to snap photo shutter!"
+                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0"
               >
                 <Image
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover"
                   src={src}
                   width={360}
                   height={255}
@@ -190,12 +222,10 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
             {EVENT_PHOTOS.map((src, i) => (
               <div
                 key={`photo-b-${i}`}
-                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 group relative cursor-pointer"
-                onClick={playPhotoClick}
-                title="Click to snap photo shutter!"
+                className="w-[240px] h-[165px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0"
               >
                 <Image
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover"
                   src={src}
                   width={360}
                   height={255}
@@ -207,24 +237,28 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         </div>
 
         {/* Bottom Film Sprocket Holes (stretching all the way to right screen edge) */}
-        <div className="absolute bottom-[8px] left-[12px] right-0 flex gap-[9px] overflow-hidden pointer-events-none z-10">
-          {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
-            <div
-              key={`bottom-sprocket-${i}`}
-              className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
-            />
-          ))}
+        <div className="absolute bottom-[8px] left-[12px] right-0 overflow-hidden pointer-events-none z-10">
+          <div className="film-sprocket-track flex gap-[9px]">
+            {/* Set A */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`bottom-sprocket-a-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+            {/* Set B */}
+            {Array.from({ length: SPROCKET_COUNT }).map((_, i) => (
+              <div
+                key={`bottom-sprocket-b-${i}`}
+                className="w-[14px] h-[19px] bg-white rounded-[3px] shrink-0"
+              />
+            ))}
+          </div>
         </div>
       </div>
 
       {/* 35mm Film Roll Canister Assembly */}
-      <div
-        style={{
-          transform: inView ? "translateX(0)" : "translateX(-24px)",
-          opacity: inView ? 1 : 0,
-          transition: "transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.7s ease 0.1s",
-        }}
-      >
+      <div className="relative z-20">
         <FilmCanister />
       </div>
 
@@ -248,15 +282,13 @@ export const RECAP: FC<RecapProps> = ({ inView = true }) => {
         </p>
       </div>
 
-      {/* 5. 30 HOURS Red Grunge Stamp - Authentic Rubber Stamp Slam Animation (Click to stamp again!) */}
+      {/* 5. 30 HOURS Red Grunge Stamp - Authentic Rubber Stamp Slam Animation */}
       <div
-        className={`absolute top-[442px] left-[550px] z-20 flex items-center cursor-pointer select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2.8]"
+        className={`absolute top-[442px] left-[550px] z-20 flex items-center select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2.8]"
           }`}
-        onClick={handleRestamp}
-        title="Click to stamp again!"
       >
         <Image
-          className="w-[136px] h-[70px] object-contain transition-transform duration-200 hover:scale-105 active:scale-95"
+          className="w-[136px] h-[70px] object-contain"
           src="/recap/hours_n.svg"
           width={193}
           height={98}

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import KeyButton from "../onboarding/KeyButton";
+import KeyButton from "@/components/ui/KeyButton";
 
 const CardboardBoxOpeningAnimation = dynamic(
   () => import("./CardboardBoxOpeningAnimation"),
@@ -71,7 +71,7 @@ export default function LoginPage() {
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="text-white">PEOPLE</span>
               <motion.div
-                className="w-[36px] sm:w-[44px] md:w-[50px] lg:w-[54px] h-[36px] sm:h-[44px] md:h-[50px] lg:h-[54px] relative inline-block shrink-0 -mt-1 cursor-pointer select-none origin-center"
+                className="w-[36px] sm:w-[44px] md:w-[50px] lg:w-[54px] h-[36px] sm:h-[44px] md:h-[50px] lg:h-[54px] relative inline-block shrink-0 -mt-1 select-none origin-center pointer-events-none"
                 animate={{
                   rotate: [20, 380],
                 }}
@@ -80,24 +80,6 @@ export default function LoginPage() {
                     repeat: Infinity,
                     duration: 8,
                     ease: "linear",
-                  },
-                }}
-                whileHover={{
-                  scale: 1.28,
-                  rotate: 720,
-                  transition: {
-                    type: "spring",
-                    stiffness: 260,
-                    damping: 12,
-                  },
-                }}
-                whileTap={{
-                  scale: 0.8,
-                  rotate: -180,
-                  transition: {
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 10,
                   },
                 }}
               >
@@ -118,7 +100,11 @@ export default function LoginPage() {
               onClick={handleGoogleSignIn}
               className="w-full max-w-[390px]"
               icon={
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 ml-2 shrink-0" viewBox="0 0 24 24">
+                <svg
+                  className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px] shrink-0 -translate-y-[2px]"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path
                     fill="#74D4F0"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -138,7 +124,7 @@ export default function LoginPage() {
                 </svg>
               }
             >
-              LOGIN WITH GOOGLE
+              <span className="pr-4 sm:pr-5">LOGIN WITH GOOGLE</span>
             </KeyButton>
 
             {error === "AccessDenied" && (

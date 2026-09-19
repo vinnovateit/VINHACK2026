@@ -6,7 +6,7 @@ export default function SiteFooter() {
     <>
       {/* Desktop Layout (1280px DesignCanvas layout) */}
       <footer
-        className="hidden md:block -translate-x-1/2 absolute bg-black h-[826px] left-1/2 overflow-clip top-[9924px] w-[1280px]"
+        className="hidden md:block -translate-x-1/2 absolute bg-black h-[740px] left-1/2 overflow-clip top-[9924px] w-[1280px]"
         data-node-id="297:3"
         data-name="FOOTER"
       >
@@ -38,7 +38,7 @@ export default function SiteFooter() {
               </div>
             </div>
           </div>
-          <div className="absolute h-[536px] left-0 top-[290px] w-[1280px]" data-node-id="297:20" data-name="Union">
+          <div className="absolute h-[450px] left-0 top-[290px] w-[1280px]" data-node-id="297:20" data-name="Union">
             <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/union5.svg" />
           </div>
           {/* Interactive folder tab links with hover top-right arrow and underline */}
@@ -96,11 +96,11 @@ export default function SiteFooter() {
             );
           })}
         </div>
-        <div className="absolute content-stretch flex items-center justify-center left-[-382px] p-[10px] top-[428px]" data-marquee="footer" data-node-id="297:28">
+        <div className="absolute content-stretch flex items-center justify-center left-[-382px] p-[10px] top-[355px]" data-marquee="footer" data-node-id="297:28">
           <p className="[word-break:break-word] scripts leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" data-node-id="297:29">{FOOTER.marquee}</p>
           <p className="[word-break:break-word] scripts leading-[normal] not-italic relative shrink-0 text-[99.84px] text-black w-max whitespace-nowrap" dir="auto" aria-hidden>{FOOTER.marquee}</p>
         </div>
-        <div className="-translate-x-1/2 absolute content-stretch flex gap-[10.4px] items-center left-[calc(50%-380px)] top-[703px]" data-node-id="297:30">
+        <div className="-translate-x-1/2 absolute content-stretch flex gap-[10.4px] items-center left-[calc(50%-380px)] top-[640px]" data-node-id="297:30">
           <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:31">{FOOTER.madeWith[0]}</p>
           <p className="[word-break:break-word] font-rotonto leading-[normal] not-italic relative shrink-0 text-[28.8px] text-black text-center whitespace-nowrap" data-node-id="297:32">
             {FOOTER.madeWith[1]}
@@ -115,7 +115,7 @@ export default function SiteFooter() {
             {FOOTER.madeWith[3]}
           </p>
         </div>
-        <div className="absolute content-stretch flex gap-[6.912px] items-center left-[55px] top-[756px]" data-node-id="297:36">
+        <div className="absolute content-stretch flex gap-[6.912px] items-center left-[55px] top-[690px]" data-node-id="297:36">
           <div className="relative shrink-0 size-[14.4px]" data-node-id="297:37" data-name="Vector">
             <img alt="" className="absolute block inset-0 max-w-none size-full" src="/figma/vector1.svg" />
           </div>
@@ -124,13 +124,13 @@ export default function SiteFooter() {
           </p>
         </div>
         {/* The society's mark, filed bottom-right on the red panel. */}
-        <div className="absolute h-[53.568px] left-[1058px] top-[732px] w-[163.19px]" data-node-id="297:39" data-name="VIIT 3">
+        <a href="https://vinnovateit.com" target="_blank" rel="noopener noreferrer" className="absolute h-[53.568px] left-[1058px] top-[647px] w-[163.19px]" data-node-id="297:39" data-name="VIIT 3">
           <img alt="VinnovateIT" className="absolute block inset-0 max-w-none size-full" src="/figma/vinnovate-black.svg" />
-        </div>
+        </a>
       </footer>
 
       {/* Mobile Layout (Responsive single-column layout) */}
-      <footer className="md:hidden pt-16 overflow-x-clip bg-black text-[#fcfcfc] w-full">
+      <footer className="md:hidden pt-0 overflow-x-clip bg-black text-[#fcfcfc] w-full">
         {/* Five folder tabs */}
         <div>
           {FOOTER.tabs.map((tab) => {
@@ -169,7 +169,7 @@ export default function SiteFooter() {
         </div>
 
         {/* Red Base Panel */}
-        <div className="relative -mt-[20px] sm:-mt-[24px] rounded-t-[20px] pt-8 pb-12 w-full" style={{ background: FOOTER.base }}>
+        <div className="relative -mt-[20px] sm:-mt-[24px] rounded-t-[20px] pt-6 pb-8 w-full" style={{ background: FOOTER.base }}>
           <div className="overflow-clip">
             <div
               className="marquee"
@@ -186,7 +186,7 @@ export default function SiteFooter() {
 
           <div className="mx-auto max-w-[560px] w-full px-5 flex flex-col items-center justify-center text-center">
             {/* Line 1: Made with love by [VinnovateIT Logo] */}
-            <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-[18px] sm:text-[22px] text-black font-rotonto leading-none">
+            <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-[18px] sm:text-[22px] text-black font-rotonto leading-none">
               <span className="inline-flex items-center">{FOOTER.madeWith[0]}</span>
               <span className="inline-flex items-center">{FOOTER.madeWith[1]}</span>
               <img
@@ -195,15 +195,17 @@ export default function SiteFooter() {
                 src="/figma/vector.svg"
               />
               <span className="inline-flex items-center">{FOOTER.madeWith[2]}</span>
-              <img
-                alt="VinnovateIT"
-                className="block h-[38px] sm:h-[44px] w-auto max-w-[160px] sm:max-w-[190px] object-contain shrink-0 self-center translate-y-[6px] sm:translate-y-[8px]"
-                src="/figma/vinnovate-black.svg"
-              />
+              <a href="https://vinnovateit.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+                <img
+                  alt="VinnovateIT"
+                  className="block h-[38px] sm:h-[44px] w-auto max-w-[160px] sm:max-w-[190px] object-contain shrink-0 self-center translate-y-[6px] sm:translate-y-[8px]"
+                  src="/figma/vinnovate-black.svg"
+                />
+              </a>
             </div>
 
             {/* Line 2: Copyright */}
-            <div className="mt-4 sm:mt-5 flex items-center justify-center gap-1.5 text-[12px] sm:text-[13px] text-black font-rotonto leading-normal">
+            <div className="mt-3 sm:mt-4 flex items-center justify-center gap-1.5 text-[12px] sm:text-[13px] text-black font-rotonto leading-normal">
               <img
                 alt=""
                 aria-hidden="true"

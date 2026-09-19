@@ -1,25 +1,109 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import DiscordIcon from "@/components/nav/DiscordIcon";
+import KeyButton from "@/components/ui/KeyButton";
 import { DISCORD } from "@/content/site";
 
-
 export default function DiscordTab() {
+  const [entered, setEntered] = useState(false);
+  const [footerVisible, setFooterVisible] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Check if the user prefers reduced motion
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Entrance animation delay (~1.35s) so it lands last after hero elements
+    const timer = setTimeout(
+      () => {
+        if (isMounted) setEntered(true);
+      },
+      prefersReducedMotion ? 0 : 1350,
+    );
+
+    // Detect if any visible footer is in the viewport
+    const checkFooterVisibility = () => {
+      if (!isMounted) return;
+      const footers = document.querySelectorAll("footer");
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      let inView = false;
+
+      for (const footer of footers) {
+        // Only evaluate footers that are currently rendered and visible in layout
+        if (footer.getClientRects().length > 0) {
+          const rect = footer.getBoundingClientRect();
+          // Footer is in view if its top has entered viewport and bottom has not left past top
+          if (rect.top < vh && rect.bottom > 0) {
+            inView = true;
+            break;
+          }
+        }
+      }
+
+      setFooterVisible(inView);
+    };
+
+    // Set up IntersectionObserver for all footer elements
+    const footers = document.querySelectorAll("footer");
+    let observer: IntersectionObserver | null = null;
+
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        () => {
+          checkFooterVisibility();
+        },
+        {
+          root: null,
+          threshold: [0, 0.05, 0.1],
+        },
+      );
+      footers.forEach((el) => observer?.observe(el));
+    }
+
+    window.addEventListener("scroll", checkFooterVisibility, { passive: true });
+    window.addEventListener("resize", checkFooterVisibility, { passive: true });
+
+    // Initial check on mount
+    checkFooterVisibility();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      observer?.disconnect();
+      window.removeEventListener("scroll", checkFooterVisibility);
+      window.removeEventListener("resize", checkFooterVisibility);
+    };
+  }, []);
+
+  const isVisible = entered && !footerVisible;
+
   return (
-    <a
-      href={DISCORD.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={DISCORD.label}
-      className="group fixed right-4 bottom-4 z-100 flex items-center gap-2 border border-black bg-[#74d4f0] px-3 py-2 font-rotonto text-[13px] tracking-wide text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)] transition-transform duration-200 ease-out -rotate-2 hover:-translate-y-1 hover:rotate-0 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#bfea88] active:translate-y-0 md:right-7 md:bottom-7 md:gap-2.5 md:px-4 md:py-2.5 md:text-[15px]"
+    <aside
+      aria-label="Discord community link"
+      className={`fixed right-4 bottom-4 z-100 md:right-7 md:bottom-7 select-none transition-all duration-400 ease-out ${
+        isVisible
+          ? "opacity-100 pointer-events-auto translate-y-0"
+          : "opacity-0 pointer-events-none translate-y-4"
+      }`}
     >
-
-      <DiscordIcon className="block size-4 shrink-0 md:size-[18px]" />
-
-      {DISCORD.label}
-
-
-      <span className="text-[11px] leading-none opacity-70 transition-opacity duration-200 group-hover:opacity-100 md:text-[12px]">
-        ↗
-      </span>
-    </a>
+      <div className="-rotate-2 hover:rotate-0 transition-transform duration-200">
+        <KeyButton
+          href={DISCORD.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          color="#5865f2"
+          size="compact"
+          className="w-[145px] sm:w-[160px] md:w-[170px]"
+          icon={<DiscordIcon className="size-4 md:size-[18px] shrink-0" />}
+        >
+          {DISCORD.label}
+        </KeyButton>
+      </div>
+    </aside>
   );
 }
+

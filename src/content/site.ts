@@ -119,7 +119,7 @@ export type NavItem = {
  */
 export const NAV = {
   /** The eyebrow over the shelf. */
-  label: "// EXPLORE",
+  label: "EXPLORE",
   /** Names the drawer itself, once it is open. */
   title: "Site navigation",
   open: "Open the navigation shelf",
@@ -471,7 +471,7 @@ export const WHO_ARE_WE = {
 /* ----------------------------------------------------------- projects */
 
 export const PROJECTS = {
-  heading: "PROJECTS //",
+  heading: "PROJECTS",
   /** In the order the design stacks them, left to right. */
   cards: [
     {
@@ -507,7 +507,7 @@ export const PROJECTS = {
       displayName: "Latch",
       bg: "#74D4F0",
       hoverBg: "#FF4337",
-      hoverTextColor: "#ffffff",
+      hoverTextColor: "#000000",
       shapeSvg: "/projects/shape_notched.svg",
       textColor: "#000000",
       logo: "/projects/latch.svg",
@@ -521,13 +521,13 @@ export const PROJECTS = {
       displayName: "MessIT",
       bg: "#2849CB",
       hoverBg: "#BFEA88",
-      hoverTextColor: "#000000",
+      hoverTextColor: "#ffffff",
       shapeSvg: "/projects/shape_blob.svg",
       textColor: "#ffffff",
       logo: "/projects/messit.svg",
       icon: "/projects/messit.svg",
       url: "https://messit.vinnovateit.com",
-      tagline: "Know what's cooking",
+      tagline: "Know what's cooking.",
       body: "VIT's go-to mess menu app, trusted by 40,000+ students.",
     },
   ],
@@ -546,6 +546,14 @@ export const TRACKS = {
    * small type, so keep it to roughly three lines at that size.
    */
   items: [
+    {
+      title: "PROACTIVE MENTAL HEALTH FOR STUDENTS",
+      /** Printed where the other cards say "Track". */
+      label: "Sponsor Track",
+      blurb:
+        "Build solutions that identify early signs of student stress and proactively connect them to meaningful support. Think beyond passive wellness tools and create low-friction systems for early intervention, peer support, healthy routines, and human escalation.",
+      tags: ["Mental Health", "Early Intervention", "Peer Support"],
+    },
     {
       title: "INDUSTRY 6.0",
       blurb:
@@ -576,21 +584,13 @@ export const TRACKS = {
         "For ideas that don't fit the mould and solutions nobody saw coming. Think beyond conventional apps and explore AI, automation, blockchain, quantum technology, smart devices, emerging technologies, or anything else you can imagine.",
       tags: ["Emerging Tech", "Quantum", "Wildcard"],
     },
-    {
-      title: "PROACTIVE MENTAL HEALTH FOR STUDENTS",
-      /** Printed where the other cards say "Track". */
-      label: "Sponsor Track",
-      blurb:
-        "Build solutions that identify early signs of student stress and proactively connect them to meaningful support. Think beyond passive wellness tools and create low-friction systems for early intervention, peer support, healthy routines, and human escalation.",
-      tags: ["Mental Health", "Early Intervention", "Peer Support"],
-    },
   ],
 } as const;
 
 /* ------------------------------------------------------------ sponsors */
 
 export const SPONSORS = {
-  label: "SPONSORS //",
+  label: "SPONSORS",
   heading: "Our Sponsors",
   /**
    * In paint order — biggest first. The first two carry a description, the
@@ -746,7 +746,7 @@ export type FaqCategory = {
 };
 
 export const FAQS = {
-  heading: "FREQUENTLY ASKED QUESTIONS //",
+  heading: "FREQUENTLY ASKED QUESTIONS",
   categories: [
     {
       id: "general",

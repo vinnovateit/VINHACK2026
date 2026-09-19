@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CalendarDays, CircleHelp, Mail, Send } from "lucide-react";
-import { TIMELINE, TRACKS } from "@/content/site";
+import KeyButton from "@/components/ui/KeyButton";
+import DiscordIcon from "@/components/nav/DiscordIcon";
+import { TIMELINE, TRACKS, DISCORD } from "@/content/site";
 import styles from "./participant-page.module.css";
 
 type PageKind = "timeline" | "tracks" | "help";
 
 const pageCopy = {
-  timeline: { label: "// event timeline", title: "Know what happens next.", intro: "Keep your team moving through every checkpoint of VinHack 2026." },
-  tracks: { label: "// build direction", title: "Choose a problem worth solving.", intro: "Pick a direction, find your angle, and build something that lasts." },
-  help: { label: "// participant support", title: "You do not have to get stuck.", intro: "Find a quick answer or send the team a question from here." },
+  timeline: { label: "EVENT TIMELINE", title: "Know what happens next.", intro: "Keep your team moving through every checkpoint of VinHack 2026." },
+  tracks: { label: "BUILD DIRECTION", title: "Choose a problem worth solving.", intro: "Pick a direction, find your angle, and build something that lasts." },
+  help: { label: "PARTICIPANT SUPPORT", title: "You do not have to get stuck.", intro: "Find a quick answer or send the team a question from here." },
 } as const;
 
 export default function ParticipantPage({ kind }: { kind: PageKind }) {
@@ -80,7 +82,7 @@ function TracksContent() {
       </div>
       {tracks.map((track, idx) => (
         <article className={`${styles.trackCard} ${styles[track.tone]}`} key={track.name}>
-          <span>0{idx + 1}</span>
+          <span>#{idx + 1}</span>
           <h2>{track.name}</h2>
           <p>{track.detail}</p>
           <Link href={`/dashboard?track=${encodeURIComponent(track.name)}`}>
@@ -93,5 +95,49 @@ function TracksContent() {
 }
 
 function HelpContent() {
-  return <section className={styles.helpGrid} aria-label="Participant help"><article className={styles.helpCard}><CircleHelp size={27} /><h2>Frequently asked</h2><details><summary>Can I change my team?</summary><p>Ask the organizers before submissions open so they can update your workspace.</p></details><details><summary>Where do I submit my project?</summary><p>Return to the dashboard and use the Submit for review panel.</p></details><details><summary>How do I get mentor feedback?</summary><p>Use the event timeline for review checkpoints and ask for help when you need a hand.</p></details></article><article className={`${styles.helpCard} ${styles.contactCard}`}><Mail size={27} /><h2>Talk to the team</h2><p>For an urgent event question, send a note with your team code and a short description of what you need.</p><a href="mailto:vinnovateit@gmail.com">Email VinnovateIT <Send size={17} /></a></article></section>;
+  return (
+    <section className={styles.helpGrid} aria-label="Participant help">
+      <article className={styles.helpCard}>
+        <CircleHelp size={27} />
+        <h2>Frequently asked</h2>
+        <details>
+          <summary>Can I change my team?</summary>
+          <p>Ask the organizers before submissions open so they can update your workspace.</p>
+        </details>
+        <details>
+          <summary>Where do I submit my project?</summary>
+          <p>Return to the dashboard and use the Submit for review panel.</p>
+        </details>
+        <details>
+          <summary>How do I get mentor feedback?</summary>
+          <p>Use the event timeline for review checkpoints and ask for help when you need a hand.</p>
+        </details>
+      </article>
+      <article className={`${styles.helpCard} ${styles.contactCard}`}>
+        <div>
+          <Mail size={27} />
+          <h2>Talk to the team</h2>
+          <p>
+            For an urgent event question, send a note with your team code and a short description of what you need.
+          </p>
+          <a href="mailto:vinnovateit@gmail.com">
+            Email VinnovateIT <Send size={17} />
+          </a>
+        </div>
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(0, 0, 0, 0.2)" }}>
+          <KeyButton
+            href={DISCORD.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            color="#5865f2"
+            size="compact"
+            className="w-full"
+            icon={<DiscordIcon className="size-4 shrink-0" />}
+          >
+            JOIN DISCORD
+          </KeyButton>
+        </div>
+      </article>
+    </section>
+  );
 }

@@ -8,7 +8,6 @@ import { keyDown, keyUp } from "@/components/motion/click";
 import { draggable } from "@/components/motion/drag";
 import { slideIn, slideOut } from "@/components/motion/pinboard";
 import { MOBILE, typewriter } from "@/components/motion/recipes";
-import { reveal } from "@/components/motion/reveal";
 import { wireSpeaker } from "@/components/motion/speaker";
 import { stampIn } from "@/components/motion/stamp";
 import { wireTimelineReceipt } from "@/components/motion/receipt";
@@ -39,7 +38,6 @@ gsap.registerPlugin(useGSAP);
  *   data-m-stamp-at="top 45%"  where in the pass it fires, when it has to wait
  *   data-m-slide-out         panned off to the right as its section leaves
  *   data-m-slide-in          panned in from the left as its section arrives
- *   data-m-reveal            copy pulling into focus once
  *   data-m-drag              pickable up, and throwable off the page
  *
  * Split in two the way `PageMotion` is: everything that moves on its own is
@@ -98,11 +96,6 @@ export default function MobileMotion({ children }: { children: ReactNode }) {
             delay: Number(el.dataset.mStamp) || 0,
             ...(at ? { start: at } : {}),
           });
-        }
-
-        // ---- copy ------------------------------------------------------
-        for (const el of all("[data-m-reveal]")) {
-          reveal([el], { trigger: sectionOf(el), stagger: 0 });
         }
       });
 

@@ -11,7 +11,7 @@ export default function TracksSection() {
   return (
     <section
       aria-label="Tracks"
-      className="-translate-x-1/2 absolute bg-black h-[3600px] left-1/2 top-[3342px] w-[1280px]"
+      className="-translate-x-1/2 absolute bg-black h-[2600px] left-1/2 top-[3342px] w-[1280px]"
       style={{ overflowAnchor: "none" }}
       data-node-id="594:33"
       data-name="TRACKS"

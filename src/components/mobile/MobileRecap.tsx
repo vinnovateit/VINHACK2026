@@ -5,11 +5,8 @@ import Image from "next/image";
 import CollegesBadge from "@/components/sections/recap/CollegesBadge";
 import BuildersCounter from "@/components/sections/recap/BuildersCounter";
 import PixelSmiley from "@/components/sections/recap/PixelSmiley";
-import {
-  playStampSlam,
-  playPhotoClick,
-  playSmileyChirp,
-} from "@/components/motion/film";
+import FilmLeader from "@/components/sections/recap/FilmLeader";
+import { playStampSlam } from "@/components/motion/film";
 import { useInView } from "@/components/useInView";
 
 const EVENT_PHOTOS = [
@@ -38,6 +35,26 @@ const CORE_SNAKE_STEP = CORE_SNAKE_PERIOD / CORE_SNAKE_WAVELENGTH;
 export default function MobileRecap() {
   const [sectionRef, inView] = useInView<HTMLElement>(0.15);
   const [stampTrigger, setStampTrigger] = useState(false);
+  const [hasRolledOut, setHasRolledOut] = useState(false);
+  const [rolloutDuration, setRolloutDuration] = useState(10);
+
+  useEffect(() => {
+    const updateDuration = () => {
+      const vw = typeof window !== "undefined" ? window.innerWidth : 390;
+      const distance = Math.max(80, vw - 64 - 34);
+      const speed = 835 / 30; // 27.83 px/s
+      setRolloutDuration(distance / speed);
+    };
+    updateDuration();
+    window.addEventListener("resize", updateDuration);
+    return () => window.removeEventListener("resize", updateDuration);
+  }, []);
+
+  useEffect(() => {
+    if (inView && !hasRolledOut) {
+      setHasRolledOut(true);
+    }
+  }, [inView, hasRolledOut]);
 
   useEffect(() => {
     if (!inView) return;
@@ -50,16 +67,6 @@ export default function MobileRecap() {
       setStampTrigger(false);
     };
   }, [inView]);
-
-  const handleRestamp = () => {
-    setStampTrigger(false);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setStampTrigger(true);
-        playStampSlam();
-      });
-    });
-  };
 
   return (
     <section
@@ -93,20 +100,12 @@ export default function MobileRecap() {
 
         {/* Smiley & 99+ Projects Built */}
         <div className="flex items-center gap-1 shrink-0">
-          <div
-            className="w-[42px] h-[42px] cursor-pointer"
-            onClick={playSmileyChirp}
-            title="Click smiley!"
-          >
+          <div className="w-[42px] h-[42px]">
             <div className="w-full h-full animate-[spin_20s_linear_infinite]">
               <PixelSmiley />
             </div>
           </div>
-          <div
-            className="w-[74px] h-[48px] -rotate-6 cursor-pointer hover:scale-105 transition-transform"
-            onClick={playPhotoClick}
-            title="99+ Projects Built"
-          >
+          <div className="w-[74px] h-[48px] -rotate-6">
             <Image
               className="w-full h-full object-contain"
               src="/recap/project.svg"
@@ -137,15 +136,43 @@ export default function MobileRecap() {
         </div>
 
         {/* Filmstrip rolling out from canister to right edge */}
-        <div className="absolute left-[64px] right-0 top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10">
+        <div
+          className={`film-strip-group absolute left-[64px] top-[10px] bottom-[10px] border-y-[2px] border-[#313131] bg-black overflow-hidden z-10 film-rollout-container ${
+            hasRolledOut ? "film-deployed" : ""
+          }`}
+          style={{
+            transition: hasRolledOut
+              ? `width ${rolloutDuration.toFixed(2)}s linear`
+              : undefined,
+          }}
+        >
+          {/* Leading 35mm Film Leader Tongue */}
+          <div
+            className={`absolute top-0 right-0 z-30 transition-opacity duration-500 pointer-events-none ${
+              hasRolledOut ? "opacity-0" : "opacity-100"
+            }`}
+            style={{
+              transitionDelay: hasRolledOut ? `${Math.max(0, rolloutDuration - 0.3).toFixed(2)}s` : "0s",
+            }}
+          >
+            <FilmLeader isMobile />
+          </div>
           {/* Top Film Sprocket Holes */}
-          <div className="absolute top-[4px] left-[6px] right-0 flex gap-[6px] overflow-hidden pointer-events-none z-10">
-            {Array.from({ length: 45 }).map((_, i) => (
-              <div
-                key={`mob-top-sprocket-${i}`}
-                className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
-              />
-            ))}
+          <div className="absolute top-[4px] left-[6px] right-0 overflow-hidden pointer-events-none z-10">
+            <div className="film-sprocket-track flex gap-[6px]">
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-top-sprocket-a-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-top-sprocket-b-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+            </div>
           </div>
 
           {/* Photo Marquee */}
@@ -154,12 +181,10 @@ export default function MobileRecap() {
               {EVENT_PHOTOS.concat(EVENT_PHOTOS).map((src, i) => (
                 <div
                   key={`mob-photo-${i}`}
-                  className="w-[155px] h-[105px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0 cursor-pointer group"
-                  onClick={playPhotoClick}
-                  title="Click to snap shutter!"
+                  className="w-[155px] h-[105px] rounded-[2px] overflow-hidden border border-[#222222] shrink-0"
                 >
                   <Image
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-cover"
                     src={src}
                     width={360}
                     height={255}
@@ -171,13 +196,21 @@ export default function MobileRecap() {
           </div>
 
           {/* Bottom Film Sprocket Holes */}
-          <div className="absolute bottom-[4px] left-[6px] right-0 flex gap-[6px] overflow-hidden pointer-events-none z-10">
-            {Array.from({ length: 45 }).map((_, i) => (
-              <div
-                key={`mob-bottom-sprocket-${i}`}
-                className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
-              />
-            ))}
+          <div className="absolute bottom-[4px] left-[6px] right-0 overflow-hidden pointer-events-none z-10">
+            <div className="film-sprocket-track flex gap-[6px]">
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-bottom-sprocket-a-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+              {Array.from({ length: 52 }).map((_, i) => (
+                <div
+                  key={`mob-bottom-sprocket-b-${i}`}
+                  className="w-[10px] h-[13px] bg-white rounded-[2px] shrink-0"
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -197,15 +230,13 @@ export default function MobileRecap() {
 
         {/* Stamp & Core Memory */}
         <div className="flex items-center justify-between gap-2 pt-1">
-          {/* 3 0Hours Stamp */}
+          {/* 30 Hours Stamp */}
           <div
-            className={`flex items-center cursor-pointer select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2]"
+            className={`flex items-center select-none ${stampTrigger ? "stamp-active" : "opacity-0 scale-[2]"
               }`}
-            onClick={handleRestamp}
-            title="Click to stamp again!"
           >
             <Image
-              className="w-[105px] h-[54px] object-contain transition-transform duration-200 active:scale-95"
+              className="w-[105px] h-[54px] object-contain"
               src="/recap/hours_n.svg"
               width={193}
               height={98}

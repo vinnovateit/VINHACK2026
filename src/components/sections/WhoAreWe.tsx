@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { WHO_ARE_WE } from "@/content/site";
 import { DESKTOP, MOBILE } from "@/components/motion/recipes";
+import { clamp, mix, easeOutQuad, smoothDamp } from "@/lib/math";
 
 /**
  * The "WHO ARE WE" interactive collage section.
@@ -18,14 +19,14 @@ import { DESKTOP, MOBILE } from "@/components/motion/recipes";
 
 // -------------------- TIMING & SCROLL FACTORS --------------------
 // 1. Total scroll travel in pixels (Increase to make the whole section scroll slower)
-const SCROLL_TRAVEL = 1800;
+const SCROLL_TRAVEL = 1100;
 
 /**
  * The room the canvas gives this section: Projects' shifted top (2496 + the
- * 1296 `.recap-extended-sections` carries) less this section's own top of 1392.
+ * -4px `.recap-extended-sections` carries) less this section's own top of 1392.
  * Keep it in step with that translate.
  */
-const CANVAS_RESERVED = 2400;
+const CANVAS_RESERVED = 1100;
 
 // 2. The headline crossfade. It is a clock, not a scroll position: the two
 // lines run themselves once the stage is parked and fills the screen, so the
@@ -179,54 +180,6 @@ const CARD_CONFIGS: Record<string, CardConfig> = {
     z: 20,
   },
 };
-
-function clamp(min: number, max: number, value: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function mix(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
-
-function easeOutQuad(t: number): number {
-  return 1 - (1 - t) * (1 - t);
-}
-
-/**
- * Critically damped spring simulation (smoothDamp).
- * Eliminates mouse-wheel notch jumps and trackpad momentum stutter.
- */
-function smoothDamp(
-  current: number,
-  target: number,
-  velocityRef: { value: number },
-  smoothTime: number,
-  maxSpeed: number,
-  deltaTime: number
-): number {
-  smoothTime = Math.max(0.0001, smoothTime);
-  const omega = 2 / smoothTime;
-
-  const x = omega * deltaTime;
-  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
-  let change = current - target;
-  const originalTo = target;
-
-  const maxChange = maxSpeed * smoothTime;
-  change = clamp(-maxChange, maxChange, change);
-  target = current - change;
-
-  const temp = (velocityRef.value + omega * change) * deltaTime;
-  velocityRef.value = (velocityRef.value - omega * temp) * exp;
-  let output = target + (change + temp) * exp;
-
-  if ((originalTo - current > 0) === (output > originalTo)) {
-    output = originalTo;
-    velocityRef.value = (output - originalTo) / deltaTime;
-  }
-
-  return output;
-}
 
 const emptySubscribe = () => () => {};
 
@@ -399,21 +352,16 @@ export default function WhoAreWeSection({
       keepOffTheWords();
 
       if (variant === "flow") {
-        travelPx = Math.max(900, Math.round(SCROLL_TRAVEL * 0.7));
-        // In flow the reservation can simply be told how much room to keep.
-        container.style.height = `${travelPx + exit}px`;
+        travelPx = 500;
+        // In flow the container reservation must cover the pinned travel plus the full 100vh
+        // stage exit so the portal clears the viewport completely before Projects arrives.
+        container.style.height = `${travelPx + Math.round(window.innerHeight * 1.1)}px`;
       } else {
-        /* What the collage actually has on the canvas, and it is not this
-           section's own `height`: everything from Projects down is shifted by
-           `.recap-extended-sections` (+1296px in globals.css), which puts
-           Projects at 3792 against this section's 1392 — 2400px of room, not
-           the 2632 the placeholder is drawn at. Reserve against the real
-           number or the last screenful of the park has Projects under it. */
         const reserved = CANVAS_RESERVED;
         travelPx = clamp(
-          900,
-          Math.max(900, reserved - exit),
-          Math.max(1500, Math.round(SCROLL_TRAVEL * (rect.width / 1280 || 1))),
+          600,
+          Math.max(600, reserved - Math.round(exit * 0.4)),
+          750,
         );
       }
     };
@@ -493,6 +441,7 @@ export default function WhoAreWeSection({
     let latestScrollY = typeof window !== "undefined" ? window.scrollY : 0;
     const onScroll = () => {
       latestScrollY = window.scrollY ?? document.documentElement.scrollTop ?? 0;
+      update(0.016);
     };
 
     let currentP = 0;
@@ -502,43 +451,6 @@ export default function WhoAreWeSection({
        than finding it already over. */
     let textSeconds = 0;
     let drawnT = Number.NaN;
-    /* The reveal is three seconds long and the park is long enough to scroll
-       through in one flick, so a fast scroller could pass the section without
-       the two lines ever handing over. So the page is held still for exactly
-       as long as the reveal takes, once: the first time the visitor arrives at
-       the section from above, the document stops at the park's start until the
-       clock has run out, then lets go and never does it again. Scrolling back
-       up through it afterwards is free.
-
-       The lock is the same one `SiteNav` uses for its drawer — `overflow:
-       hidden` on the body, with the scrollbar's width made up as padding so
-       the full-bleed collage does not jump sideways when it disappears. */
-    let holdDone = false;
-    let holding = false;
-    let approachedFromAbove = false;
-    let bodyOverflow = "";
-    let bodyPad = "";
-
-    const lockScroll = () => {
-      if (holding) return;
-      holding = true;
-      const { body } = document;
-      bodyOverflow = body.style.overflow;
-      bodyPad = body.style.paddingRight;
-      const gutter = window.innerWidth - document.documentElement.clientWidth;
-      body.style.overflow = "hidden";
-      if (gutter > 0) body.style.paddingRight = `${gutter}px`;
-    };
-
-    const unlockScroll = () => {
-      if (!holding) return;
-      holding = false;
-      document.body.style.overflow = bodyOverflow;
-      document.body.style.paddingRight = bodyPad;
-    };
-    let smoothScrollY = latestScrollY;
-    const scrollVel = { value: 0 };
-    const pVel = { value: 0 };
     let lastTime = typeof performance !== "undefined" ? performance.now() : 0;
     let initialized = false;
 
@@ -553,65 +465,29 @@ export default function WhoAreWeSection({
         }
       }
 
-      const currentScrollY = latestScrollY;
+      const currentScrollY =
+        typeof window !== "undefined"
+          ? (window.scrollY ?? document.documentElement.scrollTop ?? latestScrollY)
+          : latestScrollY;
       const isReduced = calm.matches;
 
-      if (!initialized) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-        pVel.value = 0;
-      } else if (isReduced || Math.abs(currentScrollY - smoothScrollY) > 2000) {
-        smoothScrollY = currentScrollY;
-        scrollVel.value = 0;
-      } else {
-        // Smooth input filtering (smoothDamp)
-        smoothScrollY = smoothDamp(
-          smoothScrollY,
-          currentScrollY,
-          scrollVel,
-          0.08,
-          Infinity,
-          dt
-        );
-      }
-
-      /* The hold. Engaged the moment the visitor crosses into the park having
-         come down to it, released when the clock runs out — and, because a
-         flick can carry the page past `parkStart` inside a single frame, the
-         document is put back on that line rather than merely stopped where it
-         landed. */
-      if (!isReduced && !holdDone && armed) {
-        if (latestScrollY < parkStart) {
-          approachedFromAbove = true;
-        } else if (approachedFromAbove && textSeconds < TEXT_DURATION * HOLD_FRACTION) {
-          if (!holding) {
-            window.scrollTo(0, parkStart);
-            lockScroll();
-          }
-          latestScrollY = parkStart;
-          smoothScrollY = parkStart;
-          scrollVel.value = 0;
-        }
-      }
-
-      if (holding && (isReduced || textSeconds >= TEXT_DURATION * HOLD_FRACTION)) {
-        holdDone = true;
-        unlockScroll();
-      }
-
-      // Full-Screen Pinned Stage Translation:
+      // Full-Screen Pinned Stage Translation (Synchronous 1:1 scroll tracking with zero delay):
       let stageY = 0;
-      if (smoothScrollY < parkStart) {
-        stageY = parkStart - smoothScrollY;
-      } else if (smoothScrollY > parkStart + travelPx) {
-        stageY = (parkStart + travelPx) - smoothScrollY;
+      if (currentScrollY < parkStart) {
+        stageY = parkStart - currentScrollY;
+      } else if (currentScrollY > parkStart + travelPx) {
+        stageY = (parkStart + travelPx) - currentScrollY;
       } else {
         stageY = 0; // ZERO MOVEMENT - 100% COMPOSITOR PINNED!
       }
 
+      // No fade in/out — keep full opacity while in view
+      const stageOpacity = 1;
+
       // Culled when completely outside viewport
       const culled =
-        stageY > window.innerHeight * 1.2 || stageY < -window.innerHeight * 1.2;
+        stageY > window.innerHeight * 1.05 ||
+        stageY < -window.innerHeight * 1.05;
 
       /* Wind the clock. Parked is the trigger — `stageY === 0` is exactly the
          span where the stage is pinned over the whole viewport — and leaving
@@ -621,7 +497,7 @@ export default function WhoAreWeSection({
         textSeconds = 0;
       } else if (isReduced) {
         textSeconds = TEXT_DURATION;
-      } else if (stageY === 0 || holding) {
+      } else if (stageY === 0) {
         textSeconds = Math.min(TEXT_DURATION, textSeconds + dt);
       }
       const textT = TEXT_DURATION > 0 ? textSeconds / TEXT_DURATION : 1;
@@ -634,25 +510,17 @@ export default function WhoAreWeSection({
         if (portalEl.style.transform !== transformStr) {
           portalEl.style.transform = transformStr;
         }
-      }
-
-      // Progress computation:
-      const stuck = clamp(0, travelPx, smoothScrollY - parkStart);
-      const targetP = stuck / travelPx;
-
-      if (!initialized) {
-        currentP = targetP;
-        initialized = true;
-      } else if (isReduced) {
-        currentP = targetP;
-        pVel.value = 0;
-      } else {
-        currentP = smoothDamp(currentP, targetP, pVel, 0.12, Infinity, dt);
-        if (Math.abs(currentP - targetP) < 0.0001 && Math.abs(pVel.value) < 0.0001) {
-          currentP = targetP;
-          pVel.value = 0;
+        const opStr = stageOpacity.toFixed(3);
+        if (portalEl.style.opacity !== opStr) {
+          portalEl.style.opacity = opStr;
         }
       }
+
+      // Progress computation (immediate 1:1 sync with scroll):
+      const stuck = clamp(0, travelPx, currentScrollY - parkStart);
+      const targetP = stuck / travelPx;
+      currentP = targetP;
+      initialized = true;
 
       /* The scatter has a floor, and the floor is the clock.
          `render` reads the first 45% of progress as the outward scatter, and
@@ -707,7 +575,6 @@ export default function WhoAreWeSection({
 
     return () => {
       cancelAnimationFrame(rafId);
-      unlockScroll();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onLayout);
       if (portalEl) portalEl.style.display = "none";
@@ -738,7 +605,7 @@ export default function WhoAreWeSection({
         style={{
           height:
             variant === "flow"
-              ? `${Math.round(SCROLL_TRAVEL * 0.7) + 520}px`
+              ? "calc(500px + 110vh)"
               : `${CANVAS_RESERVED}px`,
           overflowAnchor: "none",
         }}
@@ -846,7 +713,7 @@ export default function WhoAreWeSection({
                   <p className="font-rotonto text-black text-[25px] md:text-[27px] leading-[1.08] font-bold uppercase whitespace-pre-line">
                     {greenQuote.headline}
                   </p>
-                  <p className="font-sans text-black/80 text-[10px] md:text-[11px] font-bold tracking-[0.16em] uppercase">
+                  <p className=" text-black/80 text-[10px] md:text-[11px] font-bold tracking-[0.16em] uppercase">
                     {greenQuote.subline}
                   </p>
                 </div>
@@ -897,7 +764,7 @@ export default function WhoAreWeSection({
                   <p className="font-rotonto text-black text-[26px] md:text-[28px] leading-[1.1] font-bold uppercase whitespace-pre-line">
                     {pinkQuote.headline}
                   </p>
-                  <p className="font-sans text-black/70 text-[9px] md:text-[10px] font-bold tracking-[0.16em] uppercase text-right">
+                  <p className=" text-black/70 text-[9px] md:text-[10px] font-bold tracking-[0.16em] uppercase text-right">
                     PROBABLY...
                   </p>
                 </div>
@@ -931,7 +798,7 @@ export default function WhoAreWeSection({
                   <p className="font-rotonto text-black text-[23px] md:text-[25px] leading-[1.08] font-bold uppercase whitespace-pre-line">
                     {blueQuote.headline}
                   </p>
-                  <p className="font-mono text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
+                  <p className="font-rotonto text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
                     {blueQuote.subline}
                   </p>
                 </div>
@@ -948,7 +815,7 @@ export default function WhoAreWeSection({
                   <p className="font-rotonto text-black text-[24px] md:text-[26px] leading-[1.08] font-bold uppercase whitespace-pre-line">
                     {redQuote.headline}
                   </p>
-                  <p className="font-mono text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
+                  <p className="font-rotonto text-black/80 text-[10px] md:text-[11px] tracking-wider uppercase font-semibold">
                     {redQuote.subline}
                   </p>
                 </div>
